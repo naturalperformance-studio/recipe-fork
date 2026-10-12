@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.Mode
 import app.recipefork.app.R
+import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.ThemeChoice
@@ -68,7 +69,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
  * column, said to be the editor's, and the saved media the device need not keep (FLOW-060), cleared only once its
  * statement is confirmed, and disabled, saying why, while there is nothing to clear. The clearing runs in [scope],
  * which outlives the screen, and the screen's snackbar says once it is done; its words differ by [mode] and in
- * [Mode.Serverless] name nothing of the server (FLOW-062 (1)). Back — the bar's or the system's — returns to the book.
+ * [Mode.Serverless] name nothing of the server (FLOW-062 (1)). In [Mode.Serverless] a "Backup" section follows, saving the
+ * book to a file and restoring it from one ([BackupSection], FLOW-073), run by [backup]. Back — the bar's or the
+ * system's — returns to the book.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +86,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenKitchen: () -> Unit,
     modifier: Modifier = Modifier,
+    backup: BookBackup? = null,
 ) {
     val snackbars = remember { SnackbarHostState() }
     Scaffold(
@@ -121,6 +125,7 @@ fun SettingsScreen(
             KitchenItem(kitchen, onOpenKitchen)
             DragHandleItem(handleSide)
             SavedMediaItem(recipes, mode, scope, snackbars)
+            if (mode == Mode.Serverless && backup != null) BackupSection(backup, snackbars)
         }
     }
 }
@@ -365,6 +370,19 @@ object SettingsTags {
     const val KITCHEN = "settings-kitchen"
     const val HANDLE_RIGHT = "settings-handle-right"
     const val CLEAR_MEDIA = "settings-clear-media"
+
+    /** The book saved to a file and restored from one (FLOW-073), in the serverless build. */
+    const val BACKUP_SAVE = "settings-backup-save"
+    const val BACKUP_RESTORE = "settings-backup-restore"
+    const val BACKUP_PROGRESS = "settings-backup-progress"
+    const val BACKUP_CANCEL = "settings-backup-cancel"
+    const val BACKUP_QUESTION = "settings-backup-question"
+    const val BACKUP_ADD = "settings-backup-add"
+    const val BACKUP_REPLACE = "settings-backup-replace"
+    const val BACKUP_QUESTION_CANCEL = "settings-backup-question-cancel"
+    const val BACKUP_CONFIRMATION = "settings-backup-confirmation"
+    const val BACKUP_REPLACE_CONFIRM = "settings-backup-replace-confirm"
+    const val BACKUP_CONFIRMATION_CANCEL = "settings-backup-confirmation-cancel"
 
     // The dialogs moved here from the book's menu keep their tags' values.
     const val USUAL_DIALOG = "library-usual-dialog"

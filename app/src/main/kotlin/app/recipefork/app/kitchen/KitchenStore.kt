@@ -1,6 +1,12 @@
 package app.recipefork.app.kitchen
 
 import android.content.Context
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.longOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +23,26 @@ interface KitchenStore {
 
     /** Ticks every one of [ids] when [has], else unticks them; the others stay as they are. */
     fun hold(ids: Collection<Long>, has: Boolean)
+
+    /** Makes [ids] the whole set held, as a restored book's kitchen replaces the device's. */
+    fun replace(ids: Set<Long>)
+}
+
+/**
+ * My kitchen as a saved book carries it, `kitchen.json` (decisions/20261012-a-book-file-holds-the-books-database.md):
+ * `{"held":[ids…]}`.
+ */
+object KitchenJson {
+    fun encode(held: Set<Long>): String =
+        buildJsonObject { put(HELD, JsonArray(held.sorted().map(::JsonPrimitive))) }.toString()
+
+    /** The ids [text] holds; null when it is no such document. */
+    fun decode(text: String): Set<Long>? {
+        val held = (runCatching { Json.parseToJsonElement(text) }.getOrNull() as? JsonObject)?.get(HELD) as? JsonArray
+        return held?.map { ((it as? JsonPrimitive)?.takeUnless { p -> p.isString }?.longOrNull) ?: return null }?.toSet()
+    }
+
+    private const val HELD = "held"
 }
 
 /** The set held in memory alone, as long as the object lives. */
@@ -26,6 +52,10 @@ class HeldKitchen(initial: Set<Long> = emptySet()) : KitchenStore {
 
     override fun hold(ids: Collection<Long>, has: Boolean) {
         state.value = if (has) state.value + ids else state.value - ids.toSet()
+    }
+
+    override fun replace(ids: Set<Long>) {
+        state.value = ids
     }
 }
 
@@ -45,6 +75,12 @@ class PreferencesKitchen(context: Context) : KitchenStore {
         if (now == state.value) return
         preferences.edit().putStringSet(KEY, now.mapTo(HashSet()) { it.toString() }).commit()
         state.value = now
+    }
+
+    @Synchronized
+    override fun replace(ids: Set<Long>) {
+        preferences.edit().putStringSet(KEY, ids.mapTo(HashSet()) { it.toString() }).commit()
+        state.value = ids
     }
 
     internal companion object {

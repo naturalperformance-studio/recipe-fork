@@ -250,30 +250,32 @@ class RecipeImport(
 
 /**
  * A recipe file handed to the application by another (FLOW-064): the `content:` or `file:` address an `ACTION_VIEW`
- * intent carries, or the stream an `ACTION_SEND` of the product's type carries. A timer's notification is a view of the
- * application's own address, and is no file.
+ * intent carries, or the stream an `ACTION_SEND` of the product's type carries — never a saved book ([BookFileIntents]),
+ * which the import would refuse. A timer's notification is a view of the application's own address, and is no file.
  */
 object RecipeFileIntents {
-    private val FILE_SCHEMES = setOf(android.content.ContentResolver.SCHEME_CONTENT, android.content.ContentResolver.SCHEME_FILE)
+    internal val FILE_SCHEMES = setOf(android.content.ContentResolver.SCHEME_CONTENT, android.content.ContentResolver.SCHEME_FILE)
 
     fun fileOf(intent: Intent?): Uri? = when (intent?.action) {
         Intent.ACTION_VIEW -> intent.data
         Intent.ACTION_SEND -> intent.takeIf { it.type == RecipeFile.MIME_TYPE }?.let(::streamOf)
         else -> null
-    }?.takeIf { it.scheme in FILE_SCHEMES }
+    }?.takeIf { it.scheme in FILE_SCHEMES && !BookFileIntents.isBookFile(it) }
 
     @Suppress("DEPRECATION")
-    private fun streamOf(intent: Intent): Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
+    internal fun streamOf(intent: Intent): Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
 
     /**
      * The intent that hands the file [intent] opens or shares on to [MainActivity], in the application's own task —
-     * the one already open, its screen followed as a newly opened file — with the reading of the file granted on; null
+     * the one already open, its screen followed as a newly opened file — with the reading of the file granted on: a
+     * recipe file as a view, to be imported; a saved book as [BookFileIntents.ACTION_RESTORE], to be restored. Null
      * where [intent] holds no file.
      */
     fun forward(context: Context, intent: Intent?): Intent? {
-        val uri = fileOf(intent) ?: return null
+        val book = BookFileIntents.arriving(intent)
+        val uri = book ?: fileOf(intent) ?: return null
         return Intent(context, MainActivity::class.java)
-            .setAction(Intent.ACTION_VIEW)
+            .setAction(if (book != null) BookFileIntents.ACTION_RESTORE else Intent.ACTION_VIEW)
             .setDataAndType(uri, intent?.type)
             .addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or

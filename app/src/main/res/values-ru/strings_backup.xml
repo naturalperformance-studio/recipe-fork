@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_title">Резервная копия</string>
+    <string name="backup_save">Сохранить книгу в файл</string>
+    <string name="backup_save_hint">Все рецепты с фото и видео — в выбранное вами место</string>
+    <string name="backup_restore">Восстановить из файла</string>
+    <string name="backup_restore_hint">Вернуть сохранённую раньше книгу</string>
+    <string name="backup_file_name">Книга рецептов %1$s.recipefork-book</string>
+    <string name="backup_saving">Сохранение книги…</string>
+    <string name="backup_reading">Чтение файла…</string>
+    <string name="backup_restoring">Восстановление книги…</string>
+    <string name="backup_cancel">Отмена</string>
+    <plurals name="backup_saved">
+        <item quantity="one">Книга сохранена: %d рецепт</item>
+        <item quantity="few">Книга сохранена: %d рецепта</item>
+        <item quantity="many">Книга сохранена: %d рецептов</item>
+        <item quantity="other">Книга сохранена: %d рецепта</item>
+    </plurals>
+    <plurals name="backup_restored">
+        <item quantity="one">Восстановлен %d рецепт</item>
+        <item quantity="few">Восстановлено %d рецепта</item>
+        <item quantity="many">Восстановлено %d рецептов</item>
+        <item quantity="other">Восстановлено %d рецепта</item>
+    </plurals>
+    <plurals name="backup_added">
+        <item quantity="one">Добавлен %d рецепт</item>
+        <item quantity="few">Добавлено %d рецепта</item>
+        <item quantity="many">Добавлено %d рецептов</item>
+        <item quantity="other">Добавлено %d рецепта</item>
+    </plurals>
+    <plurals name="backup_already_held">
+        <item quantity="one">%d уже был в книге</item>
+        <item quantity="few">%d уже были в книге</item>
+        <item quantity="many">%d уже были в книге</item>
+        <item quantity="other">%d уже были в книге</item>
+    </plurals>
+    <string name="backup_added_and_held">%1$s; %2$s</string>
+    <string name="backup_save_failed">Не удалось сохранить книгу — файл не оставлен</string>
+    <string name="backup_restore_failed">Не удалось восстановить книгу — в ней ничего не изменилось</string>
+    <string name="backup_refused_not_a_book">Этот файл нельзя восстановить: это не сохранённая книга рецептов</string>
+    <string name="backup_refused_damaged">Этот файл нельзя восстановить: он повреждён</string>
+    <string name="backup_refused_newer">Этот файл нельзя восстановить: он сохранён более новой версией приложения — сначала обновите приложение</string>
+    <string name="backup_refused_cannot_read">Этот файл нельзя восстановить: его не удалось прочитать (хватает ли места?)</string>
+    <string name="backup_ask_title">В книге есть рецепты</string>
+    <plurals name="backup_ask_text">
+        <item quantity="one">В книге уже %d рецепт. Добавить из файла рецепты, которых в ней нет, или заменить всю книгу файлом?</item>
+        <item quantity="few">В книге уже %d рецепта. Добавить из файла рецепты, которых в ней нет, или заменить всю книгу файлом?</item>
+        <item quantity="many">В книге уже %d рецептов. Добавить из файла рецепты, которых в ней нет, или заменить всю книгу файлом?</item>
+        <item quantity="other">В книге уже %d рецепта. Добавить из файла рецепты, которых в ней нет, или заменить всю книгу файлом?</item>
+    </plurals>
+    <string name="backup_add">Добавить в книгу</string>
+    <string name="backup_replace">Заменить книгу</string>
+    <string name="backup_replace_title">Заменить книгу?</string>
+    <plurals name="backup_replace_text">
+        <item quantity="one">%d рецепт книги будет удалён вместе с фото и видео, а на его место встанут рецепты из файла. Отменить это нельзя.</item>
+        <item quantity="few">Все %d рецепта книги будут удалены вместе с фото и видео, а на их место встанут рецепты из файла. Отменить это нельзя.</item>
+        <item quantity="many">Все %d рецептов книги будут удалены вместе с фото и видео, а на их место встанут рецепты из файла. Отменить это нельзя.</item>
+        <item quantity="other">Все %d рецепта книги будут удалены вместе с фото и видео, а на их место встанут рецепты из файла. Отменить это нельзя.</item>
+    </plurals>
+    <string name="backup_opened_busy">Книга уже сохраняется или восстанавливается, поэтому этот файл не открыт. Откройте его снова, когда это закончится.</string>
+    <string name="backup_replace_confirm">Заменить</string>
+</resources>

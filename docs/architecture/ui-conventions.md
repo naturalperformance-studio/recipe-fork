@@ -7,7 +7,7 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 | What | Here |
 |---|---|
 | Touch targets | ≥ 48 dp everywhere; **≥ 56 dp on the card** (cooking with busy hands, A11Y-007). |
-| Haptics | Only through `ui/Haptics.kt`: `Haptic.CONFIRM` → `EFFECT_CLICK`, `Haptic.TICK` → `EFFECT_TICK`, played on the `Vibrator` with touch usage (the view's `performHapticFeedback` was silent on the owner's Samsung). From API 33 the system's touch-feedback switch silences them; below 33 the app reads `HAPTIC_FEEDBACK_ENABLED` itself. Tests use the `LocalHaptics` double. |
+| Haptics | Only through `ui/Haptics.kt`: `Haptic.CONFIRM` → an 80 ms one-shot, `Haptic.TICK` → a 50 ms one-shot, at the default amplitude, played on the `Vibrator` with touch usage (the view's `performHapticFeedback` was silent on the owner's Samsung, and its predefined click and tick effects were not felt there — v0.34, T-245). From API 33 the system's touch-feedback switch silences them; below 33 the app reads `HAPTIC_FEEDBACK_ENABLED` itself. Tests use the `LocalHaptics` double. |
 | Strings | `res/values/strings_<feature>.xml` and `res/values-ru/strings_<feature>.xml`, both in the same change. |
 | Contrast | `ui/ContrastTest` lists every colour pair the interface draws; a new pair is added there. |
 | Theme | Every colour role (light and dark), corner size and main type size in `res/values/app_theme.xml` (ADR 20261004), built by `ui/AppTheme.kt`; screens take colours only from `MaterialTheme.colorScheme`. |

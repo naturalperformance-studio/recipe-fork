@@ -263,6 +263,16 @@ class LibrarySession(
     }
 
     /**
+     * A saved book was opened from another application: the settings are shown above the book, in place of whatever
+     * was open — an editor keeps what was entered as it is typed — for its restore asks, runs and is said there
+     * (FLOW-073).
+     */
+    fun showBackup() {
+        showHeld()
+        openSettings()
+    }
+
+    /**
      * A timer's notification was tapped: its recipe's card opens, in place of whatever was open — an editor keeps
      * what was entered as it is typed — and is brought to the timer's step (FLOW-013 (4)). Kept like the card, so
      * that the step is still shown should the process end before the card is drawn.
