@@ -61,8 +61,9 @@ sealed interface ShoppingQuantity {
  * A measured line as the reader's system shows it (v0.35): its [amount], the line's exact total converted once by
  * [UnitConversion.convert][app.recipefork.core.scaling.UnitConversion.convert] and rounded on the shown unit's grid;
  * [approximate] where the line merged parts by the entry's measures or the conversion went through them; and, on an
- * approximate line, [counted]: each part written in a unit that does not convert exactly into the shown one — as the
- * recipes need it, and what it was counted as in the shown unit.
+ * approximate line of several parts, [counted]: each part written in a unit that does not convert exactly into the
+ * shown one — as the recipes need it, and what it was counted as in the shown unit. A line of one part notes nothing:
+ * its "≈" says it was converted, as the card's does.
  */
 data class ShoppingShown(
     val amount: ShoppingAmount,

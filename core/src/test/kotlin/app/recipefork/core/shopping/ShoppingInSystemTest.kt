@@ -4,6 +4,7 @@ import app.recipefork.core.recipe.QuantityUnit.CUP
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.MILLILITRE
 import app.recipefork.core.recipe.QuantityUnit.OUNCE
+import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.QuantityUnit.TEASPOON
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitSystem.METRIC
@@ -21,6 +22,7 @@ private val KITCHEN: Map<Long, EntryMeasures> = mapOf(
     FLOUR to EntryMeasures(factors = mapOf("g" to 1.0, "tsp" to 3.0, "tbsp" to 10.0, "cup" to 130.0)),
     MILK to EntryMeasures(factors = mapOf("g" to 1.0, "ml" to 1.03, "tsp" to 5.0, "tbsp" to 15.0, "cup" to 258.0)),
     BEEF to EntryMeasures(factors = mapOf("g" to 1.0)),
+    ONION to EntryMeasures(divisible = false, factors = mapOf("pc" to 150.0, "g" to 1.0)),
 )
 
 private fun shownList(system: UnitSystem, vararg recipes: ShoppingRecipe) = ShoppingTotals.of(recipes.toList(), KITCHEN, system)
@@ -76,10 +78,21 @@ class ShoppingInSystemTest {
     }
 
     @Test
-    fun `a single cup line converted through the dictionary is approximate and says what it counted`() {
-        // Scenario 2: 1 cup of milk, a liquid, reads ≈ 250 ml in Metric.
-        val milk = shownList(METRIC, recipe(A, row(MILK, r(1), CUP))).single().shown!!
-        assertEquals(ShoppingShown(amount(MILLILITRE, r(250)), true, listOf(CountedPart(amount(CUP, r(1)), amount(MILLILITRE, r(250))))), milk)
+    fun `a line of one part converted through the dictionary is approximate and notes nothing, as on the card`() {
+        // Scenario 2: 1 cup of milk, a liquid, reads ≈ 250 ml in Metric; 2 cups of flour ≈ 260 g, from two recipes too.
+        assertEquals(ShoppingShown(amount(MILLILITRE, r(250)), true, emptyList()), shownList(METRIC, recipe(A, row(MILK, r(1), CUP))).single().shown)
+        val flour = shownList(METRIC, recipe(A, row(FLOUR, r(1), CUP)), recipe(B, row(FLOUR, r(1), CUP))).single().shown
+        assertEquals(ShoppingShown(amount(GRAM, r(260)), true, emptyList()), flour)
+    }
+
+    @Test
+    fun `a part in the shown dimension's other unit is not noted, while a household part is`() {
+        // Metric: 2 cups of flour (260 g) and 4 oz (113.4 g) merge in cups, 373.4 g; the ounces go into grams exactly.
+        val flour = shownList(METRIC, recipe(A, row(FLOUR, r(2), CUP)), recipe(B, row(FLOUR, r(4), OUNCE))).single().shown
+        assertEquals(ShoppingShown(amount(GRAM, r(373)), true, listOf(CountedPart(amount(CUP, r(2)), amount(GRAM, r(260))))), flour)
+        // US: an onion (150 g) and 200 g merge in grams, 350 g → 12½ oz; the grams go into ounces exactly.
+        val onion = shownList(US, recipe(A, row(ONION, r(1), PIECE)), recipe(B, row(ONION, r(200), GRAM))).single().shown
+        assertEquals(ShoppingShown(amount(OUNCE, r(25, 2)), true, listOf(CountedPart(amount(PIECE, r(1)), amount(OUNCE, r(11, 2))))), onion)
     }
 
     @Test

@@ -445,6 +445,17 @@ class ShoppingScreenTest {
         assertEquals(ticks, store.list.value.ticks)
     }
 
+    // v0.35 T-250: a cup of a liquid reads in millilitres in Metric, marked "≈", with no note repeating it.
+    @Test
+    fun aCupOfALiquidReadsInMillilitres() {
+        val pancakes = recipe("Pancakes", 4, row(MILK, r(1), CUP))
+        save(pancakes)
+        store.update { it.with(listed(pancakes)) }
+        showBook()
+        openList()
+        assertEquals(listOf("milk — ≈ 250 ml", "Pancakes"), compose.textsOf(lineTag("milk — ≈ 250 ml")))
+    }
+
     @Test
     fun theTicksStayAcrossARestart() {
         save(soup, pie)

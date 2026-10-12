@@ -21,15 +21,20 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.IngredientEntries
 import app.recipefork.app.card.tagsTopToBottom
+import app.recipefork.app.data.HeldUnitSystemSetting
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.file.FileProviderCache
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.print.LocalPrinting
 import app.recipefork.app.print.PdfWriter
 import app.recipefork.app.print.PlatformPrinting
+import app.recipefork.app.print.PrintBlock
+import app.recipefork.app.print.PrintDocument
+import app.recipefork.app.print.Printing
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
+import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.shopping.ShoppingAmount
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -86,8 +91,10 @@ class ShoppingPrintTest {
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
 
-    private fun show(list: ShoppingList) {
-        val environment = ShoppingEnvironment(HeldShopping(list), ingredients = IngredientEntries { SHOPPING_DICTIONARY })
+    private fun show(list: ShoppingList, units: UnitSystem = UnitSystem.METRIC, printing: Printing = this.printing) {
+        val environment = ShoppingEnvironment(
+            HeldShopping(list), unitSystem = HeldUnitSystemSetting(units), ingredients = IngredientEntries { SHOPPING_DICTIONARY },
+        )
         compose.setContent {
             CompositionLocalProvider(LocalPrinting provides printing) {
                 MaterialTheme { ShoppingScreen(environment, recipes, onBack = {}) }
@@ -153,6 +160,28 @@ class ShoppingPrintTest {
         show(ShoppingList())
         assertTrue(exists(ShoppingTags.EMPTY))
         assertFalse(exists(ShoppingTags.MENU))
+    }
+
+    // v0.35 T-250: what is printed is the list in the chosen system, as the screen shows it.
+    @Test
+    fun printingFollowsTheChosenSystem() {
+        val printed = mutableListOf<PrintDocument>()
+        val capturing = object : Printing {
+            override fun print(context: Context, document: PrintDocument) {
+                printed += document
+            }
+
+            override suspend fun share(context: Context, document: PrintDocument): Boolean = true.also { printed += document }
+        }
+        runBlocking { recipes.save(soup) }
+        show(ShoppingList(listOf(listed(soup))), UnitSystem.US, capturing)
+        take(ShoppingTags.PRINT)
+        compose.waitUntil(PATIENCE_MS) { printed.size == 1 }
+        // 300 g of flour, 130 g a cup: ≈ 2⅓ cups.
+        assertEquals(
+            listOf("onion — 1 pc", "flour — ≈ 2⅓ cup"),
+            printed.single().blocks.filterIsInstance<PrintBlock.Box>().map { it.text },
+        )
     }
 
     @Test

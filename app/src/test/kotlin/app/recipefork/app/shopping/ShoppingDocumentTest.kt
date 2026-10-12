@@ -92,7 +92,8 @@ class ShoppingDocumentTest {
     }
 
     // v0.35 T-250: the printed list follows the chosen system as the screen does — the flour of a gram recipe and a cup
-    // recipe in cups, what it counted in cups, the salt in teaspoons — and a line ticked in Metric is in the basket.
+    // recipe in cups, what it counted in cups, the salt in teaspoons (one part: no note) — and a line ticked in Metric
+    // is in the basket.
     @Test
     fun thePrintedListFollowsTheChosenSystem() {
         val document = document(list(InterfaceLanguage.ENGLISH, "salt — 5 g"), system = UnitSystem.US)!!
@@ -102,10 +103,19 @@ class ShoppingDocumentTest {
                 Box("flour — ≈ 4⅓ cup", ticked = false, note = "300 g counted as ≈ 2⅓ cup\nBread, Untitled recipe"),
                 Box("baking paper", ticked = false, note = null),
                 Box("batteries", ticked = false, note = null),
-                Box("salt — ≈ ¾ tsp", ticked = true, note = "5 g counted as ≈ ¾ tsp\nBread"),
+                Box("salt — ≈ ¾ tsp", ticked = true, note = "Bread"),
             ),
             document.blocks.filterIsInstance<Box>(),
         )
+    }
+
+    // v0.35 T-250: on paper too, a cup of a liquid reads in millilitres in Metric, with no note repeating it.
+    @Test
+    fun aCupOfALiquidIsPrintedInMillilitres() {
+        val pancakes = recipe("Pancakes", 4, row(MILK, r(1), CUP))
+        val entry = ShoppingEntry(listed(pancakes), pancakes)
+        val boxes = document(ShoppingList(listOf(entry.listed)), of = listOf(entry))!!.blocks.filterIsInstance<Box>()
+        assertEquals(listOf(Box("milk — ≈ 250 ml", ticked = false, note = "Pancakes")), boxes)
     }
 
     // A line ticked when it asked for less is to buy again, as on the screen; with nothing ticked there is no basket.

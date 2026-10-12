@@ -36,9 +36,10 @@ import app.recipefork.core.scaling.measureOf
  *   a row naming nothing is left out.
  * - In a reader's system (v0.35), a measured line's exact total — merged, in the unit of its largest part — is
  *   converted once by [UnitConversion.convert] and rounded on the shown unit's grid, as the card shows an amount
- *   ([ShoppingLine.shown]). On a line shown approximate, each part written in a unit that does not convert exactly
- *   into the shown one (another dimension, or a household unit) is noted with what it counted as in the shown unit,
- *   so a note names the chosen system's unit ("2 cups counted as ≈ 260 g" in Metric). The line itself — its unit,
+ *   ([ShoppingLine.shown]). On a line of several parts shown approximate, each part written in a unit that does not
+ *   convert exactly into the shown one (another dimension, or a household unit) is noted with what it counted as in
+ *   the shown unit, so a note names the chosen system's unit ("2 cups counted as ≈ 260 g" in Metric); a line of one
+ *   part converted through the dictionary notes nothing, its "≈" says enough, as on the card. The line itself — its unit,
  *   its amount, what it merged — stays as the recipes are written, so that what a line is does not change with the
  *   system.
  *
@@ -141,8 +142,8 @@ object ShoppingTotals {
 
     /**
      * A line in [target]'s unit, [total] there exactly, shown in [system]; [parts] are its groups, each with its exact
-     * amount in [target]'s unit. On an approximate line, a part is noted where its unit does not go exactly into the
-     * shown one; a line shown exactly notes none.
+     * amount in [target]'s unit. On an approximate line of several parts, a part is noted where its unit does not go
+     * exactly into the shown one; a line shown exactly, or of one part, notes none.
      */
     private fun shownIn(
         system: UnitSystem,
@@ -156,7 +157,9 @@ object ShoppingTotals {
         val unit = converted.quantity.unit
         val grid = checkNotNull(RoundingGrid.of(unit, target.divisible.takeIf { unit == target.unit }))
         val inexact = approximate || converted.approximate
-        val counted = parts.filter { (group, _) -> inexact && !convertsExactly(group.unit, unit) }.map { (group, inTarget) ->
+        // A line of one part converted through the dictionary is that part: "≈" says enough, as on the card.
+        val noted = parts.takeIf { inexact && it.size > 1 }.orEmpty()
+        val counted = noted.filter { (group, _) -> !convertsExactly(group.unit, unit) }.map { (group, inTarget) ->
             val inShown = inTarget / converted.writtenPerShown
             CountedPart(amount(group.unit, group.sum, group.divisible), ShoppingAmount(unit, grid.nearest(inShown)), inShown < grid.floor)
         }
