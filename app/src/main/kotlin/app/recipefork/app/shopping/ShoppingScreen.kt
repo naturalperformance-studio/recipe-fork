@@ -268,12 +268,13 @@ private fun ListContent(
 }
 
 /** A line's key in the list: what it is, so that it moves between the two parts as itself. */
-private fun lineKey(line: ListedLine) = "line/${line.tick.key}"
+private fun lineKey(line: ListedLine) = LINE_KEY + line.tick.key
 
 /** The list's keys of its two headings. */
 private const val RECIPES_KEY = "recipes"
 private const val LINES_KEY = "lines"
 private const val BASKET_KEY = "basket"
+private const val LINE_KEY = "line/"
 
 @Composable
 private fun Heading(title: Int) {
