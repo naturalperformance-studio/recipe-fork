@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The shopping list (FLOW-074): the recipes put on it, each at its own serving count, and what to buy for them,
+         added up. Opened from the book's top bar. -->
+    <string name="shopping_open">Shopping list</string>
+    <string name="shopping_open_action">Open the shopping list</string>
+    <string name="shopping_title">Shopping list</string>
+    <string name="shopping_back">Back</string>
+    <string name="shopping_back_action">Back to the book</string>
+    <string name="shopping_menu">More actions</string>
+    <string name="shopping_menu_action">Show more actions for the list</string>
+    <!-- The list's ⋮: every recipe leaves the list at once, with Undo. -->
+    <string name="shopping_clear">Clear list</string>
+    <string name="shopping_cleared">List cleared</string>
+    <string name="shopping_undo">Undo</string>
+    <!-- The list's ⋮: every line ticked as bought is unticked at once, the recipes stay; with Undo. -->
+    <string name="shopping_clear_ticked">Clear ticked</string>
+    <string name="shopping_ticks_cleared">Ticks cleared</string>
+    <!-- The two parts of the list: its recipes, then what to buy. -->
+    <string name="shopping_recipes">Recipes</string>
+    <string name="shopping_to_buy">To buy</string>
+    <!-- The part of the list at the bottom that holds the lines ticked as bought. -->
+    <string name="shopping_basket">In the basket</string>
+    <!-- A line is ticked as bought with a tap: what the screen reader says of its state, and of the tap. -->
+    <string name="shopping_ticked">Bought</string>
+    <string name="shopping_unticked">Not bought</string>
+    <string name="shopping_tick_action">Mark as bought</string>
+    <string name="shopping_untick_action">Mark as not bought</string>
+    <!-- A recipe's removal from the list, named by its title; said with Undo. -->
+    <string name="shopping_remove">Remove “%1$s” from the list</string>
+    <string name="shopping_removed">“%1$s” removed from the list</string>
+    <!-- A recipe's serving count on the list walks as on the card; its − and + say what they do. -->
+    <string name="shopping_servings_fewer_action">Buy for fewer servings</string>
+    <string name="shopping_servings_more_action">Buy for more servings</string>
+    <!-- The card's ⋮ item that puts a recipe on the list, named by the empty list too. -->
+    <string name="shopping_add">Add to shopping list</string>
+    <string name="shopping_empty">Your shopping list is empty</string>
+    <string name="shopping_empty_sentence">Open a recipe and choose “%1$s” in its ⋮ menu.</string>
+    <!-- A line: what to buy, then how much ("flour — ≈ 1.5 kg", "salt — to taste"). -->
+    <string name="shopping_line">%1$s — %2$s</string>
+    <!-- An amount added up from parts in other units, counted by the ingredient's measures. -->
+    <string name="shopping_approximate">≈ %1$s</string>
+    <!-- An amount that a recipe also takes to taste: "5 g + to taste"; the second part is "to taste". -->
+    <string name="shopping_plus_to_taste">%1$s + %2$s</string>
+    <!-- Under an approximate line, what was counted: "2 cups counted as ≈ 260 g"; a part below the line's smallest
+         amount: "1 tsp counted as < ¼ cup". -->
+    <string name="shopping_counted">%1$s counted as ≈ %2$s</string>
+    <string name="shopping_counted_below">%1$s counted as %2$s</string>
+    <!-- A line of the reader's own (T-232): "Add item" opens a field that offers ingredients and equipment from the
+         dictionaries; a pick, or the text as typed, is added to the list. -->
+    <string name="shopping_own_add">Add item</string>
+    <string name="shopping_own_add_action">Add an item of your own to the list</string>
+    <string name="shopping_own_field">What to buy</string>
+    <!-- The typed text offered as it is written: "Add “batteries”". -->
+    <string name="shopping_own_typed">Add “%1$s”</string>
+    <string name="shopping_own_typed_action">Add “%1$s” as written</string>
+    <string name="shopping_own_pick_action">Add “%1$s” to the list</string>
+    <!-- An own line removed, said with Undo. -->
+    <string name="shopping_own_removed">“%1$s” removed from the list</string>
+</resources>

@@ -26,7 +26,6 @@ import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.RecipeRepository
-import app.recipefork.app.library.DELETABLE
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.LocalizationChecks
 import app.recipefork.core.recipe.Recipe
@@ -131,7 +130,7 @@ class CardForkTest {
             val recipe = save(recipe("Soup in $state", state))
             show(recipe.id)
             assertEquals("$state", 0, compose.onAllNodes(hasAnyAncestor(hasTestTag(CardTags.BAR)) and hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size)
-            val expected = listOf(CardTags.BACK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }, CardTags.MENU.takeIf { state in DELETABLE }) +
+            val expected = listOf(CardTags.BACK) + listOfNotNull(CardTags.EDIT.takeIf { state.editable }) + CardTags.MENU +
                 TABS + listOf(CardTags.SERVINGS_FEWER, CardTags.SERVINGS_MORE, CardTags.FORK)
             assertEquals("$state", expected, interactiveTags())
             val screen = compose.onNodeWithTag(CardTags.SCREEN).fetchSemanticsNode().boundsInRoot

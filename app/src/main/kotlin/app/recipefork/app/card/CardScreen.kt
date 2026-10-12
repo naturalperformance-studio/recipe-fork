@@ -95,6 +95,8 @@ import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.library.removeFound
+import app.recipefork.app.shopping.ListedRecipe
+import app.recipefork.app.shopping.ShoppingStore
 import app.recipefork.app.timer.rememberCardTimers
 import androidx.compose.material3.Button
 import androidx.compose.material3.Snackbar
@@ -210,8 +212,9 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * frozen (FORK-001, FORK-007) — a found recipe is held frozen, so its card offers fork and never edit (FLOW-064 (2)).
  *
  * Cooking holds nothing that distracts from cooking: no cover, no summary, no description, no fork, no edit. Its bar
- * holds back and the title, and a ⋮ only while the recipe has done marks, holding their clearing (FLOW-068) — which
- * View's ⋮ holds too while there are marks, and which the card's snackbar offers to undo; its page
+ * holds back, the title and the ⋮, holding the recipe's shopping-list action and, while the recipe has done marks,
+ * their clearing (FLOW-068) — which View's ⋮ holds too while there are marks, and which the card's snackbar offers to
+ * undo; its page
  * the serving count, the ingredients and the steps, in lines the card's [CardTarget] tall that mark done, amounts fixed
  * from their lines, timers started from their steps. The screen stays on while it is shown (FLOW-014), and on either
  * tab while one of the recipe's timers runs.
@@ -225,6 +228,10 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * dictionary entry it names), so that it is ticked there and the card found again on return; without [onOpenKitchen]
  * it answers no tap. While My kitchen is known to have nothing ticked — nothing at all, or, the equipment dictionary
  * read, nothing that counts — View offers under the equipment to set it up ([onSetUpKitchen]).
+ *
+ * Either tab's ⋮ always offers to put the recipe on the reader's shopping list at the count shown — the count a fixed
+ * amount implies while one is fixed, none for a recipe with no count — or, once it is on the list, to set it to that
+ * count, never adding it twice (FLOW-074); the card's snackbar says so, and its Open opens the list ([onOpenShopping]).
  *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
@@ -244,6 +251,7 @@ fun CardScreen(
     onSetUpKitchen: (() -> Unit)? = null,
     session: CardSession = remember { TextCardSession.inMemory() },
     onRemoved: (PendingRemoval) -> Unit = PendingRemoval::finish,
+    onOpenShopping: () -> Unit = {},
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
     // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
@@ -331,6 +339,20 @@ fun CardScreen(
     // The card's statements: one at a time, the newest replacing the one before (ui-conventions "Statements").
     val snackbars = remember { SnackbarHostState() }
     val clearMarks = rememberClearMarks(marks, snackbars)
+    val loaded = entries
+    // The scale the recipe is read at, one for both tabs, once what it is read with is at hand.
+    val held = if (recipe != null && loaded != null && marks != null) {
+        // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
+        rememberScaleInForce(recipe, environment.usualServings.count.value, session)
+    } else {
+        null
+    }
+    // Whether the recipe is on the shopping list, as the list changes: the ⋮ offers to update it rather than add it.
+    val book = recipes.bookName().fileName
+    val shoppingList by environment.shopping.list.collectAsState()
+    val listed = recipe != null && shoppingList.recipes.any { it.isOf(book, recipe.id) }
+    val language = cardLanguage()
+    val addToShopping = rememberAddToShopping(environment.shopping, snackbars, onOpenShopping)
     // Where the serving count stands on View, in the root, as laid out — for the floating fork action to keep clear of.
     var servingsShown by remember(recipeId) { mutableStateOf<Rect?>(null) }
     // Where the floating fork action's bottom stands, in the root: above the bar of running timers or the navigation
@@ -362,6 +384,10 @@ fun CardScreen(
                     },
                     marked = marks?.any == true,
                     onClearMarks = clearMarks,
+                    listed = listed,
+                    onAddToShopping = {
+                        if (recipe != null) addToShopping(ListedRecipe(book, recipe.id, shownCount(recipe, held, loaded, language, environment.usualServings.count.value)))
+                    },
                 )
                 // The tabs stay under the bar and never scroll with the recipe.
                 if (recipe != null) CardTabs(pager)
@@ -423,13 +449,10 @@ fun CardScreen(
                 )
                 .consumeWindowInsets(padding),
         ) {
-            val loaded = entries
             when {
                 shown == CardContent.Missing -> Missing(onBack)
                 shown == CardContent.Unreadable -> Unreadable(onRetry = { attempt++ })
-                recipe != null && loaded != null && marks != null -> {
-                    // Read once, not collected: the usual count only sets where a card opens, never moves an open one.
-                    val scale = rememberScaleInForce(recipe, environment.usualServings.count.value, session)
+                recipe != null && loaded != null && marks != null && held != null -> {
                     HorizontalPager(
                         state = pager,
                         key = { TABS[it].name },
@@ -437,7 +460,7 @@ fun CardScreen(
                     ) { page ->
                         val mode = TABS[page]
                         RecipeContent(
-                            recipe, loaded, recipes, scale, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                            recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                             shownAgain,
                             equipmentEntries = equipmentEntries,
                             kitchen = kitchen,
@@ -524,6 +547,56 @@ private fun rememberScaleInForce(recipe: Recipe, usual: Rational?, session: Card
         val ordered = recipe.ingredients.sortedBy { it.position }
         val opening = session.heldScale(recipe.id)?.restored(authored, ordered, usual) ?: CardScale.opening(authored, usual)
         ScaleInForce(opening, recipe.id, ordered, session)
+    }
+}
+
+/**
+ * The serving count the card shows [recipe] at, [held] with the dictionary [entries]: the count requested, or the one
+ * a fixed amount implies while one is fixed; none for a recipe with no count. Before the card has its scale, the count
+ * it opens at, with the reader's [usual] count.
+ */
+private fun shownCount(
+    recipe: Recipe,
+    held: ScaleInForce?,
+    entries: Map<Long, IngredientEntryEntity>?,
+    language: InterfaceLanguage,
+    usual: Rational?,
+): Rational? {
+    val authored = recipe.servings?.takeIf { it >= 1 }
+    if (held == null || entries == null) return CardScale.opening(authored, usual).requested
+    return ingredientList(held.ordered, entries, language, authored, held.scale).servingCount?.value
+}
+
+/** The language the card writes its lines and counts in: the interface's. */
+@Composable
+private fun cardLanguage(): InterfaceLanguage = when (interfaceLanguage(LocalConfiguration.current)) {
+    RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
+    RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
+}
+
+/**
+ * Puts a recipe on the shopping list [store] from the card's ⋮ (FLOW-074) — at the end, or, already there, at the new
+ * count where it stands, never twice — and says so in the card's snackbar, which replaces whatever it said before
+ * (making a clearing of marks final): "Added to shopping list", or "Shopping list updated", with Open, which opens the
+ * list ([onOpen]).
+ */
+@Composable
+private fun rememberAddToShopping(store: ShoppingStore, snackbars: SnackbarHostState, onOpen: () -> Unit): (ListedRecipe) -> Unit {
+    val scope = rememberCoroutineScope()
+    val open by rememberUpdatedState(onOpen)
+    val added = stringResource(R.string.card_shopping_added)
+    val updated = stringResource(R.string.card_shopping_updated)
+    val openLabel = stringResource(R.string.card_shopping_open)
+    return remember(store, scope, snackbars, added, updated, openLabel) {
+        { recipe ->
+            val already = store.list.value.recipes.any { it.isOf(recipe.book, recipe.recipe) }
+            store.update { it.with(recipe) }
+            scope.launch {
+                snackbars.currentSnackbarData?.dismiss()
+                val result = snackbars.showSnackbar(if (already) updated else added, actionLabel = openLabel, duration = SnackbarDuration.Long)
+                if (result == SnackbarResult.ActionPerformed) open()
+            }
+        }
     }
 }
 
@@ -669,7 +742,7 @@ private fun CardSnackbarHost(snackbars: SnackbarHostState) {
 /**
  * The screen's bar: back at its start; the recipe's [title] once the content's heading has scrolled out of view, beside
  * back ([BarTitle]) — the content holds it whole; and the recipe's actions at its end — edit while the recipe is
- * editable, then the ⋮ while it holds anything. Fork is not here but the screen's floating action ([ForkAction]), so
+ * editable, then the ⋮, always, as it always holds the shopping-list action. Fork is not here but the screen's floating action ([ForkAction]), so
  * that a title of some thirty characters reads whole on a 360 dp phone. Each icon is one the screen reader names, whose
  * click it announces as what it does (A11Y-005) and whose name a long press shows in a tooltip.
  */
@@ -686,6 +759,8 @@ private fun TopBar(
     onRemove: () -> Unit,
     marked: Boolean,
     onClearMarks: () -> Unit,
+    listed: Boolean,
+    onAddToShopping: () -> Unit,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
     var last by remember { mutableStateOf(title) }
@@ -717,7 +792,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                if (removal != null || marked) CardMenu(removal, onRemove, marked, onClearMarks)
+                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping)
             }
         },
         scrollBehavior = scrollBehavior,
@@ -814,10 +889,7 @@ private fun RecipeContent(
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
-    val language = when (interfaceLanguage(LocalConfiguration.current)) {
-        RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
-        RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
-    }
+    val language = cardLanguage()
     val viewing = mode == CardMode.VIEW
     // A card brought to a timer's step goes there on Cooking, not to the place it was left at (FLOW-013 (4)).
     val toStep = !viewing && LocalStepToShow.current?.pending?.collectAsState()?.value?.recipeId == recipe.id.value
@@ -1209,13 +1281,21 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
- * The card's ⋮, after its other actions, shown while it holds anything: Clear marks while the recipe has done marks
+ * The card's ⋮, after its other actions, always shown: first the shopping-list action — "Add to shopping list", or
+ * "Update in shopping list" while the recipe is [listed] (FLOW-074) — then Clear marks while the recipe has done marks
  * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
  * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
  * tall.
  */
 @Composable
-private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, onClearMarks: () -> Unit) {
+private fun CardMenu(
+    removal: Removal?,
+    onRemove: () -> Unit,
+    marked: Boolean,
+    onClearMarks: () -> Unit,
+    listed: Boolean,
+    onAddToShopping: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BarAction(
@@ -1226,6 +1306,14 @@ private fun CardMenu(removal: Removal?, onRemove: () -> Unit, marked: Boolean, o
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(if (listed) R.string.card_shopping_update else R.string.shopping_add)) },
+                onClick = {
+                    expanded = false
+                    onAddToShopping()
+                },
+                modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHOPPING),
+            )
             if (marked) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.card_clear_marks)) },
@@ -1316,6 +1404,7 @@ object CardTags {
     const val DELETE = "card-delete"
     const val REMOVE = "card-remove"
     const val CLEAR_MARKS = "card-clear-marks"
+    const val SHOPPING = "card-shopping"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val SUMMARY = "card-summary"

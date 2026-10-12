@@ -286,9 +286,9 @@ class CardScreenTest {
         RecipeState.entries.filter { it.editable }.forEach { state ->
             val recipe = save(fullRecipe(state))
             show(recipe.id)
-            // Cooking: the lines mark; no edit, no fork, no ⋮ while nothing is marked.
+            // Cooking: the lines mark; no edit, no fork; the ⋮, which always holds the shopping-list action.
             compose.chooseCardTab(CardMode.COOKING)
-            assertEquals("$state", listOf(CardTags.BACK) + TABS + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.MENU) + TABS + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
             assertNothingInTheContentActs()
             // View: edit and the ⋮ in the bar, fork floating; nothing in the content acts but the servings.
             compose.chooseCardTab(CardMode.VIEW)
@@ -312,12 +312,13 @@ class CardScreenTest {
             show(recipe.id)
             compose.chooseCardTab(CardMode.VIEW)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK) + TABS + SERVINGS_ACTIONS, interactiveTags() - CardTags.FORK)
+            // The ⋮ stays: it always holds the shopping-list action.
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.MENU) + TABS + SERVINGS_ACTIONS, interactiveTags() - CardTags.FORK)
             assertTrue("$state offers fork, floating", compose.onAllNodes(hasTestTag(CardTags.FORK)).fetchSemanticsNodes().size == 1)
             assertNothingInTheContentActs()
             compose.chooseCardTab(CardMode.COOKING)
             compose.onNodeWithTag(CardTags.EDIT).assertDoesNotExist()
-            assertEquals("$state", listOf(CardTags.BACK) + TABS + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
+            assertEquals("$state", listOf(CardTags.BACK, CardTags.MENU) + TABS + SERVINGS_ACTIONS + MARKED_PARTS, interactiveTags())
         }
     }
 

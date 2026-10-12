@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
@@ -18,6 +19,9 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -87,6 +91,10 @@ import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.LanguageTags
 import app.recipefork.app.settings.SettingsTags
+import app.recipefork.app.shopping.HeldShopping
+import app.recipefork.app.shopping.ListedRecipe
+import app.recipefork.app.shopping.ShoppingEnvironment
+import app.recipefork.app.shopping.ShoppingTags
 import app.recipefork.app.timer.CardTimers
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
@@ -138,7 +146,9 @@ import kotlin.time.Duration.Companion.minutes
  * Cooking tab — its current step highlighted — each with its menu open, and on Cooking with every item of equipment and
  * every ingredient marked, both lists folded; the editor on that recipe, its equipment among it, with an ingredient's
  * sheet open, a step's sheet open, with a row removed and its Undo offered, and on a frozen one with equipment; the settings and each of their
- * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; and the crop.
+ * dialogs, My kitchen — its groups and, a search finding nothing, its empty result; the shopping list — empty, with
+ * recipes, its menu open, "Add item" offering from the dictionaries, a line of one's own, and a recipe removed with
+ * Undo; and the crop.
  *
  * Each theme is a walk of its own, the application started in it as a theme chosen starts it. The screen is tall, so
  * that the lists show every entry and the card and the editor are drawn whole for the contrast check, which reads
@@ -180,6 +190,11 @@ class PreLaunchSweepTest {
     private val card = CardEnvironment(
         HeldUsualServings(), marks, equipment = EquipmentSource { device.database.dictionaryDao().equipment() }, kitchen = kitchen.store,
     ) { device.database.dictionaryDao().ingredients() }
+
+    /** The shopping list, empty as the walk first opens it, over the device's dictionaries. */
+    private val shopping = ShoppingEnvironment(HeldShopping(), EquipmentSource { device.database.dictionaryDao().equipment() }) {
+        device.database.dictionaryDao().ingredients()
+    }
 
     private var crop by mutableStateOf<PhotoToCrop?>(null)
 
@@ -345,7 +360,10 @@ class PreLaunchSweepTest {
                     } else {
                         // As MainActivity shows it: on a surface of the theme.
                         Surface(Modifier.fillMaxSize()) {
-                            AppNavHost(session, recipes, Mode.Serverless, editor = editor, card = card, themeSetting = theme, kitchen = kitchen)
+                            AppNavHost(
+                                session, recipes, Mode.Serverless,
+                                editor = editor, card = card, themeSetting = theme, kitchen = kitchen, shopping = shopping,
+                            )
                         }
                     }
                 }
@@ -356,6 +374,7 @@ class PreLaunchSweepTest {
         theCard(cake)
         theEditor()
         theSettings()
+        theShoppingList(cake)
         theNotices()
         theCrop()
         assertEquals("screens checked", SCREENS, checked)
@@ -596,6 +615,60 @@ class PreLaunchSweepTest {
         await(LibraryTags.PAGER)
     }
 
+    private fun theShoppingList(cake: Recipe) {
+        // Opened from the book's top bar: empty, it says how to add a recipe.
+        compose.onNodeWithTag(LibraryTags.SHOPPING).performClick()
+        await(ShoppingTags.EMPTY)
+        checkScreen("the shopping list, empty")
+        compose.onNodeWithTag(ShoppingTags.BACK).performClick()
+        await(LibraryTags.PAGER)
+        // The cake and the soup on it: their counts, the lines added up from both.
+        val book = BookName.Pool.fileName
+        shopping.store.update { it.with(ListedRecipe(book, cake.id, Rational.of(4))).with(ListedRecipe(book, soup.id, Rational.of(2))) }
+        compose.onNodeWithTag(LibraryTags.SHOPPING).performClick()
+        await(ShoppingTags.LIST)
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.line(0)) }
+        checkScreen("the shopping list, with recipes")
+        // A line ticked as bought: struck through, under "In the basket" at the bottom.
+        val first = compose.onNodeWithTag(ShoppingTags.line(0)).fetchSemanticsNode().config[SemanticsProperties.Text].first().text
+        compose.onNodeWithTag(ShoppingTags.line(0)).performClick()
+        compose.waitUntil(PATIENCE_MS) { shopping.store.list.value.ticks.isNotEmpty() }
+        val bought = SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.On) and
+            SemanticsMatcher("reads “$first”") { node -> node.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text == first }
+        compose.waitUntil(PATIENCE_MS) {
+            runCatching { compose.onNodeWithTag(ShoppingTags.LIST).performScrollToNode(bought) }.isSuccess
+        }
+        checkScreen("the shopping list, a line in the basket")
+        compose.onNodeWithTag(ShoppingTags.LIST).performScrollToIndex(0)
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        await(ShoppingTags.CLEAR)
+        await(ShoppingTags.CLEAR_TICKED)
+        checkScreen("the shopping list, its menu")
+        compose.onNodeWithTag(ShoppingTags.MENU).performClick()
+        awaitGone(ShoppingTags.CLEAR)
+        // "Add item": its field offering from both dictionaries, then the line of the reader's own it adds.
+        compose.onNodeWithTag(ShoppingTags.ADD).performClick()
+        await(ShoppingTags.ADD_FIELD)
+        compose.onNodeWithTag(ShoppingTags.ADD_FIELD).performTextInput("baking")
+        await(ShoppingTags.ADD_TYPED)
+        checkScreen("the shopping list, adding an item of one's own")
+        compose.onNodeWithTag(ShoppingTags.ADD_TYPED).performScrollTo().performClick()
+        awaitGone(ShoppingTags.ADD_SHEET)
+        compose.waitUntil(PATIENCE_MS) { shopping.store.list.value.own.isNotEmpty() }
+        val own = hasTestTag(ShoppingTags.LIST)
+        compose.waitUntil(PATIENCE_MS) {
+            runCatching { compose.onNode(own).performScrollToNode(hasText("baking")) }.isSuccess
+        }
+        checkScreen("the shopping list, a line of one's own")
+        compose.onNodeWithTag(ShoppingTags.LIST).performScrollToIndex(0)
+        compose.onNodeWithTag(ShoppingTags.remove(soup.id.value)).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.SNACKBAR) && !exists(ShoppingTags.recipe(soup.id.value)) }
+        checkScreen("the shopping list, a recipe removed with Undo")
+        compose.onNodeWithTag(ShoppingTags.BACK).performClick()
+        await(LibraryTags.PAGER)
+        awaitGone(ShoppingTags.SCREEN)
+    }
+
     private fun theNotices() {
         // A recipe deleted from the own view: the book offers Undo while its notice shows.
         compose.runOnIdle { session.choose(LibraryView.OWN) }
@@ -635,7 +708,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 33
+        const val SCREENS = 40
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L

@@ -7,6 +7,9 @@ import kotlin.test.assertEquals
 /**
  * DOM-011: a comparison factor orders a filter and nothing else — no scaling reads one. In `:core` a factor is read only
  * where the dictionary carries it, where it is looked up by unit, and where the filter's comparable quantity is taken.
+ *
+ * One departure, approved by the owner for the shopping list alone (v0.32): the list counts one entry's parts in other
+ * units by its factors, as an approximate line (`shopping/`). Scaling and the card still read none.
  */
 class FactorsNeverScaleTest {
     /** Unit tests of `:core` run with the module directory as the working directory. */
@@ -21,6 +24,15 @@ class FactorsNeverScaleTest {
                 .filterNot { it.startsWith("*") || it.startsWith("/*") || it.startsWith("//") }
                 .any { aRead.containsMatchIn(it) }
         }.map { it.relativeTo(sources).invariantSeparatorsPath }.toSet()
-        assertEquals(setOf("api/DictionaryContract.kt", "recipe/EntryDivisibility.kt", "scaling/QuantityPerServing.kt"), reading)
+        assertEquals(
+            setOf(
+                "api/DictionaryContract.kt",
+                "recipe/EntryDivisibility.kt",
+                "scaling/QuantityPerServing.kt",
+                "shopping/ShoppingInput.kt",
+                "shopping/ShoppingTotals.kt",
+            ),
+            reading,
+        )
     }
 }

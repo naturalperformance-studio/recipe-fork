@@ -37,6 +37,8 @@ import app.recipefork.app.media.MediaSweep
 import app.recipefork.app.media.ResolverAnimatedImages
 import app.recipefork.app.media.RetrieverClipSourceDuration
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.shopping.PreferencesShopping
+import app.recipefork.app.shopping.ShoppingStore
 import app.recipefork.app.timer.AndroidRingTimeouts
 import app.recipefork.app.timer.AndroidRingingSound
 import app.recipefork.app.timer.AndroidTimerNotices
@@ -119,6 +121,12 @@ class AppContainer(
 
     /** The reader's done marks on cards, kept on the device per book and recipe across restarts (FLOW-068). */
     val doneMarks: DoneMarks = DoneMarks.preferences(context)
+
+    /**
+     * The reader's shopping list (FLOW-074): its recipes, each at its count, kept on the device alone across restarts —
+     * never in a book, a recipe or anything sent (RET-010).
+     */
+    val shopping: ShoppingStore = PreferencesShopping(context)
 
     /**
      * Keeps the held dictionaries in step with the server while a connection is available (FLOW-001); none in

@@ -13,8 +13,11 @@ class FactorsNeverShownTest {
     /** Unit tests of `:app` run with the module directory as the working directory. */
     private val sources = File("src/main/kotlin/app/recipefork/app")
 
-    /** The dictionary holding factors, and the filter by an ingredient ordering by them (CAT-009). */
-    private val readers = setOf("dictionary/DictionaryEntities.kt", "recipe/BookSearch.kt")
+    /**
+     * The dictionary holding factors, the filter by an ingredient ordering by them (CAT-009), and the shopping list's
+     * ticks, which compare a line's amounts in two units by them (T-231) and show nothing of them.
+     */
+    private val readers = setOf("dictionary/DictionaryEntities.kt", "recipe/BookSearch.kt", "shopping/ShoppingLines.kt")
 
     private val aRead = Regex("""\bfactors\b|\bcomparisonFactor\b|\bFactorsConverter\b""")
 

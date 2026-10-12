@@ -33,9 +33,19 @@ fun ComposeTestRule.backThroughTheCard() {
     waitForIdle()
 }
 
+/** The card's ⋮ items, in the order the menu lists them. */
+private val CARD_MENU_ITEMS = listOf(CardTags.SHOPPING, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
+
 /** Whether the card's ⋮ is open: one of its items is shown. */
-private fun ComposeTestRule.cardMenuOpen() =
-    listOf(CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE).any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+private fun ComposeTestRule.cardMenuOpen() = CARD_MENU_ITEMS.any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+
+/** What the card's ⋮ holds, as its items' tags: opened, read and closed again, taking nothing from it. */
+fun ComposeTestRule.cardMenuItems(): List<String> {
+    openTheCardMenu()
+    val items = CARD_MENU_ITEMS.filter { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+    closeTheCardMenu()
+    return items
+}
 
 /** Opens the card's ⋮ and waits for its items, without taking one. */
 fun ComposeTestRule.openTheCardMenu() {
