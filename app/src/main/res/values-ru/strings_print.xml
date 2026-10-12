@@ -10,4 +10,6 @@
     <string name="print_servings_fraction">%1$s порции</string>
     <string name="print_servings_approximate">≈%1$s</string>
     <string name="print_timer">⏱ %1$s</string>
+    <string name="print_servings_fraction_below_one">%1$s порции</string>
+    <string name="print_step_video">Видео в приложении</string>
 </resources>

@@ -20,12 +20,15 @@ import app.recipefork.app.card.text
 import app.recipefork.app.dictionary.DictionaryEntry
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.media.cover
+import app.recipefork.app.media.stepMedia
 import app.recipefork.app.recipe.EquipmentNames
 import app.recipefork.app.timer.durationText
 import app.recipefork.app.timer.shownName
+import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
 import app.recipefork.core.scaling.ServingCount
 import app.recipefork.core.timer.TimerName
@@ -33,7 +36,7 @@ import java.io.File
 
 /**
  * A recipe as a document (FLOW-075 (1)): what its card's View tab shows, in its order, at the scale the card holds,
- * without what is there to touch — no done marks, no "you lack", no step photo or clip, no control.
+ * without what is there to touch — no done marks, no "you lack", no clip, no control.
  */
 object RecipeDocument {
     /**
@@ -43,7 +46,8 @@ object RecipeDocument {
      * the description; "Equipment", each item named as the card names it from [equipmentEntries]; "Ingredients ·
      * 4 servings" — no count where the card shows none — with the scale's status line, the proportions warning where
      * the card gives it, each group's heading and each line as the card writes it, read with [entries]; then "Steps",
-     * numbered, each step's text with its references as the card renders them, its note muted under it and its
+     * numbered as the card numbers them, each step's text with its references as the card renders them, its note
+     * muted under it, its photo where [photo] finds it (a clip-only step saying its video is in the app), and its
      * timers as View reads them. Plain and quick enough for any thread; the cover is only named, never read here.
      */
     fun of(
@@ -92,13 +96,22 @@ object RecipeDocument {
             }
 
             val references = CardReferences.of(ordered, list, language, entries)
-            // A step that reads as nothing is left out, as on the card; one that only shows a photo or a clip has nothing
-            // to print.
-            val steps = recipe.steps.sortedBy { it.position }.filter { isListed(it, references::quantity, hasMedia = false) }
+            // The steps the card lists, numbered as it numbers them: one holding nothing that reads or shows is left out.
+            val steps = recipe.steps.sortedBy { it.position }
+                .filter { isListed(it, references::quantity, recipe.stepMedia(it.position) != null) }
             if (steps.isNotEmpty()) add(PrintBlock.Heading(resources.getString(R.string.card_steps)))
             steps.forEachIndexed { index, step ->
-                add(PrintBlock.Numbered(index + 1, shownStepText(step, references)))
+                val text = shownStepText(step, references)
+                add(PrintBlock.Numbered(index + 1, text))
                 step.note?.let { add(PrintBlock.Muted(it)) }
+                // A photo under the text where the device holds it; a clip, which paper cannot play, said where the
+                // step has no text of its own.
+                recipe.stepMedia(step.position)?.let { media ->
+                    when (media.kind) {
+                        MediaKind.PHOTO -> photo(media.mediaId)?.takeIf { it.isFile }?.let { add(PrintBlock.Picture(it)) }
+                        MediaKind.VIDEO -> if (text.isBlank()) add(PrintBlock.Muted(resources.getString(R.string.print_step_video)))
+                    }
+                }
                 step.timers.forEachIndexed { at, timer ->
                     val name = TimerName.of(step, at, references::quantity) ?: return@forEachIndexed
                     val shown = resources.getString(
@@ -124,7 +137,7 @@ object RecipeDocument {
         return listOfNotNull(quantity, named).joinToString(" ")
     }
 
-    /** The serving [count] as the card writes it ("4", "1½", "≈4"), with its word: "4 servings", «4 порции». */
+    /** The serving [count] as the card writes it ("4", "½", "≈4"), with its word: "4 servings", «4 порции». */
     private fun servings(count: ServingCount, language: InterfaceLanguage, resources: Resources): String {
         val number = RequestedServings.text(count.value, language)
         val shown = if (count.approximate) resources.getString(R.string.print_servings_approximate, number) else number
@@ -132,7 +145,9 @@ object RecipeDocument {
         return if (whole != null) {
             resources.getQuantityString(R.plurals.print_servings, whole, shown)
         } else {
-            resources.getString(R.string.print_servings_fraction, shown)
+            // Below one serving a fraction is said in the singular: "½ serving".
+            val below = count.value < Rational.ONE
+            resources.getString(if (below) R.string.print_servings_fraction_below_one else R.string.print_servings_fraction, shown)
         }
     }
 

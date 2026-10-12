@@ -154,6 +154,54 @@ class RecipeDocumentTest {
     }
 
     @Test
+    fun theStepsAreNumberedAsOnTheCardAPhotoPrintedUnderItsStepAndAClipSaidToBeInTheApp() {
+        val photo = folder.newFile("photo-2")
+        fun media(id: String, kind: MediaKind, step: Int) = Media(id, null, kind, MediaAttachment.ToStep(step), MediaVisibility.PRIVATE)
+        val shown = Recipe.create(now, null).copy(
+            title = "Bread",
+            steps = listOf(Step(0, "Mix."), Step(1, ""), Step(2, ""), Step(3, "Bake, as in step 2.")),
+            media = listOf(media("photo-2", MediaKind.PHOTO, 1), media("clip-3", MediaKind.VIDEO, 2)),
+        )
+        fun printed(recipe: Recipe, language: String = "en", at: String = "") =
+            texts(RecipeDocument.of(recipe, emptyMap(), emptyMap(), CardScale(null), resources(language)) { folder.root.resolve(at + it) })
+
+        // The summary counts the four steps the page lists.
+        assertEquals(
+            listOf(
+                "title: Bread",
+                "muted: 4 steps",
+                "heading: Steps",
+                "1. Mix.",
+                "2. ",
+                "picture: ${photo.name}",
+                "3. ",
+                "muted: Video in the app",
+                "4. Bake, as in step 2.",
+            ),
+            printed(shown),
+        )
+        assertTrue(printed(shown, "ru").toString(), "muted: Видео в приложении" in printed(shown, "ru"))
+
+        // A photo the device does not hold is left out; its step keeps its number.
+        assertEquals(
+            listOf("1. Mix.", "2. ", "3. ", "muted: Video in the app", "4. Bake, as in step 2."),
+            printed(shown, at = "elsewhere-").drop(3),
+        )
+
+        // A clip under a step with text of its own adds nothing to it.
+        val withText = shown.copy(steps = shown.steps.map { if (it.position == 2) it.copy(text = "Shape.") else it })
+        assertEquals(listOf("3. Shape.", "4. Bake, as in step 2."), printed(withText).drop(6))
+    }
+
+    @Test
+    fun aFractionBelowOneServingIsSingular() {
+        val one = cake.copy(servings = 1)
+        assertTrue(texts(document(one, CardScale(Rational.of(1, 2)))).contains("heading: Ingredients · ½ serving"))
+        assertTrue(texts(document(one, CardScale(Rational.of(1, 4)))).contains("heading: Ingredients · ¼ serving"))
+        assertTrue(texts(document(one, CardScale(Rational.of(1, 2)), language = "ru")).contains("heading: Ингредиенты · ½ порции"))
+    }
+
+    @Test
     fun aRecipeWithNoCountShowsNoneAndAnUntitledOneSaysSo() {
         val texts = texts(document(cake.copy(title = " ", servings = null), CardScale(null)))
         assertEquals("title: Untitled recipe", texts.first())
