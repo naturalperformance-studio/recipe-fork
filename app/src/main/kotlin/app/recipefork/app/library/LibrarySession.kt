@@ -61,21 +61,29 @@ enum class LibraryView { MARKED, OWN }
  * configuration change in memory, and the end of the process through saved state. A task started anew — after
  * the application was removed from the recent applications, or after a restart of the device — has no saved
  * state, so a new session opens on the view last shown, which the device keeps in [lastView]; the first one ever
- * opens on the marked recipes (FLOW-034 (6), as the owner decided: the book opens where it was left).
+ * opens on the reader's own recipes, "My recipes" (FLOW-034 (6), as the owner decided: the book opens where it was
+ * left; v0.38: where nothing was left, on the reader's own).
  */
 class LibrarySession(
     private val saved: SavedStateHandle,
     private val lastView: LastBookView = HeldLastBookView(),
 ) : ViewModel() {
     init {
-        if (!saved.contains(VIEW_KEY)) saved[VIEW_KEY] = lastView.read() ?: LibraryView.MARKED
+        if (!saved.contains(VIEW_KEY)) saved[VIEW_KEY] = lastView.read() ?: FIRST_VIEW
     }
 
-    val view: StateFlow<LibraryView> = saved.getStateFlow(VIEW_KEY, LibraryView.MARKED)
+    val view: StateFlow<LibraryView> = saved.getStateFlow(VIEW_KEY, FIRST_VIEW)
 
-    /** Shows [view]; a selection made in the other view ends. */
+    /**
+     * The reader shows [view]; a selection made in the other view ends. Shown in place of another view, it ends the
+     * notice the book was giving (v0.38): a removal it offered to undo is final, a recipe a file brought is said no more.
+     */
     fun choose(view: LibraryView) {
         if (selecting.value?.view != view) endSelection()
+        if (view != this.view.value) {
+            closeNotice()
+            finishRemoval()
+        }
         show(view)
     }
 
@@ -83,7 +91,8 @@ class LibrarySession(
 
     /**
      * The entries chosen in the book's selection, while it is on: started by a long press on an entry, ended by ✕, Back,
-     * the other view shown, an action taken on it, or the last entry taken off. Held in memory alone, like the removal it
+     * an action taken on it, or the last entry taken off; while it lasts the book does not let the other view be shown
+     * (v0.38). Held in memory alone, like the removal it
      * may lead to: a new process starts with none.
      */
     val selection: StateFlow<BookSelection?> = selecting.asStateFlow()
@@ -466,6 +475,7 @@ class LibrarySession(
      */
     fun removed(removal: PendingRemoval) {
         closeNotice()
+        putBack.value = null
         failedUndo.value = null
         deletedCollection.value = null
         pending.getAndUpdate { removal }?.takeIf { it !== removal }?.finish()
@@ -476,7 +486,23 @@ class LibrarySession(
      * Should the book not take it back, [undoFailed] says so.
      */
     fun undoRemoval(removal: PendingRemoval) {
-        if (pending.compareAndSet(removal, null)) removal.undo { failedUndo.value = removal }
+        if (pending.compareAndSet(removal, null)) {
+            removal.undo(onFailed = { failedUndo.value = removal }, onBack = { back -> putBack.value = back.firstOrNull() })
+        }
+    }
+
+    private val putBack = MutableStateFlow<String?>(null)
+
+    /**
+     * The first recipe an Undo put back — the topmost of those taken together, as they were taken in the order listed —
+     * until its list has been brought to it ([restoredShown]), or another recipe leaves the book: the view listing it
+     * brings it into view (v0.38).
+     */
+    val restored: StateFlow<String?> = putBack.asStateFlow()
+
+    /** The list was brought to [recipeId], put back by an Undo. */
+    fun restoredShown(recipeId: String) {
+        putBack.compareAndSet(recipeId, null)
     }
 
     private val failedUndo = MutableStateFlow<PendingRemoval?>(null)
@@ -590,6 +616,8 @@ class LibrarySession(
     }
 
     private companion object {
+        /** The view a book opens on the first time, before any was shown: the reader's own recipes (v0.38). */
+        val FIRST_VIEW = LibraryView.OWN
         const val CARDS_KEY = "library."
         const val QUERY_KEY = "library.query."
         const val ORDER_KEY = "library.order."

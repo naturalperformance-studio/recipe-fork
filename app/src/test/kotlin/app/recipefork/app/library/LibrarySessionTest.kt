@@ -43,8 +43,13 @@ class LibrarySessionTest {
         Robolectric.buildActivity(MainActivity::class.java)
             .let { if (saved == null) it.setup() else it.setup(saved) }.also { compose.waitForIdle() }
 
-    private fun chooseOwn() {
-        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
+    private fun chooseOwn() = choose(LibraryView.OWN)
+
+    /** Shows the marked recipes: the view the book does not open on the first time (v0.38), so that keeping it shows. */
+    private fun chooseMarked() = choose(LibraryView.MARKED)
+
+    private fun choose(view: LibraryView) {
+        compose.onNodeWithTag(LibraryTags.tab(view)).performClick()
         compose.waitForIdle()
     }
 
@@ -58,45 +63,45 @@ class LibrarySessionTest {
         pause().stop().destroy()
     }
 
-    // FLOW-034 (6) at the application's start.
+    // FLOW-034 (6) at the application's start: v0.38, on the reader's own recipes.
     @Test
-    fun theApplicationOpensOnTheMarkedRecipes() {
+    fun theApplicationOpensOnTheOwnRecipes() {
         launch()
-        assertView(LibraryView.MARKED)
+        assertView(LibraryView.OWN)
     }
 
     // FLOW-058 (1)
     @Test
     fun theHomeActionAndReturnKeepTheView() {
         val activity = launch()
-        chooseOwn()
+        chooseMarked()
         activity.pause().stop()
         activity.restart().start().resume()
         compose.waitForIdle()
-        assertView(LibraryView.OWN)
+        assertView(LibraryView.MARKED)
     }
 
     // FLOW-058 (1): a configuration change on the way is the same session too.
     @Test
     fun aRecreatedActivityKeepsTheView() {
         val activity = launch()
-        chooseOwn()
+        chooseMarked()
         activity.recreate()
         compose.waitForIdle()
-        assertView(LibraryView.OWN)
+        assertView(LibraryView.MARKED)
     }
 
     // FLOW-058 (2): the process ended while away, and the reader returns — restored from saved state.
     @Test
     fun theProcessEndedWhileAwayKeepsTheView() {
         val activity = launch()
-        chooseOwn()
+        chooseMarked()
         val saved = Bundle()
         activity.pause().stop().saveInstanceState(saved)
         // The process dies: the Activity and every object in memory are gone, only the saved state remains.
         activity.destroy()
         launch(saved)
-        assertView(LibraryView.OWN)
+        assertView(LibraryView.MARKED)
     }
 
     // A card open when the process ends reopens on return, as the editor does (FLOW-058 (2), FLOW-029).
@@ -130,29 +135,28 @@ class LibrarySessionTest {
     @Test
     fun removalFromRecentsStartsANewSessionOnTheViewLastLeft() {
         val activity = launch()
-        chooseOwn()
+        chooseMarked()
         activity.closeTask()
         val again = launch()
-        assertView(LibraryView.OWN)
-        // And the view left is followed again: back on the marked recipes, the next new session opens on them.
-        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
-        compose.waitForIdle()
+        assertView(LibraryView.MARKED)
+        // And the view left is followed again: back on the own recipes, the next new session opens on them.
+        chooseOwn()
         again.closeTask()
         launch()
-        assertView(LibraryView.MARKED)
+        assertView(LibraryView.OWN)
     }
 
     // FLOW-058 (4): after a restart of the device the application starts with nothing to restore, on the view last left.
     @Test
     fun aDeviceRestartStartsANewSessionOnTheViewLastLeft() {
         val activity = launch()
-        chooseOwn()
+        chooseMarked()
         val saved = Bundle()
         activity.pause().stop().saveInstanceState(saved)
         activity.destroy()
         // A restart keeps no task, so the platform hands the new Activity no saved state.
         launch(saved = null)
-        assertView(LibraryView.OWN)
+        assertView(LibraryView.MARKED)
     }
 
     /** In the own-recipes view of a book holding a recipe, types [query] and orders the view by title. */

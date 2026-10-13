@@ -133,7 +133,7 @@ class DeleteRecipeTest {
         delete = "Delete",
         notice = "“%s” deleted",
         undo = "Undo",
-        empty = "Nothing written here yet",
+        empty = "No recipes of yours yet",
         write = "New recipe",
     )
 
@@ -142,7 +142,7 @@ class DeleteRecipeTest {
         delete = "Удалить",
         notice = "Рецепт «%s» удалён",
         undo = "Вернуть",
-        empty = "Здесь пока ничего не написано",
+        empty = "Своих рецептов пока нет",
         write = "Новый рецепт",
     )
 

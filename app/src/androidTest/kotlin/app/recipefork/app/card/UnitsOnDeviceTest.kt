@@ -162,7 +162,7 @@ class UnitsOnDeviceTest {
 
     private companion object {
         const val PATIENCE_MS = 30_000L
-        const val WRITTEN_HERE = "Written here"
+        const val WRITTEN_HERE = "My recipes"
         /** The shipped dictionary's flour, butter and milk. */
         const val FLOUR = 5000L
         const val BUTTER = 4600L

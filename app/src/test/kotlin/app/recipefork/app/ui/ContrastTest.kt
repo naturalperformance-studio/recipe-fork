@@ -112,7 +112,7 @@ class ContrastTest {
         graphic("an entry's mark of being chosen in the book's selection — the filled circle with its check — on its card", c.primary, c.surfaceContainerHighest),
         graphic("an entry's mark of not being chosen in the book's selection — the empty circle — on its card", c.onSurfaceVariant, c.surfaceContainerHighest),
         graphic("the edge of an entry chosen in the book's selection, against the book behind it", c.primary, c.surface),
-        text("the book's selection bar — its count, its ✕ and its ⋮", c.onSurface, c.surface),
+        text("the book's selection bar — its count, its ✕, its icons and its ⋮ — on its tint (v0.38)", c.onSecondaryContainer, c.secondaryContainer),
         graphic("the indicator of a list being read", c.primary, c.surface),
         graphic("a removal's icon in the editor — an ingredient row, a step, a timer", c.error, c.surface),
         graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
