@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -164,6 +165,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** What the bar's title keeps clear at its end, so that wrapped it never reaches under an action (TopAppBar's title inset). */
@@ -279,42 +281,45 @@ fun LibraryScreen(
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     contentKey = { it != null },
                 ) { chosen ->
-                    if (chosen != null) {
-                        SelectionBar(
-                            chosen.count,
-                            selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding, printing),
-                            onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
-                            onClose = session::endSelection,
+                    // The bar fading out takes no touch: its actions are no longer the ones shown.
+                    Box(Modifier.leaving(transition.targetState == EnterExitState.PostExit)) {
+                        if (chosen != null) {
+                            SelectionBar(
+                                chosen.count,
+                                selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding, printing),
+                                onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
+                                onClose = session::endSelection,
+                            )
+                        } else TopAppBar(
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.library_title),
+                                    // Material sets the title in 12 dp past the room it is measured for: a title wrapped
+                                    // at a large font scale would reach under the first action.
+                                    modifier = Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(LibraryTags.TITLE),
+                                )
+                            },
+                            actions = {
+                                BlockAction(
+                                    R.drawable.ic_shopping_cart,
+                                    stringResource(R.string.shopping_open),
+                                    LibraryTags.SHOPPING,
+                                    onClick = onOpenShopping,
+                                    action = stringResource(R.string.shopping_open_action),
+                                )
+                                BlockAction(
+                                    R.drawable.ic_settings,
+                                    stringResource(R.string.settings_open),
+                                    LibraryTags.SETTINGS,
+                                    onClick = onOpenSettings,
+                                    modifier = Modifier.padding(end = 4.dp),
+                                    action = stringResource(R.string.settings_open_action),
+                                )
+                            },
+                            scrollBehavior = bar,
+                            modifier = Modifier.testTag(LibraryTags.TOP_BAR),
                         )
-                    } else TopAppBar(
-                        title = {
-                            Text(
-                                text = stringResource(R.string.library_title),
-                                // Material sets the title in 12 dp past the room it is measured for: a title wrapped
-                                // at a large font scale would reach under the first action.
-                                modifier = Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(LibraryTags.TITLE),
-                            )
-                        },
-                        actions = {
-                            BlockAction(
-                                R.drawable.ic_shopping_cart,
-                                stringResource(R.string.shopping_open),
-                                LibraryTags.SHOPPING,
-                                onClick = onOpenShopping,
-                                action = stringResource(R.string.shopping_open_action),
-                            )
-                            BlockAction(
-                                R.drawable.ic_settings,
-                                stringResource(R.string.settings_open),
-                                LibraryTags.SETTINGS,
-                                onClick = onOpenSettings,
-                                modifier = Modifier.padding(end = 4.dp),
-                                action = stringResource(R.string.settings_open_action),
-                            )
-                        },
-                        scrollBehavior = bar,
-                        modifier = Modifier.testTag(LibraryTags.TOP_BAR),
-                    )
+                    }
                 }
                 // The switch of views stays above the list and never scrolls with it (FLOW-034 (1)).
                 // The width each tab's words have: the row's share less the tab's margins, the window's width until the
@@ -597,16 +602,43 @@ internal fun rememberBookCollections(): CollectionRepository {
 }
 
 /**
- * Brings [list] to the entry of [recipeId] once, when [rows] list it, and then tells [onShown]; nothing when they do
- * not. [before] items stand above the rows in the list — the row of collections.
+ * Brings [list] to the entry of [recipeId] once, when [rows] list it; nothing when they do not. [before] items stand
+ * above the rows in the list — the row of collections.
  */
 @Composable
-private fun RevealOnNotice(recipeId: String?, rows: List<String>?, list: LazyListState, before: Int = 0, onShown: (String) -> Unit = {}) {
+private fun RevealOnNotice(recipeId: String?, rows: List<String>?, list: LazyListState, before: Int = 0) {
     val at = if (recipeId == null) -1 else rows?.indexOf(recipeId) ?: -1
-    LaunchedEffect(recipeId, at >= 0) {
-        if (at < 0 || recipeId == null) return@LaunchedEffect
-        list.animateScrollToItem(at + before)
-        onShown(recipeId)
+    LaunchedEffect(recipeId, at >= 0) { if (at >= 0) list.animateScrollToItem(at + before) }
+}
+
+/**
+ * Brings the entry of [recipeId], put back by an Undo (v0.38), into view — only when it is not wholly in view already, so
+ * that a recipe put back among those shown moves nothing — once the [list] is laid out with the [shown] rows, and then
+ * tells [onDone]. One the view lists ([listed]) but does not show yet — beyond the rows shown so far — is not sought:
+ * [onDone] is told at once, so that the list does not jump to it later. [before] items stand above the rows.
+ */
+@Composable
+private fun RevealRestored(
+    recipeId: String?,
+    listed: List<String>?,
+    shown: List<String>?,
+    list: LazyListState,
+    before: Int,
+    onDone: (String) -> Unit,
+) {
+    val at = if (recipeId == null) -1 else shown?.indexOf(recipeId) ?: -1
+    val beyond = recipeId != null && at < 0 && listed?.contains(recipeId) == true
+    val items = (shown?.size ?: 0) + before
+    LaunchedEffect(recipeId, at, beyond, items) {
+        if (recipeId == null) return@LaunchedEffect
+        if (beyond) return@LaunchedEffect onDone(recipeId)
+        if (at < 0) return@LaunchedEffect
+        // Laid out with it among its items: only then does the layout say where it stands.
+        val laid = snapshotFlow { list.layoutInfo }.first { it.totalItemsCount == items }
+        val item = laid.visibleItemsInfo.firstOrNull { it.key == recipeId }
+        val whole = item != null && item.offset >= laid.viewportStartOffset && item.offset + item.size <= laid.viewportEndOffset
+        if (!whole) list.animateScrollToItem(at + before)
+        onDone(recipeId)
     }
 }
 
@@ -832,7 +864,7 @@ private fun OwnList(
     ScrollToTopOnChange(listed?.params, listState)
     RevealOnNotice(reveal, loaded?.map { it.recipeId }, listState, above)
     // A recipe an Undo put back is brought into view (v0.38).
-    RevealOnNotice(restored, loaded?.map { it.recipeId }, listState, above, onShown = session::restoredShown)
+    RevealRestored(restored, found?.map { it.recipeId }, loaded?.map { it.recipeId }, listState, above, onDone = session::restoredShown)
     // Near the end of what is shown, the next recipes are shown (FLOW-041 (5)).
     LaunchedEffect(listState, loaded?.size, limit, above) {
         snapshotFlow { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1) - above }
@@ -1041,13 +1073,20 @@ internal fun EntryCard(
     val state = stringResource(if (selected == true) R.string.library_entry_selected else R.string.library_entry_not_selected)
     val open = when {
         selected != null && onSelect != null -> Modifier
-            .combinedClickable(onClickLabel = toggleLabel, onLongClickLabel = toggleLabel, onLongClick = onSelect, onClick = onSelect)
+            .combinedClickable(
+                onClickLabel = toggleLabel, onLongClickLabel = toggleLabel, onLongClick = onSelect, onClick = onSelect,
+                // Felt only through the application's haptics: starting the selection plays its confirmation.
+                hapticFeedbackEnabled = false,
+            )
             .semantics {
                 this.selected = selected
                 stateDescription = state
             }
         onSelect != null && onOpen != null ->
-            Modifier.combinedClickable(onClickLabel = openLabel, role = Role.Button, onLongClickLabel = selectLabel, onLongClick = onSelect, onClick = onOpen)
+            Modifier.combinedClickable(
+                onClickLabel = openLabel, role = Role.Button, onLongClickLabel = selectLabel, onLongClick = onSelect, onClick = onOpen,
+                hapticFeedbackEnabled = false,
+            )
         // An entry that does not open is still chosen by a long press.
         onSelect != null -> Modifier
             .pointerInput(onSelect) { detectTapGestures(onLongPress = { onSelect() }) }
@@ -1336,7 +1375,8 @@ private fun MarkedList(
     val above = if (listed?.narrowed == false && listed?.viewIsEmpty == false && collections.isNotEmpty()) 1 else 0
     RevealOnNotice(reveal, marked?.map { it.recipeId }, listState, above)
     // A recipe an Undo put back is brought into view (v0.38).
-    RevealOnNotice(restored, marked?.map { it.recipeId }, listState, above, onShown = session::restoredShown)
+    val markedIds = marked?.map { it.recipeId }
+    RevealRestored(restored, markedIds, markedIds, listState, above, onDone = session::restoredShown)
     val export = rememberExport(recipes, session)
     val shown = listed
     val selectable = remember(marked) { marked?.map { Selectable(it.recipeId, removable = it.held, holds = it.held) } }
@@ -1619,6 +1659,8 @@ object LibraryTags {
     fun cover(recipeId: String) = "library-cover-$recipeId"
     /** The selection's bar, in place of the book's title while entries are chosen: its ✕, its count, its ⋮ and items. */
     const val SELECTION_BAR = "library-selection-bar"
+    /** A bar fading out as the other fades in, which takes no touch and is hidden from the screen reader. */
+    const val BAR_LEAVING = "library-bar-leaving"
     const val SELECTION_CLOSE = "library-selection-close"
     const val SELECTION_COUNT = "library-selection-count"
     const val SELECTION_MENU = "library-selection-menu"

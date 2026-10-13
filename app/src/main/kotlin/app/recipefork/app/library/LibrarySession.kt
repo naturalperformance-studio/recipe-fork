@@ -83,6 +83,7 @@ class LibrarySession(
         if (view != this.view.value) {
             closeNotice()
             finishRemoval()
+            putBack.value = null
         }
         show(view)
     }
@@ -148,6 +149,7 @@ class LibrarySession(
     fun query(view: LibraryView): StateFlow<String> = saved.getStateFlow(QUERY_KEY + view.name, "")
 
     fun search(view: LibraryView, query: String) {
+        if (query != this.query(view).value) putBack.value = null
         saved[QUERY_KEY + view.name] = query
     }
 
@@ -155,6 +157,7 @@ class LibrarySession(
     fun order(view: LibraryView): StateFlow<BookOrder> = saved.getStateFlow(ORDER_KEY + view.name, BookOrder.NEWEST)
 
     fun orderBy(view: LibraryView, order: BookOrder) {
+        putBack.value = null
         saved[ORDER_KEY + view.name] = order
     }
 
@@ -165,6 +168,7 @@ class LibrarySession(
     fun filters(view: LibraryView): StateFlow<BookFilters> = saved.getStateFlow(FILTERS_KEY + view.name, BookFilters())
 
     fun filter(view: LibraryView, filters: BookFilters) {
+        putBack.value = null
         saved[FILTERS_KEY + view.name] = filters
     }
 
@@ -495,8 +499,9 @@ class LibrarySession(
 
     /**
      * The first recipe an Undo put back — the topmost of those taken together, as they were taken in the order listed —
-     * until its list has been brought to it ([restoredShown]), or another recipe leaves the book: the view listing it
-     * brings it into view (v0.38).
+     * until its list has been brought to it ([restoredShown]), another recipe leaves the book, the reader shows the
+     * other view, or a search, an order or a filter changes what is listed: the view listing it brings it into view
+     * (v0.38).
      */
     val restored: StateFlow<String?> = putBack.asStateFlow()
 

@@ -10,6 +10,13 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -19,6 +26,8 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -126,13 +135,16 @@ class BookSelectionHoldsTest {
         collections.create(name)!!.also { id -> members.forEach { collections.addTo(it.id, listOf(id)) } }
     }
 
-    private fun show(view: LibraryView) {
+    private fun show(view: LibraryView, platform: HapticFeedback? = null) {
         session.choose(view)
         val editor = EditorEnvironment(active, device.catalog(context)) { now }
         val card = CardEnvironment(marks = marks) { device.database.dictionaryDao().ingredients() }
         compose.setContent {
             CompositionLocalProvider(LocalCardTimers provides cardTimers, LocalHaptics provides haptics) {
-                AppTheme { AppNavHost(session, recipes, Mode.Standard, editor = editor, card = card, collections = collections) }
+                val content = @androidx.compose.runtime.Composable {
+                    AppTheme { AppNavHost(session, recipes, Mode.Standard, editor = editor, card = card, collections = collections) }
+                }
+                if (platform == null) content() else CompositionLocalProvider(LocalHapticFeedback provides platform) { content() }
             }
         }
         compose.waitForIdle()
@@ -306,12 +318,63 @@ class BookSelectionHoldsTest {
         compose.mainClock.advanceTimeByFrame()
         compose.mainClock.advanceTimeBy(60)
         assertTrue("the selection's bar fades in", exists(LibraryTags.SELECTION_BAR))
-        assertTrue("the book's bar fades out", exists(LibraryTags.TITLE))
+        assertTrue("the book's bar fades out", exists(LibraryTags.BAR_LEAVING))
+        // Leaving, the book's bar is no longer found by the screen reader (the merged tree, as it reads it).
+        assertTrue(compose.onAllNodes(hasTestTag(LibraryTags.TITLE)).fetchSemanticsNodes().isEmpty())
+        assertTrue(compose.onAllNodes(hasTestTag(LibraryTags.SETTINGS)).fetchSemanticsNodes().isEmpty())
         compose.mainClock.advanceTimeBy(2_000)
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()
         assertTrue(exists(LibraryTags.SELECTION_BAR))
-        assertFalse(exists(LibraryTags.TITLE))
+        assertFalse(exists(LibraryTags.BAR_LEAVING))
+    }
+
+    // The selection's bar fading out after it ends takes no touch: with the book's bar scrolled away, nothing stands
+    // over the leaving bar, and its ⋮ — a selection's "Select all" — must not open.
+    @Test
+    fun theBarFadingOutTakesNoTouch() {
+        val all = (0 until 20).map { own("Recipe $it", minutesAgo = it.toLong()) }
+        show(LibraryView.OWN)
+        awaitEntry(all.first())
+        repeat(2) { compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput { swipeUp(durationMillis = 1_000) } }
+        compose.waitUntil(PATIENCE_MS) { compose.onNodeWithTag(LibraryTags.TOP_BAR).getBoundsInRoot().let { it.bottom - it.top } < 1.dp }
+        val chosen = all[10]
+        longPress(chosen)
+        await(LibraryTags.SELECTION_MENU)
+        compose.waitForIdle()
+        val at = compose.onNodeWithTag(LibraryTags.SELECTION_MENU).getBoundsInRoot().let { bounds ->
+            with(compose.density) { Offset(((bounds.left + bounds.right) / 2).toPx(), ((bounds.top + bounds.bottom) / 2).toPx()) }
+        }
+        compose.mainClock.autoAdvance = false
+        compose.runOnUiThread { session.endSelection() }
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeBy(30)
+        assertTrue("the selection's bar fades out", exists(LibraryTags.SELECTION_MENU))
+        compose.onRoot().performTouchInput { click(at) }
+        // Looked for at once: the leaving bar, menu and all, is gone once it has faded.
+        compose.mainClock.advanceTimeByFrame()
+        compose.mainClock.advanceTimeByFrame()
+        assertFalse("the leaving bar's ⋮ opened", exists(LibraryTags.SELECT_ALL))
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertNull(session.selection.value)
+    }
+
+    // A long press is felt once, as the application's confirmation: the platform's own long-press feedback is off.
+    @Test
+    fun aLongPressIsFeltOnlyAsTheConfirmation() {
+        val platform = mutableListOf<HapticFeedbackType>()
+        val soup = own("Soup")
+        show(LibraryView.OWN, object : HapticFeedback {
+            override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
+                platform += hapticFeedbackType
+            }
+        })
+        longPress(soup)
+        compose.waitUntil(PATIENCE_MS) { haptics.all == listOf(Haptic.CONFIRM) }
+        assertEquals(emptyList<HapticFeedbackType>(), platform)
     }
 
     // --- In Russian, at twice the font scale ------------------------------------------------------------------------

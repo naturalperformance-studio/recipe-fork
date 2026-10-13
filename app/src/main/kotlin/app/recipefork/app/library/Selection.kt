@@ -23,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -221,4 +223,21 @@ internal fun SelectionMark(recipeId: String, selected: Boolean, modifier: Modifi
             tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/**
+ * The book's bar while it fades out, the other bar fading in in its place ([leaving]): it takes no touch — a press
+ * begun on it comes to nothing — and the screen reader no longer finds it, so that neither the selection's actions on
+ * a selection just ended nor the title's actions as a selection starts can be taken from it.
+ */
+internal fun Modifier.leaving(leaving: Boolean): Modifier = if (!leaving) {
+    this
+} else {
+    this
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
+            }
+        }
+        .clearAndSetSemantics { testTag = LibraryTags.BAR_LEAVING }
 }

@@ -17,7 +17,10 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
@@ -366,6 +369,115 @@ class BookHeaderAndNoticesTest {
 
         compose.waitUntil(PATIENCE_MS) { displayed(LibraryTags.entryTitle(top.id.value)) }
         compose.waitUntil(PATIENCE_MS) { session.restored.value == null }
+    }
+
+    // A recipe put back among those shown moves nothing: the list stays where it stood, its first entry with it.
+    @Test
+    fun undoOfARecipeInViewMovesNothing() {
+        val all = many(12)
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(all.first().id.value))
+        compose.waitForIdle()
+        val first = LibraryTags.entry(all.first().id.value)
+        val before = shown(first)
+        val second = all[1]
+        deleteFromItsMenu(second)
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.entry(second.id.value)) }
+
+        compose.takeNoticeAction("Undo")
+
+        compose.waitUntil(PATIENCE_MS) { displayed(LibraryTags.entryTitle(second.id.value)) }
+        compose.waitUntil(PATIENCE_MS) { session.restored.value == null }
+        compose.waitForIdle()
+        assertTrue("the first entry left the screen", displayed(first))
+        assertEquals("the first entry's top", before.top, shown(first).top, 0.5f)
+    }
+
+    // A recipe put back that a search hides is not sought: a search changed lets it go, and the list does not jump to it
+    // once it is listed again.
+    @Test
+    fun aRecipePutBackThatASearchHidesIsLetGo() {
+        val all = many(12)
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(all.first().id.value))
+        val gone = all[1]
+        deleteFromItsMenu(gone)
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("Recipe 11")
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entry(all[11].id.value)) && !exists(LibraryTags.entry(all[0].id.value)) }
+
+        compose.takeNoticeAction("Undo")
+        compose.waitUntil(PATIENCE_MS) { stored(gone) != null && session.restored.value == gone.id.value }
+
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("")
+        assertNull("still sought", session.restored.value)
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entry(gone.id.value)) }
+        compose.waitForIdle()
+        assertTrue("the list left its top", displayed(LibraryTags.entry(all.first().id.value)))
+    }
+
+    // Showing the other view lets go of a recipe put back that its own view has not shown yet.
+    @Test
+    fun theOtherViewLetsGoOfARecipePutBack() {
+        val all = many(3)
+        found("Borscht")
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(all.first().id.value))
+        val gone = all[1]
+        deleteFromItsMenu(gone)
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("Recipe 0")
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.entry(all[2].id.value)) }
+        compose.takeNoticeAction("Undo")
+        compose.waitUntil(PATIENCE_MS) { session.restored.value == gone.id.value }
+
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+
+        compose.waitUntil(PATIENCE_MS) { session.view.value == LibraryView.MARKED }
+        assertNull(session.restored.value)
+    }
+
+    // --- The header lets go of the focus, and settles ---------------------------------------------------------------
+
+    // A search field focused, the header scrolled wholly away: the field is focused no more, so that what the keyboard
+    // types never goes out of sight.
+    @Test
+    fun theHeaderScrolledAwayLetsGoOfTheFocus() {
+        val all = many(20)
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(all.first().id.value))
+        compose.onNodeWithTag(LibraryTags.SEARCH).performClick()
+        compose.waitUntil(PATIENCE_MS) { focused(LibraryTags.SEARCH) }
+
+        repeat(3) { compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput { swipeUp(durationMillis = 1_000) } }
+
+        compose.waitUntil(PATIENCE_MS) { headerHeight() < 0.5f }
+        compose.waitUntil(PATIENCE_MS) { !focused(LibraryTags.SEARCH) }
+    }
+
+    private fun focused(tag: String) =
+        compose.onNodeWithTag(tag).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Focused) == true
+
+    // Let go partway, the header settles the way the list was going: wholly away going down, whole again going up.
+    @Test
+    fun theHeaderLetGoPartwaySettles() {
+        val all = many(20)
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(all.first().id.value))
+        compose.waitForIdle()
+        val full = headerHeight()
+        // Past the top bar's height, into the header's, and no further.
+        val bar = shown(LibraryTags.TOP_BAR).height
+        val partway = with(compose.density) { (bar + full / 2).dp.toPx() }
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput {
+            swipeUp(startY = centerY + partway / 2, endY = centerY - partway / 2, durationMillis = 1_000)
+        }
+        compose.waitForIdle()
+        assertEquals("going down, the header settled away", 0f, headerHeight(), 0.5f)
+
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput {
+            swipeDown(startY = centerY - partway / 2, endY = centerY + partway / 2, durationMillis = 1_000)
+        }
+        compose.waitForIdle()
+        assertEquals("going up, the header settled whole", full, headerHeight(), 0.5f)
     }
 
     // Several deleted together from the selection: Undo brings the first of them into view.
