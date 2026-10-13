@@ -2,12 +2,20 @@ package app.recipefork.app.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -21,7 +29,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -35,6 +45,7 @@ import app.recipefork.app.backup.BackupWork
 import app.recipefork.app.backup.BookBackup
 import app.recipefork.app.backup.BookFileRefusal
 import app.recipefork.app.library.DestructiveConfirm
+import app.recipefork.app.ui.WordFitText
 import java.time.LocalDate
 
 /**
@@ -75,8 +86,8 @@ internal fun BackupSection(backup: BookBackup, snackbars: SnackbarHostState) {
         onCancel = backup::cancel,
     ) { restoreFrom.launch(arrayOf("*/*")) }
     when (val asking = state) {
-        is BackupState.Asking -> RestoreQuestion(asking.inBook, backup)
-        is BackupState.ConfirmingReplace -> ReplaceConfirmation(asking.inBook, backup)
+        is BackupState.Asking -> RestoreQuestion(asking.inBook, onAdd = backup::add, onReplace = backup::replace, onCancel = backup::cancel)
+        is BackupState.ConfirmingReplace -> ReplaceConfirmation(asking.inBook, onReplace = backup::confirmReplace, onCancel = backup::cancel)
         else -> Unit
     }
     val ended = (state as? BackupState.Ended)?.notice
@@ -105,13 +116,13 @@ private fun BackupItem(
 ) {
     val dimmed = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     ListItem(
-        headlineContent = { Text(headline) },
+        headlineContent = { WordFitText(headline) },
         supportingContent = {
             if (working == null) {
-                Text(hint)
+                WordFitText(hint)
             } else {
                 Column {
-                    Text(stringResource(working.work.label()))
+                    WordFitText(stringResource(working.work.label()))
                     val progress = Modifier.fillMaxWidth().padding(top = 8.dp).testTag(SettingsTags.BACKUP_PROGRESS)
                     working.done?.let { LinearProgressIndicator(progress = { it }, modifier = progress) } ?: LinearProgressIndicator(progress)
                 }
@@ -135,29 +146,56 @@ private fun BackupWork.label(): Int = when (this) {
     BackupWork.ADDING, BackupWork.REPLACING -> R.string.backup_restoring
 }
 
-/** Asked before a restore into a book that holds [inBook] recipes: add to it, replace it, or neither. */
+/**
+ * Asked before a restore into a book that holds [inBook] recipes: add to it ([onAdd]), replace it ([onReplace]), or
+ * neither ([onCancel]). The two ways are the dialog's own rows under the question, each one tap, the whole width its
+ * target: Add, which keeps every recipe the book holds, first; Replace under it in the error colour, confirmed once
+ * more ([ReplaceConfirmation]). Its one button is Cancel, so that no row of buttons stacks at a large font scale; the
+ * question scrolls where the screen is too short for it.
+ */
 @Composable
-private fun RestoreQuestion(inBook: Int, backup: BookBackup) = AlertDialog(
-    onDismissRequest = backup::cancel,
+internal fun RestoreQuestion(inBook: Int, onAdd: () -> Unit, onReplace: () -> Unit, onCancel: () -> Unit) = AlertDialog(
+    onDismissRequest = onCancel,
     modifier = Modifier.testTag(SettingsTags.BACKUP_QUESTION),
-    title = { Text(stringResource(R.string.backup_ask_title)) },
-    text = { Text(pluralStringResource(R.plurals.backup_ask_text, inBook, inBook)) },
-    confirmButton = {
-        DialogButton(R.string.backup_add, SettingsTags.BACKUP_ADD, backup::add)
-        DialogButton(R.string.backup_replace, SettingsTags.BACKUP_REPLACE, backup::replace)
+    title = { WordFitText(stringResource(R.string.backup_ask_title)) },
+    text = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            WordFitText(pluralStringResource(R.plurals.backup_ask_text, inBook, inBook))
+            Spacer(Modifier.height(8.dp))
+            RestoreWay(R.drawable.ic_add_item, R.string.backup_add, SettingsTags.BACKUP_ADD, MaterialTheme.colorScheme.onSurface, onAdd)
+            RestoreWay(R.drawable.ic_import_file, R.string.backup_replace, SettingsTags.BACKUP_REPLACE, MaterialTheme.colorScheme.error, onReplace)
+        }
     },
-    dismissButton = { DialogButton(R.string.backup_cancel, SettingsTags.BACKUP_QUESTION_CANCEL, backup::cancel) },
+    confirmButton = { DialogButton(R.string.backup_cancel, SettingsTags.BACKUP_QUESTION_CANCEL, onCancel) },
 )
 
-/** Replacing confirmed once more, naming the [inBook] recipes that go; it cannot be undone. */
+/** One way of [RestoreQuestion]: its [icon] and [label] in [colour] on the dialog's own colour; a tap takes it. */
 @Composable
-private fun ReplaceConfirmation(inBook: Int, backup: BookBackup) = AlertDialog(
-    onDismissRequest = backup::cancel,
+private fun RestoreWay(@DrawableRes icon: Int, @StringRes label: Int, tag: String, colour: Color, onClick: () -> Unit) = ListItem(
+    headlineContent = { WordFitText(stringResource(label)) },
+    // Said by the words beside it.
+    leadingContent = { Icon(painterResource(icon), contentDescription = null) },
+    colors = ListItemDefaults.colors(
+        containerColor = AlertDialogDefaults.containerColor,
+        headlineColor = colour,
+        leadingIconColor = colour,
+    ),
+    modifier = Modifier.heightIn(min = 56.dp).clickable(role = Role.Button, onClick = onClick).testTag(tag),
+)
+
+/** Replacing confirmed once more ([onReplace]), naming the [inBook] recipes that go; it cannot be undone. */
+@Composable
+internal fun ReplaceConfirmation(inBook: Int, onReplace: () -> Unit, onCancel: () -> Unit) = AlertDialog(
+    onDismissRequest = onCancel,
     modifier = Modifier.testTag(SettingsTags.BACKUP_CONFIRMATION),
-    title = { Text(stringResource(R.string.backup_replace_title)) },
-    text = { Text(pluralStringResource(R.plurals.backup_replace_text, inBook, inBook)) },
-    confirmButton = { DestructiveConfirm(R.string.backup_replace_confirm, SettingsTags.BACKUP_REPLACE_CONFIRM, onClick = backup::confirmReplace) },
-    dismissButton = { DialogButton(R.string.backup_cancel, SettingsTags.BACKUP_CONFIRMATION_CANCEL, backup::cancel) },
+    title = { WordFitText(stringResource(R.string.backup_replace_title)) },
+    text = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            WordFitText(pluralStringResource(R.plurals.backup_replace_text, inBook, inBook))
+        }
+    },
+    confirmButton = { DestructiveConfirm(R.string.backup_replace_confirm, SettingsTags.BACKUP_REPLACE_CONFIRM, onClick = onReplace) },
+    dismissButton = { DialogButton(R.string.backup_cancel, SettingsTags.BACKUP_CONFIRMATION_CANCEL, onCancel) },
 )
 
 @Composable

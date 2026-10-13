@@ -1,6 +1,9 @@
 package app.recipefork.app.settings
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -12,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.Mode
 import app.recipefork.app.R
 import app.recipefork.app.library.DestructiveConfirm
+import app.recipefork.app.ui.WordFitText
 
 /**
  * The statement before saved media is cleared (FLOW-060): nothing is deleted until it is confirmed, and declining it
@@ -25,7 +29,7 @@ internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: (
         onDismissRequest = onDecline,
         modifier = Modifier.testTag(SettingsTags.CLEAR_MEDIA_STATEMENT),
         title = {
-            Text(
+            WordFitText(
                 stringResource(
                     when (mode) {
                         Mode.Serverless -> R.string.library_clear_media_title_serverless
@@ -35,14 +39,17 @@ internal fun ClearMediaStatement(mode: Mode, onConfirm: () -> Unit, onDecline: (
             )
         },
         text = {
-            Text(
-                stringResource(
-                    when (mode) {
-                        Mode.Serverless -> R.string.library_clear_media_statement_serverless
-                        Mode.Standard -> R.string.library_clear_media_statement
-                    },
-                ),
-            )
+            // Scrolled where the screen is too short for it at a large font scale, rather than cut.
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                WordFitText(
+                    stringResource(
+                        when (mode) {
+                            Mode.Serverless -> R.string.library_clear_media_statement_serverless
+                            Mode.Standard -> R.string.library_clear_media_statement
+                        },
+                    ),
+                )
+            }
         },
         confirmButton = {
             DestructiveConfirm(R.string.library_clear_media_confirm, SettingsTags.CLEAR_MEDIA_CONFIRM, onClick = onConfirm)

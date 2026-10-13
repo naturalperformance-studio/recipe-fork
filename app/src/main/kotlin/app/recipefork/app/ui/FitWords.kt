@@ -1,14 +1,24 @@
 package app.recipefork.app.ui
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -58,6 +68,56 @@ internal fun WordFitText(text: String, style: TextStyle, width: Int, modifier: M
     val density = LocalDensity.current
     val fitted = remember(text, style, width, measurer, density) { fitWords(text, style, width, measurer, density) }
     FittedText(text, fitted, modifier)
+}
+
+/**
+ * [text] as [WordFitText] above draws it, in the width the place it stands in gives it — a list item's line, a dialog's
+ * row — and in [style], by default the one that place gives its text; [modifier] is the text's own. Asked how tall or
+ * wide it is before it is measured — as a list item asks of its supporting text — it answers as its text, so laid out.
+ */
+@Composable
+internal fun WordFitText(text: String, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val policy = remember(text, style, measurer, density) { FittedTextPolicy(text, style, measurer, density) }
+    Layout(content = { BoxWithConstraints { WordFitText(text, style, constraints.maxWidth, modifier) } }, measurePolicy = policy)
+}
+
+/**
+ * Lays out its one child — the [text] fitted to its width — as it measures itself, and answers the questions of its size
+ * before measuring from the text, fitted ([fitWords]) to the width asked about, as [FittedText] lays it out.
+ */
+private class FittedTextPolicy(
+    private val text: String,
+    private val style: TextStyle,
+    private val measurer: TextMeasurer,
+    private val density: Density,
+) : MeasurePolicy {
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val placeable = measurables.single().measure(constraints)
+        return layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+    }
+
+    private fun height(width: Int): Int {
+        val fitted = fitWords(text, style, width, measurer, density)
+        return measurer.measure(
+            text,
+            fitted.style,
+            softWrap = !fitted.overflows,
+            maxLines = if (fitted.overflows) 1 else Int.MAX_VALUE,
+            constraints = Constraints(maxWidth = width),
+        ).size.height
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = height(width)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = height(width)
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+        widestWord(listOf(text), style, measurer)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+        measurer.measure(text, style, softWrap = false, maxLines = 1).size.width
 }
 
 /**
