@@ -154,6 +154,7 @@ private fun measure(block: PrintBlock, size: PageSize): Laid? {
             ),
         ) { canvas, x, baseline -> drawBox(canvas, x + 1f, baseline, block.ticked) }
         is PrintBlock.Picture -> PictureLaid.read(block, size)
+        PrintBlock.PageBreak -> BreakLaid
     }
 }
 
@@ -175,6 +176,13 @@ private sealed class Laid {
     abstract val slab: Slab
 
     abstract fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float)
+}
+
+/** A page break: no lines, nothing drawn; what follows begins a page. */
+private object BreakLaid : Laid() {
+    override val slab = Slab(0f, emptyList(), newPage = true)
+
+    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float) = Unit
 }
 
 /** A stretch of text wrapped to [width] less [indent], set [indent] in from the left. */
