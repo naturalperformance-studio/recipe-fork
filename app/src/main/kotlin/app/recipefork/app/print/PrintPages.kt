@@ -15,17 +15,62 @@ import android.text.TextPaint
 import android.text.TextUtils
 import app.recipefork.app.media.Orientation
 import app.recipefork.app.media.exifOrientation
+import java.io.File
 import java.io.OutputStream
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+
+/**
+ * Decodes a picture's pixels when the page that holds it is drawn; the platform's BitmapFactory by default. Whatever it
+ * returns is recycled once that page is drawn.
+ */
+fun interface PictureDecoder {
+    /**
+     * [file] decoded at no more than [width] by [height] pixels as stored — before its EXIF orientation turns it —
+     * keeping its proportions and never enlarged; null where it cannot be read.
+     */
+    fun decode(file: File, width: Int, height: Int): Bitmap?
+
+    companion object {
+        val Platform = PictureDecoder(::decodeAtMost)
+    }
+}
+
+/** [file] decoded at most [width] by [height] pixels: sampled down by a power of two, then scaled the rest of the way. */
+internal fun decodeAtMost(file: File, width: Int, height: Int): Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(file.path, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0 || width <= 0 || height <= 0) return null
+    var sample = 1
+    while (bounds.outWidth / (sample * 2) >= width && bounds.outHeight / (sample * 2) >= height) sample *= 2
+    // A sampled side is the stored one divided, rounded down or up by the format; taking it as rounded up never
+    // leaves the scaled picture larger than asked.
+    val sampledWidth = ceil(bounds.outWidth / sample.toDouble()).toInt()
+    val sampledHeight = ceil(bounds.outHeight / sample.toDouble()).toInt()
+    val options = BitmapFactory.Options().apply { inSampleSize = sample }
+    if (sampledWidth > width || sampledHeight > height) {
+        // BitmapFactory scales by inTargetDensity / inDensity while decoding, so no second full-size bitmap is made.
+        options.inScaled = true
+        if (width.toLong() * sampledHeight <= height.toLong() * sampledWidth) {
+            options.inDensity = sampledWidth
+            options.inTargetDensity = width
+        } else {
+            options.inDensity = sampledHeight
+            options.inTargetDensity = height
+        }
+    }
+    return BitmapFactory.decodeFile(file.path, options)
+}
 
 /** The footer of a page: the document's title cut to one line, and "n / m". */
 data class Footer(val title: String, val number: String)
 
 /**
  * A [PrintDocument] laid out on pages of [size] (FLOW-075): drawn black on white in the system's sans font whatever
- * the app's theme, each page with a muted footer. Laying out reads the document's pictures and writing draws them, so
- * both run off the main thread. Nothing here reaches the network.
+ * the app's theme, each page with a muted footer. Laying out reads only each picture's size and turning; a picture's
+ * pixels are decoded when the page that holds it is drawn, at the size it is printed, and let go once that page is
+ * drawn — so the pages hold no pictures however many the document has. Both run off the main thread. Nothing here
+ * reaches the network.
  */
 class PrintPages private constructor(
     val size: PageSize,
@@ -50,12 +95,25 @@ class PrintPages private constructor(
         return Footer(TextUtils.ellipsize(oneLine, Style.muted, room, TextUtils.TruncateAt.END).toString(), number)
     }
 
-    /** Draws page [index] on [canvas], whose units are points and whose origin is the page's top left corner. */
+    /**
+     * Draws page [index] on [canvas], whose units are points and whose origin is the page's top left corner; the
+     * pictures decoded for it are recycled before this returns.
+     */
     fun draw(canvas: Canvas, index: Int) {
+        val held = mutableListOf<Bitmap>()
+        try {
+            draw(canvas, index, held)
+        } finally {
+            held.forEach(Bitmap::recycle)
+        }
+    }
+
+    /** Draws page [index] on [canvas], adding to [held] each picture decoded for it, for the caller to recycle. */
+    private fun draw(canvas: Canvas, index: Int, held: MutableList<Bitmap>) {
         canvas.drawColor(Color.WHITE)
         val left = size.margin
         for (placement in pages[index]) {
-            blocks.getValue(placement.block).draw(canvas, placement.from, placement.to, left, size.margin + placement.top)
+            blocks.getValue(placement.block).draw(canvas, placement.from, placement.to, left, size.margin + placement.top, held)
         }
         val footer = footer(index)
         val baseline = size.height - size.margin - Style.muted.fontMetrics.descent
@@ -70,10 +128,10 @@ class PrintPages private constructor(
     fun writePdf(out: OutputStream, which: List<Int> = (0 until count).toList()): Int {
         val pdf = PdfDocument()
         try {
-            which.forEachIndexed { written, index ->
-                val info = PdfDocument.PageInfo.Builder(size.width.roundToInt(), size.height.roundToInt(), written + 1).create()
+            writePages(which) { number, draw ->
+                val info = PdfDocument.PageInfo.Builder(size.width.roundToInt(), size.height.roundToInt(), number).create()
                 val page = pdf.startPage(info)
-                draw(page.canvas, index)
+                draw(page.canvas)
                 pdf.finishPage(page)
             }
             pdf.writeTo(out)
@@ -83,10 +141,34 @@ class PrintPages private constructor(
         return which.size
     }
 
+    /**
+     * Draws [which] of the pages one after another: [page] is given each one's number (from 1) and a drawing of it to
+     * run on its canvas, and the pictures decoded for that page are recycled once [page] returns — after a PDF page is
+     * finished. The platform's PdfDocument records a finished page as a picture holding its own reference to the pixels
+     * drawn on it, so recycling them then is safe; it lets them go itself when the document is written and closed.
+     */
+    internal fun writePages(which: List<Int>, page: (number: Int, draw: (Canvas) -> Unit) -> Unit) {
+        which.forEachIndexed { written, index ->
+            val held = mutableListOf<Bitmap>()
+            try {
+                page(written + 1) { canvas -> draw(canvas, index, held) }
+            } finally {
+                held.forEach(Bitmap::recycle)
+            }
+        }
+    }
+
     companion object {
-        /** [document] laid out on pages of [size]: each block measured, a picture that cannot be read left out. */
-        fun layOut(document: PrintDocument, size: PageSize = PageSize.A4): PrintPages {
-            val laid = document.blocks.mapIndexedNotNull { index, block -> measure(block, size)?.let { index to it } }
+        /**
+         * [document] laid out on pages of [size]: each block measured, a picture that cannot be read left out. Of the
+         * pictures only their sizes are read; [pictures] decodes them when their pages are drawn.
+         */
+        fun layOut(
+            document: PrintDocument,
+            size: PageSize = PageSize.A4,
+            pictures: PictureDecoder = PictureDecoder.Platform,
+        ): PrintPages {
+            val laid = document.blocks.mapIndexedNotNull { index, block -> measure(block, size, pictures)?.let { index to it } }
             val footerHeight = Style.muted.fontMetrics.let { it.descent - it.ascent } + FOOTER_GAP
             val bodyHeight = size.height - 2 * size.margin - footerHeight
             val pages = paginate(laid.map { it.second.slab }, bodyHeight)
@@ -128,7 +210,7 @@ private const val BOX_INDENT = 17f
 private const val BOX_SIDE = 8.5f
 
 /** [block] measured for pages of [size]; null for a picture that cannot be read. */
-private fun measure(block: PrintBlock, size: PageSize): Laid? {
+private fun measure(block: PrintBlock, size: PageSize, pictures: PictureDecoder): Laid? {
     val width = size.textWidth
     return when (block) {
         is PrintBlock.Title -> TextLaid(16f, keep = true, listOf(Part(block.text, Style.title, width, 0f)))
@@ -153,7 +235,7 @@ private fun measure(block: PrintBlock, size: PageSize): Laid? {
                 block.note?.let { Part(it, Style.muted, width, BOX_INDENT) },
             ),
         ) { canvas, x, baseline -> drawBox(canvas, x + 1f, baseline, block.ticked) }
-        is PrintBlock.Picture -> PictureLaid.read(block, size)
+        is PrintBlock.Picture -> PictureLaid.read(block, size, pictures)
         PrintBlock.PageBreak -> BreakLaid
     }
 }
@@ -171,18 +253,21 @@ private fun drawBox(canvas: Canvas, x: Float, baseline: Float, ticked: Boolean) 
     }
 }
 
-/** A block measured: how pagination sees it, and how lines [from] until [to] of it are drawn at [left], [top]. */
+/**
+ * A block measured: how pagination sees it, and how lines [from] until [to] of it are drawn at [left], [top]; a picture
+ * decoded to draw it is added to [held].
+ */
 private sealed class Laid {
     abstract val slab: Slab
 
-    abstract fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float)
+    abstract fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float, held: MutableList<Bitmap>)
 }
 
 /** A page break: no lines, nothing drawn; what follows begins a page. */
 private object BreakLaid : Laid() {
     override val slab = Slab(0f, emptyList(), newPage = true)
 
-    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float) = Unit
+    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float, held: MutableList<Bitmap>) = Unit
 }
 
 /** A stretch of text wrapped to [width] less [indent], set [indent] in from the left. */
@@ -212,7 +297,7 @@ private class TextLaid(
         whole = whole,
     )
 
-    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float) {
+    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float, held: MutableList<Bitmap>) {
         var y = top
         var k = from
         while (k < to) {
@@ -234,14 +319,37 @@ private class TextLaid(
     }
 }
 
-/** A picture, decoded upright and no larger than twice its drawn size in points, drawn centred at [drawn] size. */
-private class PictureLaid(val bitmap: Bitmap, val orientation: Orientation, val drawn: Points, textWidth: Float) : Laid() {
+/** How finely a picture is printed: its pixels per inch at the size it is drawn. */
+internal const val PICTURE_DPI = 150
+
+/**
+ * A picture of [file], turned by [orientation] and drawn centred at [drawn] size: decoded only while its page is drawn,
+ * at [PICTURE_DPI] of that size; one that cannot be decoded then leaves its space empty.
+ */
+private class PictureLaid(
+    val file: File,
+    val orientation: Orientation,
+    val drawn: Points,
+    textWidth: Float,
+    val decoder: PictureDecoder,
+) : Laid() {
     private val inset = (textWidth - drawn.width) / 2
+
+    /** The drawn size as the picture is stored, before it is turned. */
+    private val stored = if (orientation.swapsSides) Points(drawn.height, drawn.width) else drawn
 
     override val slab = Slab(8f, listOf(drawn.height), whole = true)
 
-    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float) {
-        val (w, h) = if (orientation.swapsSides) drawn.height to drawn.width else drawn.width to drawn.height
+    override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float, held: MutableList<Bitmap>) {
+        val bitmap = try {
+            decoder.decode(file, pixels(stored.width), pixels(stored.height))
+        } catch (e: OutOfMemoryError) {
+            null
+        } catch (e: RuntimeException) {
+            null
+        } ?: return
+        held += bitmap
+        val (w, h) = stored
         canvas.save()
         canvas.translate(left + inset + drawn.width / 2, top + drawn.height / 2)
         canvas.rotate(orientation.degrees.toFloat())
@@ -251,7 +359,11 @@ private class PictureLaid(val bitmap: Bitmap, val orientation: Orientation, val 
     }
 
     companion object {
-        fun read(block: PrintBlock.Picture, size: PageSize): PictureLaid? = try {
+        /** The pixels [points] take at [PICTURE_DPI]. */
+        fun pixels(points: Float): Int = ceil(points * PICTURE_DPI / 72f).toInt().coerceAtLeast(1)
+
+        /** The picture of [block] measured from its size and EXIF orientation alone; null when they cannot be read. */
+        fun read(block: PrintBlock.Picture, size: PageSize, decoder: PictureDecoder): PictureLaid? = try {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeFile(block.file.path, bounds)
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
@@ -259,15 +371,8 @@ private class PictureLaid(val bitmap: Bitmap, val orientation: Orientation, val 
             } else {
                 val orientation = exifOrientation { block.file.inputStream() }
                 val (w, h) = if (orientation.swapsSides) bounds.outHeight to bounds.outWidth else bounds.outWidth to bounds.outHeight
-                val drawn = pictureSize(w, h, size.textWidth, size.height / 3)
-                val needed = ceil(drawn.width * 2).toInt()
-                var sample = 1
-                while (w / (sample * 2) >= needed) sample *= 2
-                BitmapFactory.decodeFile(block.file.path, BitmapFactory.Options().apply { inSampleSize = sample })
-                    ?.let { PictureLaid(it, orientation, drawn, size.textWidth) }
+                PictureLaid(block.file, orientation, pictureSize(w, h, size.textWidth, size.height / 3), size.textWidth, decoder)
             }
-        } catch (e: OutOfMemoryError) {
-            null
         } catch (e: RuntimeException) {
             null
         }
