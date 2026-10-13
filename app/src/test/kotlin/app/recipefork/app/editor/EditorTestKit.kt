@@ -14,6 +14,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.getOrNull
+import app.recipefork.app.ui.AccessibilityChecks
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.text.TextLayoutResult
@@ -355,6 +358,26 @@ fun ComposeTestRule.keyboardAskedFor(): EditorInfo {
         windowRoots().reversed().asSequence().flatMap { it.all() }.first { it.onCheckIsTextEditor() }.onCreateInputConnection(info)
     }
     return info
+}
+
+/** How a list of a sheet's controls names Material's drag handle, which carries no test tag (T-272). */
+const val DRAG_HANDLE = "material-drag-handle"
+
+/** How a list of a sheet's controls names the tooltip Material wraps its drag handle in: it only shows the handle's name. */
+const val DRAG_HANDLE_TOOLTIP = "material-drag-handle-tooltip"
+
+/** The controls a sheet starts with since T-272, before its Done: Material's drag handle, in its tooltip. */
+val SHEET_HANDLE = listOf(DRAG_HANDLE_TOOLTIP, DRAG_HANDLE)
+
+/** Whether [node] is Material's drag handle of a sheet: named, it dismisses the sheet. */
+fun isDragHandle(node: SemanticsNode): Boolean =
+    SemanticsActions.Dismiss in node.config && node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().isNotEmpty()
+
+/** What names [node] in a list of a sheet's controls: its test tag, or what Material's drag handle and its tooltip are. */
+fun controlName(node: SemanticsNode): String = node.config.getOrNull(SemanticsProperties.TestTag) ?: when {
+    AccessibilityChecks.dragHandleTooltip.matches(node) -> DRAG_HANDLE_TOOLTIP
+    isDragHandle(node) -> DRAG_HANDLE
+    else -> "untagged node ${node.id}"
 }
 
 /** What Material 3's bottom sheet says itself — its scrim's and its drag handle's names — from the library's resources. */

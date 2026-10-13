@@ -130,7 +130,8 @@
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
     <!-- A part of an ingredient in a step: offered beside the whole, entered in the ingredient's own unit. -->
-    <string name="editor_step_offered_part">%1$s — part…</string>
+    <string name="editor_step_offered_part">Part…</string>
+    <string name="editor_step_offered_part_name">A part of %1$s…</string>
     <string name="editor_part_title">Part of %1$s</string>
     <string name="editor_part_field">How much, %1$s</string>
     <string name="editor_part_of_whole">Out of %1$s in the list.</string>

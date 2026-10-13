@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -316,6 +317,61 @@ class EditorSheetsAlikeTest {
         val title = compose.onNode(hasText(string(R.string.media_step_photo_label, 1)) and hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET)), useUnmergedTree = true)
             .fetchSemanticsNode()
         assertEquals(style, layout(title.config))
+    }
+
+    @Test
+    fun theEditorSheetsHaveTheSourceSheetsHandle() = handles()
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun theEditorSheetsHaveTheSourceSheetsHandleInRussian() = handles()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun theEditorSheetsHaveTheSourceSheetsHandleAt320DpAndTwiceTheFontInRussian() {
+        assertEquals(2f, context.resources.configuration.fontScale, 0.001f)
+        handles()
+    }
+
+    // T-272: the ingredient, group and step sheets have Material's drag handle, as the photo source sheet has — the
+    // same name, a 48 dp target centred above the title — and the handle's own Dismiss closes the sheet.
+    private fun handles() {
+        open()
+        fun handleIn(sheet: String): SemanticsNode =
+            compose.onNode(hasAnyAncestor(hasTestTag(sheet)) and SemanticsMatcher("Material's drag handle", ::isDragHandle)).fetchSemanticsNode()
+        val named = mutableListOf<List<String>>()
+        fun check(sheet: String, title: String?) {
+            val handle = handleIn(sheet)
+            named += handle.config[SemanticsProperties.ContentDescription]
+            val area = handle.boundsInRoot
+            assertTrue("$sheet: the handle is under 48 dp: $area", dp(area.width) >= 47.5f && dp(area.height) >= 47.5f)
+            val whole = compose.onNodeWithTag(sheet).fetchSemanticsNode().boundsInRoot
+            assertEquals("$sheet: the handle is not centred", whole.center.x, area.center.x, 1f)
+            if (title != null) assertTrue("$sheet: the handle is not above the title", area.bottom <= bounds(title).top + 0.5f)
+        }
+        compose.openIngredient(0)
+        check(IngredientSheetTags.SHEET, IngredientSheetTags.TITLE)
+        compose.closeIngredient()
+        compose.openGroup(0)
+        check(GroupSheetTags.SHEET, GroupSheetTags.TITLE)
+        compose.closeGroup()
+        compose.openStep(0)
+        check(StepSheetTags.SHEET, StepSheetTags.TITLE)
+        compose.onNodeWithTag(EditorTags.stepPhoto(0)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitUntil(PATIENCE_MS) { exists(SourceSheetTags.SHEET) }
+        check(SourceSheetTags.SHEET, null)
+        // Named as the source sheet's is.
+        assertEquals(1, named.distinct().size)
+        compose.onNode(hasAnyAncestor(hasTestTag(SourceSheetTags.SHEET)) and SemanticsMatcher("Material's drag handle", ::isDragHandle))
+            .performSemanticsAction(SemanticsActions.Dismiss)
+        compose.waitUntil(PATIENCE_MS) { !exists(SourceSheetTags.SHEET) }
+        compose.closeStep()
+
+        // The handle's Dismiss, as the screen reader offers it, closes the sheet.
+        compose.openIngredient(0)
+        compose.onNode(hasAnyAncestor(hasTestTag(IngredientSheetTags.SHEET)) and SemanticsMatcher("Material's drag handle", ::isDragHandle))
+            .performSemanticsAction(SemanticsActions.Dismiss)
+        compose.waitUntil(PATIENCE_MS) { !exists(IngredientSheetTags.SHEET) }
     }
 
     @Test

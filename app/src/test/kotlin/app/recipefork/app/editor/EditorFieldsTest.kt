@@ -1,11 +1,19 @@
 package app.recipefork.app.editor
 
 import android.content.Context
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.os.Looper
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
+import android.view.accessibility.AccessibilityRecord
+import app.recipefork.core.api.TagDto
+import org.robolectric.Shadows.shadowOf
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -384,5 +392,105 @@ class EditorFieldsTest {
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.chosen(10)) }
         assertTrue(exists(EditorTags.TAGS))
         assertFalse(exists(EditorTags.remove(10)))
+    }
+
+    // ---- T-272: a long tag keeps its cross's room, and a field's mark is told to the screen reader as it appears.
+
+    @Test
+    fun aLongTagWrapsBeforeItsCross() = longTag()
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aLongTagWrapsBeforeItsCrossInRussian() = longTag()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2.0f)
+    fun aLongTagWrapsBeforeItsCrossAt320DpAndTwiceTheFontInRussian() {
+        assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
+        longTag(wraps = true)
+    }
+
+    private fun longTag(wraps: Boolean = false) {
+        val long = TagDto(13, "средиземноморская кухня для всей большой семьи", "Mediterranean home cooking for the whole big family")
+        runBlocking { device.database.dictionaryDao().replace(SAMPLE_DICTIONARIES.copy(tags = SAMPLE_DICTIONARIES.tags + long)) }
+        open(draft { it.copy(title = "Pasta", tags = setOf(13L)) })
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.chip(13)) }
+        compose.onNodeWithTag(EditorTags.chip(13)).performScrollTo()
+        val label = labelOf(EditorTags.chip(13))
+        if (wraps) assertTrue("the tag does not wrap, so this checks nothing", layoutOf(label).lineCount > 1)
+        assertWhole(label, "the tag's words")
+        // The words end before the cross begins; the cross stands whole inside the chip, on the screen.
+        val words = Rect(label.positionInRoot, label.size.toSize())
+        val icon = bounds(EditorTags.removeIcon(13))
+        val chip = bounds(EditorTags.chip(13))
+        assertTrue("the words $words run under the cross $icon", words.right <= icon.left + 0.5f)
+        assertTrue("the cross $icon is outside the chip $chip", icon.left >= chip.left && icon.right <= chip.right + 0.5f)
+        assertTrue("the chip $chip runs off the screen", chip.right <= px(context.resources.configuration.screenWidthDp.toFloat()) + 0.5f)
+    }
+
+    @Test
+    fun aFieldsMarkIsToldToTheScreenReaderAsItAppears() = markTold()
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun aFieldsMarkIsToldToTheScreenReaderAsItAppearsInRussian() = markTold()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2.0f)
+    fun aFieldsMarkIsToldToTheScreenReaderAsItAppearsAt320DpAndTwiceTheFontInRussian() {
+        assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
+        markTold()
+    }
+
+    /**
+     * A mark coming as the author leaves a field is read out as it appears: its words are their own node for the screen
+     * reader, a polite live region — the field's own error is not announced once the author is in another field — and
+     * the field stays in error, saying the same. With a screen reader on, the live region is told of as it comes.
+     */
+    private fun markTold() {
+        val manager = context.getSystemService(AccessibilityManager::class.java)
+        shadowOf(manager).setEnabled(true)
+        shadowOf(manager).setTouchExplorationEnabled(true)
+        shadowOf(manager).setEnabledAccessibilityServiceList(listOf(AccessibilityServiceInfo()))
+        try {
+            open(draft { it.copy(title = "", description = "d".repeat(2_001), steps = listOf(Step(0, "s".repeat(2_001)))) })
+            enter(EditorTags.TITLE)
+            var before = shadowOf(manager).sentAccessibilityEvents.size
+            enter(EditorTags.DESCRIPTION)
+            assertToldAsItAppears(EditorTags.TITLE, EditorTags.TITLE_MARK, manager, before)
+            before = shadowOf(manager).sentAccessibilityEvents.size
+            enter(EditorTags.TITLE)
+            assertToldAsItAppears(EditorTags.DESCRIPTION, EditorTags.DESCRIPTION_MARK, manager, before)
+            // A step's text left too long, for its note, in its sheet.
+            enter(EditorTags.stepText(0))
+            before = shadowOf(manager).sentAccessibilityEvents.size
+            compose.onNodeWithTag(StepNoteTags.field(0)).performScrollTo().performSemanticsAction(SemanticsActions.RequestFocus)
+            assertToldAsItAppears(EditorTags.stepText(0), EditorTags.stepMark(0), manager, before)
+        } finally {
+            shadowOf(manager).setEnabled(false)
+            shadowOf(manager).setTouchExplorationEnabled(false)
+        }
+    }
+
+    private fun assertToldAsItAppears(field: String, mark: String, manager: AccessibilityManager, after: Int) {
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(mark)).fetchSemanticsNodes().isNotEmpty() }
+        val node = compose.onNodeWithTag(mark).fetchSemanticsNode()
+        val words = compose.textsOf(mark).single()
+        assertEquals(LiveRegionMode.Polite, node.config.getOrNull(SemanticsProperties.LiveRegion))
+        assertEquals(listOf(words), node.config[SemanticsProperties.Text].map { it.text })
+        // Not merged into the field: the field is no live region, which would read it out at every key; it is in error.
+        val fieldNode = compose.onNodeWithTag(field).fetchSemanticsNode()
+        assertNull(fieldNode.config.getOrNull(SemanticsProperties.LiveRegion))
+        assertEquals(words, fieldNode.config.getOrNull(SemanticsProperties.Error))
+        // Told to the reader: a change of the window's content from the mark, or the part it came into.
+        fun virtualId(event: AccessibilityEvent): Int =
+            (AccessibilityRecord::class.java.getMethod("getSourceNodeId").invoke(event) as Long).ushr(32).toInt()
+        val around = generateSequence(node) { it.parent }.map { it.id }.toSet()
+        compose.waitUntil(PATIENCE_MS) {
+            shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(100))
+            shadowOf(manager).sentAccessibilityEvents.drop(after).any { event ->
+                event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && virtualId(event) in around
+            }
+        }
     }
 }

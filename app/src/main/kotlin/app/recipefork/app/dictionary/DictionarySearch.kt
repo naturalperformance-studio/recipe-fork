@@ -44,13 +44,14 @@ internal class DictionarySearch<T : DictionaryEntry> {
         val collator = Collator.getInstance(if (language == InterfaceLanguage.RUSSIAN) Locale("ru") else Locale.ENGLISH)
         val byLabel = compareBy<T, String>(collator) { it.label(language) }.thenBy { it.id }
 
-        val matchedIds = matched.map { it.entry.id }.toSet()
-        // Each offered parent heads a block of its leaves; a leaf whose parent is offered lives in that block.
-        val heads = matched.filter { it.entry.parentId == null || it.entry.parentId !in matchedIds }
-        val (first, rest) = heads.partition { head -> head.names.any { it.folded.startsWith(sought) } }
-        val offered = (first.map { it.entry }.sortedWith(byLabel) + rest.map { it.entry }.sortedWith(byLabel)).flatMap { head ->
-            leaves[head.id].orEmpty().sortedWith(byLabel) + head
-        }.distinctBy { it.id }
+        // A matched parent brings its leaves; each entry is offered once, whichever way it came.
+        val brought = matched.flatMap { listOf(it.entry) + if (it.entry.parentId == null) leaves[it.entry.id].orEmpty() else emptyList() }
+            .distinctBy { it.id }
+        // What begins with the whole typed text, by one of its own names, comes first, the shorter such name first; then
+        // the rest, alphabetically by the label shown.
+        val begun = brought.associate { entry -> entry.id to index.of(entry).names.filter { it.folded.startsWith(sought) }.minOfOrNull { it.folded.length } }
+        val sorted = brought.sortedWith(compareBy<T> { begun[it.id] == null }.thenBy { begun[it.id] ?: 0 }.then(byLabel))
+        val offered = parentsFirst(sorted, offeredIds = sorted.map { it.id }.toSet())
 
         val soughtWords = typedWords.sorted()
         fun ownExactly(entry: T, synonym: Boolean) =
@@ -74,6 +75,27 @@ internal class DictionarySearch<T : DictionaryEntry> {
             }
         }
         return Found(ordered, freeText = if (exact == null) typed.trim() else null, exact = exact, synonyms = synonyms)
+    }
+
+    /**
+     * [sorted] with every leaf whose parent is offered too moved, where it came before that parent, to just after it —
+     * the leaves so moved in the order they had — so that a parent is always offered before its own leaves.
+     */
+    private fun parentsFirst(sorted: List<T>, offeredIds: Set<Long>): List<T> {
+        val placed = HashSet<Long>()
+        val waiting = HashMap<Long, MutableList<T>>()
+        val ordered = ArrayList<T>(sorted.size)
+        fun place(entry: T) {
+            ordered += entry
+            placed += entry.id
+            waiting.remove(entry.id)?.forEach(::place)
+        }
+        for (entry in sorted) {
+            val parent = entry.parentId
+            if (parent != null && parent in offeredIds && parent !in placed) waiting.getOrPut(parent) { mutableListOf() } += entry
+            else place(entry)
+        }
+        return ordered
     }
 
     /**

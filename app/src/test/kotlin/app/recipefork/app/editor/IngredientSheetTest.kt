@@ -265,12 +265,12 @@ class IngredientSheetTest {
         val sheet = hasAnyAncestor(hasTestTag(IngredientSheetTags.SHEET))
         val fields = compose.onAllNodes(sheet and hasSetTextAction()).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
         assertEquals(listOf(EditorTags.ingredientName(1), EditorTags.ingredientQuantity(1), IngredientNoteTags.field(1)), fields)
-        // Every control of the sheet is tagged — it has no drag handle — and they stand in this order: Done, the fields,
-        // then the row's actions.
+        // Every control of the sheet is tagged but Material's drag handle (T-272), and they stand in this order: the
+        // handle, Done, the fields, then the row's actions.
         val interactive = compose.onAllNodes(sheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .map { it.config[SemanticsProperties.TestTag] }
+            .map(::controlName)
         assertEquals(
-            listOf(
+            SHEET_HANDLE + listOf(
                 IngredientSheetTags.DONE, EditorTags.ingredientName(1), EditorTags.ingredientQuantity(1),
                 EditorTags.ingredientUnit(1), EditorTags.divisible(1, true), EditorTags.divisible(1, false), IngredientNoteTags.field(1),
             ) + listOf(RowAction.MOVE_UP, RowAction.MOVE_DOWN, RowAction.INSERT_ABOVE, RowAction.INSERT_BELOW, RowAction.GROUP_ABOVE)
