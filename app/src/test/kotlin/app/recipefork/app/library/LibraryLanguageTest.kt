@@ -79,7 +79,7 @@ class LibraryLanguageTest {
             database.favourites().put(FavouriteEntity("m", "Marked pie", now))
             titles += "Marked pie"
         }
-        compose.setContent { MaterialTheme { AppNavHost(LibrarySession(SavedStateHandle()), recipes) } }
+        compose.setContent { MaterialTheme { AppNavHost(LibrarySession(SavedStateHandle()).apply { choose(LibraryView.MARKED) }, recipes) } }
         // The rule waits for the book as for the screen; the time limit only turns a missing entry into a failure.
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.entry("m")), PATIENCE_MS)
         assertEveryTextInTheLanguageInForce()

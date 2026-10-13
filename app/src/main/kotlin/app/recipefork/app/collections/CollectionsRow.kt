@@ -31,10 +31,11 @@ import app.recipefork.app.book.CollectionRow
 /**
  * The collections of a view of the book (v0.36) — the reader's own above the own recipes, the imported ones above the
  * imported recipes — as a row of cards under its heading, scrolled sideways: each names its collection and how many
- * recipes it holds, and opens it ([onOpen], with its identity). Nothing is drawn while there are none.
+ * recipes it holds, and opens it ([onOpen], with its identity). Nothing is drawn while there are none. Not [enabled] —
+ * while the book's selection is on — no card responds (v0.38).
  */
 @Composable
-internal fun CollectionsRow(collections: List<CollectionRow>, onOpen: (String) -> Unit, modifier: Modifier = Modifier) {
+internal fun CollectionsRow(collections: List<CollectionRow>, onOpen: (String) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     if (collections.isEmpty()) return
     Column(modifier.fillMaxWidth().testTag(CollectionScreenTags.ROW), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -52,26 +53,29 @@ internal fun CollectionsRow(collections: List<CollectionRow>, onOpen: (String) -
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            collections.forEach { collection -> CollectionCard(collection, onOpen) }
+            collections.forEach { collection -> CollectionCard(collection, onOpen, enabled) }
         }
     }
 }
 
 /** One collection of the row: its name, at most three lines, and its count of recipes; tapping it opens it. */
 @Composable
-private fun CollectionCard(collection: CollectionRow, onOpen: (String) -> Unit) {
+private fun CollectionCard(collection: CollectionRow, onOpen: (String) -> Unit, enabled: Boolean) {
     val open = { onOpen(collection.collectionId) }
     val action = stringResource(R.string.collections_open_action)
     Card(
         onClick = open,
+        enabled = enabled,
         modifier = Modifier
             .widthIn(min = CARD_MIN_WIDTH, max = CARD_MAX_WIDTH)
             .heightIn(min = 48.dp)
             .fillMaxHeight()
             .semantics {
-                onClick(label = action) {
-                    open()
-                    true
+                if (enabled) {
+                    onClick(label = action) {
+                        open()
+                        true
+                    }
                 }
             }
             .testTag(CollectionScreenTags.card(collection.collectionId)),

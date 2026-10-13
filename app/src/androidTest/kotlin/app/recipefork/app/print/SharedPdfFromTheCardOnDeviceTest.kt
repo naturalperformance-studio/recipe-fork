@@ -257,7 +257,7 @@ class SharedPdfFromTheCardOnDeviceTest {
     private companion object {
         const val TIMING = "PdfShareTiming"
         const val PATIENCE_MS = 30_000L
-        const val WRITTEN_HERE = "Written here"
+        const val WRITTEN_HERE = "My recipes"
         const val SHARE_AS_PDF = "Share as PDF"
     }
 }

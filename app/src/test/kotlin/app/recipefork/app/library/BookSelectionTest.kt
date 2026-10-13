@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasAnyAncestor
@@ -15,7 +16,6 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
@@ -81,8 +81,8 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * The book's selection (v0.37, T-261): a long press on an entry of either view starts it with that entry chosen; taps
  * then choose and take off entries without opening them; the bar shows ✕, "N selected" and the actions, its ⋮ "Select
- * all", which chooses every entry the view lists under its search and filters; ✕, Back, the other view shown or an
- * action taken ends it. Delete (own) and Remove (imported) take every chosen recipe they apply to out of the book at once,
+ * all", which chooses every entry the view lists under its search and filters; ✕, Back or an action taken ends it,
+ * and while it lasts the other view is not shown (v0.38). Delete (own) and Remove (imported) take every chosen recipe they apply to out of the book at once,
  * asking nothing, with one notice and one Undo, which brings them all back with their places in collections.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -301,15 +301,18 @@ class BookSelectionTest {
         assertTrue(exists(LibraryTags.entry(soup.id.value)))
     }
 
+    // v0.38: while selecting the view does not change — the other tab does not respond, and the selection holds.
     @Test
-    fun switchingTheViewEndsTheSelection() {
+    fun theOtherTabNeitherShowsItsViewNorEndsTheSelection() {
         val soup = own("Soup")
         found("Borscht")
         show(LibraryView.OWN)
         longPress(soup)
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
-        awaitNoSelection()
-        assertEquals(LibraryView.MARKED, session.view.value)
+        compose.waitForIdle()
+        assertEquals(LibraryView.OWN, session.view.value)
+        awaitCount("1 selected")
+        assertChosen(soup, true)
     }
 
     // The same in the view of imported recipes, a recipe whose content the book does not hold chosen as well.
@@ -522,8 +525,10 @@ class BookSelectionTest {
         assertFalse(exists(LibraryTags.SELECTION_DELETE))
         closeSelectionMenu()
 
-        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        // The other view is shown once the selection ends (v0.38).
+        compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
         awaitNoSelection()
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
         longPress("server-1", LibraryView.MARKED)
         openSelectionMenu()
         assertFalse(exists(LibraryTags.SELECTION_REMOVE))
@@ -562,9 +567,10 @@ class BookSelectionTest {
         awaitCount("1 selected")
 
         compose.waitUntil(PATIENCE_MS) { exists(CollectionScreenTags.card(dinner.value)) }
-        // The row stands above the recipes, brought into view; acted on as a screen reader does, since the bar may cover it.
+        // v0.38: the row does not respond while selecting; a collection opened otherwise — a file's notice's Open — is.
         compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(CollectionScreenTags.card(dinner.value)))
-        compose.onNodeWithTag(CollectionScreenTags.card(dinner.value)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithTag(CollectionScreenTags.card(dinner.value)).assertIsNotEnabled()
+        compose.runOnUiThread { session.openCollection(dinner.value) }
 
         compose.waitUntil(PATIENCE_MS) { exists(CollectionScreenTags.SCREEN) }
         assertNull(session.selection.value)

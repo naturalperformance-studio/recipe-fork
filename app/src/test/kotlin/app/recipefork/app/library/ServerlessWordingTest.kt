@@ -76,7 +76,8 @@ class ServerlessWordingTest {
     private val device = TestDevice(context)
     private val active = ActiveBook(BookName.Pool, book.database)
     private val recipes = RecipeRepository(active)
-    private val session = LibrarySession(SavedStateHandle())
+    // These tests begin on the marked recipes; the book opens on the own ones the first time (v0.38).
+    private val session = LibrarySession(SavedStateHandle()).apply { choose(LibraryView.MARKED) }
     private val now = Instant.parse("2026-10-03T12:00:00Z")
     private val files = File(context.cacheDir, "serverless-wording-files").also { it.deleteRecursively() }
     private val importer = RecipeImport(recipes, files, clock = { now })
