@@ -278,8 +278,8 @@ class IngredientGroupsScreenTest {
         assertTrue(!focused(EditorTags.groupName(0)))
         val inSheet = hasAnyAncestor(hasTestTag(GroupSheetTags.SHEET))
         assertEquals(
-            listOf(GroupSheetTags.DONE, EditorTags.groupName(0), EditorTags.groupAction(0, RowAction.MOVE_DOWN), EditorTags.groupRemove(0)),
-            compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] },
+            SHEET_HANDLE + listOf(GroupSheetTags.DONE, EditorTags.groupName(0), EditorTags.groupAction(0, RowAction.MOVE_DOWN), EditorTags.groupRemove(0)),
+            compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes().map(::controlName),
         )
         compose.chooseInSheet(EditorTags.groupAction(0, RowAction.MOVE_DOWN))
         awaitShape(recipe, "salt Glaze: sugar butter Dough: flour water")

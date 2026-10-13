@@ -98,7 +98,13 @@ internal fun FieldMark(part: RecipePart, bound: Bound, length: Int, limit: Int, 
         Modifier.fillMaxWidth().then(keepingTheFocusedFieldInPlace(FIELD_MARK_GAP)),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(fieldMarkText(part, bound), Modifier.weight(1f).testTag(tag))
+        // Its own node for the screen reader, a polite live region, so that it is read as it appears — as the author
+        // leaves the field for another, when the field's own error is not announced. Only the words: a live region
+        // merged into the field would have the field read out at every key.
+        Text(
+            fieldMarkText(part, bound),
+            Modifier.weight(1f).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }.testTag(tag),
+        )
         Text(
             stringResource(R.string.editor_mark_counter, count, most),
             modifier = Modifier.semantics { contentDescription = counted }.testTag(EditorTags.counter(tag)),

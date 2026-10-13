@@ -134,7 +134,8 @@
     <string name="editor_row_move_down">Переместить вниз</string>
     <string name="editor_row_group_above">Добавить группу выше</string>
     <!-- Часть ингредиента в шаге: предлагается рядом с целым, вводится в единице ингредиента. -->
-    <string name="editor_step_offered_part">%1$s — часть…</string>
+    <string name="editor_step_offered_part">Часть…</string>
+    <string name="editor_step_offered_part_name">Часть: %1$s…</string>
     <string name="editor_part_title">Часть: %1$s</string>
     <string name="editor_part_field">Сколько, %1$s</string>
     <string name="editor_part_of_whole">Из %1$s по списку.</string>

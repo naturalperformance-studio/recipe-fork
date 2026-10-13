@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -219,8 +220,9 @@ internal fun IngredientSheet(
         onDismissRequest = dismiss,
         sheetState = state,
         modifier = Modifier.testTag(IngredientSheetTags.SHEET),
-        // No handle: the sheet opens whole, and Done, a swipe down or Back closes it.
-        dragHandle = null,
+        // Material's handle, as the cover's source sheet has (media/SourceSheet.kt): as wide as it is tall, so that its
+        // own actions (expand, dismiss) have a full touch target. The sheet opens whole; Done, a swipe down or Back closes it.
+        dragHandle = { BottomSheetDefaults.DragHandle(width = 48.dp) },
     ) {
         val manager = LocalFocusManager.current
         SideEffect { focus = manager }
@@ -451,7 +453,8 @@ private fun IngredientNameField(
         )
         if (offer != null && (offer.entries.isNotEmpty() || offer.freeText != null)) {
             Column(Modifier.fillMaxWidth().testTag(IngredientNameTags.offer(position))) {
-                offer.entries.forEach { entry ->
+                // The first few only: what is wanted is near the top, and more is typed sooner than scrolled to.
+                offer.entries.take(OFFERED_AT_MOST).forEach { entry ->
                     val entryLabel = entry.label(language)
                     OfferedChoice(
                         text = entryLabel,
@@ -483,6 +486,9 @@ private fun IngredientNameField(
         }
     }
 }
+
+/** How many dictionary entries the ingredient field offers at most; the free text, when offered, comes after them. */
+internal const val OFFERED_AT_MOST = 8
 
 /** The test tags of the ingredient field's offer (FLOW-057). */
 object IngredientNameTags {
@@ -836,7 +842,8 @@ internal fun GroupSheet(
         onDismissRequest = dismiss,
         sheetState = state,
         modifier = Modifier.testTag(GroupSheetTags.SHEET),
-        dragHandle = null,
+        // Material's handle, as the row's sheet has.
+        dragHandle = { BottomSheetDefaults.DragHandle(width = 48.dp) },
     ) {
         val manager = LocalFocusManager.current
         SideEffect { focus = manager }

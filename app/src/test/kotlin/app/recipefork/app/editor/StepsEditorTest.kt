@@ -225,9 +225,9 @@ class StepsEditorTest {
         compose.openStep(1)
         val inSheet = hasAnyAncestor(hasTestTag(StepSheetTags.SHEET))
         val actions = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .map { it.config[SemanticsProperties.TestTag] }.toSet()
+            .map(::controlName).toSet()
         assertEquals(
-            setOf(
+            SHEET_HANDLE.toSet() + setOf(
                 StepSheetTags.DONE, EditorTags.stepText(1), EditorTags.stepRemove(1), EditorTags.stepInsert(1), EditorTags.timerAttach(1),
                 EditorTags.stepPhoto(1), StepNoteTags.field(1),
             ) + RowAction.entries.filter { it != RowAction.GROUP_ABOVE }.map { EditorTags.stepAction(1, it) },
