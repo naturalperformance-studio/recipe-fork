@@ -42,8 +42,10 @@ internal fun rememberBookKitchen(environment: KitchenEnvironment): Kitchen? {
     }
 }
 
+// A read of the device's database, on the threads kept for waiting on it: work that keeps every computing thread busy
+// never holds back the kitchen, and with it a view whose filter "Enough equipment" waits for it.
 private suspend fun readEquipment(environment: KitchenEnvironment): List<EquipmentEntryEntity> = try {
-    withContext(Dispatchers.Default) { environment.equipment.equipment() }
+    withContext(Dispatchers.IO) { environment.equipment.equipment() }
 } catch (e: CancellationException) {
     throw e
 } catch (e: Exception) {

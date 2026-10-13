@@ -53,9 +53,15 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
 
         /**
          * What [input] holds, read as [read] reads it: the animation, or a still picture — or, for a GIF or a WebP
-         * larger than [maxBytes], one too large to be read at all ([ImageKind.TooLarge]).
+         * larger than [maxBytes], one too large to be read at all ([ImageKind.TooLarge]). A source that [states] its
+         * size over [maxBytes] is told too large from its signature alone, nothing of it held in memory.
          */
-        fun examine(input: InputStream, maxBytes: Int = MAX_BYTES, longest: Duration = VideoLimits.MAX_DURATION): ImageKind {
+        fun examine(
+            input: InputStream,
+            maxBytes: Int = MAX_BYTES,
+            longest: Duration = VideoLimits.MAX_DURATION,
+            states: Long? = null,
+        ): ImageKind {
             val signature = ByteArray(SIGNATURE_BYTES)
             var read = 0
             while (read < SIGNATURE_BYTES) {
@@ -64,6 +70,7 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
                 read += count
             }
             if (!Gif.matches(signature, read) && !WebP.matches(signature, read)) return ImageKind.Still
+            if (states != null && states > maxBytes) return ImageKind.TooLarge
             val bytes = ByteArrayOutputStream(64 * 1024)
             bytes.write(signature, 0, read)
             val buffer = ByteArray(64 * 1024)

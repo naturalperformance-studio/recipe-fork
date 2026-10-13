@@ -236,6 +236,20 @@ class AnimatedImageTest {
         assertEquals(1700.milliseconds, (animated as ImageKind.Animated).animation.duration)
     }
 
+    // A GIF or a WebP whose source states a size over the cap is told too large from its signature: nothing past it is
+    // read, so a file of 33 MB is never held in memory to be refused (T-274: under a full suite's memory, it was).
+    @Test
+    fun aGifOrWebpStatingASizeOverTheCapIsToldTooLargeFromItsSignature() {
+        listOf("animated.gif", "animated.webp").forEach { name ->
+            val bytes = fixture(name)
+            val input = Counting(bytes)
+            assertEquals(name, ImageKind.TooLarge, AnimatedImage.examine(input, maxBytes = bytes.size - 1, states = bytes.size.toLong()))
+            assertTrue("$name: ${input.read} bytes read", input.read <= 12)
+            assertTrue(name, AnimatedImage.examine(Counting(bytes), maxBytes = bytes.size, states = bytes.size.toLong()) is ImageKind.Animated)
+        }
+        assertEquals(ImageKind.Still, AnimatedImage.examine(Counting(fixture("still.png")), maxBytes = 1, states = 1_000_000))
+    }
+
     @Test
     fun anAnimationReadFromAStreamIsTheOneItsBytesHold() {
         val gif = AnimatedImage.read(Counting(fixture("animated.gif")))!!
