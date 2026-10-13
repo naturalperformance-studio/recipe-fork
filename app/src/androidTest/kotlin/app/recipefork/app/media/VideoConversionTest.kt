@@ -149,7 +149,8 @@ class VideoConversionTest {
     @Test
     fun aClipOverFifteenSecondsIsRefusedBeforeAnyConversion() {
         listOf(40, 16).forEach { seconds ->
-            val source = clip("long-$seconds.mp4", 160, 96, seconds, fps = 2)
+            // At a size every phone's encoder takes: the owner's took nothing as small as 160 x 96 (T-243).
+            val source = clip("long-$seconds.mp4", 640, 360, seconds, fps = 2)
             val started = System.nanoTime()
 
             assertEquals(ClipOutcome.Refused(ClipRefusal.TOO_LONG), add(source))
@@ -158,6 +159,23 @@ class VideoConversionTest {
         }
         assertEquals(0, converter.calls)
         assertEquals(emptyList<String>(), left())
+    }
+
+    // MEDIA-007, T-243 on the owner's phone: the camera's full fifteen seconds with sound, the sound track running a
+    // little past the picture so that the file states more than fifteen seconds, is accepted and converted.
+    @Test
+    fun aFifteenSecondCameraClipWhoseSoundRunsPastItIsAccepted() {
+        val source = TestClips.write(File(sources, "fifteen.mp4"), 640, 360, seconds = 15, fps = 4, soundPastMs = 300)
+        val states = MediaMetadataRetriever().use {
+            it.setDataSource(source.path)
+            it.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toLong()
+        }
+        assertTrue("the file states $states ms", states > 15_000)
+
+        val stored = stored(source)
+
+        assertEquals(1, converter.calls)
+        assertEquals(listOf(MediaFormat.MIMETYPE_VIDEO_AVC), tracks(stored.file))
     }
 
     // MEDIA-007 (3), MEDIA-008: a file whose duration cannot be read is refused, and nothing is attached.

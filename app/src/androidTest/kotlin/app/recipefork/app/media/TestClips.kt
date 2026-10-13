@@ -23,8 +23,8 @@ object TestClips {
     private class Track(val format: MediaFormat, val samples: List<Sample>)
 
     /**
-     * Writes a clip of [width] x [height] pixels lasting [seconds] at [fps] into [file], with a sound track if [sound],
-     * a key frame every [keyFrames] seconds (every frame at 0), turned by [rotation] degrees for display and marked
+     * Writes a clip of [width] x [height] pixels lasting [seconds] at [fps] into [file], with a sound track if [sound] —
+     * running [soundPastMs] milliseconds past the picture, as a phone's camera may write it — a key frame every [keyFrames] seconds (every frame at 0), turned by [rotation] degrees for display and marked
      * as shot at [location] (latitude, longitude) if given.
      */
     fun write(
@@ -36,13 +36,14 @@ object TestClips {
         bitrate: Int = 8_000_000,
         keyFrames: Int = 1,
         sound: Boolean = true,
+        soundPastMs: Int = 0,
         rotation: Int = 0,
         location: Pair<Float, Float>? = null,
     ): File {
         file.parentFile?.mkdirs()
         val tracks = buildList {
             add(video(width, height, seconds * fps, fps, bitrate, keyFrames))
-            if (sound) add(sound(seconds))
+            if (sound) add(sound(seconds, soundPastMs))
         }
         val muxer = MediaMuxer(file.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         try {
@@ -114,14 +115,14 @@ object TestClips {
         }
     }
 
-    private fun sound(seconds: Int): Track {
+    private fun sound(seconds: Int, pastMs: Int): Track {
         val rate = 44_100
         val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, rate, 1).apply {
             setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
             setInteger(MediaFormat.KEY_BIT_RATE, 64_000)
         }
         val chunk = 1024
-        val chunks = seconds * rate / chunk
+        val chunks = (seconds * rate + pastMs * rate / 1000) / chunk
         return encode(format, chunks) { index, codec, input ->
             val buffer = codec.getInputBuffer(input)!!
             buffer.clear()

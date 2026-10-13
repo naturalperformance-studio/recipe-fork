@@ -30,7 +30,8 @@ import kotlin.math.roundToInt
 /**
  * Turns an animated GIF or WebP into a step's clip (scenario 3, MEDIA-004): each frame decoded by the platform and
  * composed onto the animation's canvas as its container says, laid on white where it is transparent, brought to the
- * limits' longer edge when larger, and encoded as H.264 at [ClipPlan.bitrate] — one picture per frame, held for the
+ * limits' longer edge when larger — or up to the least the device's encoder takes when smaller ([EncoderSizes]) — and
+ * encoded as H.264 at [ClipPlan.bitrate] — one picture per frame, held for the
  * frame's own delay — into an MP4 with no audio track, written by the same muxer as [ClipTransformer]'s, which keeps
  * no metadata (MEDIA-003).
  *
@@ -49,10 +50,18 @@ object AnimationEncoder {
      * is the caller's to delete.
      */
     suspend fun encode(animation: AnimatedImage, target: File) = withContext(Dispatchers.Default) {
-        encode(animation, ClipPlan.converted(PixelSize(animation.width, animation.height), VideoLimits.MAX_LONGER_EDGE), target)
+        val planned = ClipPlan.converted(PixelSize(animation.width, animation.height), VideoLimits.MAX_LONGER_EDGE)
+        val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        try {
+            // The size the encoder that runs takes: a small animation enlarged to its least (EncoderSizes.fitted).
+            val sizes = EncoderSizes.of(codec.codecInfo.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC).videoCapabilities)
+            encode(animation, codec, EncoderSizes.fitted(planned, sizes, VideoLimits.MAX_LONGER_EDGE), target)
+        } finally {
+            codec.release()
+        }
     }
 
-    private suspend fun encode(animation: AnimatedImage, size: PixelSize, target: File) {
+    private suspend fun encode(animation: AnimatedImage, codec: MediaCodec, size: PixelSize, target: File) {
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, size.width, size.height).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
             setInteger(MediaFormat.KEY_BIT_RATE, ClipPlan.bitrate(size))
@@ -63,7 +72,6 @@ object AnimationEncoder {
             setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO)
         }
         val frames = animation.frames
-        val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
         var muxer: Muxer? = null
         var composer: Composer? = null
         try {
@@ -120,7 +128,6 @@ object AnimationEncoder {
             muxer = null
             output.close()
         } finally {
-            codec.release()
             composer?.release()
             // Left unfinished, the file is the caller's to delete; closing it is only letting go of it.
             muxer?.let { runCatching { it.close() } }

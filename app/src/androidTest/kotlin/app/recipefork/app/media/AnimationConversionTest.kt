@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.ImageFormat
 import android.media.ImageReader
+import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
@@ -125,14 +126,36 @@ class AnimationConversionTest {
      * time.
      */
     private fun assertTheSquareMoves(clip: File, delays: List<Long>) {
+        // Read at the fixture's 160 x 120 places, wherever the device's encoder had it enlarged to.
+        val size = shown(clip)
+        fun at(picture: Bitmap, x: Int, y: Int) = picture.getPixel(x * size.width / FIXTURE.width, y * size.height / FIXTURE.height)
         var start = 0L
         delays.forEachIndexed { k, delay ->
             val picture = frameAt(clip, start + delay / 4)
-            assertRed("the square of frame $k", picture.getPixel(30 + 12 * k, 60))
-            assertBlue("the canvas of frame $k", picture.getPixel(5, 110))
-            if (k > 0) assertBlue("where the square of frame $k left", picture.getPixel(30 + 12 * (k - 1) - 14, 60))
+            assertRed("the square of frame $k", at(picture, 30 + 12 * k, 60))
+            assertBlue("the canvas of frame $k", at(picture, 5, 110))
+            if (k > 0) assertBlue("where the square of frame $k left", at(picture, 30 + 12 * (k - 1) - 14, 60))
             start += delay
         }
+    }
+
+    /**
+     * The size the 160 x 120 fixtures are encoded at on this device: their own where its encoder takes it, else the
+     * least it takes, in the same proportions (T-243: the owner's phone takes nothing so small).
+     */
+    private fun encodedFixture(): PixelSize {
+        val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        try {
+            val sizes = EncoderSizes.of(codec.codecInfo.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC).videoCapabilities)
+            return EncoderSizes.fitted(FIXTURE, sizes, VideoLimits.MAX_LONGER_EDGE)
+        } finally {
+            codec.release()
+        }
+    }
+
+    private fun assertTheFixturesProportions(size: PixelSize) {
+        assertEquals(encodedFixture(), size)
+        assertTrue("$size is 4:3", kotlin.math.abs(size.width * 3 - size.height * 4) <= 4 * 16)
     }
 
     /**
@@ -205,7 +228,7 @@ class AnimationConversionTest {
         assertEquals(1, converter.calls)
         assertEquals(listOf(stored.mediaId), left())
         assertWithinTheClipLimits(stored.file)
-        assertEquals(PixelSize(160, 120), shown(stored.file))
+        assertTheFixturesProportions(shown(stored.file))
         assertTrue("it lasts ${lasts(stored.file)} ms", lasts(stored.file) in 1650L..1750L)
         assertTheSquareMoves(stored.file, delays)
         assertTheCardPlays(stored.file, pictures = delays.size)
@@ -219,7 +242,7 @@ class AnimationConversionTest {
         val stored = stored("animated.webp")
 
         assertWithinTheClipLimits(stored.file)
-        assertEquals(PixelSize(160, 120), shown(stored.file))
+        assertTheFixturesProportions(shown(stored.file))
         assertTrue("it lasts ${lasts(stored.file)} ms", lasts(stored.file) in 1350L..1450L)
         assertTheSquareMoves(stored.file, delays)
         assertTheCardPlays(stored.file, pictures = delays.size)
@@ -270,5 +293,10 @@ class AnimationConversionTest {
         assertEquals(ClipOutcome.Refused(ClipRefusal.UNREADABLE), runBlocking { animations.add(book, source("still.png")) })
         assertEquals(0, converter.calls)
         assertEquals(emptyList<String>(), left())
+    }
+
+    private companion object {
+        /** The size of the moving-square fixtures, animated.gif and animated.webp. */
+        val FIXTURE = PixelSize(160, 120)
     }
 }
