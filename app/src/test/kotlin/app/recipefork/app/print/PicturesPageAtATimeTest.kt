@@ -111,6 +111,59 @@ class PicturesPageAtATimeTest {
         }
     }
 
+    /** What the decoder is asked for, page by page, for a document of [pictures]; it hands back a stand-in pixel. */
+    private fun asksFor(pictures: List<File>): List<Pair<Int, Int>> {
+        val decoder = Counting { _, _, _ -> Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888) }
+        val pages = PrintPages.layOut(PrintDocument("Сборник", pictures.map { PrintBlock.Picture(it) }), a4, decoder)
+        val tiny = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        pages.writePages((0 until pages.count).toList()) { _, draw -> draw(Canvas(tiny)) }
+        assertEquals(pictures.size, decoder.asked.size)
+        return decoder.asked
+    }
+
+    private fun total(asked: List<Pair<Int, Int>>) = asked.sumOf { (w, h) -> w.toLong() * h }
+
+    @Test
+    fun aRecipesPicturesAreAskedForAtTheirPrintSizeUnchanged() {
+        // A recipe of a dozen photos, 4:3 and 3:4, stored at the app's 1600 pixels: well inside the budget.
+        val landscape = picture(1600, 1200)
+        val portrait = picture(1200, 1600)
+        val asked = asksFor(List(12) { if (it % 2 == 0) landscape else portrait })
+
+        assertEquals(List(6) { listOf(frame(1600, 1200), frame(1200, 1600)) }.flatten(), asked)
+        assertTrue(total(asked) <= PICTURE_BUDGET)
+    }
+
+    @Test
+    fun aDocumentOfManyPicturesIsAskedForNoMoreThanTheBudgetAltogether() {
+        // Forty recipes of six photos: about 146 million pixels at the print size, nine times the budget.
+        val photo = picture(1600, 900)
+        val asked = asksFor(List(240) { photo })
+        val (fullW, fullH) = frame(1600, 900)
+
+        assertTrue("${total(asked)} pixels", total(asked) <= PICTURE_BUDGET)
+        assertTrue("${total(asked)} pixels", total(asked) > PICTURE_BUDGET * 0.98)
+        for ((w, h) in asked) {
+            assertTrue("$w x $h", w < fullW && h < fullH && w >= PICTURE_FLOOR)
+            assertEquals(fullW.toFloat() / fullH, w.toFloat() / h, 0.02f)
+        }
+    }
+
+    @Test
+    fun aPictureIsNeverShrunkBelowTheFloorNorEnlarged() {
+        // So many pictures that the budget would leave each under the floor; a small one stays its own size.
+        val photo = picture(1600, 900)
+        val small = picture(200, 120)
+        val asked = asksFor(List(600) { photo } + small)
+
+        val (fullW, fullH) = frame(1600, 900)
+        for ((w, h) in asked.dropLast(1)) {
+            assertEquals(PICTURE_FLOOR, w)
+            assertEquals(fullH.toFloat() / fullW * PICTURE_FLOOR, h.toFloat(), 1f)
+        }
+        assertEquals(200 to 120, asked.last())
+    }
+
     @Test
     fun aTurnedPictureIsAskedForAtItsStoredProportions() {
         // Stored 900 x 1600 and turned a quarter: printed upright as 1600 x 900, as wide as the text.

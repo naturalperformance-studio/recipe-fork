@@ -19,6 +19,7 @@ import java.io.File
 import java.io.OutputStream
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * Decodes a picture's pixels when the page that holds it is drawn; the platform's BitmapFactory by default. Whatever it
@@ -169,6 +170,7 @@ class PrintPages private constructor(
             pictures: PictureDecoder = PictureDecoder.Platform,
         ): PrintPages {
             val laid = document.blocks.mapIndexedNotNull { index, block -> measure(block, size, pictures)?.let { index to it } }
+            PictureLaid.budget(laid.mapNotNull { it.second as? PictureLaid })
             val footerHeight = Style.muted.fontMetrics.let { it.descent - it.ascent } + FOOTER_GAP
             val bodyHeight = size.height - 2 * size.margin - footerHeight
             val pages = paginate(laid.map { it.second.slab }, bodyHeight)
@@ -323,11 +325,23 @@ private class TextLaid(
 internal const val PICTURE_DPI = 150
 
 /**
- * A picture of [file], turned by [orientation] and drawn centred at [drawn] size: decoded only while its page is drawn,
- * at [PICTURE_DPI] of that size; one that cannot be decoded then leaves its space empty.
+ * The most pixels a document's pictures are decoded at, all of them together: 64 MB of ARGB. The platform's PdfDocument
+ * keeps every picture drawn on a page until the whole file is written, so this bounds what a long document holds.
+ */
+internal const val PICTURE_BUDGET = 16L * 1024 * 1024
+
+/** The long edge, in pixels, a picture is never made smaller than to keep a document within [PICTURE_BUDGET]. */
+internal const val PICTURE_FLOOR = 300
+
+/**
+ * A picture of [file], [width] by [height] pixels as stored, turned by [orientation] and drawn centred at [drawn] size:
+ * decoded only while its page is drawn, at [PICTURE_DPI] of that size or less where the document's pictures together
+ * would need more than [PICTURE_BUDGET]; one that cannot be decoded then leaves its space empty.
  */
 private class PictureLaid(
     val file: File,
+    width: Int,
+    height: Int,
     val orientation: Orientation,
     val drawn: Points,
     textWidth: Float,
@@ -338,11 +352,20 @@ private class PictureLaid(
     /** The drawn size as the picture is stored, before it is turned. */
     private val stored = if (orientation.swapsSides) Points(drawn.height, drawn.width) else drawn
 
+    /** The pixels the picture is decoded at, as stored: its frame at [PICTURE_DPI], never more than the file holds. */
+    private val full: Pair<Int, Int> = (pixels(stored.width) to pixels(stored.height)).let { frame ->
+        if (frame.first >= width || frame.second >= height) width to height else frame
+    }
+
+    /** The pixels the decoder is asked for: [full] unless the document's budget made them fewer. */
+    var asked: Pair<Int, Int> = full
+        private set
+
     override val slab = Slab(8f, listOf(drawn.height), whole = true)
 
     override fun draw(canvas: Canvas, from: Int, to: Int, left: Float, top: Float, held: MutableList<Bitmap>) {
         val bitmap = try {
-            decoder.decode(file, pixels(stored.width), pixels(stored.height))
+            decoder.decode(file, asked.first, asked.second)
         } catch (e: OutOfMemoryError) {
             null
         } catch (e: RuntimeException) {
@@ -359,6 +382,26 @@ private class PictureLaid(
     }
 
     companion object {
+        /**
+         * Shrinks [pictures] alike, keeping their proportions, where together they would be decoded at more than
+         * [PICTURE_BUDGET] pixels; none below [PICTURE_FLOOR] on its long edge (or its own size, where smaller).
+         */
+        fun budget(pictures: List<PictureLaid>) {
+            val total = pictures.sumOf { it.full.first.toLong() * it.full.second }
+            if (total <= PICTURE_BUDGET) return
+            val scale = sqrt(PICTURE_BUDGET.toDouble() / total)
+            for (picture in pictures) {
+                val (w, h) = picture.full
+                val long = maxOf(w, h)
+                val floor = minOf(PICTURE_FLOOR, long)
+                picture.asked = if (long * scale >= floor) {
+                    (w * scale).toInt().coerceAtLeast(1) to (h * scale).toInt().coerceAtLeast(1)
+                } else {
+                    (w * floor.toDouble() / long).roundToInt().coerceAtLeast(1) to (h * floor.toDouble() / long).roundToInt().coerceAtLeast(1)
+                }
+            }
+        }
+
         /** The pixels [points] take at [PICTURE_DPI]. */
         fun pixels(points: Float): Int = ceil(points * PICTURE_DPI / 72f).toInt().coerceAtLeast(1)
 
@@ -371,7 +414,8 @@ private class PictureLaid(
             } else {
                 val orientation = exifOrientation { block.file.inputStream() }
                 val (w, h) = if (orientation.swapsSides) bounds.outHeight to bounds.outWidth else bounds.outWidth to bounds.outHeight
-                PictureLaid(block.file, orientation, pictureSize(w, h, size.textWidth, size.height / 3), size.textWidth, decoder)
+                val drawn = pictureSize(w, h, size.textWidth, size.height / 3)
+                PictureLaid(block.file, bounds.outWidth, bounds.outHeight, orientation, drawn, size.textWidth, decoder)
             }
         } catch (e: RuntimeException) {
             null
