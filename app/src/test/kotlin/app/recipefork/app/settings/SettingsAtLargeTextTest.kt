@@ -4,10 +4,12 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -238,8 +240,8 @@ class SettingsAtLargeTextTest {
 
     /**
      * The restore question into a book of 3 recipes: its words whole; Add ([add]) first, Replace ([replace]) under it,
-     * each a row of the dialog's body at least 48 dp tall and as wide as the body, Replace in the error colour, Add not;
-     * Cancel its one button, below them. Each row and Cancel answer a tap with their own way.
+     * each a row of the dialog's body at least 48 dp tall and as wide as the body, a button named by its words, Replace in
+     * the error colour, Add not; Cancel its one button, below them. Each row and Cancel answer a tap with their own way.
      */
     private fun restoreQuestionReadsSafeFirst(add: String, replace: String, cancel: String) {
         val taken = mutableListOf<String>()
@@ -252,6 +254,11 @@ class SettingsAtLargeTextTest {
         assertEquals(listOf(add), compose.textsOf(SettingsTags.BACKUP_ADD))
         assertEquals(listOf(replace), compose.textsOf(SettingsTags.BACKUP_REPLACE))
         assertEquals(listOf(cancel), compose.textsOf(SettingsTags.BACKUP_QUESTION_CANCEL))
+        // Each way is a button to the screen reader, named by its own words.
+        listOf(SettingsTags.BACKUP_ADD to add, SettingsTags.BACKUP_REPLACE to replace).forEach { (tag, name) ->
+            compose.onNodeWithTag(tag).assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            assertEquals("$tag's name", name, AccessibilityChecks.announcedLabel(compose.onNodeWithTag(tag).fetchSemanticsNode()))
+        }
         compose.onNodeWithTag(SettingsTags.BACKUP_REPLACE).performScrollTo()
         val addRow = bounds(SettingsTags.BACKUP_ADD)
         val replaceRow = bounds(SettingsTags.BACKUP_REPLACE)
