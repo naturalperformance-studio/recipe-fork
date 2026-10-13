@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
@@ -244,8 +245,9 @@ class BookHeaderTest {
 
     private fun actionCollapsed(tag: String): Boolean = bounds(tag).let { abs(it.width - it.height) < 1f }
 
-    // Scenario 5: the title bar scrolls away as the list goes down and returns as it goes up; the tabs and the search
-    // stay; the action floats at the bottom right, shrinking to its icon going down and showing its words going up.
+    // Scenario 5: the title bar scrolls away as the list goes down and returns as it goes up; the tabs stay, and the
+    // search scrolls away and returns with the bar (v0.38); the action floats at the bottom right, shrinking to its icon
+    // going down and showing its words going up.
     @Test
     fun theTitleBarScrollsAwayAndReturnsAndTheActionShrinksAndGrows() {
         recipesOf(LibraryView.OWN, 40)
@@ -266,9 +268,9 @@ class BookHeaderTest {
         compose.waitUntil(PATIENCE_MS) { bounds(LibraryTags.TOP_BAR).height < 1f }
         compose.waitUntil(PATIENCE_MS) { actionCollapsed(LibraryTags.NEW) }
         assertEquals(listOf("New recipe"), compose.textsOf(LibraryTags.NEW))
-        // The tabs and the search stay on screen.
+        // The tabs stay on screen; the search has gone with the bar (v0.38).
         compose.onNodeWithTag(LibraryTags.SWITCH).assertIsDisplayed()
-        compose.onNodeWithTag(LibraryTags.SEARCH).assertIsDisplayed()
+        compose.onNodeWithTag(LibraryTags.SEARCH).assertIsNotDisplayed()
         assertTrue(bounds(LibraryTags.SWITCH).top < 1f)
 
         // A little way back up, not to the top: the bar returns and the action shows its words.
@@ -276,6 +278,8 @@ class BookHeaderTest {
         compose.waitUntil(PATIENCE_MS) { abs(bounds(LibraryTags.TOP_BAR).height - barHeight) < 1f }
         compose.waitUntil(PATIENCE_MS) { actionExpanded(LibraryTags.NEW) }
         compose.onNodeWithTag(LibraryTags.TITLE).assertIsDisplayed()
+        // The search field and the filters come back after the bar, as far as the scroll goes (v0.38).
+        compose.waitUntil(PATIENCE_MS) { bounds(LibraryTags.HEADER_AREA).height > 0f }
         val range = compose.onNodeWithTag(LibraryTags.OWN_LIST).fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange]
         assertTrue("the list went back to its top", range.value() > 0f)
 

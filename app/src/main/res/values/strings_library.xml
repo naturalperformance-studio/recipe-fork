@@ -3,7 +3,8 @@
     <!-- FLOW-034: the section's name. -->
     <string name="library_title">My recipe book</string>
     <string name="library_view_marked">Marked</string>
-    <string name="library_view_own">Written here</string>
+    <!-- The own view is named as in Russian, "My recipes" (v0.38). -->
+    <string name="library_view_own">My recipes</string>
     <string name="library_view_marked_action">Show the recipes marked in this book</string>
     <string name="library_view_own_action">Show the recipes written in this book</string>
     <!-- In a build without the server the marked view holds the recipes imported from files (FLOW-062 (1)): it is
@@ -32,7 +33,7 @@
     <string name="library_sent_with_changes">Sent, with changes not sent</string>
     <!-- FLOW-042: the own-recipes view of a book in which nothing has been written: its one-line headline and its
          sentence. Its one offer is the view's action, "New recipe". -->
-    <string name="library_own_empty">Nothing written here yet</string>
+    <string name="library_own_empty">No recipes of yours yet</string>
     <string name="library_own_empty_sentence">Recipes you write in this book are kept here.</string>
     <!-- FLOW-042 (5): writing a new recipe, from the view's action and from its empty state. -->
     <string name="library_own_new">New recipe</string>

@@ -1452,7 +1452,7 @@ class ReleaseSmokeTest {
         /** How many such dialogs one wait answers, beginning anew, before it no longer waits longer for them. */
         const val ANSWERED_DIALOGS = 5
         /** The library's tab of the recipes written on this device. */
-        const val WRITTEN_HERE = "Written here"
+        const val WRITTEN_HERE = "My recipes"
         const val EDIT = "Edit"
         /** The card's two tabs. */
         const val VIEW = "View"

@@ -67,7 +67,8 @@ class LibraryScreenTest {
     private val book = TestBook(context)
     private val database = book.database
     private val recipes = RecipeRepository(ActiveBook(BookName.Pool, database))
-    private val session = LibrarySession(SavedStateHandle())
+    // These tests begin on the marked recipes; the book opens on the own ones the first time (v0.38).
+    private val session = LibrarySession(SavedStateHandle()).apply { choose(LibraryView.MARKED) }
     private val now = Instant.parse("2026-09-29T12:00:00Z")
 
     /** What the reader reads on the screen, in one language. */
@@ -254,14 +255,15 @@ class LibraryScreenTest {
         assertEquals("Written with no account", spoken(written).first())
     }
 
-    // FLOW-034 (6): a session in which no view was chosen opens on the marked recipes.
+    // FLOW-034 (6), v0.38: a session in which no view was chosen opens on the reader's own recipes, "My recipes".
     @Test
-    fun aSessionWithNoChoiceOpensOnTheMarkedRecipes() {
+    fun aSessionWithNoChoiceOpensOnTheOwnRecipes() {
         own("Own", RecipeState.PUBLISHED)
-        show()
-        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).assertIsSelected()
-        compose.onNodeWithTag(LibraryTags.MARKED_LIST).assertExists()
-        compose.onNodeWithTag(LibraryTags.OWN_LIST).assertDoesNotExist()
+        mark("Someone's pie")
+        compose.setContent { MaterialTheme { AppNavHost(LibrarySession(SavedStateHandle()), recipes) } }
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.OWN_LIST), PATIENCE_MS)
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).assertIsSelected()
+        compose.onNodeWithTag(LibraryTags.MARKED_LIST).assertDoesNotExist()
     }
 
     // FLOW-034 (3 of the task: leaving the section and returning in one session keeps the view).

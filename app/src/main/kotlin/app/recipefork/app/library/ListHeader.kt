@@ -115,8 +115,9 @@ private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lower
  * "All filters" opens the sheet of every filter. The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
  * they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)); the tags they [carries]
  * most are offered as quick filters; the sheet's equipment section is My [kitchen]'s ([SheetKitchen]), left out while
- * it is not known yet. It stands at the top of its view's page, under the tabs, and never
- * scrolls with the list.
+ * it is not known yet. It stands at the top of its view's page, under the tabs, and scrolls away as the list goes down
+ * and back as it goes up ([ScrollAwayHeader]). While the book's selection is on it is not [enabled]: nothing in it
+ * responds (v0.38).
  */
 @Composable
 internal fun ListHeader(
@@ -131,6 +132,7 @@ internal fun ListHeader(
     carries: Map<String, List<Long>> = emptyMap(),
     kitchen: SheetKitchen? = null,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
@@ -142,6 +144,7 @@ internal fun ListHeader(
             OutlinedTextField(
                 value = search.value,
                 onValueChange = search::type,
+                enabled = enabled,
                 singleLine = true,
                 // A short label on one line, which the field keeps room for above its outline when it rises there; the
                 // longer words stand inside as its placeholder, cut short where they do not fit.
@@ -168,6 +171,7 @@ internal fun ListHeader(
                             stringResource(R.string.library_search_clear),
                             LibraryTags.SEARCH_CLEAR,
                             onClick = search::clear,
+                            enabled = enabled,
                         )
                     }
                 },
@@ -175,9 +179,9 @@ internal fun ListHeader(
                 keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
                 modifier = Modifier.weight(1f).testTag(LibraryTags.SEARCH),
             )
-            OrderChoice(order, onOrder)
+            OrderChoice(order, onOrder, enabled)
         }
-        QuickFilters(filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true })
+        QuickFilters(filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true }, enabled = enabled)
     }
     if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, kitchen, onClose = { sheetOpen = false })
 }
@@ -187,7 +191,7 @@ internal fun ListHeader(
  * of the three orders, the one in force selected.
  */
 @Composable
-private fun OrderChoice(order: BookOrder, onOrder: (BookOrder) -> Unit) {
+private fun OrderChoice(order: BookOrder, onOrder: (BookOrder) -> Unit, enabled: Boolean = true) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         BlockAction(
@@ -196,6 +200,7 @@ private fun OrderChoice(order: BookOrder, onOrder: (BookOrder) -> Unit) {
             LibraryTags.ORDER,
             onClick = { expanded = !expanded },
             action = stringResource(R.string.library_order_action),
+            enabled = enabled,
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             BookOrder.entries.forEach { choice ->
@@ -326,6 +331,7 @@ private fun QuickFilters(
     languages: List<BookLanguage>,
     carries: Map<String, List<Long>>,
     onAll: () -> Unit,
+    enabled: Boolean = true,
 ) {
     val popular = remember(carries, filters.tags) { mostUsedTags(carries, filters.tags) }
     val needsIngredients = filters.ingredient != null
@@ -340,6 +346,7 @@ private fun QuickFilters(
     ) {
         AssistChip(
             onClick = onAll,
+            enabled = enabled,
             label = { Text(stringResource(R.string.library_filter_add)) },
             leadingIcon = {
                 Icon(painterResource(R.drawable.ic_filter), contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize))
@@ -349,37 +356,38 @@ private fun QuickFilters(
         filters.ingredient?.let { id ->
             val name = choices.ingredients?.firstOrNull { it.id == id }?.label(language)
                 ?: stringResource(R.string.library_filter_unknown_ingredient)
-            FilterOn(name, LibraryTags.INGREDIENT_FILTER) { onFilters(filters.copy(ingredient = null)) }
+            FilterOn(name, LibraryTags.INGREDIENT_FILTER, enabled) { onFilters(filters.copy(ingredient = null)) }
         }
         filters.tags.sorted().forEach { id ->
             val name = choices.tags?.firstOrNull { it.id == id }?.label(language)
                 ?: stringResource(R.string.library_filter_unknown_tag)
-            FilterOn(name, LibraryTags.tagFilter(id)) { onFilters(filters.toggled(id)) }
+            FilterOn(name, LibraryTags.tagFilter(id), enabled) { onFilters(filters.toggled(id)) }
         }
         filters.language?.let { chosen ->
-            FilterOn(stringResource(languageChipLabel(chosen)), LibraryTags.LANGUAGE_FILTER) { onFilters(filters.copy(language = null)) }
+            FilterOn(stringResource(languageChipLabel(chosen)), LibraryTags.LANGUAGE_FILTER, enabled) { onFilters(filters.copy(language = null)) }
         }
         if (filters.equipment) {
-            FilterOn(stringResource(R.string.library_filter_equipment_enough), LibraryTags.EQUIPMENT_FILTER) {
+            FilterOn(stringResource(R.string.library_filter_equipment_enough), LibraryTags.EQUIPMENT_FILTER, enabled) {
                 onFilters(filters.copy(equipment = false))
             }
         }
         if (filters.any) {
             TextButton(
                 onClick = { onFilters(BookFilters()) },
+                enabled = enabled,
                 modifier = Modifier.heightIn(min = 48.dp).testTag(LibraryTags.FILTERS_CLEAR),
             ) { Text(stringResource(R.string.library_filter_clear)) }
         }
         if (languages.size > 1) {
             languages.filter { it != filters.language }.forEach { offer ->
-                FilterOffer(stringResource(languageChipLabel(offer)), LibraryTags.languageOffer(offer)) {
+                FilterOffer(stringResource(languageChipLabel(offer)), LibraryTags.languageOffer(offer), enabled) {
                     onFilters(filters.copy(language = offer))
                 }
             }
         }
         val known = choices.tags.orEmpty().associateBy { it.id }
         popular.mapNotNull { known[it] }.take(QUICK_TAGS).forEach { tag ->
-            FilterOffer(tag.label(language), LibraryTags.tagOffer(tag.id)) { onFilters(filters.toggled(tag.id)) }
+            FilterOffer(tag.label(language), LibraryTags.tagOffer(tag.id), enabled) { onFilters(filters.toggled(tag.id)) }
         }
     }
 }
@@ -390,10 +398,11 @@ private fun languageChipLabel(language: BookLanguage): Int =
 
 /** A filter in force, named and selected; tapping it removes it. */
 @Composable
-private fun FilterOn(name: String, tag: String, onRemove: () -> Unit) {
+private fun FilterOn(name: String, tag: String, enabled: Boolean, onRemove: () -> Unit) {
     FilterChip(
         selected = true,
         onClick = onRemove,
+        enabled = enabled,
         label = { Text(name) },
         trailingIcon = {
             Icon(
@@ -416,6 +425,6 @@ private fun Modifier.chipTarget(tag: String): Modifier =
 
 /** A filter offered, not selected; tapping it applies it. */
 @Composable
-private fun FilterOffer(name: String, tag: String, onApply: () -> Unit) {
-    FilterChip(selected = false, onClick = onApply, label = { Text(name) }, modifier = Modifier.chipTarget(tag))
+private fun FilterOffer(name: String, tag: String, enabled: Boolean, onApply: () -> Unit) {
+    FilterChip(selected = false, onClick = onApply, enabled = enabled, label = { Text(name) }, modifier = Modifier.chipTarget(tag))
 }

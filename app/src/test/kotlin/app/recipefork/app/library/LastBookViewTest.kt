@@ -12,8 +12,8 @@ import org.junit.runner.RunWith
 
 /**
  * Scenario 8: the view of the book last shown is kept on the device, and a new session — a task started anew, with no
- * saved state — opens on it; the first one ever opens on the marked recipes. A session restored from saved state shows
- * the view it saved.
+ * saved state — opens on it; the first one ever opens on the reader's own recipes, "My recipes" (v0.38). A session
+ * restored from saved state shows the view it saved.
  */
 @RunWith(AndroidJUnit4::class)
 class LastBookViewTest {
@@ -23,7 +23,14 @@ class LastBookViewTest {
     private fun newSession() = LibrarySession(SavedStateHandle(), PreferencesLastBookView(context))
 
     @Test
-    fun theFirstSessionOpensOnTheMarkedRecipes() {
+    fun theFirstSessionOpensOnTheOwnRecipes() {
+        assertEquals(LibraryView.OWN, newSession().view.value)
+    }
+
+    // A view remembered still wins over the first one.
+    @Test
+    fun aRememberedViewWinsOverTheFirst() {
+        newSession().choose(LibraryView.MARKED)
         assertEquals(LibraryView.MARKED, newSession().view.value)
     }
 
@@ -59,9 +66,9 @@ class LastBookViewTest {
     fun whatTheDeviceHoldsThatNamesNoViewReadsAsNone() {
         context.getSharedPreferences(PreferencesLastBookView.FILE, Context.MODE_PRIVATE).edit()
             .putString(PreferencesLastBookView.KEY, "SOMETHING_ELSE").commit()
-        assertEquals(LibraryView.MARKED, newSession().view.value)
+        assertEquals(LibraryView.OWN, newSession().view.value)
         context.getSharedPreferences(PreferencesLastBookView.FILE, Context.MODE_PRIVATE).edit()
             .putInt(PreferencesLastBookView.KEY, 3).commit()
-        assertEquals(LibraryView.MARKED, newSession().view.value)
+        assertEquals(LibraryView.OWN, newSession().view.value)
     }
 }

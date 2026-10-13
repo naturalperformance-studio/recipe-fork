@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
  * One action of a block as an icon, 48 by 48 dp (A11Y-003): the screen reader speaks its [label], which names the
  * block (A11Y-005), and a long press shows the same [label] in a tooltip, so its meaning is never left to the icon
  * alone. A click is announced as [action] when given. A [destructive] action — a removal — is drawn in the error colour.
+ * One not [enabled] does not respond to a click, and is drawn dimmed as Material draws a disabled icon button.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -42,6 +43,7 @@ internal fun BlockAction(
     modifier: Modifier = Modifier,
     action: String? = null,
     destructive: Boolean = false,
+    enabled: Boolean = true,
 ) {
     val tooltip = rememberTooltipState()
     val scope = rememberCoroutineScope()
@@ -58,6 +60,7 @@ internal fun BlockAction(
                 .size(48.dp)
                 .clip(CircleShape)
                 .combinedClickable(
+                    enabled = enabled,
                     role = Role.Button,
                     onClickLabel = action,
                     onClick = onClick,
@@ -66,7 +69,12 @@ internal fun BlockAction(
                 .testTag(tag),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(icon), contentDescription = label, tint = if (destructive) MaterialTheme.colorScheme.error else LocalContentColor.current)
+            val tint = if (destructive) MaterialTheme.colorScheme.error else LocalContentColor.current
+            // Not enabled, it is drawn as Material draws a disabled icon button.
+            Icon(painterResource(icon), contentDescription = label, tint = if (enabled) tint else tint.copy(alpha = DISABLED_ALPHA))
         }
     }
 }
+
+/** How opaque Material draws the content of a disabled control. */
+private const val DISABLED_ALPHA = 0.38f
