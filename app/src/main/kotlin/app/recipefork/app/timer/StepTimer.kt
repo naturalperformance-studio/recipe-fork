@@ -171,9 +171,28 @@ class RecipeTimers internal constructor(
 
     internal fun rings(key: TimerKey): Boolean = key in ringing
 
-    /** Cancels the timer of [key], one of this recipe's; the other timers of its step run on. */
-    internal fun cancel(key: TimerKey) {
-        card.scope.launch { card.turns.withLock { store.cancel(key) } }
+    /**
+     * Cancels the timer of [key], one of this recipe's; the other timers of its step run on. Where it was running, the
+     * card is told ([onCancelled]) with what puts it back as it was — [restore] — for its Undo.
+     */
+    internal fun cancel(key: TimerKey, onCancelled: (undo: () -> Unit) -> Unit = {}) {
+        card.scope.launch {
+            card.turns.withLock {
+                val was = store.get(key)
+                store.cancel(key)
+                if (was != null && !was.hasEnded(store.clock.now())) {
+                    withContext(Dispatchers.Main) { onCancelled { restore(was) } }
+                }
+            }
+        }
+    }
+
+    /**
+     * Puts back [timer], cancelled while it ran, with the same end: running on, or ringing where that end has passed
+     * meanwhile. Nothing where the reader has started it again since.
+     */
+    internal fun restore(timer: RunningTimer) {
+        card.scope.launch { card.turns.withLock { store.restore(timer) } }
     }
 
     /**
@@ -245,18 +264,34 @@ internal data class Restart(val step: Step, val index: Int, val name: String)
 /**
  * The name the timer at [index] of [step] reads by on the card: told apart, where it shares its name with the step's
  * other timers, by its number (DOM-024). While it is held, the name and the number it started with, as its
- * notification and the bar read them; otherwise [current], its name as the step reads now, and its number there.
+ * notification and the bar read them; otherwise [current], its name as the step reads now, and its number there. A name
+ * derived from the step is shown short ([TimerName.short]): the step's first words, the notification keeping the rest.
  */
 @Composable
 internal fun shownName(step: Step, index: Int, held: RunningTimer?, current: String): String =
-    shownName(LocalResources.current, step, index, held, current)
+    shownName(LocalResources.current, step, index, held, current, short = true)
 
-/** [shownName] read from [resources], off the screen: a printed step names its timers so (FLOW-075). */
-internal fun shownName(resources: Resources, step: Step, index: Int, held: RunningTimer?, current: String): String {
-    val name = held?.name ?: current
+/**
+ * [shownName] read from [resources], off the screen: a printed step names its timers so (FLOW-075), whole unless
+ * [short].
+ */
+internal fun shownName(
+    resources: Resources,
+    step: Step,
+    index: Int,
+    held: RunningTimer?,
+    current: String,
+    short: Boolean = false,
+): String {
+    // A held timer's name is derived where it was started with what it was read from; a given one is held without.
+    val derived = if (held != null) held.source != null else step.timers.getOrNull(index)?.label == null
+    val name = (held?.name ?: current).let { if (short && derived) TimerName.short(it) else it }
     val number = if (held != null) held.number else TimerName.number(step, index)
     return number?.let { resources.getString(R.string.timer_numbered, name, it) } ?: name
 }
+
+/** What the card does once a running timer is cancelled: says so, offering the Undo given. Nothing where none listens. */
+val LocalTimerCancelled = staticCompositionLocalOf<(undo: () -> Unit) -> Unit> { {} }
 
 /**
  * The timer at [index] of [step] on the card (FLOW-016), apart from the step's other timers (DOM-024): a [TimerButton]
@@ -291,6 +326,7 @@ fun StepTimer(
         else -> remainingText(held.remaining(now))
     }
     val running = held != null && !finished
+    val cancelled = LocalTimerCancelled.current
     // The control first, then its actions beside it where they fit; where they do not — a long name, a large font, a
     // narrow screen — the actions go under it at its end, and the status under the name, each whole (A11Y-004).
     BesideOrUnder(
@@ -346,7 +382,7 @@ fun StepTimer(
                         icon = R.drawable.ic_remove_timer,
                         action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
                         tag = TimerTags.cancel(step.position, index),
-                        onClick = { timers.cancel(key) },
+                        onClick = { timers.cancel(key, cancelled) },
                         onHighlight = onHighlight,
                     ) { Text(stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel)) }
                 }

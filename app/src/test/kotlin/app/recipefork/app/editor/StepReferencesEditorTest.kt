@@ -441,10 +441,9 @@ class StepReferencesEditorTest {
         assertFalse(compose.onNodeWithTag(StepSheetTags.text(0), useUnmergedTree = true).fetchSemanticsNode().config.contains(SemanticsActions.SetText))
         assertFalse(compose.onAllNodes(hasTestTag(EditorTags.stepInsert(0)), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         assertFalse(compose.onAllNodes(hasTestTag(EditorTags.stepText(0)), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
-        // The timer's line names it as the card does: each reference held together with no-break spaces.
-        val timer = compose.rowText(StepSheetTags.timer(0, 0))
-        assertTrue(timer, timer.replace('\u00A0', ' ').contains(text))
-        assertTrue(timer, timer.endsWith(" · 5 мин"))
+        // The timer's line names it as the card does (v0.38): the step's first words, each reference held together with
+        // no-break spaces and never cut inside — the milk's, across the cut, is left out whole.
+        assertEquals("Всыпьте 200\u00A0г муки,… · 5 мин", compose.rowText(StepSheetTags.timer(0, 0)))
     }
 
     // FLOW-016 (8) at the authored scale: the derived timer name reads a reference as the editor shows it.

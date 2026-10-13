@@ -70,6 +70,8 @@ class ContrastTest {
         text("the book's top bar — its title and menu — with a list scrolled under it", c.onSurface, c.surfaceContainer),
         text("the chosen tab — the book's view, the card's View or Cooking", c.primary, c.surface),
         text("a tab not chosen — the book's view, the card's View or Cooking", c.onSurfaceVariant, c.surface),
+        text("the card's chosen tab with the recipe scrolled under the bar, on the bar's scrolled colour", c.primary, c.surfaceContainer),
+        text("the card's tab not chosen with the recipe scrolled under the bar, on the bar's scrolled colour", c.onSurfaceVariant, c.surfaceContainer),
         text("a view's floating action — its words and icon; the card's current step on Cooking, on its container", c.onPrimaryContainer, c.primaryContainer),
         text("the arrow after a rounded reference in the card's current step, and the step's author's note, on its container", c.onSurfaceVariant, c.primaryContainer),
         text("My kitchen opened from a recipe — the row of its item, its name and \"Needed for the recipe\", on the primary container", c.onPrimaryContainer, c.primaryContainer),

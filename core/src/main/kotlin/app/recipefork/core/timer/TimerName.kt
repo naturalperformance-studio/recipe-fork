@@ -18,6 +18,9 @@ object TimerName {
     /** The mark that ends a derived name cut short. */
     const val ELLIPSIS = "…"
 
+    /** How many characters of a derived name a screen shows ([short]): the notification keeps [LENGTH]. */
+    const val SHORT_LENGTH = 24
+
     /**
      * The name derived from [stepText]: its whole text where it is [LENGTH] characters or fewer, with nothing marking
      * it (FLOW-016 (4)); otherwise its first [LENGTH] characters, cut back to the last space within them where the cut
@@ -41,7 +44,35 @@ object TimerName {
      * cut, whether a reference stands within the step's first [LENGTH] characters — which a reader's larger count can
      * lengthen past the cut — and whether one stands within the name as shown.
      */
-    fun reading(runs: List<StepRun>): Reading {
+    fun reading(runs: List<StepRun>): Reading = reading(runs, LENGTH)
+
+    /**
+     * A derived [name] as a screen shows it, where a line or a button has no room for a notification's [LENGTH]
+     * characters: cut as [derived] cuts, to [SHORT_LENGTH] characters — at a word, with an ellipsis, a character
+     * outside the basic plane counting once. A reference is one unit here too: in a name each reference holds its
+     * spaces as no-break spaces ([StepText.unbreakable]), so whatever such spaces join is never cut inside. A name of
+     * [SHORT_LENGTH] characters or fewer is shown whole. Only a derived name is shortened: a given one is the author's.
+     */
+    fun short(name: String): String = reading(unitsOf(name), SHORT_LENGTH).name
+
+    /** [name] as runs: each group of characters joined by no-break spaces a unit of its own, the rest typed text. */
+    private fun unitsOf(name: String): List<StepRun> {
+        val runs = ArrayList<StepRun>()
+        var at = 0
+        for (unit in JOINED.findAll(name)) {
+            if (unit.range.first > at) runs += StepRun.Typed(name.substring(at, unit.range.first))
+            runs += StepRun.Reference(-1, unit.value)
+            at = unit.range.last + 1
+        }
+        if (at < name.length) runs += StepRun.Typed(name.substring(at))
+        return runs
+    }
+
+    /** Characters joined by no-break spaces, as a reference reads within a name. */
+    private val JOINED = Regex("[^\\s\u00A0]+(?:\u00A0+[^\\s\u00A0]+)+")
+
+    /** [reading], cut at [length] characters. */
+    private fun reading(runs: List<StepRun>, length: Int): Reading {
         // The text on one line, with, for every character, the run of the reference it belongs to, or -1.
         val text = StringBuilder()
         val owners = ArrayList<Int>()
@@ -71,12 +102,12 @@ object TimerName {
         val lead = text.indexOfFirst { !it.isWhitespace() }.let { if (it < 0) text.length else it }
         text.delete(0, lead)
         repeat(lead) { owners.removeAt(0) }
-        val length = text.codePointCount(0, text.length)
-        if (length <= LENGTH) {
+        val count = text.codePointCount(0, text.length)
+        if (count <= length) {
             val referenced = owners.any { it != -1 }
             return Reading(text.toString(), cut = false, referenceInOpening = referenced, referenceShown = referenced)
         }
-        val end = text.offsetByCodePoints(0, LENGTH)
+        val end = text.offsetByCodePoints(0, length)
         // The cut stays where the next character is no part of a word (a space, a comma); otherwise back to the last space.
         val cut = if (!isPartOfAWord(Character.codePointAt(text, end))) {
             end

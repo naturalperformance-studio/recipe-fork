@@ -19,6 +19,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.Color
+import app.recipefork.app.timer.LocalTimerCancelled
+import app.recipefork.app.ui.Motion
+import app.recipefork.app.ui.isLargeText
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CornerSize
@@ -402,10 +407,24 @@ fun CardScreen(
     }
     // Where the serving count stands on View, in the root, as laid out — for the floating fork action to keep clear of.
     var servingsShown by remember(recipeId) { mutableStateOf<Rect?>(null) }
+    // So does the title with its summary line under it.
+    var headingShown by remember(recipeId) { mutableStateOf<Rect?>(null) }
+    // A running timer cancelled, on its step or in the bar, is said so with Undo, which puts it back as it was.
+    val timerCancelled = rememberTimerCancelled(snackbars)
     // Where the floating fork action's bottom stands, in the root: above the bar of running timers or the navigation
     // bar, by Material's spacing.
     var forkFloor by remember { mutableFloatStateOf(Float.NaN) }
     var forkHeight by remember { mutableIntStateOf(0) }
+    // The bar and the tabs under it are one surface: the bar's colour, which turns to its scrolled colour as the recipe
+    // scrolls under it, is the tabs' too.
+    val barColors = TopAppBarDefaults.topAppBarColors()
+    val barState = bar.state
+    val scrolledUnder by remember(barState) { derivedStateOf { barState.overlappedFraction > 0.01f } }
+    val barColor by animateColorAsState(
+        if (scrolledUnder) barColors.scrolledContainerColor else barColors.containerColor,
+        Motion.appearing(),
+        label = "bar",
+    )
     Scaffold(
         modifier
             .keepScreenAwake(active = tab == CardMode.COOKING || timing)
@@ -413,7 +432,7 @@ fun CardScreen(
             .nestedScroll(bar.nestedScrollConnection)
             .testTag(CardTags.SCREEN),
         topBar = {
-            Column {
+            Column(Modifier.background(barColor)) {
                 val viewing = tab == CardMode.VIEW
                 TopBar(
                     shown = recipe != null,
@@ -444,12 +463,14 @@ fun CardScreen(
         },
         // Fork floats at the bottom end of View, above the bar of running timers when it shows and above the navigation
         // bar; it shows its word at the top and while the reader scrolls up, and shrinks to its icon while they scroll
-        // down. It never covers the serving count: while the count's row stands where Fork floats — at whatever size it
-        // is drawn — Fork stands aside, and comes back as soon as the reader scrolls the count clear of it.
+        // down; at large text it stays its icon throughout (v0.38), as the book's action does. It never covers the
+        // title, its summary line or the serving count: while one of them stands where Fork floats — at whatever size it
+        // is drawn — Fork stands aside, and comes back as soon as the reader scrolls it clear.
         floatingActionButton = {
             if (recipe != null && tab == CardMode.VIEW) {
                 val viewScroll = scrolls[CardMode.VIEW.ordinal]
                 var expanded by remember(viewScroll) { mutableStateOf(true) }
+                val large = isLargeText()
                 LaunchedEffect(viewScroll) {
                     var last = viewScroll.value
                     snapshotFlow { viewScroll.value }.collect { now ->
@@ -458,18 +479,20 @@ fun CardScreen(
                     }
                 }
                 val least = with(LocalDensity.current) { CardTarget.roundToPx() }
-                val clear = forkClearOf(servingsShown, forkFloor, maxOf(forkHeight, least))
+                val clear = forkClearOf(listOf(headingShown, servingsShown), forkFloor, maxOf(forkHeight, least))
                 AnimatedVisibility(clear, enter = fadeIn() + scaleIn(), exit = fadeOut() + scaleOut()) {
-                    ForkAction(expanded, onFork, Modifier.onSizeChanged { forkHeight = it.height })
+                    ForkAction(expanded && !large, onFork, Modifier.onSizeChanged { forkHeight = it.height })
                 }
             }
         },
         snackbarHost = { CardSnackbarHost(snackbars) },
         bottomBar = {
             timersBar?.let {
-                RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
-                    places.placeOf(CardPlaces.step(position))?.let { step -> scope.launch { scroll.animateScrollTo(step.top) } }
-                })
+                CompositionLocalProvider(LocalTimerCancelled provides timerCancelled) {
+                    RunningTimersBar(it.timers, it.shown, it.number, onShow = { position ->
+                        places.placeOf(CardPlaces.step(position))?.let { step -> scope.launch { scroll.animateScrollTo(step.top) } }
+                    })
+                }
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -508,17 +531,21 @@ fun CardScreen(
                         modifier = Modifier.fillMaxSize().testTag(CardTags.PAGER),
                     ) { page ->
                         val mode = TABS[page]
-                        RecipeContent(
-                            recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
-                            shownAgain, units,
-                            equipmentEntries = equipmentEntries,
-                            kitchen = kitchen,
-                            onOpenKitchen = onOpenKitchen,
-                            onSetUpKitchen = setUpKitchen,
-                            onServingsPlaced = if (mode == CardMode.VIEW) { bounds -> servingsShown = bounds } else null,
-                            // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
-                            bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
-                        ) { if (mode == CardMode.VIEW) titleOut = it }
+                        // A timer cancelled on a step is said in the card's notice, with Undo.
+                        CompositionLocalProvider(LocalTimerCancelled provides timerCancelled) {
+                            RecipeContent(
+                                recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                                shownAgain, units,
+                                equipmentEntries = equipmentEntries,
+                                kitchen = kitchen,
+                                onOpenKitchen = onOpenKitchen,
+                                onSetUpKitchen = setUpKitchen,
+                                onServingsPlaced = if (mode == CardMode.VIEW) { bounds -> servingsShown = bounds } else null,
+                                onHeadingPlaced = if (mode == CardMode.VIEW) { bounds -> headingShown = bounds } else null,
+                                // View leaves room for the floating fork action too, so that the recipe's end scrolls clear of it.
+                                bottom = if (mode == CardMode.VIEW) bottom + FORK_ROOM else bottom,
+                            ) { if (mode == CardMode.VIEW) titleOut = it }
+                        }
                     }
                 }
                 else -> Loading()
@@ -550,6 +577,27 @@ private fun rememberStatement(snackbars: SnackbarHostState): (String) -> Unit {
     }
 }
 
+/**
+ * Says "Timer cancelled" with Undo once the reader cancels a running timer, replacing whatever the card said before;
+ * Undo runs what puts the timer back as it was ([app.recipefork.app.timer.RecipeTimers.restore]). Nothing is left to
+ * make final when the notice goes: the timer is cancelled, and its announcement withdrawn, at the tap.
+ */
+@Composable
+private fun rememberTimerCancelled(snackbars: SnackbarHostState): (undo: () -> Unit) -> Unit {
+    val scope = rememberCoroutineScope()
+    val said = stringResource(R.string.card_timer_cancelled)
+    val undoLabel = stringResource(R.string.card_undo)
+    return remember(scope, snackbars, said, undoLabel) {
+        { undo ->
+            scope.launch {
+                snackbars.currentSnackbarData?.dismiss()
+                val result = snackbars.showSnackbar(said, actionLabel = undoLabel, duration = SnackbarDuration.Long)
+                if (result == SnackbarResult.ActionPerformed) undo()
+            }
+        }
+    }
+}
+
 /** The card's tabs in the order of their tabs and pages: a tab's page is its ordinal. */
 private val TABS = CardMode.entries
 
@@ -561,7 +609,8 @@ private val TABS = CardMode.entries
 @Composable
 private fun CardTabs(pager: PagerState) {
     val scope = rememberCoroutineScope()
-    PrimaryTabRow(selectedTabIndex = pager.currentPage, modifier = Modifier.testTag(CardTags.TABS)) {
+    // On the bar's colour, which the column holding the bar and the tabs draws.
+    PrimaryTabRow(selectedTabIndex = pager.currentPage, containerColor = Color.Transparent, modifier = Modifier.testTag(CardTags.TABS)) {
         TABS.forEach { tab ->
             val viewing = tab == CardMode.VIEW
             val label = stringResource(if (viewing) R.string.card_tab_view else R.string.card_tab_cooking)
@@ -728,16 +777,15 @@ private fun Missing(onBack: () -> Unit) {
 private val FAB_SPACING = 16.dp
 
 /**
- * Whether the floating fork action, [height] tall with its bottom at [floor] in the root, stands clear of the serving
- * count's row as it is shown, [servings] in the root (clipped to the part in sight, empty where the recipe shows no
- * count): their heights do not meet. It sits at the row's end, where the count's − and + are, so whether drawn with its
- * word or as its icon alone it would cover them. Not clear until both are known, so that it never shows over the count
- * for a moment as the card opens.
+ * Whether the floating fork action, [height] tall with its bottom at [floor] in the root, stands clear of each of
+ * [parts] as it is shown in the root — the title with its summary line, the serving count's row — each clipped to the
+ * part in sight, empty where the recipe shows none: their heights do not meet. It sits at their end, where the count's
+ * − and + are and a line's last words, so whether drawn with its word or as its icon alone it would cover them. Not
+ * clear until every part is known, so that it never shows over one for a moment as the card opens.
  */
-internal fun forkClearOf(servings: Rect?, floor: Float, height: Int): Boolean {
-    if (servings == null || floor.isNaN()) return false
-    if (servings.height <= 0f) return true
-    return servings.bottom <= floor - height || servings.top >= floor
+internal fun forkClearOf(parts: List<Rect?>, floor: Float, height: Int): Boolean {
+    if (floor.isNaN() || parts.any { it == null }) return false
+    return parts.filterNotNull().all { part -> part.height <= 0f || part.bottom <= floor - height || part.top >= floor }
 }
 
 /**
@@ -774,7 +822,8 @@ private fun rememberClearMarks(marks: CardMarks?, snackbars: SnackbarHostState):
 
 /**
  * The card's snackbar: one statement at a time, above the floating action and the bar of running timers, read by the
- * screen reader as it comes (the host's live region); its action 48 dp tall at least ([SnackbarAction]).
+ * screen reader as it comes (the host's live region); its action 48 dp tall at least ([SnackbarAction]), and at large
+ * text ([isLargeText]) on a line of its own.
  */
 @Composable
 private fun CardSnackbarHost(snackbars: SnackbarHostState) {
@@ -782,6 +831,8 @@ private fun CardSnackbarHost(snackbars: SnackbarHostState) {
         Snackbar(
             modifier = Modifier.padding(12.dp).testTag(CardTags.SNACKBAR),
             action = data.visuals.actionLabel?.let { label -> { SnackbarAction(label, data::performAction) } },
+            // At large text the action stands on a line of its own, leaving the words the whole width (v0.38).
+            actionOnNewLine = isLargeText(),
         ) { Text(data.visuals.message) }
     }
 }
@@ -844,6 +895,8 @@ private fun TopBar(
                 CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onAddToCollection, onPrint)
             }
         },
+        // On the colour the column holding the bar and the tabs draws: the bar's, turning to its scrolled colour.
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
         scrollBehavior = scrollBehavior,
     )
 }
@@ -936,6 +989,7 @@ private fun RecipeContent(
     onOpenKitchen: ((Long) -> Unit)?,
     onSetUpKitchen: (() -> Unit)?,
     onServingsPlaced: ((Rect) -> Unit)?,
+    onHeadingPlaced: ((Rect) -> Unit)?,
     bottom: Dp,
     onTitleOut: (Boolean) -> Unit,
 ) {
@@ -966,7 +1020,7 @@ private fun RecipeContent(
         ) {
             if (viewing) {
                 Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
-                Column {
+                Column(onHeadingPlaced?.let { placed -> Modifier.onGloballyPositioned { placed(it.boundsInRoot()) } } ?: Modifier) {
                     // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
                     Text(
                         recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },

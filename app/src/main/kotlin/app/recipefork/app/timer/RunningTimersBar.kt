@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.card.CardTarget
 import app.recipefork.app.ui.Motion
+import app.recipefork.core.timer.TimerName
 
 /**
  * The timers of this recipe the bar at the bottom of the card shows: each running, or ringing once ended, whose step is
@@ -207,10 +208,14 @@ private fun MergedLine(
     )
 }
 
-/** [timer]'s name in the bar: its own, or its step's [number] where it has none, told apart by its number. */
+/**
+ * [timer]'s name in the bar: its own, a derived one short as the card shows it ([TimerName.short]), or its step's
+ * [number] where it has none, told apart by its number.
+ */
 @Composable
 private fun barName(timer: RunningTimer, number: Int): String {
-    val name = timer.name.ifBlank { stringResource(R.string.timer_bar_step, number) }
+    val own = if (timer.source != null) TimerName.short(timer.name) else timer.name
+    val name = own.ifBlank { stringResource(R.string.timer_bar_step, number) }
     return timer.number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name
 }
 
@@ -219,6 +224,7 @@ private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers,
     val key = timer.key
     val position = key.stepPosition
     val index = key.index
+    val cancelled = LocalTimerCancelled.current
     // The name first, its time and its control beside it at the end where the name keeps room for its longest word;
     // otherwise the name has the line's whole width and the time and the control stand under it, at the end, so that
     // a name at a large font scale on a narrow phone is never squeezed into breaking inside a word (A11Y-004).
@@ -260,7 +266,7 @@ private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers,
                         icon = R.drawable.ic_remove_timer,
                         action = stringResource(R.string.timer_cancel_action),
                         tag = TimerTags.barCancel(position, index),
-                        onClick = { timers.cancel(key) },
+                        onClick = { timers.cancel(key, cancelled) },
                     ) { Text(stringResource(R.string.timer_cancel)) }
                 }
             }

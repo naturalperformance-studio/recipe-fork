@@ -75,6 +75,7 @@ import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.decodeForDisplay
 import app.recipefork.app.media.stepMedia
 import app.recipefork.app.timer.durationText
+import app.recipefork.app.timer.shownName
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaKind
 import kotlinx.coroutines.CoroutineScope
@@ -375,11 +376,14 @@ private fun StepLine(
     }
 }
 
-/** The timer at [index] of [step] as the card's View writes it, a clock before it: its name and its duration. */
+/**
+ * The timer at [index] of [step] as the card's View writes it, a clock before it: its name — a derived one short, as
+ * the card shows it ([shownName]) — and its duration.
+ */
 @Composable
 private fun StepTimerLine(position: Int, step: Step, index: Int, reading: app.recipefork.core.recipe.ReferenceQuantity) {
     val timer = step.timers.getOrNull(index) ?: return
-    val name = TimerName.of(step, index, reading).orEmpty()
+    val name = shownName(step, index, held = null, current = TimerName.of(step, index, reading).orEmpty())
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(painterResource(R.drawable.ic_step_timer), contentDescription = null, tint = muted, modifier = Modifier.size(18.dp))
