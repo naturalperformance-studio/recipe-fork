@@ -38,7 +38,8 @@ import kotlinx.coroutines.launch
  *   card's does.
  * - [addAllToCollection]: the sheet of the reader's collections and "New collection…" ([ChooseCollectionSheet]); the
  *   collection chosen, or made, takes every one of the recipes it does not hold yet, in their order, at its end, and the
- *   selection ends: "3 recipes added to “Dinner”", or that they were all in it already.
+ *   selection ends: "3 recipes added to “Dinner”", or that they were all in it already, or — they left the book
+ *   meanwhile — that nothing was added.
  * - [addAllToShopping]: every one on the list at the count its card would open with, one listed already keeping its
  *   count, as a collection's "Add all to shopping list" puts them and says so, with Open; the selection ends.
  */
@@ -87,11 +88,16 @@ internal fun rememberBookAdding(
     // Every one of [recipeIds] the collection [id], named [name], does not hold yet goes in at its end.
     fun into(id: CollectionId, name: String, recipeIds: List<String>) {
         scope.launch {
-            val added = attempt { collections.addAll(id, recipeIds.map(::RecipeId)) }
+            val ids = recipeIds.map(::RecipeId)
+            val added = attempt { collections.addAll(id, ids) }
+            // None went in: because it holds them all already, or because they left the book meanwhile.
+            val allThere = added == 0 && attempt { collections.get(id)?.recipes?.containsAll(ids) } == true
             say(
                 when {
                     added == null -> resources.getString(R.string.collection_sheet_change_failed)
-                    added == 0 -> resources.getQuantityString(R.plurals.library_all_in_collection, recipeIds.size, recipeIds.size, name)
+                    allThere && ids.size == 1 -> resources.getString(R.string.library_one_in_collection, name)
+                    allThere -> resources.getString(R.string.library_all_in_collection, name)
+                    added == 0 -> resources.getString(R.string.library_none_added_to_collection, name)
                     else -> resources.getQuantityString(R.plurals.library_added_to_collection, added, added, name)
                 },
             )

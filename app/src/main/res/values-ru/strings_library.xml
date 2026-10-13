@@ -141,11 +141,8 @@
         <item quantity="many">%1$d рецептов добавлено в «%2$s»</item>
         <item quantity="other">%1$d рецепта добавлено в «%2$s»</item>
     </plurals>
-    <plurals name="library_all_in_collection">
-        <item quantity="one">Рецепт уже в «%2$s»</item>
-        <item quantity="few">Все эти рецепты уже в «%2$s»</item>
-        <item quantity="many">Все эти рецепты уже в «%2$s»</item>
-        <item quantity="other">Все эти рецепты уже в «%2$s»</item>
-    </plurals>
+    <string name="library_one_in_collection">Рецепт уже в «%1$s»</string>
+    <string name="library_all_in_collection">Все эти рецепты уже в «%1$s»</string>
+    <string name="library_none_added_to_collection">В «%1$s» ничего не добавлено</string>
     <string name="library_shopping_unread">Не удалось прочитать рецепт, ничего не добавлено</string>
 </resources>

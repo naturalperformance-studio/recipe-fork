@@ -239,17 +239,17 @@ class DeleteRecipeTest {
             val whole = entry.width - with(compose.density) { 32.dp.toPx() }
             assertFalse("${recipe.state} shows its offer outside a menu", exists(LibraryTags.delete(recipe.id.value)))
             if (recipe.state in setOf(RecipeState.LOCAL, RecipeState.PRIVATE, RecipeState.REJECTED)) {
-                assertTrue("${recipe.state} has no menu", exists(LibraryTags.actions(recipe.id.value)))
+                assertTrue("${recipe.state} should carry a menu", exists(LibraryTags.actions(recipe.id.value)))
                 assertTrue("${recipe.state} keeps room for its menu", room < whole - 1f)
                 compose.openEntryMenu(recipe.id.value)
-                assertTrue("${recipe.state} offers no deletion", exists(LibraryTags.delete(recipe.id.value)))
+                assertTrue("${recipe.state} should offer deletion", exists(LibraryTags.delete(recipe.id.value)))
                 assertEquals(listOf("Delete"), compose.textsOf(LibraryTags.delete(recipe.id.value)))
                 compose.closeEntryMenu(recipe.id.value)
             } else {
                 // Its menu holds the adding items alone (T-263), no deletion.
-                assertTrue("${recipe.state} has no menu", exists(LibraryTags.actions(recipe.id.value)))
+                assertTrue("${recipe.state} should carry a menu", exists(LibraryTags.actions(recipe.id.value)))
                 compose.openEntryMenu(recipe.id.value)
-                assertFalse("${recipe.state} offers deletion", exists(LibraryTags.delete(recipe.id.value)))
+                assertFalse("${recipe.state} should offer no deletion", exists(LibraryTags.delete(recipe.id.value)))
                 compose.closeEntryMenu(recipe.id.value)
             }
         }

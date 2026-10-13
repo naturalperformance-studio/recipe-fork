@@ -316,6 +316,28 @@ class BookAddingTest {
         assertEquals(listOf(pie.id, soup.id), members(CollectionId(made.collectionId)))
     }
 
+    // Recipes chosen that left the book while the sheet was open cannot go in: the notice says nothing was added, not
+    // that they are in the collection already.
+    @Test
+    fun recipesGoneMeanwhileAreNotSaidToBeInTheCollection() {
+        val soup = own("Soup", minutesAgo = 1)
+        val pie = own("Pie")
+        show(LibraryView.OWN)
+        choose(soup, pie)
+        openChooser()
+        runBlocking { listOf(soup, pie).forEach { recipes.take(it.id) } }
+
+        compose.onNodeWithTag(AddToCollectionTags.NEW).performClick()
+        await(AddToCollectionTags.NAME)
+        compose.onNodeWithTag(AddToCollectionTags.NAME).performTextInput("Weekend")
+        compose.onNodeWithTag(AddToCollectionTags.CREATE).performClick()
+
+        awaitNotice("Nothing was added to “Weekend”")
+        val made = runBlocking { collections.listed(CollectionOrigin.OWN).first() }.single()
+        assertEquals(emptyList<RecipeId>(), members(CollectionId(made.collectionId)))
+        assertEquals(0, compose.onAllNodes(hasText("already", substring = true), useUnmergedTree = true).fetchSemanticsNodes().size)
+    }
+
     // Closed without a choice, the sheet adds nothing and the selection stays.
     @Test
     fun theSheetClosedWithoutAChoiceKeepsTheSelection() {
@@ -538,6 +560,23 @@ class BookAddingTest {
     }
 
     // --- Russian -----------------------------------------------------------------------------------------------------
+
+    // Twenty-one chosen, all in the collection already: said as several — Russian's "one" form also covers 21.
+    @Test
+    @Config(qualifiers = "ru")
+    fun twentyOneAllThereAreSaidAsSeveralInRussian() {
+        val dishes = (1..21).map { own("Блюдо $it", minutesAgo = it.toLong()) }
+        val dinner = collection("Ужин", *dishes.toTypedArray())
+        show(LibraryView.OWN)
+        longPress(dishes.first())
+        compose.awaitAndChoose(LibraryTags.SELECTION_MENU)
+        compose.awaitAndChoose(LibraryTags.SELECT_ALL)
+        compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 21 }
+        openChooser()
+        compose.onNodeWithTag(AddToCollectionTags.choice(dinner.value)).performClick()
+        awaitNotice("Все эти рецепты уже в «Ужин»")
+        assertEquals(dishes.map { it.id }, members(dinner))
+    }
 
     @Test
     @Config(qualifiers = "ru")
