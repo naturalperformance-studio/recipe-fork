@@ -29,6 +29,13 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
         val DEFAULT_DELAY: Duration = 100.milliseconds
 
         /**
+         * How far an animation's frames are read: past the longest a clip may last, its tolerance included
+         * ([VideoLimits.accepts]), so that one longer than a clip may be is read as longer and refused — never cut
+         * short to a length that would be accepted.
+         */
+        val READ_UNTIL: Duration = VideoLimits.MAX_DURATION + VideoLimits.TOLERANCE
+
+        /**
          * The most pixels an animation's canvas may have: a 4K frame's. Every frame is composed on a canvas this
          * large, and a hostile file may state any size its container can hold — 65535 pixels a side for a GIF.
          */
@@ -48,7 +55,7 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
          * is never read past its signature — and only up to [maxBytes]: a file larger than that is no animation.
          * Null as [parse].
          */
-        fun read(input: InputStream, maxBytes: Int = MAX_BYTES, longest: Duration = VideoLimits.MAX_DURATION): AnimatedImage? =
+        fun read(input: InputStream, maxBytes: Int = MAX_BYTES, longest: Duration = READ_UNTIL): AnimatedImage? =
             (examine(input, maxBytes, longest) as? ImageKind.Animated)?.animation
 
         /**
@@ -59,7 +66,7 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
         fun examine(
             input: InputStream,
             maxBytes: Int = MAX_BYTES,
-            longest: Duration = VideoLimits.MAX_DURATION,
+            longest: Duration = READ_UNTIL,
             states: Long? = null,
         ): ImageKind {
             val signature = ByteArray(SIGNATURE_BYTES)
@@ -90,7 +97,7 @@ class AnimatedImage(val width: Int, val height: Int, val frames: List<AnimationF
          * Its frames are read until their delays pass [longest]: what lasts longer than a clip may is not read to the
          * end, however many frames it holds.
          */
-        fun parse(bytes: ByteArray, longest: Duration = VideoLimits.MAX_DURATION): AnimatedImage? {
+        fun parse(bytes: ByteArray, longest: Duration = READ_UNTIL): AnimatedImage? {
             val frames = Frames(longest)
             val image = when {
                 Gif.matches(bytes, bytes.size) -> Gif.parse(bytes, frames)
