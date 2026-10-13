@@ -48,7 +48,7 @@ import java.time.Instant
 
 /**
  * The book's entries keep their actions in a menu at the end of the title line, from the top: "Add to collection" and
- * "Add to shopping list" (v0.37, T-263), then an own entry's Export (serverless build only) and Delete (where offered), a
+ * "Add to shopping list" (v0.37, T-263), Print and Share as PDF (T-264), then an own entry's Export (serverless build only) and Delete (where offered), a
  * found entry's Export (serverless build only) and Remove. Nothing stands under an entry, and an entry with no action —
  * one marked whose content the book does not hold — carries no menu. The ⋮ is 48 dp, named by the recipe it acts on, and shows
  * that name in a tooltip on a long press. Each test passes the mode it is about.
@@ -112,13 +112,27 @@ class EntryMenuTest {
     private fun dp(value: Float) = with(compose.density) { value.dp.toPx() }
 
     private fun items(id: String) =
-        listOf(LibraryTags.addToCollection(id), LibraryTags.addToShopping(id), LibraryTags.export(id), LibraryTags.delete(id), LibraryTags.remove(id))
+        listOf(
+            LibraryTags.addToCollection(id), LibraryTags.addToShopping(id), LibraryTags.print(id), LibraryTags.sharePdf(id),
+            LibraryTags.export(id), LibraryTags.delete(id), LibraryTags.remove(id),
+        )
 
-    /** The two items every entry with content offers first (T-263), as they read in English. */
-    private fun adding(id: String, collection: String = "Add to collection", shopping: String = "Add to shopping list") =
-        listOf(LibraryTags.addToCollection(id) to collection, LibraryTags.addToShopping(id) to shopping)
+    /**
+     * The four items every entry with content offers first, in both builds, as they read in English: the adding ones
+     * (T-263), then Print and Share as PDF (T-264).
+     */
+    private fun adding(
+        id: String,
+        collection: String = "Add to collection",
+        shopping: String = "Add to shopping list",
+        print: String = "Print",
+        pdf: String = "Share as PDF",
+    ) = listOf(
+        LibraryTags.addToCollection(id) to collection, LibraryTags.addToShopping(id) to shopping,
+        LibraryTags.print(id) to print, LibraryTags.sharePdf(id) to pdf,
+    )
 
-    private fun addingRu(id: String) = adding(id, "Добавить в коллекцию", "Добавить в список покупок")
+    private fun addingRu(id: String) = adding(id, "Добавить в коллекцию", "Добавить в список покупок", "Печать", "Поделиться PDF")
 
     /**
      * The entry of [id] carries a menu, 48 dp, at its card's end beside its text, and no offer stands outside it; opened,

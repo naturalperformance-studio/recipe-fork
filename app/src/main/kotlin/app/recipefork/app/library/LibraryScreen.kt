@@ -133,6 +133,7 @@ import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.kitchen.KitchenEnvironment
 import app.recipefork.app.kitchen.rememberKitchenEnvironment
+import app.recipefork.app.print.PrintWay
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.app.recipe.ListingParams
@@ -225,6 +226,7 @@ fun LibraryScreen(
     RemovalNotice(session, snackbars)
     CollectionDeletionNotice(session, collections, snackbars)
     val adding = rememberBookAdding(session, recipes, card, collections, snackbars, onOpenShopping)
+    val printing = rememberBookPrinting(session, recipes, card, snackbars)
     val work by session.work.collectAsState()
     val selection by session.selection.collectAsState()
     // What each view lists, as the selection sees it: what "Select all" chooses and what an action applies to.
@@ -243,7 +245,7 @@ fun LibraryScreen(
                 if (chosen != null) {
                     SelectionBar(
                         chosen.count,
-                        selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding),
+                        selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding, printing),
                         onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
                         onClose = session::endSelection,
                     )
@@ -327,22 +329,25 @@ fun LibraryScreen(
             when (VIEWS[page]) {
                 LibraryView.MARKED -> MarkedList(
                     recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags, bookKitchen,
-                    markedList, bottom, import, notice, adding, onOffer = { offers[LibraryView.MARKED] = it },
+                    markedList, bottom, import, notice, adding, printing, onOffer = { offers[LibraryView.MARKED] = it },
                     collections = rememberListed(collections, CollectionOrigin.IMPORTED),
                     selection = selection?.takeIf { it.view == LibraryView.MARKED },
                     onListed = { if (selectables[LibraryView.MARKED] != it) selectables[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
-                    ownList, bottom, notice, write, adding, onOffer = { offers[LibraryView.OWN] = it },
+                    ownList, bottom, notice, write, adding, printing, onOffer = { offers[LibraryView.OWN] = it },
                     collections = rememberListed(collections, CollectionOrigin.OWN),
                     selection = selection?.takeIf { it.view == LibraryView.OWN },
                     onListed = { if (selectables[LibraryView.OWN] != it) selectables[LibraryView.OWN] = it },
                 )
             }
         }
-        // A file being imported or exported shows its progress over the top of the list, shifting nothing.
-        work?.let { FileProgress(it, Modifier.padding(top = padding.calculateTopPadding())) }
+        // A file being imported or exported shows its progress over the top of the list, shifting nothing; so does a
+        // document being made to print or share.
+        val progressAt = Modifier.padding(top = padding.calculateTopPadding())
+        val file = work
+        if (file != null) FileProgress(file, progressAt) else if (printing.busy) PrintProgress(progressAt)
     }
 }
 
@@ -474,9 +479,12 @@ private fun ListedForSelection(view: LibraryView, session: LibrarySession, liste
 
 /**
  * The actions of the selection's bar on the recipes [selection] chose of [listed], in this order: "Add to collection" and
- * "Add to shopping list" ([adding]), on those the book holds the content of, in the order they were chosen; then Delete in
+ * "Add to shopping list" ([adding]), on those the book holds the content of, in the order they were chosen; then Print
+ * and Share as PDF ([printing]) of those, in the order the view lists them, as one document; then Delete in
  * the own view, Remove in the marked one, offered while it applies to one of them at least, and taking only those it
- * applies to — at once, asking nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection.
+ * applies to — at once, asking nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection;
+ * Print and Share as PDF end it once they have run to their end, the document handed over or its failure said, if it
+ * is still the selection on.
  */
 private fun selectionActions(
     selection: BookSelection,
@@ -487,6 +495,7 @@ private fun selectionActions(
     timers: CardTimers,
     marks: DoneMarks,
     adding: BookAdding,
+    printing: BookPrinting,
 ): List<SelectionAction> {
     val chosen = listed.filter { it.recipeId in selection.ids }
     val removable = chosen.filter { it.removable }.map { RecipeId(it.recipeId) }
@@ -501,8 +510,11 @@ private fun selectionActions(
             add(SelectionAction(R.string.shopping_add, LibraryTags.SELECTION_ADD_TO_SHOPPING, R.drawable.ic_add_shopping) {
                 adding.addAllToShopping(held)
             })
+            // In the order the view lists them.
+            val shown = chosen.filter { it.holds }.map { it.recipeId }
+            add(SelectionAction(R.string.print_menu_print, LibraryTags.SELECTION_PRINT) { printing.all(shown, PrintWay.PRINT) })
+            add(SelectionAction(R.string.print_menu_share, LibraryTags.SELECTION_SHARE_PDF) { printing.all(shown, PrintWay.SHARE) })
         }
-        // Print and Save as PDF come here (T-264).
         if (removable.isNotEmpty()) {
             val own = selection.view == LibraryView.OWN
             add(
@@ -717,6 +729,7 @@ private fun OwnList(
     reveal: String?,
     onWrite: () -> Unit,
     adding: BookAdding,
+    printing: BookPrinting,
     onOffer: (Boolean) -> Unit,
     collections: List<CollectionRow> = emptyList(),
     selection: BookSelection? = null,
@@ -805,6 +818,7 @@ private fun OwnList(
                         onDelete = { deleteRecipe(recipes, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
                         adding = adding,
+                        printing = printing,
                         selected = selection?.let { row.recipeId in it.ids },
                         onSelect = { session.select(LibraryView.OWN, row.recipeId) },
                     )
@@ -850,9 +864,9 @@ private fun rememberWrite(recipes: RecipeRepository, session: LibrarySession, ed
 
 /**
  * An own recipe's entry, a card; tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the
- * end of its title line, from the top ([entryActions]): "Add to collection" and "Add to shopping list" ([adding]), in
- * [Mode.Serverless] the export of every recipe (FLOW-063), and deletion for a recipe its owner may delete (FLOW-053 (1),
- * ST-010).
+ * end of its title line, from the top ([entryActions]): "Add to collection" and "Add to shopping list" ([adding]), Print
+ * and Share as PDF ([printing]), in [Mode.Serverless] the export of every recipe (FLOW-063), and deletion for a recipe
+ * its owner may delete (FLOW-053 (1), ST-010).
  */
 @Composable
 private fun OwnEntry(
@@ -865,6 +879,7 @@ private fun OwnEntry(
     onDelete: () -> Unit,
     onExport: () -> Unit,
     adding: BookAdding,
+    printing: BookPrinting,
     selected: Boolean? = null,
     onSelect: (() -> Unit)? = null,
 ) {
@@ -873,7 +888,7 @@ private fun OwnEntry(
     } else {
         null
     }
-    val actions = entryActions(row.recipeId, mode, adding, onExport, removal)
+    val actions = entryActions(row.recipeId, mode, adding, printing, onExport, removal)
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
         EntryTags(row.recipeId, tags)
@@ -887,14 +902,24 @@ private fun OwnEntry(
 
 /**
  * The items of an entry's menu, from the top: "Add to collection", "Add to shopping list" — "Update in shopping list"
- * once the recipe is on the list, as on the card — then (T-264) Print and Save as PDF, then in [Mode.Serverless] the
- * export to a file (FLOW-063), and last [removal], where the recipe may leave the book.
+ * once the recipe is on the list, as on the card — then Print and Share as PDF of the recipe as its card prints it
+ * ([printing], T-264), then in [Mode.Serverless] the export to a file (FLOW-063), and last [removal], where the recipe
+ * may leave the book.
  */
-private fun entryActions(recipeId: String, mode: Mode, adding: BookAdding, onExport: () -> Unit, removal: EntryAction?): List<EntryAction> =
+private fun entryActions(
+    recipeId: String,
+    mode: Mode,
+    adding: BookAdding,
+    printing: BookPrinting,
+    onExport: () -> Unit,
+    removal: EntryAction?,
+): List<EntryAction> =
     buildList {
         add(EntryAction(R.string.collection_sheet_menu, LibraryTags.addToCollection(recipeId)) { adding.addToCollection(recipeId) })
         val shopping = if (adding.listed(recipeId)) R.string.card_shopping_update else R.string.shopping_add
         add(EntryAction(shopping, LibraryTags.addToShopping(recipeId)) { adding.addToShopping(recipeId) })
+        add(EntryAction(R.string.print_menu_print, LibraryTags.print(recipeId)) { printing.one(recipeId, PrintWay.PRINT) })
+        add(EntryAction(R.string.print_menu_share, LibraryTags.sharePdf(recipeId)) { printing.one(recipeId, PrintWay.SHARE) })
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(recipeId), onClick = onExport))
         removal?.let(::add)
     }
@@ -1201,6 +1226,7 @@ private fun MarkedList(
     onImport: () -> Unit,
     reveal: String?,
     adding: BookAdding,
+    printing: BookPrinting,
     onOffer: (Boolean) -> Unit,
     collections: List<CollectionRow> = emptyList(),
     selection: BookSelection? = null,
@@ -1291,6 +1317,7 @@ private fun MarkedList(
                         onRemove = { removeFound(files, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
                         adding = adding,
+                        printing = printing,
                         selected = selection?.let { row.recipeId in it.ids },
                         onSelect = { session.select(LibraryView.MARKED, row.recipeId) },
                     )
@@ -1303,9 +1330,9 @@ private fun MarkedList(
 
 /**
  * A marked recipe's entry, a card: its title, any stated author and its tags; one whose content the book holds opens,
- * and its menu, at the end of its title line, offers "Add to collection" and "Add to shopping list" ([adding]), in
- * [Mode.Serverless] its export (FLOW-063 (2)), and its removal ([entryActions]). One whose content the book does not
- * hold offers nothing.
+ * and its menu, at the end of its title line, offers "Add to collection" and "Add to shopping list" ([adding]), Print and
+ * Share as PDF ([printing]), in [Mode.Serverless] its export (FLOW-063 (2)), and its removal ([entryActions]). One whose
+ * content the book does not hold offers nothing.
  */
 @Composable
 private fun MarkedEntry(
@@ -1318,6 +1345,7 @@ private fun MarkedEntry(
     onRemove: () -> Unit,
     onExport: () -> Unit,
     adding: BookAdding,
+    printing: BookPrinting,
     selected: Boolean? = null,
     onSelect: (() -> Unit)? = null,
 ) {
@@ -1325,7 +1353,7 @@ private fun MarkedEntry(
         emptyList()
     } else {
         val removal = EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), destructive = true, onClick = onRemove)
-        entryActions(row.recipeId, mode, adding, onExport, removal)
+        entryActions(row.recipeId, mode, adding, printing, onExport, removal)
     }
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
@@ -1507,6 +1535,13 @@ object LibraryTags {
     /** An entry's "Add to collection" and "Add to shopping list" ("Update in shopping list"), in its menu. */
     fun addToCollection(recipeId: String) = "library-add-to-collection-$recipeId"
     fun addToShopping(recipeId: String) = "library-add-to-shopping-$recipeId"
+
+    // Print and Share as PDF (T-264): an entry's, the selection's, and the progress while a document is made.
+    fun print(recipeId: String) = "library-print-$recipeId"
+    fun sharePdf(recipeId: String) = "library-share-pdf-$recipeId"
+    const val SELECTION_PRINT = "library-selection-print"
+    const val SELECTION_SHARE_PDF = "library-selection-share-pdf"
+    const val PRINT_PROGRESS = "library-print-progress"
     /** An entry's mark of being chosen, where its ⋮ stands while the selection is on. */
     fun selectionMark(recipeId: String) = "library-selection-mark-$recipeId"
     /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */

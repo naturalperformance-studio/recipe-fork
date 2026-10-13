@@ -24,7 +24,7 @@ fun ComposeTestRule.openEntryMenu(recipeId: String) {
 /** Every item an entry's menu may hold. */
 private fun menuItems(recipeId: String) = listOf(
     LibraryTags.addToCollection(recipeId), LibraryTags.addToShopping(recipeId),
-    LibraryTags.export(recipeId), LibraryTags.delete(recipeId), LibraryTags.remove(recipeId),
+    LibraryTags.print(recipeId), LibraryTags.sharePdf(recipeId), LibraryTags.export(recipeId), LibraryTags.delete(recipeId), LibraryTags.remove(recipeId),
 )
 
 /** Closes the open menu of the entry of [recipeId] without choosing anything. */
