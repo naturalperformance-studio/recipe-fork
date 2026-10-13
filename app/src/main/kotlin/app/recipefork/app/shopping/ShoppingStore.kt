@@ -79,6 +79,13 @@ data class ShoppingList(
             copy(recipes = recipes + recipe)
         }
 
+    /**
+     * Each of [recipes] not yet on the list added at the end, in their order, each once (v0.36, a whole collection); one
+     * listed already keeps its count where it stands.
+     */
+    fun withAll(recipes: List<ListedRecipe>): ShoppingList =
+        recipes.fold(this) { list, recipe -> if (list.recipes.any { it.isOf(recipe.book, recipe.recipe) }) list else list.with(recipe) }
+
     /** The recipe [recipe] of [book] at the count [servings]; the list as it is where it is not listed. */
     fun withServings(book: String, recipe: RecipeId, servings: Rational): ShoppingList =
         copy(recipes = recipes.map { if (it.isOf(book, recipe)) it.copy(servings = servings) else it })

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v0.36: sharing a collection as a file, from the collection's ⋮. -->
+    <string name="collection_share">Share</string>
+    <string name="collection_share_sheet">Share “%1$s”</string>
+    <string name="collection_sharing">Preparing the collection\'s file</string>
+    <string name="collection_share_failed">Couldn\'t share the collection</string>
+    <!-- v0.36: importing a collection file. %1$s is the collection's name, %2$s how many recipes the file holds
+         (collection_import_recipes), %3$s how many of them the book held already (collection_import_held). -->
+    <string name="collection_import_added">“%1$s” added: %2$s</string>
+    <string name="collection_import_added_held">“%1$s” added: %2$s (%3$s)</string>
+    <string name="collection_import_updated">“%1$s” updated: %2$s</string>
+    <string name="collection_import_updated_held">“%1$s” updated: %2$s (%3$s)</string>
+    <plurals name="collection_import_recipes">
+        <item quantity="one">%d recipe</item>
+        <item quantity="other">%d recipes</item>
+    </plurals>
+    <plurals name="collection_import_held">
+        <item quantity="one">%d was already in the book</item>
+        <item quantity="other">%d were already in the book</item>
+    </plurals>
+    <!-- The file holds the reader's own collection, shared and come back: nothing is changed. -->
+    <string name="collection_import_own">You already have this collection</string>
+    <!-- Why a collection file was refused. -->
+    <string name="collection_import_not_a_collection">This file is not a collection file, so nothing was added</string>
+    <string name="collection_import_later">This collection file was made by a newer version of the app. Update the app to open it; nothing was added</string>
+    <string name="collection_import_damaged">This collection file is damaged, so nothing was added</string>
+    <string name="collection_import_breaks_rules">A recipe in this collection file breaks the rules every recipe keeps, so nothing was added</string>
+    <!-- %1$d is the longest a clip may last, in seconds. -->
+    <string name="collection_import_clip_too_long">A clip in this collection file is longer than %1$d seconds, so nothing was added</string>
+</resources>

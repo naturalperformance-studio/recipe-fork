@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- "Add to collection" from a recipe's card (v0.36): the card's ⋮ item and the sheet it opens, listing the reader's
+         own collections with checkboxes, and the notice the card shows once the sheet closes on a change. -->
+    <string name="collection_sheet_menu">Add to collection</string>
+    <string name="collection_sheet_title">Add to collection</string>
+    <string name="collection_sheet_done">Done</string>
+    <string name="collection_sheet_new">New collection…</string>
+    <string name="collection_sheet_name">Collection name</string>
+    <string name="collection_sheet_create">Create</string>
+    <string name="collection_sheet_empty">No collections yet</string>
+    <string name="collection_sheet_in_none">Not in any collection</string>
+    <!-- Said in the sheet when a tick, an untick or Create could not be written. -->
+    <string name="collection_sheet_change_failed">Couldn\'t change the collection</string>
+    <string name="collection_sheet_create_failed">Couldn\'t create the collection</string>
+    <plurals name="collection_sheet_in">
+        <item quantity="one">In %d collection</item>
+        <item quantity="other">In %d collections</item>
+    </plurals>
+</resources>

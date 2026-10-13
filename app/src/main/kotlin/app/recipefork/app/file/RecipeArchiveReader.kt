@@ -100,6 +100,19 @@ object RecipeArchiveReader {
             read
         }
         val document = text ?: throw RefusedFile(Refusal.NOT_A_RECIPE_FILE, if (names.isEmpty()) "not a ZIP" else "no document")
+        return checked(document, names, entryOf)
+    }
+
+    /**
+     * The recipe [document] states, decoded and checked, where [names] are the entries beside it — relative to the
+     * folder it stands in: each media item it names must be among them once. Refuses it with [RefusedFile] when it
+     * cannot be believed.
+     */
+    internal fun checked(document: String, names: List<String>, entryOf: (String) -> Long? = { null }): RecipeFileContent =
+        decoded(document, entryOf).also { checkMedia(it, names) }
+
+    /** The recipe [document] states, decoded and checked against the rules of a recipe file; its media are not looked for. */
+    internal fun decoded(document: String, entryOf: (String) -> Long? = { null }): RecipeFileContent {
         val content = try {
             RecipeFile.decode(document, entryOf)
         } catch (e: LaterRecipeFile) {
@@ -109,6 +122,11 @@ object RecipeArchiveReader {
         }
         val problems = RecipeFileCheck.problems(content)
         if (problems.isNotEmpty()) throw RefusedFile(Refusal.BREAKS_RULES, problems.joinToString("; "))
+        return content
+    }
+
+    /** Refuses [content] unless each media item it names is among [names], the entries beside it, once. */
+    internal fun checkMedia(content: RecipeFileContent, names: List<String>) {
         content.media.forEach { item ->
             when (names.count { it == item.entry }) {
                 0 -> throw RefusedFile(Refusal.DAMAGED, "missing ${item.entry}")
@@ -116,7 +134,6 @@ object RecipeArchiveReader {
                 else -> throw RefusedFile(Refusal.DAMAGED, "${item.entry} given twice")
             }
         }
-        return content
     }
 
     /**
@@ -170,6 +187,25 @@ object RecipeArchiveReader {
         done: () -> Boolean,
         entry: (String, ZipInputStream, Long) -> Long,
     ) {
+        reading(open, alive) { zip ->
+            var inflated = 0L
+            var entries = 0
+            while (!done()) {
+                alive()
+                val next = zip.nextEntry ?: break
+                if (++entries > limits.entries) throw RefusedFile(Refusal.DAMAGED, "more entries than a recipe needs")
+                if (!RecipeFileCheck.isSafeEntryName(next.name)) throw RefusedFile(Refusal.DAMAGED, "unsafe entry name")
+                inflated += entry(next.name, zip, limits.archive - inflated)
+                if (inflated > limits.archive) throw RefusedFile(Refusal.DAMAGED, "archive over its cap")
+            }
+        }
+    }
+
+    /**
+     * Opens the archive [open] gives and hands it to [read], turning what goes wrong into a refusal: a stream that does
+     * not open or cannot be read as one that cannot be opened, a damaged or truncated archive as damaged.
+     */
+    internal fun reading(open: () -> InputStream, alive: () -> Unit, read: (ZipInputStream) -> Unit) {
         alive()
         val stream = try {
             open()
@@ -179,18 +215,7 @@ object RecipeArchiveReader {
             throw RefusedFile(Refusal.CANNOT_OPEN, "cannot open", e)
         }
         try {
-            ZipInputStream(stream.buffered()).use { zip ->
-                var inflated = 0L
-                var entries = 0
-                while (!done()) {
-                    alive()
-                    val next = zip.nextEntry ?: break
-                    if (++entries > limits.entries) throw RefusedFile(Refusal.DAMAGED, "more entries than a recipe needs")
-                    if (!RecipeFileCheck.isSafeEntryName(next.name)) throw RefusedFile(Refusal.DAMAGED, "unsafe entry name")
-                    inflated += entry(next.name, zip, limits.archive - inflated)
-                    if (inflated > limits.archive) throw RefusedFile(Refusal.DAMAGED, "archive over its cap")
-                }
-            }
+            ZipInputStream(stream.buffered()).use(read)
         } catch (e: RefusedFile) {
             throw e
         } catch (e: ZipException) {
@@ -206,13 +231,13 @@ object RecipeArchiveReader {
     }
 
     /** Reads the current entry to its end, discarding it, and refuses it once it inflates past [cap]. */
-    private fun drain(zip: InputStream, cap: Long, alive: () -> Unit): Long = copy(zip, Nowhere, cap, alive)
+    internal fun drain(zip: InputStream, cap: Long, alive: () -> Unit): Long = copy(zip, Nowhere, cap, alive)
 
     /**
      * Copies the current entry to [out] and returns its size; refuses it the moment it passes [cap], and asks [alive]
      * before every read.
      */
-    private fun copy(zip: InputStream, out: OutputStream, cap: Long, alive: () -> Unit): Long {
+    internal fun copy(zip: InputStream, out: OutputStream, cap: Long, alive: () -> Unit): Long {
         val buffer = ByteArray(BUFFER)
         var total = 0L
         while (true) {
@@ -225,7 +250,7 @@ object RecipeArchiveReader {
         }
     }
 
-    private fun utf8(bytes: ByteArray): String = try {
+    internal fun utf8(bytes: ByteArray): String = try {
         Charsets.UTF_8.newDecoder()
             .onMalformedInput(CodingErrorAction.REPORT)
             .onUnmappableCharacter(CodingErrorAction.REPORT)
@@ -251,13 +276,13 @@ object RecipeArchiveReader {
     }
 
     /** Discards what it is given. */
-    private object Nowhere : OutputStream() {
+    internal object Nowhere : OutputStream() {
         override fun write(b: Int) = Unit
         override fun write(b: ByteArray, off: Int, len: Int) = Unit
     }
 
     /** Passes everything on to [out], keeping the first bytes in [head]. */
-    private class HeadKeeper(private val out: OutputStream, private val head: ByteArray) : OutputStream() {
+    internal class HeadKeeper(private val out: OutputStream, private val head: ByteArray) : OutputStream() {
         private var kept = 0
 
         override fun write(b: Int) {
@@ -277,6 +302,6 @@ object RecipeArchiveReader {
         override fun flush() = out.flush()
     }
 
-    private const val HEAD = 12
+    internal const val HEAD = 12
     private const val BUFFER = 64 * 1024
 }

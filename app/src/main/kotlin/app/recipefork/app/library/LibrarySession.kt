@@ -12,6 +12,7 @@ import app.recipefork.app.card.TextCardSession
 import app.recipefork.app.data.HeldLastBookView
 import app.recipefork.app.data.LastBookView
 import app.recipefork.app.recipe.BookFilters
+import app.recipefork.core.recipe.RecipeCollection
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.search.BookOrder
 import app.recipefork.app.file.FileMessage
@@ -165,6 +166,7 @@ class LibrarySession(
     fun openSettings() {
         finishRemoval()
         shutKitchen()
+        shutCollection()
         saved[SHOPPING_KEY] = false
         saved[SETTINGS_KEY] = true
     }
@@ -217,6 +219,7 @@ class LibrarySession(
         finishRemoval()
         saved[SETTINGS_KEY] = false
         shutKitchen()
+        shutCollection()
         saved[SHOPPING_KEY] = true
     }
 
@@ -228,6 +231,77 @@ class LibrarySession(
         saved[KITCHEN_KEY] = false
         saved[KITCHEN_AT_KEY] = null
     }
+
+    /**
+     * The collection whose screen is open above the book, if one is (v0.36): kept like the card, so that a collection
+     * open when the screen turns or the process ends is open again on return. A card opened from it lies above it, and
+     * back from the card returns to it; the settings, the shopping list, an import's book and a timer's card are shown in
+     * its place.
+     */
+    val collection: StateFlow<String?> = saved.getStateFlow(COLLECTION_KEY, null)
+
+    /** The collection [id] opens above the book; the book is left, so a removal it still offers to undo is final now. */
+    fun openCollection(id: String) {
+        closeNotice()
+        finishRemoval()
+        saved[SETTINGS_KEY] = false
+        saved[SHOPPING_KEY] = false
+        shutKitchen()
+        saved[COLLECTION_KEY] = id
+    }
+
+    /**
+     * Back to the book: a recipe's removal the collection's screen still offered to undo is final now, as on opening it,
+     * so the book does not say it again.
+     */
+    fun closeCollection() {
+        finishRemoval()
+        shutCollection()
+    }
+
+    /**
+     * The shopping list opens above the collection open (v0.36, its "Add all to shopping list"), and back from it returns
+     * there; a removal the collection's screen still offers to undo is final now.
+     */
+    fun openShoppingAboveCollection() {
+        if (collection.value == null) return openShopping()
+        finishRemoval()
+        saved[SETTINGS_KEY] = false
+        shutKitchen()
+        saved[VIEWING_KEY] = null
+        saved[EDITING_KEY] = null
+        saved[SHOPPING_KEY] = true
+    }
+
+    private fun shutCollection() {
+        saved[COLLECTION_KEY] = null
+    }
+
+    private val deletedCollection = MutableStateFlow<RecipeCollection?>(null)
+
+    /**
+     * The collection last deleted from its screen, while the book offers to undo that (v0.36): its screen closes, and the
+     * book says so with Undo until its notice goes. Held in memory alone: should the process end first, the deletion is
+     * final. Nothing waits on it to be final — the collection's recipes stay in the book either way.
+     */
+    val collectionDeletion: StateFlow<RecipeCollection?> = deletedCollection.asStateFlow()
+
+    /**
+     * [collection] was deleted from its screen: the screen closes, and the book says so with Undo in place of whatever its
+     * snackbar said — a recipe's removal still offered is final now.
+     */
+    fun collectionDeleted(collection: RecipeCollection) {
+        closeNotice()
+        finishRemoval()
+        shutCollection()
+        deletedCollection.value = collection
+    }
+
+    /**
+     * The deletion of [collection] is no longer offered to undo — Undo was taken, or its notice went. Returns whether it
+     * was still offered, so that Undo puts it back once at most.
+     */
+    fun endCollectionDeletion(collection: RecipeCollection): Boolean = deletedCollection.compareAndSet(collection, null)
 
     /**
      * A recipe file was imported as the recipe [id] (FLOW-064 (1)): the view of marked recipes is shown, where it is
@@ -258,6 +332,7 @@ class LibrarySession(
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
+        shutCollection()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = null
     }
@@ -283,6 +358,7 @@ class LibrarySession(
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
+        shutCollection()
         saved[EDITING_KEY] = null
         saved[VIEWING_KEY] = recipeId
         saved[CARD_FROM_KEY] = null
@@ -335,6 +411,7 @@ class LibrarySession(
     fun removed(removal: PendingRemoval) {
         closeNotice()
         failedUndo.value = null
+        deletedCollection.value = null
         pending.getAndUpdate { removal }?.takeIf { it !== removal }?.finish()
     }
 
@@ -361,9 +438,10 @@ class LibrarySession(
         if (pending.compareAndSet(removal, null)) removal.finish()
     }
 
-    /** The book is left, or another notice said: a removal still offered is final. */
+    /** The book is left, or another notice said: a removal still offered is final, and so is a collection's deletion. */
     private fun finishRemoval() {
         failedUndo.value = null
+        deletedCollection.value = null
         pending.getAndUpdate { null }?.finish()
     }
 
@@ -412,6 +490,12 @@ class LibrarySession(
     private val held = TextCardSession({ saved.get<String>(CARDS_KEY + it) }) { key, value ->
         if (value == null) saved.remove<String>(CARDS_KEY + key) else saved[CARDS_KEY + key] = value
     }
+
+    /**
+     * The scale the reader left [recipe]'s card at this session, if any, read without the card being shown: unlike
+     * [cards], it leaves the cards most recently shown as they were.
+     */
+    fun heldScale(recipe: RecipeId): HeldScale? = held.heldScale(recipe)
 
     /** Saved state stays small: only the [MAX_CARDS] cards most recently left at a count or a place are held. */
     private val shownCards = object : CardSession {
@@ -467,5 +551,6 @@ class LibrarySession(
         const val EDITING_KEY = "library.editing"
         const val VIEWING_KEY = "library.viewing"
         const val CARD_FROM_KEY = "library.card_from"
+        const val COLLECTION_KEY = "library.collection"
     }
 }

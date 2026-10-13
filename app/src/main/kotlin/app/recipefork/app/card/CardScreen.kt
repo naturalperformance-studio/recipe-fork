@@ -92,6 +92,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.rememberUpdatedState
 import app.recipefork.app.kitchen.Kitchen
+import app.recipefork.app.collections.AddToCollectionSheet
 import app.recipefork.app.library.DELETABLE
 import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
@@ -241,6 +242,9 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * Either tab's ⋮ always offers to put the recipe on the reader's shopping list at the count shown — the count a fixed
  * amount implies while one is fixed, none for a recipe with no count — or, once it is on the list, to set it to that
  * count, never adding it twice (FLOW-074); the card's snackbar says so, and its Open opens the list ([onOpenShopping]).
+ * Right after it, while the card is given the book's collections ([CardEnvironment.collections]), "Add to collection"
+ * opens a sheet of the reader's own collections ([AddToCollectionSheet], v0.36), whose changes apply as they are ticked
+ * and which the card's snackbar confirms as it closes ("In 2 collections").
  * After it, Print hands the recipe to the system's print service and Share as PDF opens the share sheet on it as a PDF
  * file, each as View reads it at the count and fixings the card holds at that moment (FLOW-075 (1)).
  *
@@ -366,6 +370,10 @@ fun CardScreen(
     val listed = recipe != null && shoppingList.recipes.any { it.isOf(book, recipe.id) }
     val language = cardLanguage()
     val addToShopping = rememberAddToShopping(environment.shopping, snackbars, onOpenShopping)
+    // The sheet of the reader's collections, open over the card while it is asked for; its notice is the card's statement.
+    val collections = environment.collections
+    var collecting by rememberSaveable(recipeId) { mutableStateOf(false) }
+    val say = rememberStatement(snackbars)
     // The recipe on paper or in a PDF, made at the tap from what the card holds then: its scale, the dictionaries, the
     // parent's title as the book holds it, the cover and step photos the device holds, the interface's language.
     val printOut = rememberPrintOut(snackbars)
@@ -427,6 +435,7 @@ fun CardScreen(
                     onAddToShopping = {
                         if (recipe != null) addToShopping(ListedRecipe(book, recipe.id, shownCount(recipe, held, loaded, language, environment.usualServings.count.value)))
                     },
+                    onAddToCollection = if (collections != null) { { collecting = true } } else null,
                     onPrint = printRecipe,
                 )
                 // The tabs stay under the bar and never scroll with the recipe.
@@ -516,6 +525,29 @@ fun CardScreen(
             }
         }
     }
+    if (collecting && collections != null && recipe != null) {
+        AddToCollectionSheet(recipeId, collections) { notice ->
+            collecting = false
+            notice?.let(say)
+        }
+    }
+}
+
+/**
+ * Says a statement in the card's snackbar, replacing whatever it said before (making a clearing of marks final), for a
+ * short while and with no action.
+ */
+@Composable
+private fun rememberStatement(snackbars: SnackbarHostState): (String) -> Unit {
+    val scope = rememberCoroutineScope()
+    return remember(scope, snackbars) {
+        { text ->
+            scope.launch {
+                snackbars.currentSnackbarData?.dismiss()
+                snackbars.showSnackbar(text, duration = SnackbarDuration.Short)
+            }
+        }
+    }
 }
 
 /** The card's tabs in the order of their tabs and pages: a tab's page is its ordinal. */
@@ -584,9 +616,7 @@ private class ScaleInForce(
 private fun rememberScaleInForce(recipe: Recipe, usual: Rational?, session: CardSession): ScaleInForce {
     val authored = recipe.servings?.takeIf { it >= 1 }
     return remember(recipe.id, authored, recipe.ingredients) {
-        val ordered = recipe.ingredients.sortedBy { it.position }
-        val opening = session.heldScale(recipe.id)?.restored(authored, ordered, usual) ?: CardScale.opening(authored, usual)
-        ScaleInForce(opening, recipe.id, ordered, session)
+        ScaleInForce(session.openingScale(recipe, usual), recipe.id, recipe.ingredients.sortedBy { it.position }, session)
     }
 }
 
@@ -604,7 +634,7 @@ private fun shownCount(
 ): Rational? {
     val authored = recipe.servings?.takeIf { it >= 1 }
     if (held == null || entries == null) return CardScale.opening(authored, usual).requested
-    return ingredientList(held.ordered, entries, language, authored, held.scale).servingCount?.value
+    return servingsShown(recipe, held.scale, entries, language)
 }
 
 /** The language the card writes its lines and counts in: the interface's. */
@@ -804,6 +834,7 @@ private fun TopBar(
     onClearMarks: () -> Unit,
     listed: Boolean,
     onAddToShopping: () -> Unit,
+    onAddToCollection: (() -> Unit)?,
     onPrint: ((PrintWay) -> Unit)?,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
@@ -836,7 +867,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onPrint)
+                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onAddToCollection, onPrint)
             }
         },
         scrollBehavior = scrollBehavior,
@@ -1339,11 +1370,11 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 
 /**
  * The card's ⋮, after its other actions, always shown: first the shopping-list action — "Add to shopping list", or
- * "Update in shopping list" while the recipe is [listed] (FLOW-074) — then, once the recipe is read with its scale,
- * Print and Share as PDF ([onPrint], FLOW-075), then Clear marks while the recipe has done marks
- * (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal — Delete for an own recipe
- * in a deletable state, Remove for a found one — in the theme's error colour. Each item is the card's [CardTarget]
- * tall.
+ * "Update in shopping list" while the recipe is [listed] (FLOW-074) — then "Add to collection" where the card is given
+ * the book's collections ([onAddToCollection], v0.36), then, once the recipe is read with its scale, Print and Share
+ * as PDF ([onPrint], FLOW-075), then Clear marks while the recipe has done marks (FLOW-068), which takes every mark of
+ * the recipe away at once, and the recipe's removal — Delete for an own recipe in a deletable state, Remove for a found
+ * one — in the theme's error colour. Each item is the card's [CardTarget] tall.
  */
 @Composable
 private fun CardMenu(
@@ -1353,6 +1384,7 @@ private fun CardMenu(
     onClearMarks: () -> Unit,
     listed: Boolean,
     onAddToShopping: () -> Unit,
+    onAddToCollection: (() -> Unit)?,
     onPrint: ((PrintWay) -> Unit)?,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -1373,6 +1405,16 @@ private fun CardMenu(
                 },
                 modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHOPPING),
             )
+            if (onAddToCollection != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.collection_sheet_menu)) },
+                    onClick = {
+                        expanded = false
+                        onAddToCollection()
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.COLLECTION),
+                )
+            }
             if (onPrint != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.print_menu_print)) },
@@ -1482,6 +1524,7 @@ object CardTags {
     const val REMOVE = "card-remove"
     const val CLEAR_MARKS = "card-clear-marks"
     const val SHOPPING = "card-shopping"
+    const val COLLECTION = "card-collection"
     const val PRINT = "card-print"
     const val SHARE_PDF = "card-share-pdf"
     const val PROVENANCE = "card-provenance"

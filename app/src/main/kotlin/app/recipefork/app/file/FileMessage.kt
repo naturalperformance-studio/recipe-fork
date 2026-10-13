@@ -18,16 +18,38 @@ import app.recipefork.core.recipe.VideoLimits
 
 /**
  * What the person is told about a file: what became of one they opened for import (FLOW-064), that an export
- * failed (FLOW-063), or that a saved book opened from another application waits, as another saving or restore runs
+ * failed (FLOW-063) — a recipe's or a collection's — or that a saved book opened from another application waits, as another saving or restore runs
  * (FLOW-073). A recipe now in the book ([isNotice]) is said in the book's snackbar, which offers to open the
  * recipe [recipeId]; a failure is said whole, in a dialog closed by its OK. Never in a toast that cuts it short; it is
  * kept as plain data so that it outlives a rotation and the end of the process while it is shown.
  */
-data class FileMessage(val kind: Kind, val title: String = "", val recipeId: String = "") {
-    enum class Kind { ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, CLIP_TOO_LONG, EXPORT_FAILED, BOOK_BUSY }
+data class FileMessage(
+    val kind: Kind,
+    val title: String = "",
+    val recipeId: String = "",
+    /** The collection a collection file brought (v0.36), or the reader's own it matched; empty for any other message. */
+    val collectionId: String = "",
+    /** How many recipes a collection file listed, and how many of them the book held already. */
+    val recipes: Int = 0,
+    val held: Int = 0,
+) {
+    enum class Kind {
+        ADDED, ALREADY_IN_BOOK, CANNOT_OPEN, NOT_A_RECIPE_FILE, LATER_VERSION, DAMAGED, BREAKS_RULES, CLIP_TOO_LONG, EXPORT_FAILED, BOOK_BUSY,
+        COLLECTION_SHARE_FAILED,
 
-    /** Whether the message names a recipe the book holds, said in a snackbar that opens it, rather than a failure. */
-    val isNotice: Boolean get() = kind == Kind.ADDED || kind == Kind.ALREADY_IN_BOOK
+        // v0.36: what became of a collection file — the collection in the book, said in a snackbar that opens it, or a
+        // failure. A title is the collection's name.
+        COLLECTION_ADDED, COLLECTION_UPDATED, COLLECTION_OWN, NOT_A_COLLECTION_FILE, COLLECTION_LATER_VERSION, COLLECTION_DAMAGED,
+        COLLECTION_BREAKS_RULES, COLLECTION_CLIP_TOO_LONG,
+    }
+
+    /**
+     * Whether the message names a recipe or a collection the book holds, said in a snackbar that opens it, rather than
+     * a failure.
+     */
+    val isNotice: Boolean
+        get() = kind == Kind.ADDED || kind == Kind.ALREADY_IN_BOOK ||
+            kind == Kind.COLLECTION_ADDED || kind == Kind.COLLECTION_UPDATED || kind == Kind.COLLECTION_OWN
 
     /** The message in the language of [resources]; a recipe's title is named, shortened when long. */
     fun text(resources: Resources): String {
@@ -43,11 +65,36 @@ data class FileMessage(val kind: Kind, val title: String = "", val recipeId: Str
             Kind.CLIP_TOO_LONG -> resources.getString(R.string.file_import_clip_too_long, VideoLimits.MAX_DURATION.inWholeSeconds.toInt())
             Kind.EXPORT_FAILED -> resources.getString(R.string.file_export_failed)
             Kind.BOOK_BUSY -> resources.getString(R.string.backup_opened_busy)
+            Kind.COLLECTION_SHARE_FAILED -> resources.getString(R.string.collection_share_failed)
+            Kind.COLLECTION_ADDED, Kind.COLLECTION_UPDATED -> collectionText(resources)
+            Kind.COLLECTION_OWN -> resources.getString(R.string.collection_import_own)
+            Kind.NOT_A_COLLECTION_FILE -> resources.getString(R.string.collection_import_not_a_collection)
+            Kind.COLLECTION_LATER_VERSION -> resources.getString(R.string.collection_import_later)
+            Kind.COLLECTION_DAMAGED -> resources.getString(R.string.collection_import_damaged)
+            Kind.COLLECTION_BREAKS_RULES -> resources.getString(R.string.collection_import_breaks_rules)
+            Kind.COLLECTION_CLIP_TOO_LONG ->
+                resources.getString(R.string.collection_import_clip_too_long, VideoLimits.MAX_DURATION.inWholeSeconds.toInt())
+        }
+    }
+
+    /** "“New Year's menu” added: 5 recipes (2 were already in the book)", or "updated" for one held already. */
+    private fun collectionText(resources: Resources): String {
+        val name = shortened(title)
+        val count = resources.getQuantityString(R.plurals.collection_import_recipes, recipes, recipes)
+        val updated = kind == Kind.COLLECTION_UPDATED
+        return if (held == 0) {
+            resources.getString(if (updated) R.string.collection_import_updated else R.string.collection_import_added, name, count)
+        } else {
+            val already = resources.getQuantityString(R.plurals.collection_import_held, held, held)
+            resources.getString(
+                if (updated) R.string.collection_import_updated_held else R.string.collection_import_added_held, name, count, already,
+            )
         }
     }
 
     /** The message as saved state holds it. */
-    fun encoded(): String = kind.name + SEPARATOR + recipeId + SEPARATOR + title
+    fun encoded(): String =
+        listOf(kind.name, recipeId, collectionId, recipes.toString(), held.toString(), title).joinToString(SEPARATOR.toString())
 
     companion object {
         /** The longest title named whole in a message; a longer one is cut there and ends in "…". */
@@ -56,9 +103,10 @@ data class FileMessage(val kind: Kind, val title: String = "", val recipeId: Str
         private const val SEPARATOR = '\n'
 
         fun decoded(value: String?): FileMessage? {
-            val parts = value?.split(SEPARATOR, limit = 3)?.takeIf { it.size == 3 } ?: return null
-            val (kind, recipeId, title) = parts
-            return Kind.entries.firstOrNull { it.name == kind }?.let { FileMessage(it, title, recipeId) }
+            val parts = value?.split(SEPARATOR, limit = 6)?.takeIf { it.size == 6 } ?: return null
+            val (kind, recipeId, collectionId, recipes, held) = parts
+            val counts = listOf(recipes, held).map { it.toIntOrNull() ?: return null }
+            return Kind.entries.firstOrNull { it.name == kind }?.let { FileMessage(it, parts[5], recipeId, collectionId, counts[0], counts[1]) }
         }
 
         /** [title] as a message names it: whole up to [TITLE_LENGTH] characters, and cut there otherwise. */

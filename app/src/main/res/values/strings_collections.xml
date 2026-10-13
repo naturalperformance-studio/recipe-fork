@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v0.36: the row of collections above a view's recipes in the book. -->
+    <string name="collections_heading">Collections</string>
+    <plurals name="collections_count">
+        <item quantity="one">%d recipe</item>
+        <item quantity="other">%d recipes</item>
+    </plurals>
+    <string name="collections_open_action">Open the collection</string>
+    <!-- A collection's screen. -->
+    <string name="collection_back">Back</string>
+    <string name="collection_back_action">Back to the book</string>
+    <string name="collection_menu">More actions</string>
+    <string name="collection_menu_action">Show more actions for the collection</string>
+    <string name="collection_rename">Rename</string>
+    <string name="collection_delete">Delete collection</string>
+    <!-- T-257: the collection's ⋮ puts every recipe of it on the shopping list, each at the count its card opens with. -->
+    <string name="collection_add_all_to_shopping">Add all to shopping list</string>
+    <plurals name="collection_added_to_shopping">
+        <item quantity="one">Added %d recipe</item>
+        <item quantity="other">Added %d recipes</item>
+    </plurals>
+    <!-- Said in place of the count when every recipe of the collection was on the list already. -->
+    <string name="collection_all_in_shopping">All these recipes are already in the shopping list</string>
+    <!-- Said when none could be added because the recipes could not be read. -->
+    <string name="collection_shopping_unread">Could not read the recipes; nothing was added</string>
+    <string name="collection_shopping_open">Open</string>
+    <!-- The shopping list's back, for the screen reader, when the list was opened from a collection. -->
+    <string name="collection_shopping_back_action">Back to the collection</string>
+    <string name="collection_rename_title">Rename collection</string>
+    <string name="collection_name">Name</string>
+    <string name="collection_rename_confirm">Rename</string>
+    <string name="collection_cancel">Cancel</string>
+    <!-- Said in the book once a collection is deleted; its recipes stay in the book. -->
+    <string name="collection_deleted">Collection “%1$s” deleted</string>
+    <string name="collection_undo">Undo</string>
+    <!-- A recipe's menu in an own collection. -->
+    <string name="collection_move_up">Move up</string>
+    <string name="collection_move_down">Move down</string>
+    <string name="collection_remove">Remove from collection</string>
+    <string name="collection_removed">“%1$s” removed from the collection</string>
+    <string name="collection_removed_untitled">Recipe removed from the collection</string>
+    <!-- An empty collection. -->
+    <string name="collection_empty">No recipes here yet</string>
+    <string name="collection_empty_sentence">Open a recipe and choose Add to collection.</string>
+    <string name="collection_imported_empty">No recipes in this collection</string>
+</resources>
