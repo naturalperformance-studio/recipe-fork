@@ -44,8 +44,8 @@ interface EncoderSizes {
          * The size a picture planned at [planned] is encoded at by an encoder taking [sizes]: [planned] itself where it
          * is taken; otherwise enlarged, keeping its proportions, to the encoder's least width and height and each side
          * to its multiple — the MediaTek encoder of the owner's phone takes nothing as small as 160 x 120 (T-243) — and
-         * further while the encoder still refuses it, never past [maxEdge] on either side. A size no step makes taken is
-         * given as the last tried, and the encoder's own refusal says the rest.
+         * further while the encoder still refuses it, never past [maxEdge] on either side. Where no size up to that is
+         * taken, [planned] is given back, and the encoder's own refusal says the rest.
          */
         fun fitted(planned: PixelSize, sizes: EncoderSizes, maxEdge: Int): PixelSize {
             if (planned.width >= sizes.minWidth && planned.height >= sizes.minHeight && sizes.supports(planned.width, planned.height)) {
@@ -53,7 +53,11 @@ interface EncoderSizes {
             }
             var scale = max(1.0, max(sizes.minWidth.toDouble() / planned.width, sizes.minHeight.toDouble() / planned.height))
             var size = scaledTo(planned, scale, sizes, maxEdge)
-            while (!sizes.supports(size.width, size.height) && max(size.width, size.height) < maxEdge) {
+            // The largest a side may grow to: the longer edge, down to its multiple.
+            val ceiling = scaledTo(planned, Double.MAX_VALUE, sizes, maxEdge)
+            while (!sizes.supports(size.width, size.height)) {
+                // Grown as far as either side may go, and still refused: no size is taken.
+                if (size == ceiling) return planned
                 scale *= GROWTH
                 size = scaledTo(planned, scale, sizes, maxEdge)
             }
@@ -68,7 +72,7 @@ interface EncoderSizes {
         /** A side of [length] rounded up to [alignment] — and to an even number — at least [least], at most [maxEdge]. */
         private fun side(length: Double, least: Int, alignment: Int, maxEdge: Int): Int {
             val step = lcm(alignment.coerceAtLeast(1), 2)
-            val up = ceil(length - EPSILON).toInt().coerceAtLeast(least)
+            val up = ceil(length - EPSILON).coerceAtMost(maxEdge.toDouble() + step).toInt().coerceAtLeast(least)
             val aligned = (up + step - 1) / step * step
             return if (aligned <= maxEdge) aligned else maxEdge / step * step
         }

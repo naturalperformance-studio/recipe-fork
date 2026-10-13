@@ -74,6 +74,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * T-206: the book's filter "Enough equipment" — offered while My kitchen holds something that counts; on, it hides
@@ -423,7 +424,16 @@ class EquipmentFilterTest {
     private fun whileTheComputingThreadsAreHeld(block: () -> Unit) {
         val held = CountDownLatch(1)
         val busy = CoroutineScope(Dispatchers.Default)
-        repeat(Runtime.getRuntime().availableProcessors() * 2) { busy.launch { held.await() } }
+        // As many as the pool has threads, each surely holding its own before the block runs.
+        val threads = maxOf(2, Runtime.getRuntime().availableProcessors())
+        val holding = CountDownLatch(threads)
+        repeat(threads) {
+            busy.launch {
+                holding.countDown()
+                held.await()
+            }
+        }
+        assertTrue("every computing thread is held", holding.await(PATIENCE_MS, TimeUnit.MILLISECONDS))
         try {
             block()
         } finally {
@@ -442,14 +452,15 @@ class EquipmentFilterTest {
         assertListed(*cookable)
     }
 
+    // ... and the sheet offers it, and switched on there it filters, the threads held from before the book opens.
     @Test
     fun theFilterSwitchedOnFiltersWhileTheComputingThreadsAreHeld() {
         theBook()
-        show(LibraryView.OWN)
-        assertListed(*all)
-        openTheSheet()
-        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_CHOICE), PATIENCE_MS)
         whileTheComputingThreadsAreHeld {
+            show(LibraryView.OWN)
+            assertListed(*all)
+            openTheSheet()
+            compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_CHOICE), PATIENCE_MS)
             click(LibraryTags.EQUIPMENT_CHOICE)
             closeTheSheet()
             assertListed(*cookable)

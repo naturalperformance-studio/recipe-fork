@@ -79,7 +79,14 @@ class EncoderSizesTest {
     fun noSideGoesPastTheLongerEdge() {
         val size = fitted(1200, 20, Encoder(176, 144, 16, 16))
         assertTrue("$size", size.width <= VideoLimits.MAX_LONGER_EDGE && size.height >= 144)
-        val refused = fitted(160, 120, Encoder(176, 144, 16, 16, refuses = { _, _ -> true }))
-        assertTrue("$refused", refused.width <= VideoLimits.MAX_LONGER_EDGE && refused.height <= VideoLimits.MAX_LONGER_EDGE)
+    }
+
+    // An encoder that takes no size at all ends the search — even where its multiple does not divide the longer edge,
+    // so that the sides stop short of it — and the planned size is given back for the encoder to refuse (T-274 review).
+    @Test
+    fun anEncoderTakingNoSizeEndsTheSearch() {
+        listOf(Encoder(176, 144, 16, 16) { _, _ -> true }, Encoder(176, 144, 512, 512) { _, _ -> true }).forEach { encoder ->
+            assertEquals(PixelSize(160, 120), fitted(160, 120, encoder))
+        }
     }
 }
