@@ -68,6 +68,7 @@ class ContrastTest {
         text("the restore question's ways — \"Add to the book\"", c.onSurface, c.surfaceContainerHigh),
         text("the restore question's ways — \"Replace the book\"", c.error, c.surfaceContainerHigh),
         text("a menu's items", c.onSurface, c.surfaceContainer),
+        text("\"Preparing the document\" under its progress, while a document is made to print or share", c.onSurface, c.surfaceContainer),
         text("the bar of running timers — names and times left", c.onSurface, c.surfaceContainer),
         text("the book's top bar — its title and menu — with a list scrolled under it", c.onSurface, c.surfaceContainer),
         text("the chosen tab — the book's view, the card's View or Cooking", c.primary, c.surface),

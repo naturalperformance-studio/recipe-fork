@@ -14,6 +14,7 @@ import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -60,27 +61,43 @@ private fun leastSize(size: TextUnit, density: Density): TextUnit = with(density
 /**
  * [text] in [style] within [width] pixels, each word made smaller as far as it needs to fit whole on a line ([fitWords]),
  * so that the text wraps only between words; never smaller than the style's size at a font scale of 1. A word wider than
- * its room even then is not broken: the text keeps to one line and ends with an ellipsis.
+ * its room even then is not broken: the text keeps to one line and ends with an ellipsis. [onTextLayout] hears each
+ * layout of it, as [Text]'s does.
  */
 @Composable
-internal fun WordFitText(text: String, style: TextStyle, width: Int, modifier: Modifier = Modifier) {
+internal fun WordFitText(
+    text: String,
+    style: TextStyle,
+    width: Int,
+    modifier: Modifier = Modifier,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val fitted = remember(text, style, width, measurer, density) { fitWords(text, style, width, measurer, density) }
-    FittedText(text, fitted, modifier)
+    FittedText(text, fitted, modifier, onTextLayout)
 }
 
 /**
  * [text] as [WordFitText] above draws it, in the width the place it stands in gives it — a list item's line, a dialog's
  * row — and in [style], by default the one that place gives its text; [modifier] is the text's own. Asked how tall or
  * wide it is before it is measured — as a list item asks of its supporting text — it answers as its text, so laid out.
+ * [onTextLayout] hears each layout of the text.
  */
 @Composable
-internal fun WordFitText(text: String, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current) {
+internal fun WordFitText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val policy = remember(text, style, measurer, density) { FittedTextPolicy(text, style, measurer, density) }
-    Layout(content = { BoxWithConstraints { WordFitText(text, style, constraints.maxWidth, modifier) } }, measurePolicy = policy)
+    Layout(
+        content = { BoxWithConstraints { WordFitText(text, style, constraints.maxWidth, modifier, onTextLayout) } },
+        measurePolicy = policy,
+    )
 }
 
 /**
@@ -125,11 +142,14 @@ private class FittedTextPolicy(
  * line ending with an ellipsis.
  */
 @Composable
-internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = Modifier) {
+internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = Modifier, onTextLayout: (TextLayoutResult) -> Unit = {}) {
     if (fitted.overflows) {
-        Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
+        Text(
+            text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier,
+            onTextLayout = onTextLayout,
+        )
     } else {
-        Text(text, style = fitted.style, modifier = modifier)
+        Text(text, style = fitted.style, modifier = modifier, onTextLayout = onTextLayout)
     }
 }
 

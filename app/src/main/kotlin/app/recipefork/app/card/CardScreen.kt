@@ -107,6 +107,7 @@ import androidx.compose.ui.platform.LocalContext
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.print.PrintWay
 import app.recipefork.app.print.RecipeDocument
+import app.recipefork.app.print.PrintProgress
 import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.shopping.ListedRecipe
 import app.recipefork.app.shopping.rememberAddToShopping
@@ -380,8 +381,10 @@ fun CardScreen(
     var collecting by rememberSaveable(recipeId) { mutableStateOf(false) }
     val say = rememberStatement(snackbars)
     // The recipe on paper or in a PDF, made at the tap from what the card holds then: its scale, the dictionaries, the
-    // parent's title as the book holds it, the cover and step photos the device holds, the interface's language.
-    val printOut = rememberPrintOut(snackbars)
+    // parent's title as the book holds it, the cover and step photos the device holds, the interface's language. While it
+    // is made, the card says so under its tabs.
+    var preparing by remember(recipeId) { mutableStateOf(false) }
+    val printOut = rememberPrintOut(snackbars, onBusy = { preparing = it })
     val context = LocalContext.current
     val printRecipe: ((PrintWay) -> Unit)? = if (recipe != null && loaded != null && held != null) {
         { way ->
@@ -549,6 +552,7 @@ fun CardScreen(
                 }
                 else -> Loading()
             }
+            if (preparing) PrintProgress(Modifier.align(Alignment.TopCenter))
         }
     }
     if (collecting && collections != null && recipe != null) {
@@ -1396,12 +1400,13 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
 }
 
 /**
- * The card's ⋮, after its other actions, always shown: first the shopping-list action — "Add to shopping list", or
- * "Update in shopping list" while the recipe is [listed] (FLOW-074) — then "Add to collection" where the card is given
- * the book's collections ([onAddToCollection], v0.36), then, once the recipe is read with its scale, Print and Share
- * as PDF ([onPrint], FLOW-075), then Clear marks while the recipe has done marks (FLOW-068), which takes every mark of
- * the recipe away at once, and the recipe's removal — Delete for an own recipe in a deletable state, Remove for a found
- * one — in the theme's error colour. Each item is the card's [CardTarget] tall.
+ * The card's ⋮, after its other actions, always shown, in the order every ⋮ of a recipe keeps (v0.38, T-269): first
+ * "Add to collection" where the card is given the book's collections ([onAddToCollection], v0.36), then the
+ * shopping-list action — "Add to shopping list", or "Update in shopping list" while the recipe is [listed] (FLOW-074) —
+ * then, once the recipe is read with its scale, Print and Share as PDF ([onPrint], FLOW-075), then Clear marks while
+ * the recipe has done marks (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal —
+ * Delete for an own recipe in a deletable state, Remove for a found one — in the theme's error colour. Each item is the
+ * card's [CardTarget] tall.
  */
 @Composable
 private fun CardMenu(
@@ -1424,14 +1429,6 @@ private fun CardMenu(
             onClick = { expanded = !expanded },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(if (listed) R.string.card_shopping_update else R.string.shopping_add)) },
-                onClick = {
-                    expanded = false
-                    onAddToShopping()
-                },
-                modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHOPPING),
-            )
             if (onAddToCollection != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.collection_sheet_menu)) },
@@ -1442,6 +1439,14 @@ private fun CardMenu(
                     modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.COLLECTION),
                 )
             }
+            DropdownMenuItem(
+                text = { Text(stringResource(if (listed) R.string.card_shopping_update else R.string.shopping_add)) },
+                onClick = {
+                    expanded = false
+                    onAddToShopping()
+                },
+                modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHOPPING),
+            )
             if (onPrint != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.print_menu_print)) },

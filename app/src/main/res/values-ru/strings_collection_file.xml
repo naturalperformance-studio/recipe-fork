@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="collection_share">Поделиться</string>
-    <string name="collection_share_sheet">Поделиться «%1$s»</string>
+    <string name="collection_share_sheet">Экспорт «%1$s»</string>
     <string name="collection_sharing">Готовим файл коллекции</string>
-    <string name="collection_share_failed">Не удалось поделиться коллекцией</string>
+    <string name="collection_share_failed">Не удалось экспортировать коллекцию</string>
     <string name="collection_import_added">Коллекция «%1$s» добавлена: %2$s</string>
     <string name="collection_import_added_held">Коллекция «%1$s» добавлена: %2$s (%3$s)</string>
     <string name="collection_import_updated">Коллекция «%1$s» обновлена: %2$s</string>

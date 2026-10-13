@@ -195,7 +195,7 @@ class CollectionShareTest {
     }
 
     @Test
-    fun anOwnCollectionsShareComesFirstAndOpensTheSheetOnItsFile() {
+    fun anOwnCollectionsExportStandsBeforeRenameAndOpensTheSheetOnItsFile() {
         val soup = own("Soup")
         val borscht = found("Borscht")
         val menu = runBlocking { collections.create("New Year's menu")!!.also { collections.addTo(soup, listOf(it)); collections.addTo(borscht, listOf(it)) } }
@@ -204,12 +204,12 @@ class CollectionShareTest {
 
         assertEquals(listOf(CollectionShareTags.SHARE, CollectionScreenTags.RENAME, CollectionScreenTags.DELETE), menuItems())
         compose.onNodeWithTag(CollectionShareTags.SHARE).assertHeightIsAtLeast(48.dp)
-        compose.onNodeWithTag(CollectionShareTags.SHARE).assertTextEquals("Share")
+        compose.onNodeWithTag(CollectionShareTags.SHARE).assertTextEquals("Export")
         compose.onNodeWithTag(CollectionShareTags.SHARE).performClick()
 
         val sheet = awaitSheet()
         assertEquals(Intent.ACTION_CHOOSER, sheet.action)
-        assertEquals("Share “New Year's menu”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
+        assertEquals("Export “New Year's menu”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
         val (uri, document) = documentOf(sheet)
         assertEquals("New-Year-s-menu.recipefork-collection", uri.lastPathSegment)
         assertEquals(CollectionFileContent(menu, "New Year's menu", null, listOf(soup, borscht)), document)
@@ -231,7 +231,7 @@ class CollectionShareTest {
         compose.onNodeWithTag(CollectionShareTags.SHARE).performClick()
 
         val sheet = awaitSheet()
-        assertEquals("Share “Anna's dinners”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
+        assertEquals("Export “Anna's dinners”", sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
         assertEquals(CollectionFileContent(annas, "Anna's dinners", "anna", listOf(borscht)), documentOf(sheet).second)
     }
 
@@ -272,7 +272,7 @@ class CollectionShareTest {
         assertEquals(FileMessage(FileMessage.Kind.COLLECTION_SHARE_FAILED), session.message.value)
         val text = compose.onNodeWithTag(FileMessageTags.TEXT, useUnmergedTree = true).fetchSemanticsNode()
             .config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }
-        assertEquals("Couldn't share the collection", text)
+        assertEquals("Couldn't export the collection", text)
         assertNull(startedSheet())
         assertFalse(exists(CollectionShareTags.PROGRESS))
         compose.onNodeWithTag(FileMessageTags.OK).performClick()

@@ -41,6 +41,9 @@ import app.recipefork.app.editor.textsOf
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AppTheme
+import app.recipefork.app.ui.WholeWords
+import app.recipefork.core.recipe.QuantityUnit
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -274,6 +277,48 @@ class ShoppingAtLargeTextTest {
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianAtTwiceTheFontScaleEachLineShowsACheckBox() = assertLinesHaveCheckBoxes("батарейки", "пергамент")
+
+    // --- Whole words (v0.38, T-269, scenario 1) ----------------------------------------------------------------------
+
+    /**
+     * A recipe's line naming [ingredient] in the author's words — from a recipe titled [title] — and a line of the
+     * reader's own, [own]: each text of each line, as its layout lays it out, breaks only between words, its long word
+     * drawn smaller where it must; and each line's box stands centred on the first line of its words.
+     */
+    private fun assertLinesKeepWholeWords(ingredient: String, title: String, own: String) {
+        val sauce = recipe(title, 4, free(ingredient, r(2), QuantityUnit.TABLESPOON))
+        runBlocking { recipes.save(sauce) }
+        store.update { ShoppingList(listOf(listed(sauce))).with(OwnLine(POOL, "0", own)) }
+        compose.setContent { AppTheme { ShoppingScreen(shopping, recipes, onBack = {}) } }
+        compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.line(1)) && compose.textsOf(ShoppingTags.line(1)).firstOrNull() == own }
+        compose.waitForIdle()
+        listOf(ShoppingTags.line(0) to ingredient, ShoppingTags.line(1) to own).forEach { (tag, words) ->
+            val texts = WholeWords.assertWhole(compose, hasAnyAncestor(hasTestTag(tag)), tag)
+            assertTrue("$tag does not read “$words”: $texts", texts.first().startsWith(words))
+            // The box, centred on the words' first line.
+            val text = compose.onAllNodes(
+                hasAnyAncestor(hasTestTag(tag)) and SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes().first()
+            val layout = layoutOf(text)
+            val firstLine = text.positionInRoot.y + (layout.getLineTop(0) + layout.getLineBottom(0)) / 2
+            assertEquals("the box of $tag is not centred on its first line", firstLine, box(tag).boundsInRoot.center.y, 1f)
+        }
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    fun atTwiceTheFontScaleALinesWordsWrapOnlyBetweenWords() =
+        assertLinesKeepWholeWords("Worcestershire sauce", "Caesar dressing", "Worcestershire sauce, the large bottle")
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun inRussianAtTwiceTheFontScaleALinesWordsWrapOnlyBetweenWords() =
+        assertLinesKeepWholeWords("вустерширский соус", "Заправка для салата «Цезарь»", "вустерширский соус, большая бутылка")
+
+    @Test
+    fun atTheUsualFontScaleALinesBoxIsCentredOnItsFirstLine() =
+        assertLinesKeepWholeWords("Worcestershire sauce", "Caesar dressing", "Worcestershire sauce, the large bottle")
 
     // --- The empty list ---------------------------------------------------------------------------------------------
 

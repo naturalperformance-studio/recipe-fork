@@ -178,6 +178,4 @@
     <string name="library_shopping_unread">Couldn\'t read the recipe; nothing was added</string>
     <!-- The title of the document of the recipes chosen, printed or shared as a PDF (v0.37, T-264). -->
     <string name="library_selection_document">Recipes</string>
-    <!-- Said by the screen reader of the progress shown while a document is being made to print or share. -->
-    <string name="library_print_preparing">Preparing the document</string>
 </resources>

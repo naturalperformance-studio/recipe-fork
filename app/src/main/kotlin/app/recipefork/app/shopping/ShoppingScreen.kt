@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -77,10 +78,12 @@ import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.library.TITLE_CLEARANCE
 import app.recipefork.app.print.PrintWay
+import app.recipefork.app.print.PrintProgress
 import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.servingsLanguage
 import app.recipefork.app.ui.LineFitText
+import app.recipefork.app.ui.WordFitText
 import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.app.ui.isLargeText
 import app.recipefork.core.scaling.Rational
@@ -171,7 +174,9 @@ fun ShoppingScreen(
     }
     LaunchedEffect(settle) { store.update(settle) }
     val resources = LocalContext.current.resources
-    val printOut = rememberPrintOut(snackbars)
+    // While a document of the list is made, the list says so under its bar.
+    var preparing by remember { mutableStateOf(false) }
+    val printOut = rememberPrintOut(snackbars, onBusy = { preparing = it })
     val lines = remember(shown, held, language, resources, system) {
         if (shown == null || held == null) null else listedLines(shown, held, language, resources, system)
     }
@@ -252,6 +257,7 @@ fun ShoppingScreen(
             )
         },
     ) { padding ->
+        if (preparing) PrintProgress(Modifier.padding(top = padding.calculateTopPadding()))
         when {
             shown == null || all == null -> Box(Modifier.padding(padding).fillMaxSize().testTag(ShoppingTags.LOADING), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -422,10 +428,11 @@ private fun RecipeBlock(entry: ShoppingEntry, title: String, onServings: (Ration
 }
 
 /**
- * A line: its check box, then what to buy and how much; under it, muted, what an approximate line counted and the
- * recipes it comes from. The whole line is one target a tap ticks as bought, or unticks ([onToggle]) — a check box to
- * the screen reader, as a done mark on the card is; a line ticked ([done]) has its box ticked and its text struck through
- * and muted, and is read as bought. An own line has its removal ([onRemove]) beside it.
+ * A line: its check box, centred on the first line of its words, then what to buy and how much; under it, muted, what
+ * an approximate line counted and the recipes it comes from. The whole line is one target a tap ticks as bought, or
+ * unticks ([onToggle]) — a check box to the screen reader, as a done mark on the card is; a line ticked ([done]) has its
+ * box ticked and its text struck through and muted, and is read as bought. An own line has its removal ([onRemove])
+ * beside it.
  */
 @Composable
 private fun Line(listed: ListedLine, done: Boolean, tag: String, onToggle: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier) {
@@ -435,13 +442,25 @@ private fun Line(listed: ListedLine, done: Boolean, tag: String, onToggle: () ->
             Modifier.weight(1f).heightIn(min = 48.dp).ticked(done, onToggle).padding(horizontal = 16.dp, vertical = 8.dp).testTag(tag),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Drawn only: the line itself is the check box the screen reader hears and a tap toggles.
-            Checkbox(checked = done, onCheckedChange = null, modifier = Modifier.testTag(ShoppingTags.lineBox(tag)))
+            // The height of the words' first line, as laid out: the box stands centred on it.
+            var firstLine by remember { mutableStateOf(0.dp) }
+            val density = LocalDensity.current
+            Box(Modifier.heightIn(min = firstLine), contentAlignment = Alignment.Center) {
+                // Drawn only: the line itself is the check box the screen reader hears and a tap toggles.
+                Checkbox(checked = done, onCheckedChange = null, modifier = Modifier.testTag(ShoppingTags.lineBox(tag)))
+            }
+            // Each text wraps only between words, a word too wide for the room drawn smaller (A11Y-004, v0.38).
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(line.text, style = MaterialTheme.typography.bodyLarge.done(done))
-                val muted = MaterialTheme.colorScheme.onSurfaceVariant
-                line.counted?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = muted) }
-                if (line.from.isNotEmpty()) Text(line.from, style = MaterialTheme.typography.bodyMedium, color = muted)
+                WordFitText(
+                    line.text,
+                    style = MaterialTheme.typography.bodyLarge.done(done),
+                    onTextLayout = { layout ->
+                        if (layout.lineCount > 0) firstLine = with(density) { (layout.getLineBottom(0) - layout.getLineTop(0)).toDp() }
+                    },
+                )
+                val muted = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                line.counted?.let { WordFitText(it, style = muted) }
+                if (line.from.isNotEmpty()) WordFitText(line.from, style = muted)
             }
         }
         if (listed.own) {
