@@ -35,7 +35,8 @@
     <!-- The card's ⋮ item that puts a recipe on the list, named by the empty list too. -->
     <string name="shopping_add">Add to shopping list</string>
     <string name="shopping_empty">Your shopping list is empty</string>
-    <string name="shopping_empty_sentence">Open a recipe and choose “%1$s” in its ⋮ menu.</string>
+    <!-- The ways onto the list (v0.38): %1$s is shopping_add, %2$s the list's own "Add item" (shopping_own_add). -->
+    <string name="shopping_empty_sentence">Choose “%1$s” in a recipe\'s ⋮ menu — in the book or on its card — or long-press to select several recipes in the book; “%2$s” adds anything else.</string>
     <!-- A line: what to buy, then how much ("flour — ≈ 1.5 kg", "salt — to taste"). -->
     <string name="shopping_line">%1$s — %2$s</string>
     <!-- An amount added up from parts in other units, counted by the ingredient's measures. -->

@@ -74,6 +74,23 @@ internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = 
 }
 
 /**
+ * [text] in [style] on one line within [width] pixels — a top bar's title (v0.38) — the whole of it made smaller as far
+ * as it needs to fit ([fitWords], the text taken as one word); never smaller than the style's size at a font scale of 1.
+ * Longer than its room even then, it ends with an ellipsis: at a large font scale it neither wraps nor spills out of
+ * the bar.
+ */
+@Composable
+internal fun LineFitText(text: String, style: TextStyle, width: Int, modifier: Modifier = Modifier) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val fitted = remember(text, style, width, measurer, density) { fitWords(text.replace(' ', NO_BREAK), style, width, measurer, density) }
+    Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
+}
+
+/** The space that keeps the words beside it together, so that [fitWords] measures a whole line as one word. */
+private const val NO_BREAK = '\u00A0'
+
+/**
  * The one [style] for all of [texts], each given [width] pixels: made smaller, as [fitWords] does, just as far as the
  * widest word of any of them needs to fit, so that they are all drawn at one size; never smaller than the style's own
  * size at a font scale of 1.

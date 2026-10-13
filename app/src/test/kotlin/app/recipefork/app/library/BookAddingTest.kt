@@ -258,7 +258,8 @@ class BookAddingTest {
         AccessibilityChecks.assertTouchTargets(compose)
 
         openChooser()
-        assertEquals(listOf("Add to collection"), compose.textsOf(AddToCollectionTags.TITLE))
+        // Titled with how many it adds (v0.38).
+        assertEquals(listOf("Add 3 recipes to…"), compose.textsOf(AddToCollectionTags.TITLE))
         assertTrue(exists(AddToCollectionTags.choice(dinner.value)))
         assertTrue(exists(AddToCollectionTags.choice(baking.value)))
         assertFalse("an imported collection is listed", exists(AddToCollectionTags.choice(annas.value)))
@@ -589,12 +590,14 @@ class BookAddingTest {
         assertEquals("Добавить в коллекцию", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
         assertEquals("Добавить в список покупок", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
         openChooser()
+        assertEquals(listOf("Добавить 2 рецепта в…"), compose.textsOf(AddToCollectionTags.TITLE))
         assertEquals(listOf("Новая коллекция…"), compose.textsOf(AddToCollectionTags.NEW))
         compose.onNodeWithTag(AddToCollectionTags.choice(dinner.value)).performClick()
         awaitNotice("2 рецепта добавлены в «Ужин»")
 
         choose(*dishes.toTypedArray())
         openChooser()
+        assertEquals(listOf("Добавить 5 рецептов в…"), compose.textsOf(AddToCollectionTags.TITLE))
         compose.onNodeWithTag(AddToCollectionTags.choice(dinner.value)).performClick()
         awaitNotice("3 рецепта добавлены в «Ужин»")
 
@@ -605,6 +608,7 @@ class BookAddingTest {
 
         choose(dishes[0])
         openChooser()
+        assertEquals(listOf("Добавить 1 рецепт в…"), compose.textsOf(AddToCollectionTags.TITLE))
         compose.onNodeWithTag(AddToCollectionTags.choice(dinner.value)).performClick()
         awaitNotice("Рецепт уже в «Ужин»")
 

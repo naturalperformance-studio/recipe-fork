@@ -2,11 +2,13 @@ package app.recipefork.app.collections
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -21,16 +23,21 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -82,7 +89,7 @@ import app.recipefork.app.library.EntryCard
 import app.recipefork.app.library.EntryCover
 import app.recipefork.app.library.EntryTitle
 import app.recipefork.app.library.LibrarySession
-import app.recipefork.app.library.LibrarySnackbarHost
+import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.ListLoading
 import app.recipefork.app.library.RemovalNotice
 import app.recipefork.app.library.TITLE_CLEARANCE
@@ -98,6 +105,9 @@ import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeCollection
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.app.shopping.rememberAddAllToShopping
+import app.recipefork.app.ui.LineFitText
+import app.recipefork.app.ui.SnackbarAction
+import app.recipefork.app.ui.isLargeText
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -119,6 +129,9 @@ import kotlinx.coroutines.launch
  * card would open with — handed to the system's printing or written as a PDF and shared, as a card's are.
  *
  * Once the book holds the collection no more — deleted here, or its book replaced — the screen closes.
+ *
+ * At large text (v0.38) the bar's name keeps to one line, ending with an ellipsis where it is too long even drawn
+ * smaller ([LineFitText]), and a notice's action stands on a line of its own ([CollectionSnackbarHost]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,14 +193,19 @@ fun CollectionScreen(
     }
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(CollectionScreenTags.SCREEN),
-        snackbarHost = { LibrarySnackbarHost(snackbars) },
+        snackbarHost = { CollectionSnackbarHost(snackbars) },
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        collection?.name.orEmpty(),
-                        Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(CollectionScreenTags.TITLE),
-                    )
+                    // On one line, never under the bar's actions nor spilling below it at a large font scale (v0.38).
+                    BoxWithConstraints(Modifier.padding(end = TITLE_CLEARANCE)) {
+                        LineFitText(
+                            collection?.name.orEmpty(),
+                            LocalTextStyle.current,
+                            constraints.maxWidth,
+                            Modifier.semantics { heading() }.testTag(CollectionScreenTags.TITLE),
+                        )
+                    }
                 },
                 navigationIcon = { BackAction(session::closeCollection) },
                 actions = {
@@ -202,6 +220,7 @@ fun CollectionScreen(
                         )
                     }
                 },
+                modifier = Modifier.testTag(CollectionScreenTags.BAR),
             )
         },
     ) { padding ->
@@ -221,7 +240,7 @@ fun CollectionScreen(
                 EmptyState(
                     picture = R.drawable.ic_empty_book,
                     headline = stringResource(if (own) R.string.collection_empty else R.string.collection_imported_empty),
-                    sentence = if (own) stringResource(R.string.collection_empty_sentence) else null,
+                    sentence = if (own) stringResource(R.string.collection_empty_sentence, stringResource(R.string.collection_sheet_menu)) else null,
                     action = null,
                     tag = CollectionScreenTags.EMPTY,
                 )
@@ -272,6 +291,26 @@ fun CollectionScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The screen's snackbar, as the book's is: one notice at a time, above the keyboard where it is open, gone by itself
+ * after a while or swiped away either way, read by the screen reader as it comes; at large text ([isLargeText]) its
+ * action stands on a line of its own, leaving the words the whole width (v0.38).
+ */
+@Composable
+private fun CollectionSnackbarHost(snackbars: SnackbarHostState) {
+    SnackbarHost(snackbars, Modifier.imePadding().testTag(LibraryTags.SNACKBAR)) { data ->
+        val swipe = rememberSwipeToDismissBoxState()
+        // Only the snackbar itself is swiped: the margin around it lets a tap through to the list beneath.
+        SwipeToDismissBox(swipe, backgroundContent = {}, modifier = Modifier.padding(12.dp), onDismiss = { data.dismiss() }) {
+            Snackbar(
+                modifier = Modifier.testTag(LibraryTags.NOTICE),
+                action = data.visuals.actionLabel?.let { { SnackbarAction(it, data::performAction) } },
+                actionOnNewLine = isLargeText(),
+            ) { Text(data.visuals.message) }
         }
     }
 }
@@ -546,6 +585,7 @@ private fun RenameDialog(current: String, onRename: (String) -> Unit, onDismiss:
 
 object CollectionScreenTags {
     const val SCREEN = "collection"
+    const val BAR = "collection-bar"
     const val TITLE = "collection-title"
     const val BACK = "collection-back"
     const val MENU = "collection-menu"
