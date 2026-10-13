@@ -292,8 +292,12 @@ class LibrarySession(
      */
     val collection: StateFlow<String?> = saved.getStateFlow(COLLECTION_KEY, null)
 
-    /** The collection [id] opens above the book; the book is left, so a removal it still offers to undo is final now. */
+    /**
+     * The collection [id] opens above the book; the book is left, so a removal it still offers to undo is final now, and a
+     * selection made in it ends.
+     */
     fun openCollection(id: String) {
+        endSelection()
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false

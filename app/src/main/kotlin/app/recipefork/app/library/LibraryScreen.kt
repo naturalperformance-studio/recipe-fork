@@ -894,7 +894,7 @@ internal fun EntryCard(
     val state = stringResource(if (selected == true) R.string.library_entry_selected else R.string.library_entry_not_selected)
     val open = when {
         selected != null && onSelect != null -> Modifier
-            .clickable(onClickLabel = toggleLabel, onClick = onSelect)
+            .combinedClickable(onClickLabel = toggleLabel, onLongClickLabel = toggleLabel, onLongClick = onSelect, onClick = onSelect)
             .semantics {
                 this.selected = selected
                 stateDescription = state
