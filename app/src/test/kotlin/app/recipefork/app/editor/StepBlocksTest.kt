@@ -295,16 +295,17 @@ class StepBlocksTest(private val handleRight: Boolean) {
         assertEquals(texts, stored(id).steps.map { it.text })
     }
 
-    // A frozen recipe's steps are blocks too, with no column.
+    // A frozen recipe's steps read as plain text, with no column and no outline around them: nothing on a recipe that
+    // cannot be changed is drawn as a box to tap (T-271).
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aFrozenRecipesStepsAreBlocks() = frozenStepsAreBlocks(1f)
+    fun aFrozenRecipesStepsAreNotBoxes() = frozenStepsAreNotBoxes(1f)
 
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aFrozenRecipesStepsAreBlocksAtDoubleFontScale() = frozenStepsAreBlocks(2f)
+    fun aFrozenRecipesStepsAreNotBoxesAtDoubleFontScale() = frozenStepsAreNotBoxes(2f)
 
-    private fun frozenStepsAreBlocks(fontScale: Float) {
+    private fun frozenStepsAreNotBoxes(fontScale: Float) {
         open(fontScale, state = RecipeState.PUBLISHED)
         steps().indices.forEach { position ->
             assertFalse(exists(EditorTags.stepHandle(position)))
@@ -318,7 +319,23 @@ class StepBlocksTest(private val handleRight: Boolean) {
         val photo = bounds(StepSheetTags.thumbnail(PHOTO_STEP))
         val block = bounds(EditorTags.step(PHOTO_STEP))
         assertTrue(photo.left >= block.left - 0.5f && photo.right <= block.right + 0.5f && photo.top >= block.top - 0.5f && photo.bottom <= block.bottom + 0.5f)
-        assertSeparateOutlinedBlocks(steps().size)
+        assertNoOutlines(steps().size)
+    }
+
+    /** The [count] steps stand apart with no outline: their tops and bottoms are drawn in the background's colour. */
+    private fun assertNoOutlines(count: Int) {
+        val list = bounds(EditorTags.STEPS)
+        val image = compose.onNodeWithTag(EditorTags.STEPS).captureToImage().toPixelMap()
+        fun at(x: Float, y: Float): Color = image[(x - list.left).toInt().coerceIn(0, image.width - 1), (y - list.top).toInt().coerceIn(0, image.height - 1)]
+        fun differs(a: Color, b: Color) = abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.05f
+        val blocks = (0 until count).map { bounds(EditorTags.step(it)) }
+        val background = at(blocks[0].center.x, (blocks[0].bottom + blocks[1].top) / 2)
+        blocks.forEachIndexed { i, block ->
+            fun bare(side: String, points: List<Offset>) =
+                assertFalse("step $i is outlined at its $side", points.any { differs(at(it.x, it.y), background) })
+            bare("top", (0..2).flatMap { dy -> listOf(0.25f, 0.5f, 0.75f).map { Offset(block.left + block.width * it, block.top + dy) } })
+            bare("bottom", (1..3).flatMap { dy -> listOf(0.25f, 0.5f, 0.75f).map { Offset(block.left + block.width * it, block.bottom - dy) } })
+        }
     }
 
     companion object {

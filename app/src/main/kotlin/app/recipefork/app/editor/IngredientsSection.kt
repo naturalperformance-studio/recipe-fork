@@ -366,11 +366,12 @@ private fun Ingredient.holdsNothing(): Boolean =
 /** A row as a frozen recipe shows it: its line as the card writes it, and nothing to change it with. */
 @Composable
 private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: InterfaceLanguage, dictionary: List<IngredientEntryEntity>?) {
-    OutlinedCard(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
+    // Plain text, at the form's own margin: nothing on a recipe that cannot be changed is drawn as a box to tap.
+    Box(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
         Text(
             ingredientLineText(row, dictionary, language),
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).testTag(IngredientSheetTags.line(position)),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag(IngredientSheetTags.line(position)),
         )
     }
 }

@@ -2,6 +2,9 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +15,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
@@ -47,6 +51,7 @@ import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
@@ -138,12 +143,14 @@ private fun label(tag: TagEntity): String =
     if (interfaceLanguage(LocalConfiguration.current) == RecipeLanguage.RU) tag.labelRu else tag.labelEn
 
 /**
- * The tag editor: the recipe's tags as input chips, each removed by a tap on it, and the search whose offers show
+ * The tag editor: the recipe's tags as input chips, each removed by its cross alone, and the search whose offers show
  * as suggestion chips that add the tag. Tags come from the dictionary only, and typed text is never committed (DOM-008).
+ * A recipe that cannot be changed and has no tags shows no part for them.
  */
 @Composable
 internal fun Tags(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEntity>?) {
     val editable = recipe.state.editable
+    if (!editable && recipe.tags.isEmpty()) return
     Column(Modifier.fillMaxWidth().testTag(EditorTags.TAGS), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             stringResource(R.string.editor_tags),
@@ -164,37 +171,75 @@ internal fun Tags(recipe: Recipe, editor: RecipeEditor, dictionary: List<TagEnti
     }
 }
 
-/** A tag of the recipe as an input chip: a tap on it — or on its cross — removes it. */
+/**
+ * A tag of the recipe as an input chip, drawn as Material's selected input chip with its trailing cross: only the cross
+ * does anything — a tap on it removes the tag — and the rest of the chip, its label, does nothing, so that a tap meant
+ * for the words never takes a tag away. The cross is an icon button with a touch area of the minimum interactive size
+ * (48 dp, A11Y-003) centred on it, reaching past the chip as drawn — into the gap around it — rather than making the
+ * chip taller; the screen reader finds the label, then the cross, named for what it removes.
+ */
 @Composable
 private fun TagChip(id: Long, shown: String, onRemove: () -> Unit) {
     val action = stringResource(R.string.editor_tag_remove_action, shown)
-    ChipTarget { target ->
-        InputChip(
-            selected = true,
-            onClick = onRemove,
-            label = { Text(shown) },
-            trailingIcon = {
-                Icon(
-                    painterResource(R.drawable.ic_clear_search),
-                    contentDescription = null,
-                    modifier = Modifier.size(InputChipDefaults.IconSize).testTag(EditorTags.removeIcon(id)),
-                )
+    val minimum = LocalMinimumInteractiveComponentSize.current.takeIf { it.isSpecified } ?: 48.dp
+    Layout(
+        contents = listOf(
+            { TagSurface(shown, Modifier.testTag(EditorTags.chip(id)), trailing = InputChipDefaults.IconSize + CROSS_PADDING) },
+            {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    IconButton(onClick = onRemove, modifier = Modifier.size(minimum).testTag(EditorTags.remove(id))) {
+                        Icon(
+                            painterResource(R.drawable.ic_clear_search),
+                            contentDescription = action,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(InputChipDefaults.IconSize).testTag(EditorTags.removeIcon(id)),
+                        )
+                    }
+                }
             },
-            modifier = target(EditorTags.remove(id)) { onClick(label = action, action = null) },
-        )
+        ),
+        modifier = Modifier.lineGap(),
+    ) { (chips, crosses), constraints ->
+        val chip = chips.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val cross = crosses.single().measure(Constraints())
+        // The cross centred where the chip leaves room for it: its icon's width and the padding after it, at its end.
+        val centreX = chip.width - CROSS_PADDING.roundToPx() - InputChipDefaults.IconSize.roundToPx() / 2
+        layout(chip.width, chip.height) {
+            chip.place(0, 0)
+            cross.place(centreX - cross.width / 2, (chip.height - cross.height) / 2)
+        }
     }
 }
+
+/** Between a chip's trailing cross and its end, as Material's input chip draws it. */
+private val CROSS_PADDING = 8.dp
 
 /** A tag of a recipe that cannot be changed: the chip's look, and nothing to tap. */
 @Composable
 private fun FrozenTag(shown: String) {
+    TagSurface(shown, Modifier.lineGap(), trailing = 0.dp)
+}
+
+/**
+ * A tag as Material's selected input chip draws it: its shape and colours, at least its height, its label after 12 dp,
+ * then [trailing] room — for a cross over it — or the same 12 dp.
+ */
+@Composable
+private fun TagSurface(shown: String, modifier: Modifier, trailing: Dp) {
     Surface(
         shape = InputChipDefaults.shape,
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = Modifier.lineGap(),
+        // One element for the screen reader: the tag's words.
+        modifier = modifier.semantics(mergeDescendants = true) {},
     ) {
-        Text(shown, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+        Row(
+            Modifier.heightIn(min = InputChipDefaults.Height).padding(start = 12.dp, end = if (trailing > 0.dp) 0.dp else 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(shown, style = MaterialTheme.typography.labelLarge)
+            if (trailing > 0.dp) Spacer(Modifier.width(8.dp + trailing))
+        }
     }
 }
 

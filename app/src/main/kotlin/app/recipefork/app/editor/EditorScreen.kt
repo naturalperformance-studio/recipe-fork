@@ -62,6 +62,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -106,6 +108,7 @@ import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.RecipePart
+import app.recipefork.core.recipe.RecipeBounds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -244,6 +247,9 @@ fun EditorScreen(
     // refused the last write: then it goes as the bar's back.
     val refused by editor.refused.collectAsState()
     BackHandler(enabled = refused) { back() }
+    // The title field stands at the top of the form: the bar repeats the title only once that field has scrolled out of
+    // view, as the card's bar does with its heading.
+    var titleOut by remember(recipeId) { mutableStateOf(false) }
 
     Box(modifier.fillMaxSize().safeDrawingPadding()) {
         Column(Modifier.fillMaxSize().testTag(EditorTags.SCREEN)) {
@@ -251,7 +257,7 @@ fun EditorScreen(
             // there whatever the recipe holds and whatever its state (GUIDE-003), then "Done" while the recipe can be
             // changed.
             EditorBar(
-                title = recipe?.title,
+                title = recipe?.title?.takeIf { titleOut },
                 done = recipe?.state?.editable == true,
                 checklist = {
                     ForkNoteAction()
@@ -281,6 +287,7 @@ fun EditorScreen(
                     .testTag(EditorTags.FORM),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                // What the reader of a recipe that cannot be changed can do instead: fork it, from its card.
                 if (!shown.state.editable) {
                     Text(
                         stringResource(R.string.editor_frozen),
@@ -297,7 +304,7 @@ fun EditorScreen(
                     val equipment = remember { RowFocus() }
                     val firstItem = shown.listItems.firstOrNull()
                     val toIngredients = firstItem?.let { { focusOn(it, rows, headings) } }
-                    TitleAndLanguage(shown, editor) { servings.requestFocus() }
+                    TitleAndLanguage(shown, editor, onOut = { titleOut = it }) { servings.requestFocus() }
                     CoverSection(shown, editor, store, recipes.bookName(), saving)
                     Tags(shown, editor, dictionary)
                     // The description stands with the title it tells about, before the serving count; over several
@@ -489,8 +496,9 @@ private fun removalText(
 
 /**
  * The editor's top app bar, as the book's and the card's: back at its start, announced as showing the recipe, then the
- * recipe's [title] on one line, cut short where it is too long, or "New recipe" while it has none (nothing while the
- * recipe is read); at its end [checklist] and, where [done], "Done", which saves the recipe and closes the editor.
+ * recipe's [title] on one line, cut short where it is too long, or "New recipe" while it has none — given only once the
+ * title field below has scrolled out of view, so the bar does not repeat what the form shows (nothing while the recipe
+ * is read); at its end [checklist] and, where [done], "Done", which saves the recipe and closes the editor.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -534,9 +542,20 @@ private fun EditorBar(title: String?, done: Boolean, checklist: @Composable () -
     )
 }
 
+/**
+ * The title, with the declared language beside it or under it. [onOut] is told whether the title has scrolled out of
+ * the editor's view, above it.
+ */
 @Composable
-private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () -> Unit) {
+private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onOut: (Boolean) -> Unit, onNext: () -> Unit) {
     val editable = recipe.state.editable
+    val scroll = LocalEditorScroll.current
+    val out by rememberUpdatedState(onOut)
+    // Where the title stands against the top of the scrolling form, as it scrolls.
+    val placed = Modifier.onGloballyPositioned { title ->
+        val viewport = scroll?.viewport?.takeIf { it.isAttached } ?: return@onGloballyPositioned
+        out(title.positionInRoot().y + title.size.height <= viewport.positionInRoot().y)
+    }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         val label = stringResource(R.string.editor_title)
         val measurer = rememberTextMeasurer()
@@ -553,17 +572,28 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () ->
             need = need,
             title = {
                 if (editable) {
+                    // What the title still needs (FLOW-028), as the field's supporting text.
+                    val mark = fieldMark(editor, RecipePart.Title)
                     OutlinedTextField(
                         value = recipe.title,
                         onValueChange = { editor.setTitle(it) },
                         label = { Text(label) },
                         singleLine = true,
+                        isError = mark != null,
+                        supportingText = mark?.let {
+                            { FieldMark(RecipePart.Title, it, recipe.title.length, RecipeBounds.MAX_TITLE, EditorTags.TITLE_MARK) }
+                        },
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { onNext() }),
-                        modifier = Modifier.fillMaxWidth().then(leaving { editor.leave(RecipePart.Title) }).testTag(EditorTags.TITLE),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(placed)
+                            .then(leaving { editor.leave(RecipePart.Title) })
+                            .semantics(properties = fieldMarkSemantics(RecipePart.Title, mark))
+                            .testTag(EditorTags.TITLE),
                     )
                 } else {
-                    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
+                    Column(Modifier.fillMaxWidth().then(placed).semantics(mergeDescendants = true) {}.testTag(EditorTags.TITLE)) {
                         Text(label, style = MaterialTheme.typography.labelMedium)
                         Text(recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) }, style = MaterialTheme.typography.titleLarge)
                     }
@@ -572,8 +602,7 @@ private fun TitleAndLanguage(recipe: Recipe, editor: RecipeEditor, onNext: () ->
             // The declared language sits beside the title (FLOW-024): changing it is one action (L10N-004).
             language = { Language(recipe, editor) },
         )
-        // Under the title and the language, across the width, what either still needs (FLOW-028).
-        BoundMark(editor, RecipePart.Title, EditorTags.TITLE_MARK, gap = 4.dp)
+        // Under the title and the language, across the width, what the language still needs (FLOW-028).
         BoundMark(editor, RecipePart.Language, EditorTags.LANGUAGE_MARK, gap = 4.dp)
     }
 }
@@ -612,36 +641,43 @@ private fun TitleBesideLanguage(need: Dp, title: @Composable () -> Unit, languag
 
 /**
  * The description, under the title and the tags, before the serving count: one optional field over as many lines as it
- * takes, marked on leaving it when over its limit (FLOW-028); read-only where the recipe is frozen.
+ * takes, marked on leaving it when over its limit (FLOW-028); read-only where the recipe is frozen, and not there at all
+ * where a frozen recipe has none.
  */
 @Composable
 private fun DescriptionField(recipe: Recipe, editor: RecipeEditor) {
     if (!recipe.state.editable) {
+        // A recipe that cannot be changed shows no empty part: with no description, nothing stands here.
+        if (recipe.description.isEmpty()) return
         Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.DESCRIPTION)) {
             Text(stringResource(R.string.editor_description), style = MaterialTheme.typography.labelMedium)
             Text(
-                recipe.description.ifEmpty { stringResource(R.string.editor_description_none) },
+                recipe.description,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.testTag(EditorTags.DESCRIPTION_TEXT),
             )
         }
         return
     }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        OutlinedTextField(
-            value = recipe.description,
-            onValueChange = { editor.setDescription(it) },
-            label = { Text(stringResource(R.string.editor_description_optional)) },
-            minLines = 3,
-            // Over several lines, the keyboard keeps its new-line key.
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(leaving { editor.leave(RecipePart.Description) })
-                .testTag(EditorTags.DESCRIPTION),
-        )
-        BoundMark(editor, RecipePart.Description, EditorTags.DESCRIPTION_MARK, gap = 4.dp)
-    }
+    // What the description still needs (FLOW-028), as the field's supporting text.
+    val mark = fieldMark(editor, RecipePart.Description)
+    OutlinedTextField(
+        value = recipe.description,
+        onValueChange = { editor.setDescription(it) },
+        label = { Text(stringResource(R.string.editor_description_optional)) },
+        minLines = 3,
+        isError = mark != null,
+        supportingText = mark?.let {
+            { FieldMark(RecipePart.Description, it, recipe.description.length, RecipeBounds.MAX_DESCRIPTION, EditorTags.DESCRIPTION_MARK) }
+        },
+        // Over several lines, the keyboard keeps its new-line key.
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(leaving { editor.leave(RecipePart.Description) })
+            .semantics(properties = fieldMarkSemantics(RecipePart.Description, mark))
+            .testTag(EditorTags.DESCRIPTION),
+    )
 }
 
 /**
@@ -827,7 +863,7 @@ object EditorTags {
     const val SCREEN = "editor"
     const val BAR = "editor-bar"
     const val BACK = "editor-back"
-    /** The recipe's title in the top bar, or "New recipe" while it has none. */
+    /** The recipe's title in the top bar once the title field has scrolled away, or "New recipe" while it has none. */
     const val BAR_TITLE = "editor-bar-title"
     /** The top bar's "Done": once the changes are in the book, the editor closes. */
     const val DONE = "editor-done"
@@ -843,6 +879,8 @@ object EditorTags {
     const val INGREDIENTS_MARK = "editor-ingredients-mark"
     const val STEPS_MARK = "editor-steps-mark"
     const val DESCRIPTION_MARK = "editor-description-mark"
+    /** The counter beside the field mark tagged [mark]: what the field holds against its limit. */
+    fun counter(mark: String) = "$mark-counter"
     fun stepMark(position: Int) = "editor-step-$position-mark"
     fun timerNameMark(position: Int, index: Int = 0) = "${timer(position, index)}-name-mark"
     const val LANGUAGE = "editor-language"
@@ -855,6 +893,8 @@ object EditorTags {
     const val NO_MATCH = "editor-tag-no-match"
     fun offered(tagId: Long) = "editor-tag-offered-$tagId"
     fun chosen(tagId: Long) = "editor-tag-chosen-$tagId"
+    /** The recipe's tag as its chip is drawn; its cross, the only part of it that does anything, is [remove]. */
+    fun chip(tagId: Long) = "editor-tag-chip-$tagId"
     fun remove(tagId: Long) = "editor-tag-remove-$tagId"
     fun removeIcon(tagId: Long) = "editor-tag-remove-icon-$tagId"
     const val SERVINGS = "editor-servings"
@@ -902,6 +942,8 @@ object EditorTags {
     const val STEP_ADD = "editor-step-add"
     fun step(position: Int) = "editor-step-$position"
     fun stepText(position: Int) = "editor-step-$position-text"
+    /** What an empty step's field says goes there. */
+    fun stepPlaceholder(position: Int) = "editor-step-$position-placeholder"
     fun stepRemove(position: Int) = "editor-step-$position-remove"
     fun stepHandle(position: Int) = "editor-step-$position-handle"
     fun stepHandleIcon(position: Int) = "editor-step-$position-handle-icon"

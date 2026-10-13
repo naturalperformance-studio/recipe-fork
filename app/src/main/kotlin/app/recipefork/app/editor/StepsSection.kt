@@ -306,14 +306,15 @@ private fun StepRow(
 }
 
 /**
- * A step as the frozen recipe shows it: as an editable step's row reads, with no drag column, and nothing that opens.
+ * A step as the frozen recipe shows it: as an editable step's row reads, with no drag column, nothing that opens, and
+ * no box around it — plain text at the form's own margin, as nothing on it is to be tapped.
  */
 @Composable
 private fun ReadOnlyStep(position: Int, step: Step, media: Media?, ingredients: List<Ingredient>, language: InterfaceLanguage, photos: StepPhotos) {
-    OutlinedCard(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
+    Box(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
         StepLine(
             position, step, media, ingredients, language, editor = null, photos, waiting = false,
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(horizontal = 16.dp, vertical = 12.dp).testTag(StepSheetTags.line(position)),
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(vertical = 4.dp).testTag(StepSheetTags.line(position)),
         )
     }
 }
