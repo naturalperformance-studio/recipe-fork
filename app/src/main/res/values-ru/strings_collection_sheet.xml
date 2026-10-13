@@ -10,6 +10,12 @@
     <string name="collection_sheet_in_none">Ни в одной коллекции</string>
     <string name="collection_sheet_change_failed">Не удалось изменить коллекцию</string>
     <string name="collection_sheet_create_failed">Не удалось создать коллекцию</string>
+    <plurals name="collection_sheet_title_count">
+        <item quantity="one">Добавить %d рецепт в…</item>
+        <item quantity="few">Добавить %d рецепта в…</item>
+        <item quantity="many">Добавить %d рецептов в…</item>
+        <item quantity="other">Добавить %d рецепта в…</item>
+    </plurals>
     <plurals name="collection_sheet_in">
         <item quantity="one">В %d коллекции</item>
         <item quantity="few">В %d коллекциях</item>

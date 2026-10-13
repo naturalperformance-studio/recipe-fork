@@ -600,7 +600,11 @@ class CollectionScreenTest {
 
         await(CollectionScreenTags.EMPTY)
         assertEquals("No recipes here yet", text(LibraryTags.emptyHeadline(CollectionScreenTags.EMPTY)))
-        assertEquals("Open a recipe and choose Add to collection.", text(LibraryTags.emptySentence(CollectionScreenTags.EMPTY)))
+        // The ways in, as they are now (v0.38): a recipe's ⋮ in the book or on its card, and the book's selection.
+        assertEquals(
+            "Choose “Add to collection” in a recipe's ⋮ menu — in the book or on its card — or long-press to select several recipes in the book.",
+            text(LibraryTags.emptySentence(CollectionScreenTags.EMPTY)),
+        )
 
         // An imported one says it holds none, and offers no way to add.
         compose.onNodeWithTag(CollectionScreenTags.BACK).performClick()
@@ -664,7 +668,10 @@ class CollectionScreenTest {
         open(empty)
         await(CollectionScreenTags.EMPTY)
         assertEquals("Здесь пока нет рецептов", text(LibraryTags.emptyHeadline(CollectionScreenTags.EMPTY)))
-        assertEquals("Откройте рецепт и выберите «Добавить в коллекцию».", text(LibraryTags.emptySentence(CollectionScreenTags.EMPTY)))
+        assertEquals(
+            "Выберите «Добавить в коллекцию» в меню ⋮ рецепта — в книге или на его карточке — или выделите несколько рецептов в книге долгим нажатием.",
+            text(LibraryTags.emptySentence(CollectionScreenTags.EMPTY)),
+        )
         chooseInMenu(CollectionScreenTags.DELETE)
         await(LibraryTags.PAGER)
         compose.awaitRemovalNotice("Коллекция «Салаты» удалена", "Вернуть")

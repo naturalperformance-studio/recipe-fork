@@ -13,6 +13,11 @@
     <!-- Said in the sheet when a tick, an untick or Create could not be written. -->
     <string name="collection_sheet_change_failed">Couldn\'t change the collection</string>
     <string name="collection_sheet_create_failed">Couldn\'t create the collection</string>
+    <!-- The title of the book selection's sheet (v0.38): how many recipes it adds to the collection chosen below. -->
+    <plurals name="collection_sheet_title_count">
+        <item quantity="one">Add %d recipe to…</item>
+        <item quantity="other">Add %d recipes to…</item>
+    </plurals>
     <plurals name="collection_sheet_in">
         <item quantity="one">In %d collection</item>
         <item quantity="other">In %d collections</item>

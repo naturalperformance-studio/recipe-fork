@@ -261,15 +261,22 @@ class ShoppingScreenTest {
         assertFalse(session.shopping.value)
     }
 
+    // v0.38: it names every way a recipe gets there now — a recipe's ⋮ in the book or on its card, the book's selection —
+    // and "Add item".
     @Test
     fun anEmptyListSaysHowToAddARecipe() {
         showBook()
         openList()
         compose.waitUntil(PATIENCE_MS) { exists(ShoppingTags.EMPTY) }
         assertEquals(
-            listOf("Your shopping list is empty", "Open a recipe and choose “Add to shopping list” in its ⋮ menu."),
-            LocalizationChecks.shownText(compose).filter { it.startsWith("Your") || it.startsWith("Open a") },
+            listOf(
+                "Your shopping list is empty",
+                "Choose “Add to shopping list” in a recipe's ⋮ menu — in the book or on its card — or long-press to select several " +
+                    "recipes; “Add item” adds anything else.",
+            ),
+            LocalizationChecks.shownText(compose).filter { it.startsWith("Your") || it.startsWith("Choose") },
         )
+        assertTrue(exists(ShoppingTags.ADD))
         // Nothing to clear: the ⋮ is not offered.
         assertFalse(exists(ShoppingTags.MENU))
     }

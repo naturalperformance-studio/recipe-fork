@@ -42,6 +42,7 @@
     <string name="collection_removed_untitled">Recipe removed from the collection</string>
     <!-- An empty collection. -->
     <string name="collection_empty">No recipes here yet</string>
-    <string name="collection_empty_sentence">Open a recipe and choose Add to collection.</string>
+    <!-- How recipes get into it (v0.38): %1$s is the "Add to collection" item (collection_sheet_menu). -->
+    <string name="collection_empty_sentence">Choose “%1$s” in a recipe\'s ⋮ menu — in the book or on its card — or long-press to select several recipes in the book.</string>
     <string name="collection_imported_empty">No recipes in this collection</string>
 </resources>
