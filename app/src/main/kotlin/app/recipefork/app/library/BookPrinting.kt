@@ -1,20 +1,13 @@
 package app.recipefork.app.library
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import app.recipefork.app.R
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.media.PhotoStore
@@ -78,18 +71,5 @@ internal fun rememberBookPrinting(
             printOut(way) { RecipesDocument.read(title, recipeIds.map(::RecipeId), recipes, card, session::heldScale, resources, photos) }
         },
         busy = busy,
-    )
-}
-
-/**
- * The progress of a document being made to print or share, in place, over the top of the view, shifting nothing; the
- * screen reader names it.
- */
-@Composable
-internal fun PrintProgress(modifier: Modifier = Modifier) {
-    val label = stringResource(R.string.library_print_preparing)
-    LinearProgressIndicator(
-        modifier.fillMaxWidth().semantics { contentDescription = label }.testTag(LibraryTags.PRINT_PROGRESS),
-        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     )
 }

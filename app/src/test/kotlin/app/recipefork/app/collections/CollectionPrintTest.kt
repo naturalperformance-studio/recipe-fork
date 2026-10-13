@@ -48,6 +48,8 @@ import app.recipefork.app.print.PlatformPrinting
 import app.recipefork.app.print.PrintBlock
 import app.recipefork.app.print.PrintDocument
 import app.recipefork.app.print.Printing
+import app.recipefork.app.print.assertPrintProgress
+import app.recipefork.app.print.printProgressShown
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.shopping.ShoppingEnvironment
 import app.recipefork.app.timer.CardTimers
@@ -71,6 +73,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -270,21 +273,22 @@ class CollectionPrintTest {
         document.blocks.filterIsInstance<PrintBlock.Heading>().map { it.text }.filter { it.startsWith("Ingredients") || it.startsWith("Ингредиенты") }
 
     @Test
-    fun theMenuOffersPrintAndShareAsPdfAfterAddAllAndBeforeRenameInBothModes() {
+    fun theMenuOffersPrintAndShareAsPdfAfterAddAllThenExportBeforeRenameInBothModes() {
         val soup = own("Soup", servings = 4)
         val menu = collection("Menu", listOf(soup))
         show(LibraryView.OWN, Mode.Serverless)
         open(menu)
         assertEquals(
             listOf(
-                CollectionShareTags.SHARE, CollectionScreenTags.ADD_ALL_TO_SHOPPING, CollectionScreenTags.PRINT,
-                CollectionScreenTags.SHARE_PDF, CollectionScreenTags.RENAME, CollectionScreenTags.DELETE,
+                CollectionScreenTags.ADD_ALL_TO_SHOPPING, CollectionScreenTags.PRINT, CollectionScreenTags.SHARE_PDF,
+                CollectionShareTags.SHARE, CollectionScreenTags.RENAME, CollectionScreenTags.DELETE,
             ),
             items(),
         )
         openMenu()
         compose.onNodeWithTag(CollectionScreenTags.PRINT).assertTextEquals("Print")
         compose.onNodeWithTag(CollectionScreenTags.SHARE_PDF).assertTextEquals("Share as PDF")
+        compose.onNodeWithTag(CollectionShareTags.SHARE).assertTextEquals("Export")
         AccessibilityChecks.assertTouchTargets(compose)
     }
 
@@ -435,18 +439,21 @@ class CollectionPrintTest {
         assertEquals(listOf(1 to "Bread"), contents(printed.single()))
     }
 
-    // While the document is being made, a second tap — on either item — starts nothing; once it is handed over, a tap
-    // starts the next.
+    // While the document is being made, the book's progress shows under the bar, its words drawn (v0.38, T-269), and a
+    // second tap — on either item — starts nothing; once it is handed over, the progress goes and a tap starts the next.
     @Test
     fun aSecondTapWhileTheDocumentIsMadeStartsNothing() {
         val soup = own("Soup", servings = 4)
         val menu = collection("Menu", listOf(soup))
         show(LibraryView.OWN)
         open(menu)
+        assertFalse(compose.printProgressShown())
         val waiting = CompletableDeferred<Unit>()
         gate = waiting
 
         take(CollectionScreenTags.PRINT)
+        compose.waitUntil(PATIENCE_MS) { compose.printProgressShown() }
+        compose.assertPrintProgress("Preparing the document", CollectionScreenTags.BAR)
         take(CollectionScreenTags.PRINT)
         take(CollectionScreenTags.SHARE_PDF)
         compose.waitForIdle()
@@ -454,7 +461,7 @@ class CollectionPrintTest {
 
         gate = null
         waiting.complete(Unit)
-        compose.waitUntil(PATIENCE_MS) { printed.size == 1 }
+        compose.waitUntil(PATIENCE_MS) { printed.size == 1 && !compose.printProgressShown() }
         compose.waitForIdle()
         assertEquals(1, printed.size)
         assertTrue(shared.isEmpty())
@@ -476,8 +483,15 @@ class CollectionPrintTest {
         openMenu()
         compose.onNodeWithTag(CollectionScreenTags.PRINT).assertTextEquals("Печать")
         compose.onNodeWithTag(CollectionScreenTags.SHARE_PDF).assertTextEquals("Поделиться PDF")
+        compose.onNodeWithTag(CollectionShareTags.SHARE).assertTextEquals("Экспорт")
+        val waiting = CompletableDeferred<Unit>()
+        gate = waiting
         compose.onNodeWithTag(CollectionScreenTags.SHARE_PDF).performClick()
-        compose.waitUntil(PATIENCE_MS) { shared.size == 1 }
+        compose.waitUntil(PATIENCE_MS) { compose.printProgressShown() }
+        compose.assertPrintProgress("Готовим документ", CollectionScreenTags.BAR)
+        gate = null
+        waiting.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { shared.size == 1 && !compose.printProgressShown() }
         val document = shared.single()
         assertEquals("Зимнее меню", document.title)
         assertEquals(listOf(1 to "Суп", 2 to "Хлеб"), contents(document))

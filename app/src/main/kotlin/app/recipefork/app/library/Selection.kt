@@ -168,7 +168,10 @@ internal fun SelectionStartFeedback(session: LibrarySession) {
     }
 }
 
-/** The selection bar's ⋮: "Select all", then [actions], a destructive one in the error colour. */
+/**
+ * The selection bar's ⋮: "Select all", then [actions], a destructive one in the error colour — by their words alone, as
+ * every other ⋮'s items are: an action's icon is for the bar, and the ⋮'s labels line up whichever went there (v0.38).
+ */
 @Composable
 private fun SelectionMenu(actions: List<SelectionAction>, onSelectAll: () -> Unit, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
@@ -196,9 +199,8 @@ private fun SelectionMenu(actions: List<SelectionAction>, onSelectAll: () -> Uni
                         expanded = false
                         action.onClick()
                     },
-                    leadingIcon = action.icon?.let { icon -> { Icon(painterResource(icon), contentDescription = null) } },
                     colors = if (action.destructive) {
-                        MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error, leadingIconColor = MaterialTheme.colorScheme.error)
+                        MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error)
                     } else {
                         MenuDefaults.itemColors()
                     },

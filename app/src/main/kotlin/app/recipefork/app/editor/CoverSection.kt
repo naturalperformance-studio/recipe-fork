@@ -39,6 +39,7 @@ import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.SourceItem
 import app.recipefork.app.media.SourceSheet
 import app.recipefork.app.media.rememberPhotoSources
+import app.recipefork.app.ui.WordFitText
 import app.recipefork.core.recipe.Recipe
 import kotlinx.coroutines.CoroutineScope
 
@@ -112,7 +113,8 @@ internal fun CoverSection(recipe: Recipe, editor: RecipeEditor, store: PhotoStor
 
 /**
  * The empty cover: one tinted tile, a row at least [TILE_HEIGHT] tall — a picture with a plus, then what a tap does and,
- * muted under it, that a cover is optional; the words wrap at a large font scale, and the tile grows with them. At its
+ * muted under it, that a cover is optional; the words wrap at a large font scale, and the tile grows with them — a word
+ * too wide for its line, «Необязательно», drawn smaller rather than broken ([WordFitText]). At its
  * end the row keeps a place for the sign that a photograph is being prepared, shown there while [working], so the words
  * never run under it and never move when it comes or goes.
  */
@@ -137,8 +139,11 @@ private fun CoverTile(working: Boolean, onClick: () -> Unit) {
             modifier = Modifier.size(24.dp),
         )
         Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.media_cover_add), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text(stringResource(R.string.media_cover_optional), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            WordFitText(stringResource(R.string.media_cover_add), style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface))
+            WordFitText(
+                stringResource(R.string.media_cover_optional),
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            )
         }
         Box(Modifier.size(WORKING_SIZE), contentAlignment = Alignment.Center) {
             if (working) PhotoWorking(Modifier.testTag(CoverTags.WORKING))

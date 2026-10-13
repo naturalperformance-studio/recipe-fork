@@ -142,6 +142,8 @@ import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.kitchen.KitchenEnvironment
 import app.recipefork.app.kitchen.rememberKitchenEnvironment
+import app.recipefork.app.print.PrintProgress
+import app.recipefork.app.print.PrintTags
 import app.recipefork.app.print.PrintWay
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
@@ -442,7 +444,7 @@ private fun rememberFileNotice(session: LibrarySession, snackbars: SnackbarHostS
 }
 
 /**
- * The book's snackbar: one notice at a time, above the keyboard where it is open, gone by itself after a while or
+ * The book's snackbar, and a collection's: one notice at a time, above the keyboard where it is open, gone by itself after a while or
  * swiped away either way, read by the screen reader as it comes (the host's live region). At large text its action
  * stands on a line of its own ([isLargeText]).
  */
@@ -1679,7 +1681,7 @@ object LibraryTags {
     fun sharePdf(recipeId: String) = "library-share-pdf-$recipeId"
     const val SELECTION_PRINT = "library-selection-print"
     const val SELECTION_SHARE_PDF = "library-selection-share-pdf"
-    const val PRINT_PROGRESS = "library-print-progress"
+    const val PRINT_PROGRESS = PrintTags.PROGRESS
     /** An entry's mark of being chosen, where its ⋮ stands while the selection is on. */
     fun selectionMark(recipeId: String) = "library-selection-mark-$recipeId"
     /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */

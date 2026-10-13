@@ -25,4 +25,6 @@
     <string name="print_share_failed">Couldn\'t write the PDF</string>
     <!-- Said when the system's print service could not be started. -->
     <string name="print_failed">Couldn\'t start printing</string>
+    <!-- Shown under the bar, with a progress, while a document is being made to print or share. -->
+    <string name="print_preparing">Preparing the document</string>
 </resources>

@@ -1,6 +1,7 @@
 package app.recipefork.app.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,14 +25,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
+import app.recipefork.app.card.CardTarget
 import app.recipefork.app.card.ServingsControl
 import app.recipefork.app.card.ServingsTags
 import app.recipefork.app.editor.interfaceLanguage
+import app.recipefork.app.ui.WordFitText
+import app.recipefork.app.ui.fitWords
+import app.recipefork.app.ui.widestWord
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
@@ -61,28 +70,31 @@ internal fun UsualServingsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(SettingsTags.USUAL_DIALOG),
-        title = { Text(stringResource(R.string.library_usual_servings)) },
+        title = { WordFitText(stringResource(R.string.library_usual_servings)) },
         text = {
             Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Choice(stringResource(R.string.library_usual_not_set), selected = none, tag = SettingsTags.USUAL_NOT_SET) { none = true }
                 Choice(stringResource(R.string.library_usual_count_choice), selected = !none, tag = SettingsTags.USUAL_COUNT_CHOICE) { none = false }
-                ServingsControl(
-                    modifier = Modifier.padding(start = CONTROL_INDENT),
-                    count = RequestedServings.text(shown, language),
-                    approximate = false,
-                    canDecrease = shown > RequestedServings.MIN,
-                    onDecrease = {
-                        shown = RequestedServings.decreased(shown)
-                        none = false
-                    },
-                    onIncrease = {
-                        shown = RequestedServings.increased(shown)
-                        none = false
-                    },
-                    tags = ServingsTags(SettingsTags.USUAL_COUNT, SettingsTags.USUAL_FEWER, SettingsTags.USUAL_MORE),
-                    fewerAction = R.string.library_usual_fewer_action,
-                    moreAction = R.string.library_usual_more_action,
-                )
+                val count = RequestedServings.text(shown, language)
+                FittedCount(stringResource(R.string.card_servings, count)) { indent ->
+                    ServingsControl(
+                        modifier = Modifier.padding(start = indent),
+                        count = count,
+                        approximate = false,
+                        canDecrease = shown > RequestedServings.MIN,
+                        onDecrease = {
+                            shown = RequestedServings.decreased(shown)
+                            none = false
+                        },
+                        onIncrease = {
+                            shown = RequestedServings.increased(shown)
+                            none = false
+                        },
+                        tags = ServingsTags(SettingsTags.USUAL_COUNT, SettingsTags.USUAL_FEWER, SettingsTags.USUAL_MORE),
+                        fewerAction = R.string.library_usual_fewer_action,
+                        moreAction = R.string.library_usual_more_action,
+                    )
+                }
             }
         },
         confirmButton = {
@@ -109,6 +121,40 @@ private val COUNT_SAVER = listSaver<MutableState<Rational>, String>(
 /** How far the count's control stands in, under its choice's label rather than its radio button. */
 private val CONTROL_INDENT = 48.dp
 
+/**
+ * What the card's [ServingsControl] lays beside its count: an 8 dp gap, then − and + — each the card's [CardTarget]
+ * square — joined by their 2 dp seam.
+ */
+private val BESIDE_THE_COUNT = 8.dp + CardTarget * 2 + 2.dp
+
+/**
+ * The count's control ([control], told how far to stand in) as large text leaves room for it (A11Y-004): under its
+ * choice's label while every word of the count — [shown], as the control writes it — fits whole there; else from the
+ * dialog's edge, its words made smaller as far as they need to fit, never below their size at a font scale of 1
+ * ([fitWords]), so that no word of it breaks — "Servings:" at twice the font scale on a 320 dp phone.
+ */
+@Composable
+private fun FittedCount(shown: String, control: @Composable (indent: Dp) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val measurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+        val style = MaterialTheme.typography.titleMedium
+        val room = maxWidth - BESIDE_THE_COUNT
+        val (indent, fitted) = remember(shown, style, room, measurer, density) {
+            val indented = with(density) { (room - CONTROL_INDENT).roundToPx() }
+            if (widestWord(listOf(shown), style, measurer) <= indented) {
+                CONTROL_INDENT to style
+            } else {
+                0.dp to fitWords(shown, style, with(density) { room.roundToPx() }, measurer, density).style
+            }
+        }
+        // The control writes its count in the theme's titleMedium: the one fitted is given it there.
+        MaterialTheme(colorScheme = MaterialTheme.colorScheme, shapes = MaterialTheme.shapes, typography = MaterialTheme.typography.copy(titleMedium = fitted)) {
+            control(indent)
+        }
+    }
+}
+
 /** One of the dialog's two choices: the whole row, 48 dp tall at least, picks it. */
 @Composable
 private fun Choice(label: String, selected: Boolean, tag: String, onPick: () -> Unit) {
@@ -121,7 +167,7 @@ private fun Choice(label: String, selected: Boolean, tag: String, onPick: () -> 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(horizontal = 12.dp))
-        Text(label, style = MaterialTheme.typography.bodyLarge)
+        WordFitText(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
