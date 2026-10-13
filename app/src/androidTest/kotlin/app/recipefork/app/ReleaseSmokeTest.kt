@@ -1294,14 +1294,19 @@ class ReleaseSmokeTest {
         tap(label)
     }
 
-    /** The system's share sheet, while it is on screen: a window of the platform's own, not a dialog of one not responding. */
-    private fun shareSheet(): AccessibilityNodeInfo? = instrumentation.uiAutomation.windows.mapNotNull { it.root }.firstOrNull {
-        it.refresh() && it.packageName == "android" && it.findAccessibilityNodeInfosByText(NOT_RESPONDING).isEmpty()
-    }
+    /**
+     * The system's share sheet, while it is on screen: an application's window of another package than this one —
+     * whichever package the device's sheet comes from (the platform's own at API 29, the intent resolver's from Android
+     * 13, a maker's own) — never a dialog of one not responding, which is a window of the system's, not an application's.
+     */
+    private fun shareSheet(): AccessibilityNodeInfo? = instrumentation.uiAutomation.windows
+        .filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+        .mapNotNull { it.root }
+        .firstOrNull { it.refresh() && it.packageName != application.packageName }
 
     /**
      * What [share] does opens the system's share sheet — itself, not answered by the test — on a PDF named [fileName]
-     * that the build wrote, of [pages] pages at least; Back leaves the sheet, the application in front again.
+     * that the build wrote, of [pages] pages; Back leaves the sheet, the application in front again.
      */
     private fun sharesAPdf(fileName: String, pages: Int, share: () -> Unit) {
         var send: Intent? = null
@@ -1330,7 +1335,7 @@ class ReleaseSmokeTest {
         val file = shared.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!
         assertEquals(fileName, file.lastPathSegment)
         val count = application.contentResolver.openFileDescriptor(file, "r")!!.use { PdfRenderer(it).use { pdf -> pdf.pageCount } }
-        assertTrue("the PDF holds $count pages, not $pages at least", count >= pages)
+        assertEquals("the PDF's pages", pages, count)
         assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
         try {
             awaitUntil(30.seconds) { shareSheet() == null && activities(Stage.RESUMED).any { it is MainActivity } }
@@ -1410,6 +1415,9 @@ class ReleaseSmokeTest {
         onTheSelection(DELETE)
         awaitShown("3 recipes deleted")
         awaitUntil(30.seconds) { recipes.all { stored(it) == null } }
+        // Out of their collection with them, so that Undo has it to give back.
+        val left = runBlocking { container.collections.get(id) }!!.recipes
+        assertTrue("the collection holds $left", recipes.none { it.id in left })
         tap(UNDO)
         try {
             awaitUntil(30.seconds) { recipes.all { stored(it) != null } }
