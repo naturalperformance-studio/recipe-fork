@@ -423,7 +423,6 @@ fun CardScreen(
     val barColor by animateColorAsState(
         if (scrolledUnder) barColors.scrolledContainerColor else barColors.containerColor,
         Motion.appearing(),
-        label = "bar",
     )
     Scaffold(
         modifier
