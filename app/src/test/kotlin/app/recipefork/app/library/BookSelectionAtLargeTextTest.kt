@@ -41,8 +41,8 @@ import java.time.Instant
 /**
  * The selection's bar at twice the font scale on a 320 dp phone (T-261), in English and Russian: the count of chosen
  * entries stands whole on one line, between ✕ and ⋮, overlapping neither — an action's icon gives way to the ⋮ where it
- * would not leave the count room; ✕, ⋮, the bar's actions and menu items and an entry's mark of being chosen are each at
- * least 48 dp.
+ * would not leave the count room, and Print and Share as PDF (T-264) stand in the ⋮; ✕, ⋮, the bar's actions and menu
+ * items and an entry's mark of being chosen are each at least 48 dp.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -101,6 +101,9 @@ class BookSelectionAtLargeTextTest {
         }
         compose.onNodeWithTag(LibraryTags.entry(first)).performTouchInput { longClick() }
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECTION_MENU) }
+        // Print and Share as PDF (T-264) are no icons of the bar: they stand in its ⋮ alone.
+        assertFalse(exists(LibraryTags.SELECTION_PRINT))
+        assertFalse(exists(LibraryTags.SELECTION_SHARE_PDF))
         compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECT_ALL) }
         assertAtLeast48(LibraryTags.SELECT_ALL)
@@ -108,6 +111,14 @@ class BookSelectionAtLargeTextTest {
         // The adding actions (T-263) stay offered — in the bar while the count leaves room, else in its ⋮.
         assertAtLeast48(LibraryTags.SELECTION_ADD_TO_COLLECTION)
         assertAtLeast48(LibraryTags.SELECTION_ADD_TO_SHOPPING)
+        assertAtLeast48(LibraryTags.SELECTION_PRINT)
+        assertAtLeast48(LibraryTags.SELECTION_SHARE_PDF)
+        // Every item of the ⋮ stands whole within the window's width.
+        val window = bounds(LibraryTags.SELECTION_BAR).width
+        listOf(LibraryTags.SELECTION_PRINT, LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE).forEach {
+            val item = bounds(it)
+            assertTrue("$it ($item) inside the window ($window)", item.left >= -0.5f && item.right <= window + 0.5f)
+        }
         compose.onNodeWithTag(LibraryTags.SELECT_ALL).performClick()
         compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 12 && !exists(LibraryTags.SELECT_ALL) }
         compose.waitForIdle()

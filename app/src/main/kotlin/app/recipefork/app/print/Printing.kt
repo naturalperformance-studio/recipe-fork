@@ -7,8 +7,10 @@ import android.print.PrintDocumentAdapter
 import android.print.PrintManager
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -59,10 +61,12 @@ enum class PrintWay { PRINT, SHARE }
 /**
  * The ⋮'s Print and Share as PDF of a screen: the document is made when the item is taken — by `make`, null for
  * nothing to print — and printed or shared; a failure says so in [snackbars], replacing what it said before, and changes
- * nothing. A tap while a document is being made or written starts no second one.
+ * nothing. A tap while a document is being made or written starts no second one. [onBusy] hears true as one starts and
+ * false once it is over, handed over or failed.
  */
 @Composable
-fun rememberPrintOut(snackbars: SnackbarHostState): (PrintWay, suspend () -> PrintDocument?) -> Unit {
+fun rememberPrintOut(snackbars: SnackbarHostState, onBusy: (Boolean) -> Unit = {}): (PrintWay, suspend () -> PrintDocument?) -> Unit {
+    val busyNow by rememberUpdatedState(onBusy)
     val context = LocalContext.current
     val printing = LocalPrinting.current
     val scope = rememberCoroutineScope()
@@ -73,6 +77,7 @@ fun rememberPrintOut(snackbars: SnackbarHostState): (PrintWay, suspend () -> Pri
         { way, make ->
             if (!busy[0]) {
                 busy[0] = true
+                busyNow(true)
                 scope.launch {
                     val done = try {
                         val document = make()
@@ -90,6 +95,7 @@ fun rememberPrintOut(snackbars: SnackbarHostState): (PrintWay, suspend () -> Pri
                         false
                     } finally {
                         busy[0] = false
+                        busyNow(false)
                     }
                     if (!done) {
                         snackbars.currentSnackbarData?.dismiss()

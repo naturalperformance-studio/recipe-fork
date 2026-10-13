@@ -47,6 +47,34 @@ object RecipesDocument {
         photos: PhotoStore,
     ): PrintDocument? {
         if (members.isEmpty()) return null
+        val read = each(members, recipes, card, heldScale, resources, photos)
+        if (read.isEmpty()) throw IOException("none of the recipes reads back")
+        return of(title, read)
+    }
+
+    /**
+     * The one recipe [member] of the book [recipes] as its card prints it ([RecipeDocument]), read as [read] reads each
+     * of its recipes: at the count its card would open with. It fails when the recipe does not read back.
+     */
+    suspend fun one(
+        member: RecipeId,
+        recipes: RecipeRepository,
+        card: CardEnvironment,
+        heldScale: (RecipeId) -> HeldScale?,
+        resources: Resources,
+        photos: PhotoStore,
+    ): PrintDocument = each(listOf(member), recipes, card, heldScale, resources, photos).singleOrNull()
+        ?: throw IOException("the recipe does not read back")
+
+    /** Each of [members] that reads back, as [read] lays it out, in their order. */
+    private suspend fun each(
+        members: List<RecipeId>,
+        recipes: RecipeRepository,
+        card: CardEnvironment,
+        heldScale: (RecipeId) -> HeldScale?,
+        resources: Resources,
+        photos: PhotoStore,
+    ): List<PrintDocument> {
         val book = recipes.bookName()
         // Read once, as the card reads it on opening; a dictionary that cannot be read names what it would have named
         // as the card does without it.
@@ -54,14 +82,12 @@ object RecipesDocument {
         val units = card.unitSystem.system.value
         val entries = orNone { card.ingredients.entries() }.associateBy { it.id }
         val equipment = orNone { card.equipment.equipment() }.associateBy { it.id }
-        val read = members.mapNotNull { member ->
+        return members.mapNotNull { member ->
             val recipe = orNull { recipes.observe(member).first() } ?: return@mapNotNull null
             val parentTitle = recipe.parent?.let { parent -> orNull { recipes.get(parent)?.title } }
             val scale = openingScale(recipe, heldScale(recipe.id), usual)
             RecipeDocument.of(recipe, entries, equipment, scale, resources, parentTitle, units) { photos.file(book, it) }
         }
-        if (read.isEmpty()) throw IOException("none of the recipes reads back")
-        return of(title, read)
     }
 
     private suspend fun <T> orNone(read: suspend () -> List<T>): List<T> = orNull(read).orEmpty()
