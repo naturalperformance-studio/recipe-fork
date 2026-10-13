@@ -517,22 +517,36 @@ class IngredientBlocksTest(private val handleRight: Boolean) {
         }
     }
 
-    // A frozen recipe's rows read as blocks too.
+    // A frozen recipe's rows read as plain text, with no column and no outline around them: nothing on a recipe that
+    // cannot be changed is drawn as a box to tap (T-271).
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aFrozenRecipesRowsAreBlocks() = frozenRowsAreBlocks(1f)
+    fun aFrozenRecipesRowsAreNotBoxes() = frozenRowsAreNotBoxes(1f)
 
     @Test
     @Config(qualifiers = "ru-w360dp-h4000dp")
-    fun aFrozenRecipesRowsAreBlocksAtDoubleFontScale() = frozenRowsAreBlocks(2f)
+    fun aFrozenRecipesRowsAreNotBoxesAtDoubleFontScale() = frozenRowsAreNotBoxes(2f)
 
-    private fun frozenRowsAreBlocks(fontScale: Float) {
+    private fun frozenRowsAreNotBoxes(fontScale: Float) {
         open(fontScale, state = RecipeState.PUBLISHED)
         (0 until rows().size).forEach { position ->
             assertFalse(exists(EditorTags.ingredientHandle(position)))
             assertFalse(exists(EditorTags.ingredientHandleIcon(position)))
         }
-        assertSeparateOutlinedBlocks(rows().size)
+        compose.onNodeWithTag(EditorTags.INGREDIENTS).performScrollTo()
+        compose.waitForIdle()
+        val list = bounds(EditorTags.INGREDIENTS)
+        val image = compose.onNodeWithTag(EditorTags.INGREDIENTS).captureToImage().toPixelMap()
+        fun at(x: Float, y: Float): Color = image[(x - list.left).toInt().coerceIn(0, image.width - 1), (y - list.top).toInt().coerceIn(0, image.height - 1)]
+        fun differs(a: Color, b: Color) = abs(a.red - b.red) + abs(a.green - b.green) + abs(a.blue - b.blue) > 0.05f
+        val blocks = (0 until rows().size).map { bounds(EditorTags.ingredient(it)) }
+        val background = at(blocks[0].center.x, (blocks[0].bottom + blocks[1].top) / 2)
+        blocks.forEachIndexed { i, block ->
+            fun bare(side: String, points: List<Offset>) =
+                assertFalse("row $i is outlined at its $side", points.any { differs(at(it.x, it.y), background) })
+            bare("top", (0..2).flatMap { dy -> listOf(0.25f, 0.5f, 0.75f).map { Offset(block.left + block.width * it, block.top + dy) } })
+            bare("bottom", (1..3).flatMap { dy -> listOf(0.25f, 0.5f, 0.75f).map { Offset(block.left + block.width * it, block.bottom - dy) } })
+        }
     }
 
     private fun dp(px: Float) = px / compose.density.density

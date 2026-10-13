@@ -444,14 +444,14 @@ class StepsEditorTest {
             }
     }
 
-    // A frozen recipe with neither steps nor a description says so.
+    // A frozen recipe with no steps says so; one with no description shows no empty part for it (T-271).
     @Test
-    fun aFrozenRecipeWithNoStepsAndNoDescriptionSaysSo() {
+    fun aFrozenRecipeWithNoStepsSaysSoAndShowsNoEmptyDescription() {
         val recipe = seed(Recipe.create(created, null).copy(title = "Plum cake").inState(RecipeState.PUBLISHED))
         openDirectly(recipe.id)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.STEPS_NONE), PATIENCE_MS)
         assertEquals(listOf("No steps"), compose.textsOf(EditorTags.STEPS_NONE))
-        assertEquals(listOf("Description", "No description"), compose.textsOf(EditorTags.DESCRIPTION))
+        compose.onNodeWithTag(EditorTags.DESCRIPTION).assertDoesNotExist()
     }
 
     // FLOW-002 (4) at the editor's boundary: no change to the steps or the description reaches a frozen recipe.
