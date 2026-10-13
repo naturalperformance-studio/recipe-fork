@@ -1,11 +1,16 @@
 package app.recipefork.app.library
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +73,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.layout.Layout
@@ -80,6 +86,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -90,6 +97,9 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
@@ -215,6 +225,10 @@ fun LibraryScreen(
     RemovalNotice(session, snackbars)
     CollectionDeletionNotice(session, collections, snackbars)
     val work by session.work.collectAsState()
+    val selection by session.selection.collectAsState()
+    // What each view lists, as the selection sees it: what "Select all" chooses and what an action applies to.
+    val selectables = remember { mutableStateMapOf<LibraryView, List<Selectable>>() }
+    BackHandler(enabled = selection != null) { session.endSelection() }
     // The height of the view's action, in pixels: the tallest it has been laid out.
     var actionHeight by remember { mutableIntStateOf(0) }
     Scaffold(
@@ -222,9 +236,16 @@ fun LibraryScreen(
         snackbarHost = { LibrarySnackbarHost(snackbars) },
         topBar = {
             Column {
-                // The book's title, with the settings action beside it; it scrolls away as the list goes down
-                // and returns as it goes up.
-                TopAppBar(
+                // While entries are chosen, the selection's bar stands in place of the title, and does not scroll away.
+                val chosen = selection
+                if (chosen != null) {
+                    SelectionBar(
+                        chosen.count,
+                        selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks),
+                        onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
+                        onClose = session::endSelection,
+                    )
+                } else TopAppBar(
                     title = {
                         Text(
                             text = stringResource(R.string.library_title),
@@ -275,7 +296,7 @@ fun LibraryScreen(
         },
         floatingActionButton = {
             ViewAction(
-                shown, mode, offered = offers[shown] == true,
+                shown, mode, offered = offers[shown] == true && selection == null,
                 list = if (shown == LibraryView.OWN) ownList else markedList,
                 onWrite = write, onImport = import,
                 // The tallest it has been: shrunk to its icon as a list goes down, it moves nothing.
@@ -306,11 +327,15 @@ fun LibraryScreen(
                     recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags, bookKitchen,
                     markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
                     collections = rememberListed(collections, CollectionOrigin.IMPORTED),
+                    selection = selection?.takeIf { it.view == LibraryView.MARKED },
+                    onListed = { if (selectables[LibraryView.MARKED] != it) selectables[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
                     ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
                     collections = rememberListed(collections, CollectionOrigin.OWN),
+                    selection = selection?.takeIf { it.view == LibraryView.OWN },
+                    onListed = { if (selectables[LibraryView.OWN] != it) selectables[LibraryView.OWN] = it },
                 )
             }
         }
@@ -388,6 +413,10 @@ internal fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState
     val said = removal?.let { taken ->
         val title = taken.title.trim()
         when {
+            // Several left together: counted, never named.
+            taken.count > 1 -> pluralStringResource(
+                if (taken.found) R.plurals.library_recipes_removed else R.plurals.library_recipes_deleted, taken.count, taken.count,
+            )
             title.isEmpty() -> stringResource(if (taken.found) R.string.library_recipe_removed else R.string.library_recipe_deleted)
             taken.found -> stringResource(R.string.library_recipe_removed_titled, title)
             else -> stringResource(R.string.library_recipe_deleted_titled, title)
@@ -425,6 +454,49 @@ private fun CollectionDeletionNotice(session: LibrarySession, collections: Colle
         // Put back where the session's work runs, which outlives the book's screen.
         if (session.endCollectionDeletion(shown) && result == SnackbarResult.ActionPerformed) {
             session.viewModelScope.launch { collections.restore(shown) }
+        }
+    }
+}
+
+/**
+ * Tells [onListed] what [view] lists, as the selection sees it — every entry its search and filters let through, not
+ * only those shown so far — once it is read; and the selection forgets an entry chosen that it lists no more.
+ */
+@Composable
+private fun ListedForSelection(view: LibraryView, session: LibrarySession, listed: List<Selectable>?, onListed: (List<Selectable>) -> Unit) {
+    SideEffect { if (listed != null) onListed(listed) }
+    LaunchedEffect(listed) { if (listed != null) session.keepListed(view, listed.mapTo(HashSet()) { it.recipeId }) }
+}
+
+/**
+ * The actions of the selection's bar on the recipes [selection] chose of [listed]: Delete in the own view, Remove in the
+ * marked one, offered while it applies to one of them at least, and taking only those it applies to — at once, asking
+ * nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection. Later actions join the list.
+ */
+private fun selectionActions(
+    selection: BookSelection,
+    listed: List<Selectable>,
+    session: LibrarySession,
+    recipes: RecipeRepository,
+    files: RecipeImport,
+    timers: CardTimers,
+    marks: DoneMarks,
+): List<SelectionAction> {
+    val chosen = listed.filter { it.recipeId in selection.ids }
+    val removable = chosen.filter { it.removable }.map { RecipeId(it.recipeId) }
+    return buildList {
+        if (removable.isNotEmpty()) {
+            val own = selection.view == LibraryView.OWN
+            add(
+                SelectionAction(
+                    if (own) R.string.library_entry_delete else R.string.library_entry_remove,
+                    if (own) LibraryTags.SELECTION_DELETE else LibraryTags.SELECTION_REMOVE,
+                    destructive = true,
+                ) {
+                    session.endSelection()
+                    if (own) deleteRecipes(recipes, timers, marks, removable, session::removed) else removeAllFound(files, timers, marks, removable, session::removed)
+                },
+            )
         }
     }
 }
@@ -628,6 +700,8 @@ private fun OwnList(
     onWrite: () -> Unit,
     onOffer: (Boolean) -> Unit,
     collections: List<CollectionRow> = emptyList(),
+    selection: BookSelection? = null,
+    onListed: (List<Selectable>) -> Unit = {},
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
     val params = rememberListingParams(LibraryView.OWN, session)
@@ -659,6 +733,8 @@ private fun OwnList(
     }
     val export = rememberExport(recipes, session)
     val shown = listed
+    val selectable = remember(found) { found?.map { Selectable(it.recipeId, removable = it.state in DELETABLE) } }
+    ListedForSelection(LibraryView.OWN, session, selectable, onListed)
     // A book that lists recipes still offers to write one (FLOW-042 (5)), from the view's action.
     val offered = shown != null && !(shown.viewIsEmpty && !shown.narrowed)
     SideEffect { onOffer(offered) }
@@ -709,6 +785,8 @@ private fun OwnList(
                         // Deleted at once, asking nothing; the book says so with Undo (FLOW-053).
                         onDelete = { deleteRecipe(recipes, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
+                        selected = selection?.let { row.recipeId in it.ids },
+                        onSelect = { session.select(LibraryView.OWN, row.recipeId) },
                     )
                 }
             }
@@ -765,12 +843,14 @@ private fun OwnEntry(
     onOpen: () -> Unit,
     onDelete: () -> Unit,
     onExport: () -> Unit,
+    selected: Boolean? = null,
+    onSelect: (() -> Unit)? = null,
 ) {
     val actions = buildList {
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onClick = onExport))
         if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), destructive = true, onClick = onDelete))
     }
-    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier) {
+    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
         EntryTags(row.recipeId, tags)
         // The state is named in words, never carried by colour alone (A11Y-008); a serverless draft names none.
@@ -786,7 +866,13 @@ private fun OwnEntry(
  * it the entry's [lines], the first of them its title. When there are any [actions], their menu stands at the end of
  * the title's first line, and the text keeps clear of it. [onOpen], when given, opens the recipe. [inner] goes on the
  * card itself, inside its margins, and [wrap] lays its content out — beside a drag column, in a collection's screen.
+ *
+ * Where [onSelect] is given, a long press on the entry calls it: the book's selection starts with it. While the selection
+ * is on, [selected] says whether the entry is chosen (null while it is off): a tap, or a long press, calls [onSelect] in
+ * place of opening the recipe, the entry's menu gives way to its mark of being chosen ([SelectionMark]), a chosen entry
+ * is edged in the primary colour, and the screen reader hears "Selected" or "Not selected" (A11Y-008).
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun EntryCard(
     recipeId: String,
@@ -798,12 +884,38 @@ internal fun EntryCard(
     modifier: Modifier,
     inner: Modifier = Modifier,
     wrap: @Composable (content: @Composable () -> Unit) -> Unit = { it() },
+    selected: Boolean? = null,
+    onSelect: (() -> Unit)? = null,
     lines: @Composable ColumnScope.() -> Unit,
 ) {
-    val open = onOpen?.let {
-        Modifier.clickable(onClickLabel = stringResource(R.string.library_entry_open_action), role = Role.Button, onClick = it)
-    } ?: Modifier
-    Card(modifier.fillMaxWidth().padding(horizontal = 16.dp).then(inner)) {
+    val openLabel = stringResource(R.string.library_entry_open_action)
+    val selectLabel = stringResource(R.string.library_entry_select_action)
+    val toggleLabel = if (selected == true) stringResource(R.string.library_entry_deselect_action) else selectLabel
+    val state = stringResource(if (selected == true) R.string.library_entry_selected else R.string.library_entry_not_selected)
+    val open = when {
+        selected != null && onSelect != null -> Modifier
+            .combinedClickable(onClickLabel = toggleLabel, onLongClickLabel = toggleLabel, onLongClick = onSelect, onClick = onSelect)
+            .semantics {
+                this.selected = selected
+                stateDescription = state
+            }
+        onSelect != null && onOpen != null ->
+            Modifier.combinedClickable(onClickLabel = openLabel, role = Role.Button, onLongClickLabel = selectLabel, onLongClick = onSelect, onClick = onOpen)
+        // An entry that does not open is still chosen by a long press.
+        onSelect != null -> Modifier
+            .pointerInput(onSelect) { detectTapGestures(onLongPress = { onSelect() }) }
+            .semantics {
+                onLongClick(label = selectLabel) {
+                    onSelect()
+                    true
+                }
+            }
+        onOpen != null -> Modifier.clickable(onClickLabel = openLabel, role = Role.Button, onClick = onOpen)
+        else -> Modifier
+    }
+    val marked = selected != null && onSelect != null
+    val edge = if (selected == true) BorderStroke(SELECTED_EDGE, MaterialTheme.colorScheme.primary) else null
+    Card(modifier.fillMaxWidth().padding(horizontal = 16.dp).then(inner), border = edge) {
         wrap {
             Layout(
                 content = {
@@ -817,12 +929,12 @@ internal fun EntryCard(
                     ) {
                         cover(coverId, LibraryTags.cover(recipeId))
                         Column(
-                            Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty()) 16.dp else MENU_ROOM),
+                            Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty() && !marked) 16.dp else MENU_ROOM),
                             verticalArrangement = Arrangement.spacedBy(2.dp),
                             content = lines,
                         )
                     }
-                    if (actions.isNotEmpty()) EntryMenu(recipeId, title, actions)
+                    if (marked) SelectionMark(recipeId, selected == true) else if (actions.isNotEmpty()) EntryMenu(recipeId, title, actions)
                 },
             ) { measurables, constraints ->
                 val entry = measurables[0].measure(constraints)
@@ -840,7 +952,10 @@ internal fun EntryCard(
     }
 }
 
-/** The room kept at the end of an entry's text for its ⋮: the ⋮ itself and its margin. */
+/** How wide the edge of an entry chosen in the selection is drawn. */
+private val SELECTED_EDGE = 2.dp
+
+/** The room kept at the end of an entry's text for its ⋮, or its mark of being chosen: the ⋮ itself and its margin. */
 private val MENU_ROOM = 52.dp
 
 /** The space between two entries of a list, and above the first. */
@@ -1049,6 +1164,8 @@ private fun MarkedList(
     reveal: String?,
     onOffer: (Boolean) -> Unit,
     collections: List<CollectionRow> = emptyList(),
+    selection: BookSelection? = null,
+    onListed: (List<Selectable>) -> Unit = {},
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
     val params = rememberListingParams(LibraryView.MARKED, session)
@@ -1068,6 +1185,8 @@ private fun MarkedList(
     RevealOnNotice(reveal, marked?.map { it.recipeId }, listState, above)
     val export = rememberExport(recipes, session)
     val shown = listed
+    val selectable = remember(marked) { marked?.map { Selectable(it.recipeId, removable = it.held) } }
+    ListedForSelection(LibraryView.MARKED, session, selectable, onListed)
     val empty = shown != null && shown.viewIsEmpty && !shown.narrowed
     val offered = mode == Mode.Serverless && shown != null && !empty
     SideEffect { onOffer(offered) }
@@ -1132,6 +1251,8 @@ private fun MarkedList(
                         // Removed at once, asking nothing; the book says so with Undo (FLOW-053).
                         onRemove = { removeFound(files, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
+                        selected = selection?.let { row.recipeId in it.ids },
+                        onSelect = { session.select(LibraryView.MARKED, row.recipeId) },
                     )
                 }
             }
@@ -1155,12 +1276,14 @@ private fun MarkedEntry(
     onOpen: () -> Unit,
     onRemove: () -> Unit,
     onExport: () -> Unit,
+    selected: Boolean? = null,
+    onSelect: (() -> Unit)? = null,
 ) {
     val actions = if (!row.held) emptyList() else buildList {
         if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onClick = onExport))
         add(EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), destructive = true, onClick = onRemove))
     }
-    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier) {
+    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
         row.statedAuthor?.let {
             Text(
@@ -1326,6 +1449,16 @@ object LibraryTags {
     fun statedAuthor(recipeId: String) = "library-stated-author-$recipeId"
     fun remove(recipeId: String) = "library-remove-$recipeId"
     fun cover(recipeId: String) = "library-cover-$recipeId"
+    /** The selection's bar, in place of the book's title while entries are chosen: its ✕, its count, its ⋮ and items. */
+    const val SELECTION_BAR = "library-selection-bar"
+    const val SELECTION_CLOSE = "library-selection-close"
+    const val SELECTION_COUNT = "library-selection-count"
+    const val SELECTION_MENU = "library-selection-menu"
+    const val SELECT_ALL = "library-select-all"
+    const val SELECTION_DELETE = "library-selection-delete"
+    const val SELECTION_REMOVE = "library-selection-remove"
+    /** An entry's mark of being chosen, where its ⋮ stands while the selection is on. */
+    fun selectionMark(recipeId: String) = "library-selection-mark-$recipeId"
     /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */
     fun coverSlot(coverTag: String) = "$coverTag-slot"
 }

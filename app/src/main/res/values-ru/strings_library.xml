@@ -102,4 +102,31 @@
     <string name="library_filter_equipment_empty_hint">Отметьте посуду и технику, которые у вас есть, — и рецепты, которым нужно что-то ещё, можно будет скрыть.</string>
     <string name="library_filter_equipment_set_up">Настроить «Мою кухню»</string>
     <string name="library_filter_equipment_edit">Изменить «Мою кухню»</string>
+    <string name="library_entry_selected">Выбран</string>
+    <string name="library_entry_not_selected">Не выбран</string>
+    <string name="library_entry_select_action">Выбрать рецепт</string>
+    <string name="library_entry_deselect_action">Снять выбор с рецепта</string>
+    <plurals name="library_selection_count">
+        <item quantity="one">Выбран %d</item>
+        <item quantity="few">Выбрано %d</item>
+        <item quantity="many">Выбрано %d</item>
+        <item quantity="other">Выбрано %d</item>
+    </plurals>
+    <string name="library_selection_close">Закрыть выбор</string>
+    <string name="library_selection_close_action">Выйти из выбора</string>
+    <string name="library_selection_more">Другие действия с выбранными</string>
+    <string name="library_selection_more_action">Показать действия с выбранными</string>
+    <string name="library_selection_all">Выбрать все</string>
+    <plurals name="library_recipes_deleted">
+        <item quantity="one">%d рецепт удалён</item>
+        <item quantity="few">%d рецепта удалены</item>
+        <item quantity="many">%d рецептов удалено</item>
+        <item quantity="other">%d рецепта удалено</item>
+    </plurals>
+    <plurals name="library_recipes_removed">
+        <item quantity="one">%d рецепт убран</item>
+        <item quantity="few">%d рецепта убраны</item>
+        <item quantity="many">%d рецептов убрано</item>
+        <item quantity="other">%d рецепта убрано</item>
+    </plurals>
 </resources>

@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 
 /**
  * A file being imported or exported, and how far: [done] is the share of it done, or null while it is not known.
@@ -72,7 +73,58 @@ class LibrarySession(
 
     val view: StateFlow<LibraryView> = saved.getStateFlow(VIEW_KEY, LibraryView.MARKED)
 
-    fun choose(view: LibraryView) = show(view)
+    /** Shows [view]; a selection made in the other view ends. */
+    fun choose(view: LibraryView) {
+        if (selecting.value?.view != view) endSelection()
+        show(view)
+    }
+
+    private val selecting = MutableStateFlow<BookSelection?>(null)
+
+    /**
+     * The entries chosen in the book's selection, while it is on: started by a long press on an entry, ended by ✕, Back,
+     * the other view shown, an action taken on it, or the last entry taken off. Held in memory alone, like the removal it
+     * may lead to: a new process starts with none.
+     */
+    val selection: StateFlow<BookSelection?> = selecting.asStateFlow()
+
+    /**
+     * The entry [recipeId] of [view] was long pressed, or tapped while selecting: a selection starts with it chosen, or,
+     * one on in that view, it is chosen or taken off — and the selection ends once none is left.
+     */
+    fun select(view: LibraryView, recipeId: String) {
+        selecting.update { current ->
+            when {
+                current == null || current.view != view -> BookSelection(view, setOf(recipeId))
+                recipeId in current.ids -> (current.ids - recipeId).takeIf { it.isNotEmpty() }?.let { current.copy(ids = it) }
+                else -> current.copy(ids = current.ids + recipeId)
+            }
+        }
+    }
+
+    /** Every entry [view] lists, [recipeIds], is chosen ("Select all"); none listed changes nothing. */
+    fun selectAll(view: LibraryView, recipeIds: Collection<String>) {
+        if (recipeIds.isEmpty()) return
+        selecting.update { current -> if (current != null && current.view != view) current else BookSelection(view, recipeIds.toSet()) }
+    }
+
+    /**
+     * [view] lists [recipeIds] now: an entry chosen that it no longer lists — gone from the book, or hidden by a search or
+     * a filter — is chosen no more, and the selection ends once none is left.
+     */
+    fun keepListed(view: LibraryView, recipeIds: Set<String>) {
+        selecting.update { current ->
+            if (current == null || current.view != view || recipeIds.containsAll(current.ids)) {
+                current
+            } else {
+                current.ids.filterTo(LinkedHashSet()) { it in recipeIds }.takeIf { it.isNotEmpty() }?.let { current.copy(ids = it) }
+            }
+        }
+    }
+
+    fun endSelection() {
+        selecting.value = null
+    }
 
     /** Shows [view], and keeps it on the device as the view last shown. */
     private fun show(view: LibraryView) {
@@ -240,8 +292,12 @@ class LibrarySession(
      */
     val collection: StateFlow<String?> = saved.getStateFlow(COLLECTION_KEY, null)
 
-    /** The collection [id] opens above the book; the book is left, so a removal it still offers to undo is final now. */
+    /**
+     * The collection [id] opens above the book; the book is left, so a removal it still offers to undo is final now, and a
+     * selection made in it ends.
+     */
     fun openCollection(id: String) {
+        endSelection()
         closeNotice()
         finishRemoval()
         saved[SETTINGS_KEY] = false

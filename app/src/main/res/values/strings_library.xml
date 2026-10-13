@@ -133,4 +133,28 @@
     <string name="library_filter_equipment_empty_hint">Tick what your kitchen has, and recipes that need something else can be hidden.</string>
     <string name="library_filter_equipment_set_up">Set up My kitchen</string>
     <string name="library_filter_equipment_edit">Edit My kitchen</string>
+    <!-- The book's selection (v0.37): an entry chosen or not, as the screen reader says it, and what a tap on it does. -->
+    <string name="library_entry_selected">Selected</string>
+    <string name="library_entry_not_selected">Not selected</string>
+    <string name="library_entry_select_action">Select the recipe</string>
+    <string name="library_entry_deselect_action">Take the recipe off the selection</string>
+    <!-- The selection's bar: how many entries are chosen, its ✕ and its ⋮. -->
+    <plurals name="library_selection_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="library_selection_close">Close selection</string>
+    <string name="library_selection_close_action">Leave the selection</string>
+    <string name="library_selection_more">More actions on the selection</string>
+    <string name="library_selection_more_action">Show the selection\'s actions</string>
+    <string name="library_selection_all">Select all</string>
+    <!-- FLOW-053: several recipes gone from the book at once, said with the action that brings them all back. -->
+    <plurals name="library_recipes_deleted">
+        <item quantity="one">%d recipe deleted</item>
+        <item quantity="other">%d recipes deleted</item>
+    </plurals>
+    <plurals name="library_recipes_removed">
+        <item quantity="one">%d recipe removed</item>
+        <item quantity="other">%d recipes removed</item>
+    </plurals>
 </resources>

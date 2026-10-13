@@ -37,44 +37,59 @@ internal fun DestructiveConfirm(@StringRes label: Int, tag: String, target: Dp =
 }
 
 /**
- * A recipe taken out of the book from its entry or its card, asking nothing, whose leaving is not yet final (FLOW-053):
- * the book says so with Undo while its notice is shown ([LibrarySession.removal]). [undo] puts it back whole; [finish]
- * makes its leaving final, deleting the files of its media that no other recipe holds. Whichever comes first is done,
- * once; the other then does nothing. Both run where the timers' work runs, which outlives the screen, one turn among
- * the timers' starts and cancels.
+ * Recipes taken out of the book together — one from its entry or its card, or several chosen in the book's selection —
+ * asking nothing, whose leaving is not yet final (FLOW-053): the book says so with one Undo while its notice is shown
+ * ([LibrarySession.removal]). [undo] puts every one of them back whole; [finish] makes their leaving final, deleting the
+ * files of their media that no other recipe holds. Whichever comes first is done, once; the other then does nothing.
+ * Both run where the timers' work runs, which outlives the screen, one turn among the timers' starts and cancels.
  */
-class PendingRemoval internal constructor(private val taken: TakenRecipe, private val timers: CardTimers) {
-    val recipeId: String get() = taken.id.value
+class PendingRemoval internal constructor(private val taken: List<TakenRecipe>, private val timers: CardTimers) {
+    /** One recipe taken out alone. */
+    internal constructor(taken: TakenRecipe, timers: CardTimers) : this(listOf(taken), timers)
 
-    /** Whether it was a found recipe, removed, rather than an own one, deleted. */
-    val found: Boolean get() = taken.found
+    init {
+        require(taken.isNotEmpty())
+    }
 
-    /** Its title, which its notice names it by; blank for a recipe never titled. */
-    val title: String get() = taken.title
+    /** The identities of the recipes that left, in the order they were taken. */
+    val recipeIds: List<String> get() = taken.map { it.id.value }
+
+    /** How many recipes left together. */
+    val count: Int get() = taken.size
+
+    /** Whether they were found recipes, removed, rather than own ones, deleted. */
+    val found: Boolean get() = taken.all { it.found }
+
+    /** The title of the first that left, which the notice of one alone names it by; blank for a recipe never titled. */
+    val title: String get() = taken.first().title
 
     private val settled = AtomicBoolean(false)
 
     /**
-     * Puts the recipe back as it was: its content, photographs and clips, its place in the book, a found one's mark.
-     * Its done marks and its timers, ended as it left, stay ended. Should the book not take it back — it holds that
-     * recipe again, or a media item of it, or cannot be written — the leaving is final instead, as [finish] makes it,
-     * and [onFailed] is told.
+     * Puts each recipe back as it was: its content, photographs and clips, its place in the book and in its
+     * collections, a found one's mark. Their done marks and their timers, ended as they left, stay ended. Should the book
+     * not take one back — it holds that recipe again, or a media item of it, or cannot be written — that one's leaving is
+     * final instead, as [finish] makes it, the others come back all the same, and [onFailed] is told once.
      */
     fun undo(onFailed: () -> Unit = {}) {
         if (!settled.compareAndSet(false, true)) return
         timers.scope.launch {
             timers.turns.withLock {
-                if (!taken.putBack()) {
-                    taken.release()
-                    onFailed()
+                var failed = false
+                taken.forEach { recipe ->
+                    if (!recipe.putBack()) {
+                        recipe.release()
+                        failed = true
+                    }
                 }
+                if (failed) onFailed()
             }
         }
     }
 
-    /** The leaving is final: the files of the recipe's media that no recipe of the book holds are deleted (MEDIA-012). */
+    /** The leaving is final: the files of the recipes' media that no recipe of the book holds are deleted (MEDIA-012). */
     fun finish() {
-        if (settled.compareAndSet(false, true)) timers.scope.launch { timers.turns.withLock { taken.release() } }
+        if (settled.compareAndSet(false, true)) timers.scope.launch { timers.turns.withLock { taken.forEach { it.release() } } }
     }
 }
 
@@ -90,7 +105,19 @@ fun deleteRecipe(
     marks: DoneMarks,
     id: RecipeId,
     onTaken: (PendingRemoval) -> Unit = PendingRemoval::finish,
-) = take(timers, marks, id, onTaken) { recipes.take(id) }
+) = deleteRecipes(recipes, timers, marks, listOf(id), onTaken)
+
+/**
+ * Deletes the own recipes [ids] from the active book together, each as [deleteRecipe] deletes one; [onTaken] is told
+ * once, of all that left, so that one Undo brings them all back.
+ */
+fun deleteRecipes(
+    recipes: RecipeRepository,
+    timers: CardTimers,
+    marks: DoneMarks,
+    ids: List<RecipeId>,
+    onTaken: (PendingRemoval) -> Unit = PendingRemoval::finish,
+) = take(timers, marks, ids, onTaken) { recipes.take(it) }
 
 /**
  * Removes the found recipe [id] from the active book with its held content and its mark (FLOW-064 (6)), as
@@ -102,27 +129,41 @@ fun removeFound(
     marks: DoneMarks,
     id: RecipeId,
     onTaken: (PendingRemoval) -> Unit = PendingRemoval::finish,
-) = take(timers, marks, id, onTaken) { files.take(id) }
+) = removeAllFound(files, timers, marks, listOf(id), onTaken)
+
+/** Removes the found recipes [ids] from the active book together, as [deleteRecipes] deletes own ones. */
+fun removeAllFound(
+    files: RecipeImport,
+    timers: CardTimers,
+    marks: DoneMarks,
+    ids: List<RecipeId>,
+    onTaken: (PendingRemoval) -> Unit = PendingRemoval::finish,
+) = take(timers, marks, ids, onTaken) { files.take(it) }
 
 /**
- * Takes [id] out of the book by [taking], cancels its timers and drops its done [marks], one turn among the timers'
- * starts and cancels, where the timers' work runs, so that it finishes however soon the view is left. A session
- * cleared before it finishes is told of a removal it never says nor finishes: the files of its media are left to the
- * media sweep, which skips a book that holds no recipe at all.
+ * Takes each of [ids] out of the book by [taking], cancels its timers and drops its done [marks], in one turn among the
+ * timers' starts and cancels, where the timers' work runs, so that it finishes however soon the view is left; [onTaken]
+ * is told once of every one that left, none if none did. A session cleared before it finishes is told of a removal it
+ * never says nor finishes: the files of their media are left to the media sweep, which skips a book that holds no
+ * recipe at all.
  */
 private fun take(
     timers: CardTimers,
     marks: DoneMarks,
-    id: RecipeId,
+    ids: List<RecipeId>,
     onTaken: (PendingRemoval) -> Unit,
-    taking: suspend () -> TakenRecipe?,
+    taking: suspend (RecipeId) -> TakenRecipe?,
 ) {
+    if (ids.isEmpty()) return
     timers.scope.launch {
         timers.turns.withLock {
-            val taken = taking()
-            timers.store.cancelRecipe(timers.book(), id)
-            marks.clear(timers.book(), id)
-            taken?.let { onTaken(PendingRemoval(it, timers)) }
+            val taken = ids.distinct().mapNotNull { id ->
+                taking(id).also {
+                    timers.store.cancelRecipe(timers.book(), id)
+                    marks.clear(timers.book(), id)
+                }
+            }
+            if (taken.isNotEmpty()) onTaken(PendingRemoval(taken, timers))
         }
     }
 }
