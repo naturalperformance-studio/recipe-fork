@@ -272,7 +272,7 @@ class ShoppingScreenTest {
             listOf(
                 "Your shopping list is empty",
                 "Choose “Add to shopping list” in a recipe's ⋮ menu — in the book or on its card — or long-press to select several " +
-                    "recipes; “Add item” adds anything else.",
+                    "recipes in the book; “Add item” adds anything else.",
             ),
             LocalizationChecks.shownText(compose).filter { it.startsWith("Your") || it.startsWith("Choose") },
         )

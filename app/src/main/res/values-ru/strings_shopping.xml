@@ -25,7 +25,7 @@
     <string name="shopping_servings_more_action">Купить на больше порций</string>
     <string name="shopping_add">Добавить в список покупок</string>
     <string name="shopping_empty">Список покупок пуст</string>
-    <string name="shopping_empty_sentence">Выберите «%1$s» в меню ⋮ рецепта — в книге или на его карточке — или выделите несколько рецептов долгим нажатием; «%2$s» добавит что-то своё.</string>
+    <string name="shopping_empty_sentence">Выберите «%1$s» в меню ⋮ рецепта — в книге или на его карточке — или выделите несколько рецептов в книге долгим нажатием; «%2$s» добавит что-то своё.</string>
     <string name="shopping_line">%1$s — %2$s</string>
     <string name="shopping_approximate">≈ %1$s</string>
     <string name="shopping_plus_to_taste">%1$s + %2$s</string>

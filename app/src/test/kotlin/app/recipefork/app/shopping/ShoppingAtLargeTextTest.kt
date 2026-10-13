@@ -289,8 +289,38 @@ class ShoppingAtLargeTextTest {
     fun inRussianTheEmptyListNamesEveryWayOntoIt() = assertEmptySays(
         "Список покупок пуст",
         "Выберите «Добавить в список покупок» в меню ⋮ рецепта — в книге или на его карточке — или выделите несколько рецептов " +
-            "долгим нажатием; «Добавить пункт» добавит что-то своё.",
+            "в книге долгим нажатием; «Добавить пункт» добавит что-то своё.",
     )
+
+    /**
+     * On a short 320 dp phone at twice the font scale the empty state's sentence scrolls; scrolled to its end, no line
+     * of it — each as its text lays it out — lies under "Add item".
+     */
+    private fun assertEmptySentenceClearOfAddItem() {
+        show()
+        val sentence = LibraryTags.emptySentence(ShoppingTags.EMPTY)
+        val before = compose.onNodeWithTag(sentence, useUnmergedTree = true).fetchSemanticsNode().positionInRoot.y
+        repeat(3) { compose.onNodeWithTag(ShoppingTags.EMPTY).performTouchInput { swipeUp(durationMillis = 500) } }
+        compose.waitForIdle()
+        val node = compose.onNodeWithTag(sentence, useUnmergedTree = true).fetchSemanticsNode()
+        assertTrue("the empty state did not scroll: the check would prove nothing", node.positionInRoot.y < before - 0.5f)
+        val layout = layoutOf(node)
+        val at = node.positionInRoot
+        val add = bounds(ShoppingTags.ADD)
+        (0 until layout.lineCount).forEach { line ->
+            val words = Rect(at.x + layout.getLineLeft(line), at.y + layout.getLineTop(line), at.x + layout.getLineRight(line), at.y + layout.getLineBottom(line))
+            val text = layout.layoutInput.text.text.substring(layout.getLineStart(line), layout.getLineEnd(line))
+            assertFalse("“$text” ($words) lies under Add item ($add)", words.overlaps(add))
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h533dp", fontScale = 2f)
+    fun atTwiceTheFontScaleOnAShortPhoneTheEmptySentenceEndsAboveAddItem() = assertEmptySentenceClearOfAddItem()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h533dp", fontScale = 2f)
+    fun inRussianAtTwiceTheFontScaleOnAShortPhoneTheEmptySentenceEndsAboveAddItem() = assertEmptySentenceClearOfAddItem()
 
     // --- "Add item"'s sheet -----------------------------------------------------------------------------------------
 

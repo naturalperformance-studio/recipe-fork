@@ -262,7 +262,8 @@ fun ShoppingScreen(
                 sentence = stringResource(R.string.shopping_empty_sentence, stringResource(R.string.shopping_add), stringResource(R.string.shopping_own_add)),
                 action = null,
                 tag = ShoppingTags.EMPTY,
-                modifier = Modifier.padding(padding),
+                // Its words, scrolled at a large font scale, end above "Add item", as the list's last line does.
+                modifier = Modifier.padding(padding).padding(bottom = FAB_CLEARANCE),
             )
             else -> {
                 val context = LocalContext.current
@@ -346,7 +347,7 @@ private const val LINES_KEY = "lines"
 private const val BASKET_KEY = "basket"
 private const val LINE_KEY = "line/"
 
-/** What the end of the list leaves free under "Add item": the button's height and its margin. */
+/** What the end of the list, and the empty state, leave free under "Add item": the button's height and its margin. */
 private val FAB_CLEARANCE = 72.dp
 
 /**
