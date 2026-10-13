@@ -224,6 +224,7 @@ fun LibraryScreen(
     val notice = rememberFileNotice(session, snackbars, markedList, ownList)
     RemovalNotice(session, snackbars)
     CollectionDeletionNotice(session, collections, snackbars)
+    val adding = rememberBookAdding(session, recipes, card, collections, snackbars, onOpenShopping)
     val work by session.work.collectAsState()
     val selection by session.selection.collectAsState()
     // What each view lists, as the selection sees it: what "Select all" chooses and what an action applies to.
@@ -232,7 +233,8 @@ fun LibraryScreen(
     // The height of the view's action, in pixels: the tallest it has been laid out.
     var actionHeight by remember { mutableIntStateOf(0) }
     Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(bar.nestedScrollConnection),
+        // While selecting, the title bar is not shown: it takes none of the list's drags, and comes back as it was.
+        modifier = modifier.fillMaxSize().then(if (selection == null) Modifier.nestedScroll(bar.nestedScrollConnection) else Modifier),
         snackbarHost = { LibrarySnackbarHost(snackbars) },
         topBar = {
             Column {
@@ -241,7 +243,7 @@ fun LibraryScreen(
                 if (chosen != null) {
                     SelectionBar(
                         chosen.count,
-                        selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks),
+                        selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding),
                         onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
                         onClose = session::endSelection,
                     )
@@ -325,14 +327,14 @@ fun LibraryScreen(
             when (VIEWS[page]) {
                 LibraryView.MARKED -> MarkedList(
                     recipes, session, files, timers, card.marks, mode, thumbnails, card.ingredients, editor.tags, bookKitchen,
-                    markedList, bottom, import, notice, onOffer = { offers[LibraryView.MARKED] = it },
+                    markedList, bottom, import, notice, adding, onOffer = { offers[LibraryView.MARKED] = it },
                     collections = rememberListed(collections, CollectionOrigin.IMPORTED),
                     selection = selection?.takeIf { it.view == LibraryView.MARKED },
                     onListed = { if (selectables[LibraryView.MARKED] != it) selectables[LibraryView.MARKED] = it },
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
-                    ownList, bottom, notice, write, onOffer = { offers[LibraryView.OWN] = it },
+                    ownList, bottom, notice, write, adding, onOffer = { offers[LibraryView.OWN] = it },
                     collections = rememberListed(collections, CollectionOrigin.OWN),
                     selection = selection?.takeIf { it.view == LibraryView.OWN },
                     onListed = { if (selectables[LibraryView.OWN] != it) selectables[LibraryView.OWN] = it },
@@ -405,7 +407,7 @@ internal fun LibrarySnackbarHost(snackbars: SnackbarHostState) {
  * one; "Recipe deleted", "Recipe removed" for one with no title — with Undo, for as long as
  * the session offers to undo it (FLOW-053). Undo puts it back; the notice gone without it — by itself, swiped away,
  * replaced by another notice, or the book left — makes the leaving final. A notice cut short by the screen turning is
- * said again. An Undo the book could not take back is said to have failed.
+ * said again. An Undo the book could not take back is said to have failed — for several, how many could not come back.
  */
 @Composable
 internal fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState) {
@@ -430,7 +432,9 @@ internal fun RemovalNotice(session: LibrarySession, snackbars: SnackbarHostState
     }
     // An Undo the book could not take back is said, once.
     val failed by session.undoFailed.collectAsState()
-    val notBack = stringResource(R.string.library_undo_failed)
+    // How many could not come back: one alone is said as before, several are counted.
+    val many = failed?.notBack ?: 0
+    val notBack = if (many > 1) pluralStringResource(R.plurals.library_undo_failed_several, many, many) else stringResource(R.string.library_undo_failed)
     LaunchedEffect(failed) {
         val said = failed ?: return@LaunchedEffect
         snackbars.showSnackbar(notBack, duration = SnackbarDuration.Long)
@@ -469,9 +473,10 @@ private fun ListedForSelection(view: LibraryView, session: LibrarySession, liste
 }
 
 /**
- * The actions of the selection's bar on the recipes [selection] chose of [listed]: Delete in the own view, Remove in the
- * marked one, offered while it applies to one of them at least, and taking only those it applies to — at once, asking
- * nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection. Later actions join the list.
+ * The actions of the selection's bar on the recipes [selection] chose of [listed], in this order: "Add to collection" and
+ * "Add to shopping list" ([adding]), on those the book holds the content of, in the order they were chosen; then Delete in
+ * the own view, Remove in the marked one, offered while it applies to one of them at least, and taking only those it
+ * applies to — at once, asking nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection.
  */
 private fun selectionActions(
     selection: BookSelection,
@@ -481,10 +486,23 @@ private fun selectionActions(
     files: RecipeImport,
     timers: CardTimers,
     marks: DoneMarks,
+    adding: BookAdding,
 ): List<SelectionAction> {
     val chosen = listed.filter { it.recipeId in selection.ids }
     val removable = chosen.filter { it.removable }.map { RecipeId(it.recipeId) }
+    val holding = chosen.filter { it.holds }.mapTo(HashSet()) { it.recipeId }
+    // In the order they were chosen ("Select all": in the view's).
+    val held = selection.ids.filter { it in holding }
     return buildList {
+        if (held.isNotEmpty()) {
+            add(SelectionAction(R.string.collection_sheet_menu, LibraryTags.SELECTION_ADD_TO_COLLECTION, R.drawable.ic_add_to_collection) {
+                adding.addAllToCollection(held)
+            })
+            add(SelectionAction(R.string.shopping_add, LibraryTags.SELECTION_ADD_TO_SHOPPING, R.drawable.ic_add_shopping) {
+                adding.addAllToShopping(held)
+            })
+        }
+        // Print and Save as PDF come here (T-264).
         if (removable.isNotEmpty()) {
             val own = selection.view == LibraryView.OWN
             add(
@@ -698,6 +716,7 @@ private fun OwnList(
     bottom: Dp,
     reveal: String?,
     onWrite: () -> Unit,
+    adding: BookAdding,
     onOffer: (Boolean) -> Unit,
     collections: List<CollectionRow> = emptyList(),
     selection: BookSelection? = null,
@@ -733,7 +752,7 @@ private fun OwnList(
     }
     val export = rememberExport(recipes, session)
     val shown = listed
-    val selectable = remember(found) { found?.map { Selectable(it.recipeId, removable = it.state in DELETABLE) } }
+    val selectable = remember(found) { found?.map { Selectable(it.recipeId, removable = it.state in DELETABLE, holds = true) } }
     ListedForSelection(LibraryView.OWN, session, selectable, onListed)
     // A book that lists recipes still offers to write one (FLOW-042 (5)), from the view's action.
     val offered = shown != null && !(shown.viewIsEmpty && !shown.narrowed)
@@ -785,6 +804,7 @@ private fun OwnList(
                         // Deleted at once, asking nothing; the book says so with Undo (FLOW-053).
                         onDelete = { deleteRecipe(recipes, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
+                        adding = adding,
                         selected = selection?.let { row.recipeId in it.ids },
                         onSelect = { session.select(LibraryView.OWN, row.recipeId) },
                     )
@@ -830,8 +850,9 @@ private fun rememberWrite(recipes: RecipeRepository, session: LibrarySession, ed
 
 /**
  * An own recipe's entry, a card; tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the
- * end of its title line: deletion for a recipe its owner may delete (FLOW-053 (1), ST-010), and in [Mode.Serverless]
- * the export of every recipe (FLOW-063). An entry with no action carries no menu, and its text takes the whole width.
+ * end of its title line, from the top ([entryActions]): "Add to collection" and "Add to shopping list" ([adding]), in
+ * [Mode.Serverless] the export of every recipe (FLOW-063), and deletion for a recipe its owner may delete (FLOW-053 (1),
+ * ST-010).
  */
 @Composable
 private fun OwnEntry(
@@ -843,13 +864,16 @@ private fun OwnEntry(
     onOpen: () -> Unit,
     onDelete: () -> Unit,
     onExport: () -> Unit,
+    adding: BookAdding,
     selected: Boolean? = null,
     onSelect: (() -> Unit)? = null,
 ) {
-    val actions = buildList {
-        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onClick = onExport))
-        if (row.state in DELETABLE) add(EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), destructive = true, onClick = onDelete))
+    val removal = if (row.state in DELETABLE) {
+        EntryAction(R.string.library_entry_delete, LibraryTags.delete(row.recipeId), destructive = true, onClick = onDelete)
+    } else {
+        null
     }
+    val actions = entryActions(row.recipeId, mode, adding, onExport, removal)
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
         EntryTags(row.recipeId, tags)
@@ -860,6 +884,20 @@ private fun OwnEntry(
         if (mode == Mode.Standard) Text(stringResource(sentLabel(row.sent)), style = MaterialTheme.typography.bodySmall)
     }
 }
+
+/**
+ * The items of an entry's menu, from the top: "Add to collection", "Add to shopping list" — "Update in shopping list"
+ * once the recipe is on the list, as on the card — then (T-264) Print and Save as PDF, then in [Mode.Serverless] the
+ * export to a file (FLOW-063), and last [removal], where the recipe may leave the book.
+ */
+private fun entryActions(recipeId: String, mode: Mode, adding: BookAdding, onExport: () -> Unit, removal: EntryAction?): List<EntryAction> =
+    buildList {
+        add(EntryAction(R.string.collection_sheet_menu, LibraryTags.addToCollection(recipeId)) { adding.addToCollection(recipeId) })
+        val shopping = if (adding.listed(recipeId)) R.string.card_shopping_update else R.string.shopping_add
+        add(EntryAction(shopping, LibraryTags.addToShopping(recipeId)) { adding.addToShopping(recipeId) })
+        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(recipeId), onClick = onExport))
+        removal?.let(::add)
+    }
 
 /**
  * An entry of the book as a card: its cover across the card's width in the 4:3 frame, when it has one, and beneath
@@ -1162,6 +1200,7 @@ private fun MarkedList(
     bottom: Dp,
     onImport: () -> Unit,
     reveal: String?,
+    adding: BookAdding,
     onOffer: (Boolean) -> Unit,
     collections: List<CollectionRow> = emptyList(),
     selection: BookSelection? = null,
@@ -1185,7 +1224,7 @@ private fun MarkedList(
     RevealOnNotice(reveal, marked?.map { it.recipeId }, listState, above)
     val export = rememberExport(recipes, session)
     val shown = listed
-    val selectable = remember(marked) { marked?.map { Selectable(it.recipeId, removable = it.held) } }
+    val selectable = remember(marked) { marked?.map { Selectable(it.recipeId, removable = it.held, holds = it.held) } }
     ListedForSelection(LibraryView.MARKED, session, selectable, onListed)
     val empty = shown != null && shown.viewIsEmpty && !shown.narrowed
     val offered = mode == Mode.Serverless && shown != null && !empty
@@ -1251,6 +1290,7 @@ private fun MarkedList(
                         // Removed at once, asking nothing; the book says so with Undo (FLOW-053).
                         onRemove = { removeFound(files, timers, marks, RecipeId(row.recipeId), session::removed) },
                         onExport = { export(row.recipeId, row.title) },
+                        adding = adding,
                         selected = selection?.let { row.recipeId in it.ids },
                         onSelect = { session.select(LibraryView.MARKED, row.recipeId) },
                     )
@@ -1263,8 +1303,9 @@ private fun MarkedList(
 
 /**
  * A marked recipe's entry, a card: its title, any stated author and its tags; one whose content the book holds opens,
- * and its menu, at the end of its title line, offers its removal, and in [Mode.Serverless] its export as well
- * (FLOW-063 (2)).
+ * and its menu, at the end of its title line, offers "Add to collection" and "Add to shopping list" ([adding]), in
+ * [Mode.Serverless] its export (FLOW-063 (2)), and its removal ([entryActions]). One whose content the book does not
+ * hold offers nothing.
  */
 @Composable
 private fun MarkedEntry(
@@ -1276,12 +1317,15 @@ private fun MarkedEntry(
     onOpen: () -> Unit,
     onRemove: () -> Unit,
     onExport: () -> Unit,
+    adding: BookAdding,
     selected: Boolean? = null,
     onSelect: (() -> Unit)? = null,
 ) {
-    val actions = if (!row.held) emptyList() else buildList {
-        if (mode == Mode.Serverless) add(EntryAction(R.string.file_export, LibraryTags.export(row.recipeId), onClick = onExport))
-        add(EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), destructive = true, onClick = onRemove))
+    val actions = if (!row.held) {
+        emptyList()
+    } else {
+        val removal = EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), destructive = true, onClick = onRemove)
+        entryActions(row.recipeId, mode, adding, onExport, removal)
     }
     EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
@@ -1457,6 +1501,12 @@ object LibraryTags {
     const val SELECT_ALL = "library-select-all"
     const val SELECTION_DELETE = "library-selection-delete"
     const val SELECTION_REMOVE = "library-selection-remove"
+    /** The selection's "Add to collection" and "Add to shopping list", in its bar. */
+    const val SELECTION_ADD_TO_COLLECTION = "library-selection-add-to-collection"
+    const val SELECTION_ADD_TO_SHOPPING = "library-selection-add-to-shopping"
+    /** An entry's "Add to collection" and "Add to shopping list" ("Update in shopping list"), in its menu. */
+    fun addToCollection(recipeId: String) = "library-add-to-collection-$recipeId"
+    fun addToShopping(recipeId: String) = "library-add-to-shopping-$recipeId"
     /** An entry's mark of being chosen, where its ⋮ stands while the selection is on. */
     fun selectionMark(recipeId: String) = "library-selection-mark-$recipeId"
     /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */

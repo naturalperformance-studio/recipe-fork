@@ -249,6 +249,77 @@ fun AddToCollectionSheet(recipe: RecipeId, collections: CollectionRepository, on
     }
 }
 
+/**
+ * "Add to collection" from the book's selection (v0.37, T-263): a sheet listing the reader's own collections, the last
+ * made first — an imported one is frozen and not listed — and "New collection…", which opens a name field in its place.
+ * Tapping a collection closes the sheet and hands it, with its name, to [onChoose]; Create closes it and hands the name
+ * to [onCreate]. A swipe down or Back closes it choosing nothing ([onDismiss]). What is added, and what is said of it, is
+ * the caller's. A choice once made, the sheet takes no other.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChooseCollectionSheet(
+    collections: CollectionRepository,
+    onChoose: (CollectionId, String) -> Unit,
+    onCreate: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    val listed by remember(collections) { collections.listed(CollectionOrigin.OWN) }.collectAsState(initial = null)
+    var going by remember { mutableStateOf(false) }
+
+    fun close(then: () -> Unit) {
+        if (going) return
+        going = true
+        scope.launch { state.hide() }.invokeOnCompletion { then() }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = {
+            if (!going) {
+                going = true
+                onDismiss()
+            }
+        },
+        sheetState = state,
+        modifier = Modifier.testTag(AddToCollectionTags.CHOOSE_SHEET),
+        dragHandle = null,
+    ) {
+        BoxWithConstraints(Modifier.fillMaxWidth().heightIn(min = CardTarget).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp)) {
+            WordFitText(
+                stringResource(R.string.collection_sheet_title),
+                MaterialTheme.typography.titleLarge,
+                constraints.maxWidth,
+                Modifier.semantics { heading() }.testTag(AddToCollectionTags.TITLE),
+            )
+        }
+        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
+            NewCollection(onCreate = { name -> close { onCreate(name) } })
+            val rows = listed ?: return@Column
+            if (rows.isEmpty()) {
+                Text(
+                    stringResource(R.string.collection_sheet_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).testTag(AddToCollectionTags.EMPTY),
+                )
+            }
+            rows.forEach { row ->
+                ListItem(
+                    headlineContent = { Text(row.name) },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = CardTarget)
+                        .clickable(role = Role.Button) { close { onChoose(CollectionId(row.collectionId), row.name) } }
+                        .testTag(AddToCollectionTags.choice(row.collectionId)),
+                )
+            }
+        }
+    }
+}
+
 /** What [change] came to; null where it failed. */
 private suspend fun <T> attempt(change: suspend () -> T): T? =
     try {
@@ -328,6 +399,12 @@ object AddToCollectionTags {
     const val CREATE = "add-to-collection-create"
     const val EMPTY = "add-to-collection-empty"
     const val NOTICE = "add-to-collection-notice"
+
+    /** The sheet of the book's selection, which adds every recipe chosen to the one collection tapped. */
+    const val CHOOSE_SHEET = "choose-collection"
+
+    /** The row of the collection [id] in [CHOOSE_SHEET]. */
+    fun choice(id: String) = "choose-collection-$id"
 
     /** The row of the collection [id]. */
     fun collection(id: String) = "add-to-collection-$id"

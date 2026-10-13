@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -29,6 +30,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
@@ -40,11 +42,12 @@ data class BookSelection(val view: LibraryView, val ids: Set<String>) {
 }
 
 /**
- * An entry of a view as the selection sees it: the recipe it lists, and whether the book's removal of it — Delete for an
- * own recipe its owner may delete (ST-010), Remove for a found one the book holds — applies to it. An entry no action
- * applies to is chosen all the same; an action takes only those it applies to.
+ * An entry of a view as the selection sees it: the recipe it lists; whether the book's removal of it — Delete for an
+ * own recipe its owner may delete (ST-010), Remove for a found one the book holds — applies to it; and whether the book
+ * [holds] its content, which adding it to a collection or the shopping list needs. An entry no action applies to is
+ * chosen all the same; an action takes only those it applies to.
  */
-data class Selectable(val recipeId: String, val removable: Boolean)
+data class Selectable(val recipeId: String, val removable: Boolean, val holds: Boolean = true)
 
 /**
  * One action of the selection's bar, on the recipes chosen: what it reads, its tag, its icon — an action with one stands
@@ -63,10 +66,20 @@ internal class SelectionAction(
 private const val BAR_ICONS = 2
 
 /**
+ * What the bar holds besides its count and its icons: ✕ and ⋮ with their margins, the title's insets and its clearance
+ * ([TITLE_CLEARANCE]) — a little more than Material lays out, so that the count is never short of it.
+ */
+private val BAR_FIXED = 132.dp
+
+/** The room an icon takes in the bar. */
+private val BAR_ICON = 48.dp
+
+/**
  * The book's bar while its selection is on, in place of its title: ✕, which ends the selection, how many entries are
- * chosen ("3 selected"), and the [actions] on them — those with an icon in the bar, as far as [BAR_ICONS] allows, every
- * other in its ⋮ after "Select all", which chooses every entry the view lists. The count is drawn on one line, made
- * smaller as far as it needs to fit at a large font scale on a narrow phone.
+ * chosen ("3 selected"), and the [actions] on them — those with an icon in the bar, as far as [BAR_ICONS] allows and the
+ * count leaves room for, every other in its ⋮ after "Select all", which chooses every entry the view lists. The count is
+ * drawn on one line, made smaller as far as it needs to fit at a large font scale on a narrow phone, never below its
+ * size at a font scale of 1: where it would not fit even so beside the icons, an icon goes to the ⋮ instead.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,9 +89,21 @@ internal fun SelectionBar(
     onSelectAll: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-) {
-    val (inBar, inMenu) = actions.partition { it.icon != null && !it.destructive }.let { (icons, rest) ->
-        icons.take(BAR_ICONS) to (icons.drop(BAR_ICONS) + rest)
+) = BoxWithConstraints {
+    // One word to fitting: the count never wraps away from what it counts.
+    val text = pluralStringResource(R.plurals.library_selection_count, count, count).replace(' ', ' ')
+    val style = MaterialTheme.typography.titleLarge
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val width = maxWidth
+    val icons = remember(text, style, width, measurer, density) {
+        // The count at the least size it is drawn at: as many pixels as its size in dp.
+        val least = with(density) { style.fontSize.value.dp.toSp() }
+        val drawn = with(density) { measurer.measure(text, style.copy(fontSize = least), softWrap = false, maxLines = 1).size.width.toDp() }
+        ((width - BAR_FIXED - drawn) / BAR_ICON).toInt().coerceIn(0, BAR_ICONS)
+    }
+    val (inBar, inMenu) = actions.partition { it.icon != null && !it.destructive }.let { (iconed, rest) ->
+        iconed.take(icons) to (iconed.drop(icons) + rest)
     }
     TopAppBar(
         navigationIcon = {
@@ -92,11 +117,9 @@ internal fun SelectionBar(
             )
         },
         title = {
-            val text = pluralStringResource(R.plurals.library_selection_count, count, count)
             BoxWithConstraints(Modifier.padding(end = TITLE_CLEARANCE)) {
-                // One word to fitting: the count never wraps away from what it counts.
                 WordFitText(
-                    text.replace(' ', ' '),
+                    text,
                     MaterialTheme.typography.titleLarge,
                     constraints.maxWidth,
                     Modifier.semantics { heading() }.testTag(LibraryTags.SELECTION_COUNT),

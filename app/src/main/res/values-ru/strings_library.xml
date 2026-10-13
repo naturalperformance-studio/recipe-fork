@@ -129,4 +129,20 @@
         <item quantity="many">%d рецептов убрано</item>
         <item quantity="other">%d рецепта убрано</item>
     </plurals>
+    <plurals name="library_undo_failed_several">
+        <item quantity="one">Не удалось вернуть %d рецепт</item>
+        <item quantity="few">Не удалось вернуть %d рецепта</item>
+        <item quantity="many">Не удалось вернуть %d рецептов</item>
+        <item quantity="other">Не удалось вернуть %d рецепта</item>
+    </plurals>
+    <plurals name="library_added_to_collection">
+        <item quantity="one">%1$d рецепт добавлен в «%2$s»</item>
+        <item quantity="few">%1$d рецепта добавлены в «%2$s»</item>
+        <item quantity="many">%1$d рецептов добавлено в «%2$s»</item>
+        <item quantity="other">%1$d рецепта добавлено в «%2$s»</item>
+    </plurals>
+    <string name="library_one_in_collection">Рецепт уже в «%1$s»</string>
+    <string name="library_all_in_collection">Все эти рецепты уже в «%1$s»</string>
+    <string name="library_none_added_to_collection">В «%1$s» ничего не добавлено</string>
+    <string name="library_shopping_unread">Не удалось прочитать рецепт, ничего не добавлено</string>
 </resources>

@@ -40,8 +40,9 @@ import java.time.Instant
 
 /**
  * The selection's bar at twice the font scale on a 320 dp phone (T-261), in English and Russian: the count of chosen
- * entries stands whole on one line, between ✕ and ⋮, overlapping neither; ✕, ⋮, the bar's menu items and an entry's mark
- * of being chosen are each at least 48 dp.
+ * entries stands whole on one line, between ✕ and ⋮, overlapping neither — an action's icon gives way to the ⋮ where it
+ * would not leave the count room; ✕, ⋮, the bar's actions and menu items and an entry's mark of being chosen are each at
+ * least 48 dp.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -104,6 +105,9 @@ class BookSelectionAtLargeTextTest {
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECT_ALL) }
         assertAtLeast48(LibraryTags.SELECT_ALL)
         assertAtLeast48(LibraryTags.SELECTION_DELETE)
+        // The adding actions (T-263) stay offered — in the bar while the count leaves room, else in its ⋮.
+        assertAtLeast48(LibraryTags.SELECTION_ADD_TO_COLLECTION)
+        assertAtLeast48(LibraryTags.SELECTION_ADD_TO_SHOPPING)
         compose.onNodeWithTag(LibraryTags.SELECT_ALL).performClick()
         compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 12 && !exists(LibraryTags.SELECT_ALL) }
         compose.waitForIdle()

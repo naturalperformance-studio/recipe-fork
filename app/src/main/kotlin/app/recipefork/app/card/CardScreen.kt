@@ -104,7 +104,7 @@ import app.recipefork.app.print.PrintWay
 import app.recipefork.app.print.RecipeDocument
 import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.shopping.ListedRecipe
-import app.recipefork.app.shopping.ShoppingStore
+import app.recipefork.app.shopping.rememberAddToShopping
 import app.recipefork.app.timer.rememberCardTimers
 import androidx.compose.material3.Button
 import androidx.compose.material3.Snackbar
@@ -645,32 +645,6 @@ private fun cardLanguage(): InterfaceLanguage = cardLanguage(LocalConfiguration.
 internal fun cardLanguage(configuration: Configuration): InterfaceLanguage = when (interfaceLanguage(configuration)) {
     RecipeLanguage.RU -> InterfaceLanguage.RUSSIAN
     RecipeLanguage.EN -> InterfaceLanguage.ENGLISH
-}
-
-/**
- * Puts a recipe on the shopping list [store] from the card's ⋮ (FLOW-074) — at the end, or, already there, at the new
- * count where it stands, never twice — and says so in the card's snackbar, which replaces whatever it said before
- * (making a clearing of marks final): "Added to shopping list", or "Shopping list updated", with Open, which opens the
- * list ([onOpen]).
- */
-@Composable
-private fun rememberAddToShopping(store: ShoppingStore, snackbars: SnackbarHostState, onOpen: () -> Unit): (ListedRecipe) -> Unit {
-    val scope = rememberCoroutineScope()
-    val open by rememberUpdatedState(onOpen)
-    val added = stringResource(R.string.card_shopping_added)
-    val updated = stringResource(R.string.card_shopping_updated)
-    val openLabel = stringResource(R.string.card_shopping_open)
-    return remember(store, scope, snackbars, added, updated, openLabel) {
-        { recipe ->
-            val already = store.list.value.recipes.any { it.isOf(recipe.book, recipe.recipe) }
-            store.update { it.with(recipe) }
-            scope.launch {
-                snackbars.currentSnackbarData?.dismiss()
-                val result = snackbars.showSnackbar(if (already) updated else added, actionLabel = openLabel, duration = SnackbarDuration.Long)
-                if (result == SnackbarResult.ActionPerformed) open()
-            }
-        }
-    }
 }
 
 /** The recipe's [timers] and those of them [shown] in the bar; [number] is each step's number by its position. */
