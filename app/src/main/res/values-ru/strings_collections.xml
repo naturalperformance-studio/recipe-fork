@@ -37,6 +37,6 @@
     <string name="collection_removed">Рецепт «%1$s» убран из коллекции</string>
     <string name="collection_removed_untitled">Рецепт убран из коллекции</string>
     <string name="collection_empty">Здесь пока нет рецептов</string>
-    <string name="collection_empty_sentence">Откройте рецепт и выберите «Добавить в коллекцию».</string>
+    <string name="collection_empty_sentence">Выберите «%1$s» в меню ⋮ рецепта — в книге или на его карточке — или выделите несколько рецептов в книге долгим нажатием.</string>
     <string name="collection_imported_empty">В этой коллекции нет рецептов</string>
 </resources>

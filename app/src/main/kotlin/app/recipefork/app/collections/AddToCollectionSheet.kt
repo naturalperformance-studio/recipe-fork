@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,6 +50,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -82,7 +84,8 @@ import kotlinx.coroutines.sync.withLock
  *
  * Done, a swipe down or Back closes the sheet once every change is written; [onClose] is then given what the card says
  * of it — "In 2 collections", or "Not in any collection" — or, where nothing changed, the last failure, or null where
- * none failed either. Each row is the card's [CardTarget] tall at least, as the sheet stands over the card.
+ * none failed either. Each row is the card's [CardTarget] tall at least, as the sheet stands over the card. Material's
+ * drag handle stands above the title (v0.38), as on the editor's sheets.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,10 +199,11 @@ fun AddToCollectionSheet(recipe: RecipeId, collections: CollectionRepository, on
         },
         sheetState = state,
         modifier = Modifier.testTag(AddToCollectionTags.SHEET),
-        // No handle: the sheet opens whole, and Done, a swipe down or Back closes it.
-        dragHandle = null,
+        // Material's handle, as the editor's sheets have (v0.38): as wide as it is tall, so that its own actions (expand,
+        // dismiss) have a full touch target. The sheet opens whole; Done, the handle, a swipe down or Back closes it.
+        dragHandle = { BottomSheetDefaults.DragHandle(width = 48.dp) },
     ) {
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             // The title wraps only between words: at a large font scale, a word too wide for its room is drawn smaller.
             BoxWithConstraints(Modifier.weight(1f)) {
                 WordFitText(
@@ -250,8 +254,9 @@ fun AddToCollectionSheet(recipe: RecipeId, collections: CollectionRepository, on
 }
 
 /**
- * "Add to collection" from the book's selection (v0.37, T-263): a sheet listing the reader's own collections, the last
- * made first — an imported one is frozen and not listed — and "New collection…", which opens a name field in its place.
+ * "Add to collection" from the book's selection (v0.37, T-263): a sheet titled with how many recipes it adds — "Add 3
+ * recipes to…" ([count], v0.38) — under Material's drag handle, listing the reader's own collections, the last made
+ * first — an imported one is frozen and not listed — and "New collection…", which opens a name field in its place.
  * Tapping a collection closes the sheet and hands it, with its name, to [onChoose]; Create closes it and hands the name
  * to [onCreate]. A swipe down or Back closes it choosing nothing ([onDismiss]). What is added, and what is said of it, is
  * the caller's. A choice once made, the sheet takes no other.
@@ -259,6 +264,7 @@ fun AddToCollectionSheet(recipe: RecipeId, collections: CollectionRepository, on
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChooseCollectionSheet(
+    count: Int,
     collections: CollectionRepository,
     onChoose: (CollectionId, String) -> Unit,
     onCreate: (String) -> Unit,
@@ -284,11 +290,12 @@ fun ChooseCollectionSheet(
         },
         sheetState = state,
         modifier = Modifier.testTag(AddToCollectionTags.CHOOSE_SHEET),
-        dragHandle = null,
+        // Material's handle, as the card's sheet has.
+        dragHandle = { BottomSheetDefaults.DragHandle(width = 48.dp) },
     ) {
-        BoxWithConstraints(Modifier.fillMaxWidth().heightIn(min = CardTarget).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp)) {
+        BoxWithConstraints(Modifier.fillMaxWidth().heightIn(min = CardTarget).padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
             WordFitText(
-                stringResource(R.string.collection_sheet_title),
+                pluralStringResource(R.plurals.collection_sheet_title_count, count, count),
                 MaterialTheme.typography.titleLarge,
                 constraints.maxWidth,
                 Modifier.semantics { heading() }.testTag(AddToCollectionTags.TITLE),
