@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.pdf.PdfRenderer
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.ExifInterface
@@ -47,6 +48,7 @@ import app.recipefork.app.media.ClipOutcome
 import app.recipefork.app.media.PhotoOutcome
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.TestClips
+import app.recipefork.app.print.PdfShare
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.shopping.ShoppingList
 import app.recipefork.app.timer.TimerChannels
@@ -120,6 +122,9 @@ class ReleaseSmokeTest {
     // The two recipes the walk gathers into a collection, and that collection, own and then imported (v0.36).
     private var collected: List<Recipe> = emptyList()
     private var collection: CollectionId? = null
+    // The three recipes the walk chooses together in the book, and the collection it puts them in (v0.37).
+    private var chosen: List<Recipe> = emptyList()
+    private var gathered: CollectionId? = null
     // The shopping list before the walk put the collection on it, given back after.
     private var shoppingBefore: ShoppingList? = null
 
@@ -147,6 +152,8 @@ class ReleaseSmokeTest {
         loaf?.let { container.recipes.delete(it.id) }
         collection?.let { container.collections.delete(it) }
         collected.forEach { container.recipes.delete(it.id) }
+        gathered?.let { container.collections.delete(it) }
+        chosen.forEach { container.recipes.delete(it.id) }
         shoppingBefore?.let { before -> container.shopping.update { before } }
         File(application.cacheDir, BOOK_FILE).parentFile?.deleteRecursively()
         application.getSystemService(NotificationManager::class.java).cancelAll()
@@ -644,8 +651,10 @@ class ReleaseSmokeTest {
      * kitchen and Back returns to the card; the settings are gone through, and from them the whole book saved to a file
      * and a recipe it held brought back from that file; the units switched to US, where the card reads its grams in
      * ounces, and back to Metric; the recipe is deleted and brought back with Undo, exported to a
-     * file and the file opened back into the book; two recipes are gathered into a collection ([throughACollection]). Nothing
-     * crashes, and each change is in the book.
+     * file and the file opened back into the book; two recipes are gathered into a collection ([throughACollection]);
+     * three are chosen together in the book and put into a collection and on the shopping list, shared as one PDF,
+     * deleted and brought back, and the collection shared as a PDF ([throughTheSelection]). Nothing crashes, and each
+     * change is in the book.
      *
      * Export and the opening of a file belong to the serverless build (FLOW-063, FLOW-064): the standard one, which
      * offers neither, writes and reads the file through the same code the menu and the opened file reach.
@@ -781,6 +790,9 @@ class ReleaseSmokeTest {
             // Two recipes gathered into a collection from their cards, the collection opened from the book and put on
             // the shopping list whole, shared as a file, deleted with its recipes, and taken back from the file.
             throughACollection()
+            // Three recipes chosen together in the book: into a collection, on the shopping list, shared as one PDF,
+            // deleted and brought back; the collection shared as a PDF from its ⋮.
+            throughTheSelection()
             assertTrue("the application is in front, as it was left", activities(Stage.RESUMED).any { it is MainActivity })
         } finally {
             finishTheApplication()
@@ -1241,6 +1253,190 @@ class ReleaseSmokeTest {
         return file
     }
 
+    /** Waits until the selection's bar says [count] entries are chosen: "3 selected", its space one that never breaks. */
+    private fun awaitSelected(count: Int) = try {
+        awaitUntil(30.seconds) { onScreen().any { it.replace('\u00A0', ' ') == "$count selected" } }
+    } catch (e: IllegalStateException) {
+        throw AssertionError("the bar does not say $count selected; on screen: ${onScreen()}", e)
+    }
+
+    /** Starts the book's selection with [recipe] by a long press on its entry, scrolled to first. */
+    private fun longPress(recipe: Recipe) {
+        reveal(recipe.title) { shown(recipe.title) }
+        perform("a long press on “${recipe.title}”", AccessibilityNodeInfo.ACTION_LONG_CLICK) {
+            generateSequence(shown(recipe.title)) { it.holder() }.firstOrNull { it.isLongClickable }
+        }
+    }
+
+    /** Chooses [recipes] in the book: the first by a long press, each other by a tap; the bar counts them as they come. */
+    private fun select(recipes: List<Recipe>) {
+        longPress(recipes.first())
+        awaitSelected(1)
+        recipes.drop(1).forEachIndexed { at, recipe ->
+            clickRevealed(recipe.title)
+            awaitSelected(at + 2)
+        }
+    }
+
+    /** Waits until the selection has ended — on [what] — its bar gone, the book's views shown. */
+    private fun awaitSelectionEnded(what: String) = try {
+        awaitUntil(30.seconds) { shown(CLOSE_SELECTION) == null && shown(WRITTEN_HERE) != null }
+    } catch (e: IllegalStateException) {
+        throw AssertionError("the selection did not end on $what; on screen: ${onScreen()}", e)
+    }
+
+    /** Takes the selection's action [label]: its icon in the bar where it stands there, else the item of the bar's ⋮. */
+    private fun onTheSelection(label: String) {
+        if (clickable(label) == null) {
+            tap(SELECTION_MORE)
+            awaitShown(label)
+        }
+        tap(label)
+    }
+
+    /** The system's share sheet, while it is on screen: a window of the platform's own, not a dialog of one not responding. */
+    private fun shareSheet(): AccessibilityNodeInfo? = instrumentation.uiAutomation.windows.mapNotNull { it.root }.firstOrNull {
+        it.refresh() && it.packageName == "android" && it.findAccessibilityNodeInfosByText(NOT_RESPONDING).isEmpty()
+    }
+
+    /**
+     * What [share] does opens the system's share sheet — itself, not answered by the test — on a PDF named [fileName]
+     * that the build wrote, of [pages] pages at least; Back leaves the sheet, the application in front again.
+     */
+    private fun sharesAPdf(fileName: String, pages: Int, share: () -> Unit) {
+        var send: Intent? = null
+        val sheet = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult? {
+                @Suppress("DEPRECATION")
+                if (intent.action == Intent.ACTION_CHOOSER) send = intent.getParcelableExtra(Intent.EXTRA_INTENT)
+                // The sheet opens as it would for the reader.
+                return null
+            }
+        }
+        instrumentation.addMonitor(sheet)
+        try {
+            share()
+            try {
+                awaitUntil(60.seconds) { send != null && shareSheet() != null && activities(Stage.RESUMED).none { it is MainActivity } }
+            } catch (e: IllegalStateException) {
+                throw AssertionError("the share sheet did not open on the PDF (handed ${send}); on screen: ${onScreen()}", e)
+            }
+        } finally {
+            instrumentation.removeMonitor(sheet)
+        }
+        val shared = send!!
+        assertEquals(PdfShare.MIME_TYPE, shared.type)
+        @Suppress("DEPRECATION")
+        val file = shared.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!
+        assertEquals(fileName, file.lastPathSegment)
+        val count = application.contentResolver.openFileDescriptor(file, "r")!!.use { PdfRenderer(it).use { pdf -> pdf.pageCount } }
+        assertTrue("the PDF holds $count pages, not $pages at least", count >= pages)
+        assertTrue(instrumentation.uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
+        try {
+            awaitUntil(30.seconds) { shareSheet() == null && activities(Stage.RESUMED).any { it is MainActivity } }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("Back did not leave the share sheet; on screen: ${onScreen()}", e)
+        }
+    }
+
+    /**
+     * The book's selection of v0.37 as a reader goes through it, among the recipes written here: a long press chooses a
+     * recipe — the bar says "1 selected" — a tap chooses another and a second tap leaves it, and ✕ ends the selection.
+     * Three chosen go into a collection made in the sheet by "New collection…", said "3 recipes added to “…”"; chosen
+     * again, onto the shopping list, each once, whose notice's Open shows them there; chosen again, the bar's ⋮ — "Select
+     * all" first — shares them as one PDF, a contents page and each from a new page, on the system's share sheet; chosen
+     * again, Delete takes them out of the book at once, "3 recipes deleted", and Undo brings them all back, in their
+     * collection still. The collection, opened from the book, shares itself as a PDF from its ⋮. Starts and ends on the
+     * book.
+     */
+    private fun throughTheSelection() {
+        val recipes = listOf(
+            collectable("Smoke stew", servings = 2, cover = false),
+            collectable("Smoke salad", servings = 3, cover = false),
+            collectable("Smoke cake", servings = 4, cover = false),
+        )
+        chosen = recipes
+        recipes.forEach { runBlocking { container.recipes.save(it) } }
+        val name = "Smoke chosen ${System.currentTimeMillis() % 100_000}"
+        choose(WRITTEN_HERE)
+
+        // Chosen by a long press, a tap toggling another in and out; ✕ ends the selection, the book's title back.
+        select(recipes.take(2))
+        clickRevealed(recipes[1].title)
+        awaitSelected(1)
+        tap(CLOSE_SELECTION)
+        awaitSelectionEnded("✕")
+
+        // Into a collection made in the sheet.
+        select(recipes)
+        onTheSelection(ADD_TO_COLLECTION)
+        awaitShown(NEW_COLLECTION)
+        tap(NEW_COLLECTION)
+        typeFocused(COLLECTION_NAME, name)
+        tap(CREATE)
+        awaitShown("3 recipes added to “$name”")
+        val id = runBlocking { container.collections.holding(recipes.first().id).first() }.single().also { gathered = it }
+        assertEquals(recipes.map { it.id }, runBlocking { container.collections.get(id) }!!.recipes)
+        awaitSelectionEnded("the collection chosen")
+
+        // On the shopping list, each once; the notice's Open shows them there, and Back returns to the book.
+        select(recipes)
+        onTheSelection(ADD_TO_SHOPPING)
+        awaitShown("Added 3 recipes")
+        tap(OPEN)
+        awaitShown(ADD_ITEM)
+        recipes.forEach { recipe -> reveal(recipe.title) { shown("Remove “${recipe.title}” from the list") } }
+        val listed = container.shopping.list.value.recipes.map { it.recipe }
+        recipes.forEach { recipe -> assertEquals("“${recipe.title}” on the list $listed", 1, listed.count { it == recipe.id }) }
+        tap(BACK)
+        try {
+            awaitUntil(30.seconds) { shown(ADD_ITEM) == null && shown(WRITTEN_HERE) != null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the shopping list did not return to the book; on screen: ${onScreen()}", e)
+        }
+
+        // Shared as one PDF from the bar's ⋮, which offers "Select all" first: a contents page, then each from a new
+        // page. The selection ends once the sheet is handed the file.
+        select(recipes)
+        sharesAPdf(SELECTION_PDF, pages = 1 + recipes.size) {
+            tap(SELECTION_MORE)
+            awaitShown(SELECT_ALL)
+            tap(SHARE_AS_PDF)
+        }
+        awaitSelectionEnded("the PDF handed over")
+
+        // Deleted at once, and all brought back by Undo, in their collection still.
+        select(recipes)
+        onTheSelection(DELETE)
+        awaitShown("3 recipes deleted")
+        awaitUntil(30.seconds) { recipes.all { stored(it) == null } }
+        tap(UNDO)
+        try {
+            awaitUntil(30.seconds) { recipes.all { stored(it) != null } }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("Undo did not bring the recipes back; on screen: ${onScreen()}", e)
+        }
+        assertEquals(recipes.map { it.id }, runBlocking { container.collections.get(id) }!!.recipes)
+        recipes.forEach { recipe -> reveal(recipe.title) { shown(recipe.title) } }
+
+        // The collection, opened from the book's row, shares itself as a PDF from its ⋮; Back returns to the book.
+        reveal(name) { shown(name) }
+        tap(name)
+        try {
+            awaitUntil(30.seconds) { recipes.all { shown(it.title) != null } && shown(WRITTEN_HERE) == null }
+        } catch (e: IllegalStateException) {
+            throw AssertionError("the collection “$name” did not open on its recipes; on screen: ${onScreen()}", e)
+        }
+        sharesAPdf("$name.pdf", pages = 1 + recipes.size) {
+            tap(MORE_ACTIONS)
+            awaitShown(SHARE_AS_PDF)
+            tap(SHARE_AS_PDF)
+        }
+        awaitShown(recipes.first().title)
+        tap(BACK)
+        awaitShown(WRITTEN_HERE)
+    }
+
     private companion object {
         /** The system's dialog of an application not responding, in the emulator's English, and its button that waits. */
         const val NOT_RESPONDING = "isn't responding"
@@ -1326,6 +1522,16 @@ class ReleaseSmokeTest {
         const val ADD_ALL_TO_SHOPPING = "Add all to shopping list"
         const val DELETE_COLLECTION = "Delete collection"
         const val OPEN = "Open"
+        /**
+         * The book's selection's bar: ✕, the ⋮, its "Select all", its actions as the bar and an entry's ⋮
+         * name them, and the title of the document of the recipes chosen, which names its PDF.
+         */
+        const val CLOSE_SELECTION = "Close selection"
+        const val SELECTION_MORE = "More actions on the selection"
+        const val SELECT_ALL = "Select all"
+        const val ADD_TO_SHOPPING = "Add to shopping list"
+        const val SHARE_AS_PDF = "Share as PDF"
+        const val SELECTION_PDF = "Recipes.pdf"
         /** A collection's count in the book's row. */
         const val TWO_RECIPES = "2 recipes"
         /** The book's bar action that opens the shopping list, and the list's floating action. */
