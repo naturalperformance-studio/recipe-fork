@@ -48,19 +48,28 @@ object AppLanguage {
     /** Keeps [choice] and shows [activity] again in it at once; the same choice again changes nothing. */
     fun choose(activity: Activity, choice: LanguageChoice) {
         if (choice == chosen(activity)) return
+        keep(activity, choice)
+        activity.recreate()
+    }
+
+    /**
+     * Keeps [choice] and puts it in force for the application's own resources and the timers' channels; an Activity
+     * created from now on is shown in it, one shown already once it is created again.
+     */
+    fun keep(context: Context, choice: LanguageChoice) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            activity.getSystemService(LocaleManager::class.java).applicationLocales =
+            context.getSystemService(LocaleManager::class.java).applicationLocales =
                 choice.locale?.let { LocaleList(it) } ?: LocaleList.getEmptyLocaleList()
         } else {
-            preferences(activity).edit().apply {
+            preferences(context).edit().apply {
                 val code = choice.language?.name?.lowercase()
                 if (code == null) remove(LANGUAGE_KEY) else putString(LANGUAGE_KEY, code)
             }.commit()
         }
-        applyToApplication(activity.application)
+        val application = context.applicationContext
+        applyToApplication(application)
         // The timers' channels are named in the language taken now, not at the next start: in system settings too.
-        TimerChannels.create(localized(activity.application, choice))
-        activity.recreate()
+        TimerChannels.create(localized(application, choice))
     }
 
     /**

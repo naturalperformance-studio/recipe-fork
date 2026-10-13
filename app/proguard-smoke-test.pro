@@ -56,5 +56,7 @@
 -keep,allowobfuscation class app.recipefork.app.file.CollectionImportOutcome, app.recipefork.app.file.CollectionImportOutcome$* { *; }
 -keep,allowobfuscation class app.recipefork.core.recipe.CollectionId, app.recipefork.core.recipe.CollectionOrigin, app.recipefork.core.recipe.RecipeCollection { *; }
 -keep,allowobfuscation class app.recipefork.app.shopping.ShoppingStore, app.recipefork.app.shopping.ShoppingList, app.recipefork.app.shopping.ListedRecipe { *; }
+# The interface's language, which the smoke test sets to English whatever the device's (androidTest EnglishInterface).
+-keep,allowobfuscation class app.recipefork.app.data.AppLanguage, app.recipefork.app.data.LanguageChoice { *; }
 # The smoke test closes the databases it opens itself; the application never closes one.
 -keepclassmembers,allowobfuscation class androidx.room.RoomDatabase { public void close(); }

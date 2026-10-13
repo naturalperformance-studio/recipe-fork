@@ -83,6 +83,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayInputStream
@@ -104,6 +105,10 @@ import kotlin.time.Duration.Companion.seconds
  */
 @RunWith(AndroidJUnit4::class)
 class ReleaseSmokeTest {
+    /** The walk reads the application's words in English, whatever the device speaks; the system's in the device's. */
+    @get:Rule
+    val english = EnglishInterface()
+
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val application = instrumentation.targetContext.applicationContext as RecipeForkApplication
     private val container = application.container
@@ -209,9 +214,9 @@ class ReleaseSmokeTest {
     private fun answerAnotherNotResponding(): Boolean {
         val dialogs = instrumentation.uiAutomation.windows.mapNotNull { it.root }.filter { it.refresh() && it.packageName == "android" }
         for (dialog in dialogs) {
-            val title = dialog.findAccessibilityNodeInfosByText(NOT_RESPONDING).firstOrNull()?.text?.toString() ?: continue
+            val title = dialog.findAccessibilityNodeInfosByText(SystemWords.notResponding).firstOrNull()?.text?.toString() ?: continue
             if (label in title || application.packageName in title) throw AssertionError("the application itself is not responding: “$title”")
-            val wait = dialog.findAccessibilityNodeInfosByText(WAIT).firstOrNull { it.text?.toString() == WAIT } ?: continue
+            val wait = dialog.findAccessibilityNodeInfosByText(SystemWords.wait).firstOrNull { it.text?.toString() == SystemWords.wait } ?: continue
             if (generateSequence(wait) { it.parent }.firstOrNull { it.isClickable }?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) return true
         }
         return false
@@ -974,7 +979,7 @@ class ReleaseSmokeTest {
 
     /** The root of the system's print dialog, while one of its windows is on screen. */
     private fun printDialog(): AccessibilityNodeInfo? =
-        instrumentation.uiAutomation.windows.mapNotNull { it.root }.firstOrNull { it.refresh() && it.packageName == PRINT_SPOOLER }
+        instrumentation.uiAutomation.windows.mapNotNull { it.root }.firstOrNull { it.refresh() && it.packageName == SystemWords.PRINT_SPOOLER }
 
     /**
      * The card's ⋮ → Print hands the recipe to the system's print service (FLOW-075 (1)): its dialog opens — the pages
@@ -984,9 +989,9 @@ class ReleaseSmokeTest {
         tap(MORE_ACTIONS)
         awaitShown(PRINT)
         tap(PRINT)
-        // The dialog's preview counts the pages the application's adapter laid out: "Page 1 of 1".
+        // The dialog's preview counts the pages the application's adapter laid out: "Page 1 of 1", in the device's language.
         try {
-            awaitUntil(60.seconds) { printDialog() != null && onScreen().any { PAGES_LAID_OUT.matches(it) } }
+            awaitUntil(60.seconds) { printDialog() != null && onScreen().any { SystemWords.pagesLaidOut.matches(it) } }
         } catch (e: IllegalStateException) {
             throw AssertionError("the system's print dialog did not open on the laid-out pages; on screen: ${onScreen()}", e)
         }
@@ -1446,9 +1451,6 @@ class ReleaseSmokeTest {
     }
 
     private companion object {
-        /** The system's dialog of an application not responding, in the emulator's English, and its button that waits. */
-        const val NOT_RESPONDING = "isn't responding"
-        const val WAIT = "Wait"
         /** How many such dialogs one wait answers, beginning anew, before it no longer waits longer for them. */
         const val ANSWERED_DIALOGS = 5
         /** The library's tab of the recipes written on this device. */
@@ -1545,11 +1547,8 @@ class ReleaseSmokeTest {
         /** The book's bar action that opens the shopping list, and the list's floating action. */
         const val SHOPPING_LIST = "Shopping list"
         const val ADD_ITEM = "Add item"
-        /** The card's ⋮, its item that prints the recipe, and the package of the system's print dialog. */
+        /** The card's ⋮ and its item that prints the recipe. */
         const val MORE_ACTIONS = "More actions"
         const val PRINT = "Print"
-        const val PRINT_SPOOLER = "com.android.printspooler"
-        /** The print dialog's count of the pages its preview holds, in the emulator's English. */
-        val PAGES_LAID_OUT = Regex("Page 1 of [1-9][0-9]*")
     }
 }
