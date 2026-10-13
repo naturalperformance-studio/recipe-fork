@@ -225,8 +225,8 @@ class DeleteRecipeTest {
     private fun ownRows() = runBlocking { book.database.recipes().newest(100).first() }
 
     // FLOW-053 (1), ST-010: deletion is offered, in the entry's menu, on the entries of local, private and rejected
-    // recipes only; in standard mode any other entry has no action, so it carries no menu and reserves no space for
-    // one — it takes the whole width of the list. No button stands under an entry.
+    // recipes only; any other entry's menu holds no deletion (since T-263 every entry's menu offers to add the recipe to
+    // a collection or the shopping list). No button stands under an entry.
     @Test
     fun deletionIsOfferedOnLocalPrivateAndRejectedEntriesAndNowhereElse() {
         val all = RecipeState.entries.mapIndexed { i, state -> own("Soup in $state", state, i.toLong()) }
@@ -246,8 +246,11 @@ class DeleteRecipeTest {
                 assertEquals(listOf("Delete"), compose.textsOf(LibraryTags.delete(recipe.id.value)))
                 compose.closeEntryMenu(recipe.id.value)
             } else {
-                assertFalse("${recipe.state} has a menu", exists(LibraryTags.actions(recipe.id.value)))
-                assertEquals("${recipe.state} reserves space", whole, room, 1f)
+                // Its menu holds the adding items alone (T-263), no deletion.
+                assertTrue("${recipe.state} has no menu", exists(LibraryTags.actions(recipe.id.value)))
+                compose.openEntryMenu(recipe.id.value)
+                assertFalse("${recipe.state} offers deletion", exists(LibraryTags.delete(recipe.id.value)))
+                compose.closeEntryMenu(recipe.id.value)
             }
         }
         // A11Y-003, A11Y-005: the offer is large enough and says what it does.

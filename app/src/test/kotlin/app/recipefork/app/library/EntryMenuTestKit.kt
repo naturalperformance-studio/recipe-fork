@@ -17,17 +17,21 @@ fun ComposeTestRule.openEntryMenu(recipeId: String) {
     onNodeWithTag(LibraryTags.actions(recipeId)).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
     waitUntil(PATIENCE_MS) {
         onAllNodes(hasTestTag(LibraryTags.actions(recipeId))).fetchSemanticsNodes().isNotEmpty() &&
-            listOf(LibraryTags.export(recipeId), LibraryTags.delete(recipeId), LibraryTags.remove(recipeId))
-                .any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+            menuItems(recipeId).any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
     }
 }
+
+/** Every item an entry's menu may hold. */
+private fun menuItems(recipeId: String) = listOf(
+    LibraryTags.addToCollection(recipeId), LibraryTags.addToShopping(recipeId),
+    LibraryTags.export(recipeId), LibraryTags.delete(recipeId), LibraryTags.remove(recipeId),
+)
 
 /** Closes the open menu of the entry of [recipeId] without choosing anything. */
 fun ComposeTestRule.closeEntryMenu(recipeId: String) {
     onNodeWithTag(LibraryTags.actions(recipeId)).performClick()
     waitUntil(PATIENCE_MS) {
-        listOf(LibraryTags.export(recipeId), LibraryTags.delete(recipeId), LibraryTags.remove(recipeId))
-            .none { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
+        menuItems(recipeId).none { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
     }
 }
 

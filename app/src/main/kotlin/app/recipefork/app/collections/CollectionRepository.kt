@@ -139,6 +139,23 @@ class CollectionRepository(
         }.toSet()
     }
 
+    /**
+     * Puts each of [recipes] the book holds and the own collection [id] does not yet hold at its end, in their order, once
+     * (v0.37, the book's selection). Returns how many went in; null, changing nothing, where the book holds no such
+     * collection or it is an imported one.
+     */
+    suspend fun addAll(id: CollectionId, recipes: List<RecipeId>): Int? = transaction { dao ->
+        val collection = dao.get(id.value)
+        if (collection == null || !collection.origin.editable) return@transaction null
+        val ids = recipes.map { it.value }.distinct()
+        val held = ids.chunked(MAX_ARGUMENTS).flatMap { dao.heldRecipes(it) }.toSet()
+        val members = dao.members(id.value)
+        val present = members.toSet()
+        val joining = ids.filter { it in held && it !in present }
+        if (joining.isNotEmpty()) dao.setMembers(id.value, members + joining)
+        joining.size
+    }
+
     /** Takes the recipe [recipe] out of the own collection [id]; the recipe stays in the book. */
     suspend fun remove(id: CollectionId, recipe: RecipeId): CollectionChange = editing(id) { dao ->
         if (dao.removeMember(id.value, recipe.value) > 0) CollectionChange.DONE else CollectionChange.MISSING
