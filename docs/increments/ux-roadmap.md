@@ -80,3 +80,22 @@ From two fresh audits (v0.30's file lists what was taken). Still open from the 2
 - The book's Undo snackbar stays after switching tabs — end it on a tab change. S.
 - Open product questions: which view the book opens on.
 
+
+## Audit of 2026-10-13 (v0.37 build) — not taken into v0.38
+From two fresh audits (v0.38's file lists what was taken). Still open from earlier audits: the editor's Done and Add reach (2026-10-04 item 5), equipment rows, the free-text mark per row, the crop, Cooking's two touch areas on an ingredient line.
+- The editor's Done top-right and every Add at the end of its list — a bottom bar or a section FAB. M.
+- Equipment items: inline fields with a trash icon and ⋮, cut at 2× ("Big mixing b") — rows opening a small sheet like the group sheet. M.
+- The crop: only drag and pinch, hard-coded white/black — zoom −/+ and Reset, theme tokens. M.
+- The checklist: a long scrolling AlertDialog cut at the bottom — a full-height sheet. S.
+- Import/export failure dialogs: no title, only "OK"; "made by a newer version" offers no way to update. S.
+- The unit menu: the current unit unmarked, bare abbreviations ("l" reads like "1"). S.
+- Settings: one flat list with only "Backup" headed; the editor-only drag side among general settings — section headers. S.
+- My kitchen: an open group's items align with its checkbox — indent them. S.
+- The editor's snackbar is full-width, flush to the edges; Settings' floats with margins. S.
+- Sheet actions are plain text rows; the source sheet's have icons — one sheet style. S.
+- The language "Clear" under RU/EN reads as clearing the title; nothing on the cover shows a tap changes it. S.
+- The free-text mark repeats under every free-text row — one line at the list head. S.
+- On Cooking an ingredient line has two touch areas (the amount fixes, the rest marks done). S.
+- Cooking at 2× (RU): the status line reserves ~2 blank lines for the "recalculated" legend. S.
+- A collection's screen: entries show no tags; no primary action outside the ⋮; a non-lazy Column. S.
+- Menus at 2×: the selection ⋮ mixes an icon item among plain ones (→ v0.38 T-269 if it fits).
