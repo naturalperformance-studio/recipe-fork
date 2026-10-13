@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -552,8 +553,9 @@ private val DENSE_FIELD_PADDING = PaddingValues(start = 12.dp, end = 16.dp, top 
  * offer leaves the text as typed. Either way the author types on: choosing, or dismissing the offer [TRIGGER] opened,
  * gives the step's field its focus and the keyboard back, the cursor after the reference and any space typed after it.
  *
- * Each row holding a quantity is offered a second time, as a part of it ([IngredientShares.offered]): choosing that
- * asks for the part in the row's own unit ([PartDialog]), and the reference then reads that part instead of the whole.
+ * Each row is offered once. One holding a quantity offers a part of it too ([IngredientShares.offered]), by a button
+ * at the row's end: choosing that asks for the part in the row's own unit ([PartDialog]), and the reference then reads
+ * that part instead of the whole.
  * A `piece` row is offered a part once its divisibility is given — by the author, or by the dictionary entry it names —
  * as that sets which parts it holds.
  */
@@ -598,6 +600,8 @@ internal fun InsertIngredient(
             ingredients.forEachIndexed { row, listed ->
                 val ingredient = withEntryDivisibility(listed, dictionary)
                 val name = ingredient.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: unnamed
+                // Each row once: the row itself inserts the whole; a part of it, where it offers one, is the button at
+                // the row's end.
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.editor_step_offered_ingredient, name, ReferenceText.authored(ingredient, language))) },
                     onClick = {
@@ -605,19 +609,25 @@ internal fun InsertIngredient(
                         state.refocus = true
                         state.close()
                     },
+                    trailingIcon = if (IngredientShares.offered(ingredient)) {
+                        {
+                            val partName = stringResource(R.string.editor_step_offered_part_name, name)
+                            TextButton(
+                                onClick = {
+                                    // The menu goes; where the `@` stands is kept for the part's insertion.
+                                    asking = AskedPart(row, name, state.trigger)
+                                    state.offering = false
+                                },
+                                modifier = Modifier
+                                    .semantics { contentDescription = partName }
+                                    .testTag(EditorTags.stepOfferPart(position, row)),
+                            ) { Text(stringResource(R.string.editor_step_offered_part)) }
+                        }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.testTag(EditorTags.stepOffer(position, row)),
                 )
-                if (IngredientShares.offered(ingredient)) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.editor_step_offered_part, name)) },
-                        onClick = {
-                            // The menu goes; where the `@` stands is kept for the part's insertion.
-                            asking = AskedPart(row, name, state.trigger)
-                            state.offering = false
-                        },
-                        modifier = Modifier.testTag(EditorTags.stepOfferPart(position, row)),
-                    )
-                }
             }
         }
     }

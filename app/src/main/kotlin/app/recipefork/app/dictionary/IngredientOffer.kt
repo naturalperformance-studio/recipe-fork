@@ -31,9 +31,12 @@ data class IngredientOffer(
          * begins with it, or the same word in another grammatical form ("яйца" for "яйцо"), after [fold] — the words of
          * its parent's label in that language counting as its own: "сыр моцарелла" and "mozzarella cheese" find
          * моцарелла, a kind of сыр. A synonym, in either language, counts as a label for all of it: "картошка" finds
-         * картофель, "томаты" помидор (FLOW-023); an entry is offered once, whichever of its names find it. The leaves of every parent so offered are offered too, immediately before it, in the alphabetical order of their labels; a leaf matched on its own stands there as well, once.
-         * The offer is in two groups — first what begins with the whole typed text in either language, then the
-         * rest — each in the alphabetical order of the label shown, a parent placed by its own label.
+         * картофель, "томаты" помидор (FLOW-023); an entry is offered once, whichever of its names find it. The leaves of every
+         * parent so offered are offered too.
+         * The offer is in two groups — first what one of its own names, a label or a synonym in either language, begins
+         * with the whole typed text, the shorter such name first ("chick" offers chicken before chicken wings); then the
+         * rest, in the alphabetical order of the label shown — and a parent always comes before its own leaves: a leaf
+         * that would come before its parent comes just after it instead.
          *
          * The exact match is the label's words, as [fold]ed, in any order: "сливочное масло" is "масло сливочное"; failing
          * that, the label's words each in another form ([Inflection.same]): "яйца" is "яйцо", "onions" "onion"; failing

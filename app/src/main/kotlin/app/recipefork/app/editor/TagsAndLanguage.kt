@@ -237,7 +237,8 @@ private fun TagSurface(shown: String, modifier: Modifier, trailing: Dp) {
             Modifier.heightIn(min = InputChipDefaults.Height).padding(start = 12.dp, end = if (trailing > 0.dp) 0.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(shown, style = MaterialTheme.typography.labelLarge)
+            // Weighted, so that words wrapping at a large font scale on a narrow phone leave the cross its room.
+            Text(shown, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f, fill = false))
             if (trailing > 0.dp) Spacer(Modifier.width(8.dp + trailing))
         }
     }

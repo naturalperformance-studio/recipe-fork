@@ -124,7 +124,8 @@ object AccessibilityChecks {
         expectAtLeast: Int = 1,
         except: SemanticsMatcher? = null,
     ) {
-        val nodes = screen.onAllNodes(isInteractive).fetchSemanticsNodes().filterNot { except?.matches(it) == true }
+        val nodes = screen.onAllNodes(isInteractive).fetchSemanticsNodes()
+            .filterNot { except?.matches(it) == true || dragHandleTooltip.matches(it) }
         assertTrue("expected at least $expectAtLeast interactive elements, found ${nodes.size}", nodes.size >= expectAtLeast)
         nodes.forEach { node ->
             if (announcedLabel(node).isBlank()) fail("interactive element ${node.id} announces nothing: ${node.config}")
@@ -180,6 +181,20 @@ object AccessibilityChecks {
                 .map { (a, b) -> "\"${spoken.removeSuffix(" | ")}\": ${nameOf(a)} and ${nameOf(b)} (nodes ${a.id}, ${b.id})" }
         }
         if (failures.isNotEmpty()) fail("interactive elements announcing the same thing with nothing to tell them apart: $failures")
+    }
+
+    /**
+     * The anchor of the tooltip Material 3's `ModalBottomSheet` wraps a sheet's drag handle in: its one action shows the
+     * handle's name on a long press, and it says nothing itself — the handle inside it, its own element named "Drag
+     * handle" with the sheet's expand and dismiss actions, does. It is the only other element
+     * [assertInteractiveElementsLabelled] passes over; the handle is checked.
+     */
+    val dragHandleTooltip = SemanticsMatcher("Material 3's tooltip over a sheet's labelled drag handle") { node ->
+        val actions = node.config.filter { (key, value) -> value is AccessibilityAction<*> && key !in notPerformedByTheReader }.map { it.key }
+        actions == listOf(SemanticsActions.OnLongClick) &&
+            SemanticsProperties.Text !in node.config &&
+            SemanticsProperties.ContentDescription !in node.config &&
+            node.children.any { SemanticsActions.Dismiss in it.config && announcedLabel(it).isNotBlank() }
     }
 
     /**

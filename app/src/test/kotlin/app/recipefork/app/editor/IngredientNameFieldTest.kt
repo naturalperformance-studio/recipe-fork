@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -174,7 +176,7 @@ class IngredientNameFieldTest {
         compose.waitForIdle()
     }
 
-    // FLOW-057 (1, 4, 6, 10) as the screen shows them: the leaves first, the two groups, then free text beside them.
+    // FLOW-057 (1, 4, 6, 10) as the screen shows them: the two groups, a parent before its leaves, then free text beside them.
     @Test
     @Config(qualifiers = "ru")
     fun typingOffersEntriesInOrderWithFreeTextBeside() {
@@ -182,8 +184,9 @@ class IngredientNameFieldTest {
         addIngredient(0)
         assertEquals(emptyList<String>(), choices(0))
         type(0, "кур")
-        assertEquals(entryChoices(0, 11, 12, 10, 20) + IngredientNameTags.freeText(0), choices(0))
-        assertEquals(listOf("крылышки", "филе", "курица", "куркума"), entryChoices(0, 11, 12, 10, 20).map(::shownText))
+        // T-272: what begins with the text first, the shorter first — a parent before its own leaves — then the rest.
+        assertEquals(entryChoices(0, 10, 20, 11, 12) + IngredientNameTags.freeText(0), choices(0))
+        assertEquals(listOf("курица", "куркума", "крылышки", "филе"), entryChoices(0, 10, 20, 11, 12).map(::shownText))
         assertEquals(string(R.string.editor_ingredient_free_text_offer, "кур"), shownText(IngredientNameTags.freeText(0)))
         // FLOW-057 (2, 9): a word that begins no word keeps an entry out; what begins with the text comes first.
         type(0, "мол")
@@ -443,4 +446,84 @@ class IngredientNameFieldTest {
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 10)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 10)
     }
+
+    // ---- T-272, scenario 6: "chick" offers chicken first; the offer is capped, its rows Material list items.
+
+    /** Chicken and its many leaves, chickpeas beside them: more than the offer shows. */
+    private val poultry = DictionariesDto(
+        version = "test-poultry-1",
+        ingredients = listOf(
+            IngredientEntryDto(100, "курица", "chicken"),
+            IngredientEntryDto(101, "куриные бёдра без кости", "boneless chicken thighs", 100),
+            IngredientEntryDto(102, "куриные спинки", "chicken backs", 100),
+            IngredientEntryDto(103, "куриная грудка", "chicken breast", 100),
+            IngredientEntryDto(104, "куриное филе грудки", "chicken breast fillet", 100),
+            IngredientEntryDto(105, "куриные голени", "chicken drumsticks", 100),
+            IngredientEntryDto(106, "куриные лапки", "chicken feet", 100),
+            IngredientEntryDto(107, "куриные шеи", "chicken necks", 100),
+            IngredientEntryDto(108, "куриная кожа", "chicken skin", 100),
+            IngredientEntryDto(109, "куриные крылья", "chicken wings", 100),
+            IngredientEntryDto(110, "курица свободного выгула", "free-range chicken", 100),
+            IngredientEntryDto(111, "цыплёнок", "poussin", 100),
+            IngredientEntryDto(120, "нут", "chickpeas"),
+        ),
+        tags = SAMPLE_DICTIONARIES.tags,
+    )
+
+    @Test
+    fun chickOffersChickenFirstInRowsOfAList() = chickOffers("chick", "chicken")
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun chickOffersChickenFirstInRowsOfAListInRussian() = chickOffers("кури", "курица")
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp", fontScale = 2.0f)
+    fun chickOffersChickenFirstInRowsOfAListAt320DpAndTwiceTheFont() {
+        assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
+        chickOffers("chick", "chicken")
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2.0f)
+    fun chickOffersChickenFirstInRowsOfAListAt320DpAndTwiceTheFontInRussian() {
+        assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
+        chickOffers("кури", "курица")
+    }
+
+    private fun chickOffers(typed: String, chicken: String) {
+        runBlocking { device.database.dictionaryDao().replace(poultry) }
+        writeANewRecipe()
+        addIngredient(0)
+        type(0, typed)
+        compose.waitUntil(PATIENCE_MS) { choices(0).isNotEmpty() }
+        val offered = choices(0)
+        // Chicken first; then no more than eight entries, the typed text as free text after them.
+        assertEquals(IngredientNameTags.entry(0, 100), offered.first())
+        assertEquals(chicken, shownText(offered.first()))
+        assertEquals(OFFERED_AT_MOST, offered.count { it != IngredientNameTags.freeText(0) })
+        assertEquals(8, OFFERED_AT_MOST)
+        assertEquals(IngredientNameTags.freeText(0), offered.last())
+        // Each row a Material list item: as wide as the offer, at least 56 dp tall, one target saying what it picks,
+        // its words whole and inset by the list item's 16 dp.
+        val column = compose.onNodeWithTag(IngredientNameTags.offer(0)).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+        offered.forEach { tag ->
+            val row = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            val bounds = Rect(row.positionInRoot, row.size.toSize())
+            assertEquals("$tag is not as wide as the offer", column.width, bounds.width, 0.5f)
+            assertTrue("$tag is under 56 dp: $bounds", bounds.height >= 56 * compose.density.density - 0.5f)
+            assertTrue("$tag says nothing of what it picks", row.config[SemanticsActions.OnClick].label?.isNotBlank() == true)
+            val words = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().first()
+            val inset = words.positionInRoot.x - bounds.left
+            assertEquals("$tag's words are not inset as a list item's", 16 * compose.density.density, inset, 0.5f)
+            val layout = mutableListOf<TextLayoutResult>().also { words.config[SemanticsActions.GetTextLayoutResult].action!!(it) }.single()
+            assertTrue("$tag's words are cut", !layout.hasVisualOverflow)
+        }
+        // Picked, chicken names the row.
+        compose.onNodeWithTag(IngredientNameTags.entry(0, 100)).performScrollTo().performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(IngredientNameTags.offer(0)) }
+        assertEquals(chicken, fieldText(EditorTags.ingredientName(0)))
+    }
 }
+
