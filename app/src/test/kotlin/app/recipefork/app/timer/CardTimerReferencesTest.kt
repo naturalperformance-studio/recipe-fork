@@ -1,5 +1,7 @@
 package app.recipefork.app.timer
 
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -116,7 +118,8 @@ class CardTimerReferencesTest : CardTimersKit() {
         compose.onNodeWithTag(TimerTags.cancel(0)).performClick()
         awaitHeld { it.isEmpty() }
         compose.waitUntil(PATIENCE_MS) { controlName() == "Knead 200\u00A0g flour" }
-        start(0)
+        // Started again while the notice of its cancelling still offers Undo, which may stand over the control.
+        control(0).performSemanticsAction(SemanticsActions.OnClick)
         awaitHeld { it.size == 1 }
         assertEquals("Knead 200\u00A0g flour", held().single().name)
     }

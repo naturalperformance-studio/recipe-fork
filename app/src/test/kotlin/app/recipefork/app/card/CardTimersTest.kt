@@ -165,7 +165,7 @@ class CardTimersTest {
     @Test
     fun aStepWithATimerShowsAControlNamedByItsTimer() {
         show(soup)
-        control(0).assertTextContainsAll("Bring the water to the boil", "10 min")
+        control(0).assertTextContainsAll("Bring the water to the…", "10 min")
         control(2).assertTextContainsAll("Beans", "1 h 30 min")
         assertTrue(compose.onAllNodes(hasTestTag(TimerTags.start(1))).fetchSemanticsNodes().isEmpty())
         assertEquals(
@@ -176,12 +176,16 @@ class CardTimersTest {
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, expectAtLeast = 4)
     }
 
+    // v0.38, T-270: on the card a derived name is its step's first words; the announcement keeps the whole of FLOW-016's.
     @Test
-    fun aDerivedNameIsCutAsTheAnnouncementWouldBe() {
+    fun aDerivedNameIsShortOnTheCardAndWholeInTheAnnouncement() {
         val long = Recipe.create(now, owner = null).copy(steps = listOf(Step(0, beansText, timer = Timer(5.minutes))))
         runBlocking { recipes.save(long) }
         show(long)
-        control(0).assertTextContainsAll("Simmer the beans with the onion and the bay leaf until they…")
+        control(0).assertTextContainsAll("Simmer the beans with…")
+        start(0)
+        compose.waitUntil(PATIENCE_MS) { held().size == 1 }
+        assertEquals("Simmer the beans with the onion and the bay leaf until they…", held().single().name)
     }
 
     // FLOW-016 (1, 9): started, a timer shows its remaining time on its step, counting down by the clock.
@@ -190,7 +194,7 @@ class CardTimersTest {
         show(soup)
         start(0)
         awaitStatus(0, "10:00")
-        control(0).assertTextContainsAll("Bring the water to the boil")
+        control(0).assertTextContainsAll("Bring the water to the…")
         pass(1.seconds)
         awaitStatus(0, "9:59")
         pass(4.minutes)

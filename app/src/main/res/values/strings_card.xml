@@ -107,6 +107,8 @@
     <!-- Said once the marks are cleared, from either tab's menu; Undo puts back exactly the marks cleared. -->
     <string name="card_marks_cleared">Marks cleared</string>
     <string name="card_undo">Undo</string>
+    <!-- The card's notice once a running timer is cancelled, on its step or in the bar, with Undo. -->
+    <string name="card_timer_cancelled">Timer cancelled</string>
     <!-- The card's ⋮ puts the recipe on the shopping list at the count shown ("Add to shopping list", shopping_add), or,
          once it is there, sets it to that count; said with Open, which opens the list. -->
     <string name="card_shopping_update">Update in shopping list</string>
