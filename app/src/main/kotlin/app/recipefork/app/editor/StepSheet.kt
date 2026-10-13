@@ -286,8 +286,6 @@ private fun StepFields(
             )
             .testTag(EditorTags.stepText(position)),
     )
-    // What the text needs, right under it.
-    BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = SHEET_GAP)
     // The text's own control: inserting a reference.
     InsertIngredient(position, ingredients, dictionary, language, editor, held.field)
     // Its timers, then its photograph or clip: each a part of its own, named once it holds something.

@@ -335,8 +335,8 @@ class EquipmentOfferScreenTest {
             read.await()
             catalog.equipment()
         })
-        // The recipe is read: its title is in the bar.
-        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasText("Pancakes")).fetchSemanticsNodes().isNotEmpty() }
+        // The recipe is read: the bar offers its "Done" (the bar shows the title only once the form has scrolled it away).
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.DONE)).fetchSemanticsNodes().isNotEmpty() }
         compose.waitForIdle()
         assertFalse(exists(field(0)))
         assertFalse(exists(EditorTags.FORM))

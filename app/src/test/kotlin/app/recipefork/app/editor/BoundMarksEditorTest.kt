@@ -139,8 +139,9 @@ class BoundMarksEditorTest {
         compose.waitForIdle()
     }
 
+    /** Whether the mark tagged [tag] shows — one of a text field's merged into the field, as its supporting text. */
     private fun marked(tag: String): Boolean =
-        compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+        compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun awaitMark(tag: String, text: String) {
         compose.waitUntil(PATIENCE_MS) { marked(tag) }
@@ -242,7 +243,9 @@ class BoundMarksEditorTest {
         val long = "t".repeat(121)
         type(EditorTags.TITLE, long)
         enter(EditorTags.SERVINGS)
-        awaitMark(EditorTags.TITLE_MARK, over(R.string.editor_mark_characters_over, 120, 121))
+        // In the field's supporting text, whose counter gives the numbers (T-271).
+        awaitMark(EditorTags.TITLE_MARK, string(R.string.editor_mark_field_over))
+        assertEquals(listOf("121 / 120"), compose.textsOf(EditorTags.counter(EditorTags.TITLE_MARK)))
         assertEquals(long, stored(id).title)
     }
 
@@ -274,7 +277,8 @@ class BoundMarksEditorTest {
         type(EditorTags.DESCRIPTION, long)
         assertTrue(!marked(EditorTags.DESCRIPTION_MARK))
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.DESCRIPTION_MARK, over(R.string.editor_mark_characters_over, 2_000, 2_001))
+        awaitMark(EditorTags.DESCRIPTION_MARK, string(R.string.editor_mark_field_over))
+        assertEquals(listOf("2,001 / 2,000"), compose.textsOf(EditorTags.counter(EditorTags.DESCRIPTION_MARK)))
         assertFalse("the ingredients, below the description, not left", marked(EditorTags.INGREDIENTS_MARK))
         assertFalse("the steps, below the description, not left", marked(EditorTags.STEPS_MARK))
         assertEquals(long, stored(id).description)
@@ -356,19 +360,20 @@ class BoundMarksEditorTest {
         awaitNoMark(StepSheetTags.timerNameMark(0, 0))
     }
 
-    // The mark is words and an icon, never colour alone, and the screen reader reads it — as it appears, too.
+    // The mark of a part that is not one text field is words and an icon, never colour alone, and the screen reader
+    // reads it — as it appears, too; the field above it is not in error. A text field's own mark is its supporting text,
+    // in error (T-271: EditorFieldsTest).
     @Test
     fun aMarkIsWordsAndAnIconTheScreenReaderReads() {
         writeANewRecipe()
-        enter(EditorTags.TITLE)
         enter(EditorTags.SERVINGS)
-        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.TITLE_MARK) }
-        val node = compose.onNodeWithTag(EditorTags.TITLE_MARK).fetchSemanticsNode()
-        assertEquals(listOf(string(R.string.editor_mark_title_missing)), compose.textsOf(EditorTags.TITLE_MARK))
-        assertEquals(listOf(string(R.string.editor_mark_warning)), compose.descriptionOf(EditorTags.TITLE_MARK))
+        enter(EditorTags.TITLE)
+        compose.waitUntil(PATIENCE_MS) { marked(EditorTags.SERVINGS_MARK) }
+        val node = compose.onNodeWithTag(EditorTags.SERVINGS_MARK).fetchSemanticsNode()
+        assertEquals(listOf(string(R.string.editor_mark_servings_missing)), compose.textsOf(EditorTags.SERVINGS_MARK))
+        assertEquals(listOf(string(R.string.editor_mark_warning)), compose.descriptionOf(EditorTags.SERVINGS_MARK))
         assertEquals(LiveRegionMode.Polite, node.config[SemanticsProperties.LiveRegion])
-        // A warning, not an error: the field it belongs to is not in error.
-        assertTrue(compose.onNodeWithTag(EditorTags.TITLE).fetchSemanticsNode().config.getOrElseNullable(SemanticsProperties.Error) { null } == null)
+        assertTrue(compose.onNodeWithTag(EditorTags.SERVINGS).fetchSemanticsNode().config.getOrElseNullable(SemanticsProperties.Error) { null } == null)
     }
 
     // A mark states the recipe's own minimum or limit and nothing more: a build without submission has none to name.
@@ -397,7 +402,8 @@ class BoundMarksEditorTest {
         // L10N-009: numbers grouped by a no-break space.
         type(EditorTags.DESCRIPTION, "d".repeat(2_001))
         enter(EditorTags.TITLE)
-        awaitMark(EditorTags.DESCRIPTION_MARK, "Больше лимита в 2\u00A0000 символов: сейчас 2\u00A0001. Текст сохранён целиком.")
+        awaitMark(EditorTags.DESCRIPTION_MARK, "Больше лимита. Текст сохранён целиком.")
+        assertEquals(listOf("2\u00A0001 / 2\u00A0000"), compose.textsOf(EditorTags.counter(EditorTags.DESCRIPTION_MARK)))
     }
 
     /**

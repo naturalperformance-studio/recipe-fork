@@ -29,6 +29,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -42,7 +45,8 @@ import kotlinx.coroutines.flow.first
 /**
  * The mark of a part the author left below DOM-006's minimum or over a limit of DOM-012 (FLOW-028), if [part] carries
  * one: a warning, never an error — the warning icon and words saying what the part needs, in the text's own colour, read
- * by the screen reader as one statement as it appears. It refuses nothing and goes once the part is completed.
+ * by the screen reader as one statement as it appears. It refuses nothing and goes once the part is completed. A part
+ * that is one text field — the title, the description, a step's text — shows its mark in the field instead ([FieldMark]).
  */
 @Composable
 internal fun BoundMark(editor: RecipeEditor, part: RecipePart, tag: String, gap: Dp, modifier: Modifier = Modifier) {
@@ -65,6 +69,58 @@ internal fun BoundMark(editor: RecipeEditor, part: RecipePart, tag: String, gap:
         )
         Text(text, style = MaterialTheme.typography.bodyMedium)
     }
+}
+
+/**
+ * The mark of FLOW-028 the editor holds on [part] now, if any: what a text field of that part shows as its supporting
+ * text, in error, while it stands.
+ */
+@Composable
+internal fun fieldMark(editor: RecipeEditor, part: RecipePart): Bound? {
+    val marks by editor.marks.collectAsState()
+    return marks[part]
+}
+
+/**
+ * The mark of a text field's [part] standing at [bound], as the field's supporting text — Material's place for what a
+ * field needs, drawn in the error colour by the field's isError: its words at the start, and at the end a counter of the
+ * [length] the part holds against its [limit]. When it appears is FLOW-028's, unchanged: on leaving the part. Appearing
+ * under the field above the one the author went on to, it does not push that one away.
+ */
+@Composable
+internal fun FieldMark(part: RecipePart, bound: Bound, length: Int, limit: Int, tag: String) {
+    val language = numberLanguage(LocalConfiguration.current)
+    // L10N-009: grouped as the interface language groups numbers.
+    val count = QuantityText.whole(length.toLong(), language)
+    val most = QuantityText.whole(limit.toLong(), language)
+    val counted = stringResource(R.string.editor_mark_counted, count, most)
+    Row(
+        Modifier.fillMaxWidth().then(keepingTheFocusedFieldInPlace(FIELD_MARK_GAP)),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(fieldMarkText(part, bound), Modifier.weight(1f).testTag(tag))
+        Text(
+            stringResource(R.string.editor_mark_counter, count, most),
+            modifier = Modifier.semantics { contentDescription = counted }.testTag(EditorTags.counter(tag)),
+        )
+    }
+}
+
+/** What a field of [part] says to the screen reader while its mark stands at [bound]: the field is in error, and why. */
+@Composable
+internal fun fieldMarkSemantics(part: RecipePart, bound: Bound?): SemanticsPropertyReceiver.() -> Unit {
+    val text = bound?.let { fieldMarkText(part, it) }
+    return { if (text != null) error(text) }
+}
+
+/** Between a field and its supporting text, as Material lays it out. */
+private val FIELD_MARK_GAP = 4.dp
+
+/** What the supporting text of a field of [part] says while it stands at [bound]: the counter beside it gives the numbers. */
+@Composable
+private fun fieldMarkText(part: RecipePart, bound: Bound): String = when (bound) {
+    Bound.Missing -> boundText(part, bound)
+    is Bound.OverLimit -> stringResource(R.string.editor_mark_field_over)
 }
 
 /**

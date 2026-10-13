@@ -105,8 +105,8 @@ class TagLineGapTest {
             MaterialTheme { EditorScreen(recipe.id, recipes, environment, session.viewModelScope, onClose = {}) }
         }
         compose.waitUntil(PATIENCE_MS) { CHOSEN.all { exists(EditorTags.chosen(it)) } }
-        assertDrawnAtChipHeightWithinATouchArea("the recipe's tags", CHOSEN.map { EditorTags.remove(it) })
-        assertLinesKeepTheGap("the recipe's tags", CHOSEN.map { drawn(EditorTags.remove(it)) })
+        assertDrawnAtChipHeightWithACrossOfATouchArea(CHOSEN)
+        assertLinesKeepTheGap("the recipe's tags", CHOSEN.map { drawn(EditorTags.chip(it)) })
 
         compose.onNodeWithTag(EditorTags.TAG_SEARCH).performScrollTo().performTextReplacement(typed)
         val offered = shipped.tags.map { it.id }.filter { it !in CHOSEN }
@@ -139,6 +139,33 @@ class TagLineGapTest {
             val area = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
             assertTrue("$what: $tag's touch area $area is under 48 dp", area.width >= target - tolerance && area.height >= target - tolerance)
             assertTrue("$what: $tag's touch area $area does not hold the chip $drawn", area.inflate(tolerance).let { it.contains(drawn.topLeft) && it.contains(drawn.bottomRight) })
+        }
+    }
+
+    /**
+     * Each of the recipe's tags [ids] is drawn as a chip 32 dp tall at the usual font scale, and no less at a larger one;
+     * its cross — the one thing on it to tap (T-271) — has a touch area of at least 48 by 48 dp around its icon, which is
+     * drawn within the chip, and the chip is drawn shorter than that touch area.
+     */
+    private fun assertDrawnAtChipHeightWithACrossOfATouchArea(ids: List<Long>) {
+        val chip = with(compose.density) { 32.dp.toPx() }
+        val target = with(compose.density) { 48.dp.toPx() }
+        val tolerance = with(compose.density) { 0.5.dp.toPx() }
+        val scaled = context.resources.configuration.fontScale > 1f
+        ids.forEach { id ->
+            val drawn = drawn(EditorTags.chip(id))
+            if (scaled) {
+                assertTrue("tag $id is drawn ${drawn.height} px tall", drawn.height >= chip - tolerance)
+                assertTrue("tag $id is drawn ${drawn.height} px tall, as tall as its cross's touch area", drawn.height < target - tolerance)
+            } else {
+                assertEquals("tag $id's drawn height, in px", chip, drawn.height, tolerance)
+            }
+            val area = compose.onNodeWithTag(EditorTags.remove(id)).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+            assertTrue("tag $id's cross's touch area $area is under 48 dp", area.width >= target - tolerance && area.height >= target - tolerance)
+            val icon = compose.onNodeWithTag(EditorTags.removeIcon(id), useUnmergedTree = true).fetchSemanticsNode()
+                .let { Rect(it.positionInRoot, it.size.toSize()) }
+            assertTrue("tag $id's cross $icon is outside its touch area $area", area.inflate(tolerance).let { it.contains(icon.topLeft) && it.contains(icon.bottomRight) })
+            assertTrue("tag $id's cross $icon is outside the chip $drawn", drawn.inflate(tolerance).let { it.contains(icon.topLeft) && it.contains(icon.bottomRight) })
         }
     }
 
