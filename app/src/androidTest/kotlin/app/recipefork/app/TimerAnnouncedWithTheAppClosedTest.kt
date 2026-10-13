@@ -22,7 +22,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,10 +39,12 @@ import kotlin.time.Duration.Companion.seconds
  * screen is gone, and the device is put to sleep and forced idle, which is what a closed application meets.
  *
  * Putting the device to sleep locks it, and a device with a secure lock — the owner's phone — stays locked for every
- * test after: on such a device these cases are skipped, and they run on the emulator, which has none. Each case leaves
- * the device as it found it: on its battery's own report, not idle, awake, and unlocked where no secret locks it.
+ * test after: these cases run on the emulator alone, which has none, and are left out on a phone ([EmulatorOnly]).
+ * Each case leaves the device as it found it: on its battery's own report, not idle, awake, and unlocked where no
+ * secret locks it.
  */
 @RunWith(AndroidJUnit4::class)
+@EmulatorOnly("it would lock the owner's phone: putting a device with a secure lock to sleep leaves it locked")
 class TimerAnnouncedWithTheAppClosedTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val application = instrumentation.targetContext.applicationContext as RecipeForkApplication
@@ -65,7 +66,6 @@ class TimerAnnouncedWithTheAppClosedTest {
 
     @Before
     fun setUp() {
-        assumeFalse("it would lock the owner's phone: putting a device with a secure lock to sleep leaves it locked", secure)
         shell("input keyevent KEYCODE_WAKEUP")
         shell("wm dismiss-keyguard")
         clear()

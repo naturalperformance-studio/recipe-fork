@@ -1,6 +1,7 @@
 package app.recipefork.core.recipe
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -18,8 +19,16 @@ object VideoLimits {
     const val MAX_LONGER_EDGE: Int = 1280
 
     /**
-     * Whether a clip lasting [duration] is accepted (MEDIA-007): one whose duration could not be read, null here, is
-     * not, nor is one of no length.
+     * How far past [MAX_DURATION] a clip's stated duration may run and still be accepted: a phone's camera stopped at
+     * fifteen seconds writes a sound track, or a last frame, that ends a little after the picture's fifteen seconds,
+     * and the file states the longest of its tracks (T-243 on the owner's phone).
      */
-    fun accepts(duration: Duration?): Boolean = duration != null && duration.isPositive() && duration <= MAX_DURATION
+    val TOLERANCE: Duration = 500.milliseconds
+
+    /**
+     * Whether a clip lasting [duration] is accepted (MEDIA-007): at most [MAX_DURATION] give or take [TOLERANCE]; one
+     * whose duration could not be read, null here, is not, nor is one of no length.
+     */
+    fun accepts(duration: Duration?): Boolean =
+        duration != null && duration.isPositive() && duration <= MAX_DURATION + TOLERANCE
 }

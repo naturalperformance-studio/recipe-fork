@@ -37,6 +37,9 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Device tests marked for the emulator alone are left out on a phone before they run (androidTest EmulatorOnly):
+        // an assumption that skips them is reported as a failure.
+        testInstrumentationRunnerArguments["filter"] = "app.recipefork.app.EmulatorOnlyFilter"
 
         // Where the device reaches the product's server. The default is the development machine as the
         // emulator sees it (deploy/local); override with -Precipefork.serverUrl=...

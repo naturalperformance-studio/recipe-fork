@@ -25,10 +25,22 @@ class VideoLimitsTest {
     fun aClipIsAcceptedUpToItsLimit() {
         assertTrue(VideoLimits.accepts(10.seconds))
         assertTrue(VideoLimits.accepts(15.seconds))
-        assertFalse(VideoLimits.accepts(15.seconds + 1.milliseconds))
+        assertFalse(VideoLimits.accepts(16.seconds))
         assertFalse(VideoLimits.accepts(40.seconds))
         assertFalse(VideoLimits.accepts(Duration.ZERO))
         assertFalse(VideoLimits.accepts(null))
+    }
+
+    // T-243 on the owner's phone: a camera clip of fifteen seconds whose sound track runs a little past its picture
+    // states the longer track's length; it is accepted, and one clearly over is still refused.
+    @Test
+    fun aFifteenSecondCameraClipWhoseSoundRunsPastItIsAccepted() {
+        assertTrue(VideoLimits.accepts(15.seconds + 64.milliseconds))
+        assertTrue(VideoLimits.accepts(15.seconds + 300.milliseconds))
+        assertTrue(VideoLimits.accepts(VideoLimits.MAX_DURATION + VideoLimits.TOLERANCE))
+        assertFalse(VideoLimits.accepts(VideoLimits.MAX_DURATION + VideoLimits.TOLERANCE + 1.milliseconds))
+        assertFalse(VideoLimits.accepts(15.seconds + 900.milliseconds))
+        assertNull(RecipeFileCheck.clipProblem(15.seconds + 300.milliseconds))
     }
 
     @Test

@@ -292,7 +292,8 @@ class FilterChoices(private val ingredientSource: IngredientEntries, private val
     }
 
     private suspend fun <T> read(source: suspend () -> List<T>): List<T>? = try {
-        withContext(Dispatchers.Default) { source() }
+        // A read of the device's database, on the threads kept for waiting on it, as the kitchen's is.
+        withContext(Dispatchers.IO) { source() }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {

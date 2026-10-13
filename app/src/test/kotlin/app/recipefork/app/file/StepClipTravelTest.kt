@@ -134,7 +134,7 @@ class StepClipTravelTest {
     // and nothing of it is kept.
     @Test
     fun aClipIsHeldToItsLengthAtImport() {
-        assertEquals(ImportOutcome.Refused(Refusal.CLIP_TOO_LONG), importClip(VideoLimits.MAX_DURATION + 1.milliseconds))
+        assertEquals(ImportOutcome.Refused(Refusal.CLIP_TOO_LONG), importClip(VideoLimits.MAX_DURATION + VideoLimits.TOLERANCE + 1.milliseconds))
         assertNothingAdded()
         assertEquals(ImportOutcome.Refused(Refusal.CLIP_TOO_LONG), importClip(40.seconds))
         assertNothingAdded()

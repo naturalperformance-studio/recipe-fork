@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import app.recipefork.app.EnglishInterface
 import app.recipefork.app.MainActivity
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.library.LibraryTags
@@ -45,6 +46,10 @@ import java.time.Instant
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
 class UnitsOnDeviceTest {
+    /** The test reads the application's words in English, whatever the device speaks. */
+    @get:Rule
+    val english = EnglishInterface()
+
     @get:Rule
     val compose = createEmptyComposeRule()
 

@@ -29,12 +29,23 @@ class ResolverAnimatedImages(context: Context) : AnimatedImages {
     override fun read(source: Uri): AnimatedImage? = (examine(source) as? ImageKind.Animated)?.animation
 
     override fun examine(source: Uri): ImageKind = try {
-        context.contentResolver.openInputStream(source)?.use { AnimatedImage.examine(it) } ?: ImageKind.Still
+        val states = statedSize(source)
+        context.contentResolver.openInputStream(source)?.use { AnimatedImage.examine(it, states = states) } ?: ImageKind.Still
     } catch (e: Exception) {
         // A source that cannot be opened holds no animation to read.
         ImageKind.Still
     } catch (e: OutOfMemoryError) {
         ImageKind.Still
+    }
+
+    /**
+     * The size of the file [source] opens, where it states one — a file does, a stream another app writes as it goes
+     * does not — so that a file over the cap is told too large without being held in memory to find out.
+     */
+    private fun statedSize(source: Uri): Long? = try {
+        context.contentResolver.openFileDescriptor(source, "r")?.use { it.statSize.takeIf { size -> size >= 0 } }
+    } catch (e: Exception) {
+        null
     }
 }
 

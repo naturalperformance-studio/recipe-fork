@@ -66,7 +66,7 @@ class ClipStoreTest {
     // MEDIA-007: the duration is the one thing checked at the door, before any conversion runs.
     @Test
     fun aClipTooLongIsRefusedBeforeAnyConversion() = runBlocking {
-        listOf(40.seconds, 15.seconds + 1.milliseconds).forEach { lasts ->
+        listOf(40.seconds, 16.seconds, VideoLimits.MAX_DURATION + VideoLimits.TOLERANCE + 1.milliseconds).forEach { lasts ->
             val converter = Converter()
             assertEquals(ClipOutcome.Refused(ClipRefusal.TOO_LONG), store(converter, lasts).add(book, source))
             assertEquals(0, converter.calls)
@@ -77,6 +77,15 @@ class ClipStoreTest {
     @Test
     fun aClipOfFifteenSecondsIsConverted() = runBlocking {
         assertTrue(store(Converter(), VideoLimits.MAX_DURATION).add(book, source) is ClipOutcome.Stored)
+    }
+
+    // T-243 on the owner's phone: the camera's fifteen seconds with sound, the sound track running a little past the
+    // picture, so the file states a little over fifteen seconds; it is converted, not refused as too long.
+    @Test
+    fun aFifteenSecondCameraClipWhoseSoundRunsPastItIsConverted() = runBlocking {
+        val converter = Converter()
+        assertTrue(store(converter, 15.seconds + 230.milliseconds).add(book, source) is ClipOutcome.Stored)
+        assertEquals(1, converter.calls)
     }
 
     // MEDIA-007 (3): a clip whose duration cannot be read is refused, and MEDIA-008 governs the message.
