@@ -1526,7 +1526,7 @@ class ReleaseSmokeTest {
         const val CREATE = "Create"
         const val IN_ONE_COLLECTION = "In 1 collection"
         /** A collection's ⋮ items, and the Open of its notice of the recipes added to the shopping list. */
-        const val SHARE = "Share"
+        const val SHARE = "Export"
         const val ADD_ALL_TO_SHOPPING = "Add all to shopping list"
         const val DELETE_COLLECTION = "Delete collection"
         const val OPEN = "Open"

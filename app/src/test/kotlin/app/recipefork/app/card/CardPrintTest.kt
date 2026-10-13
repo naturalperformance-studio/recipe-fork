@@ -31,6 +31,8 @@ import app.recipefork.app.print.PlatformPrinting
 import app.recipefork.app.print.PrintBlock
 import app.recipefork.app.print.PrintDocument
 import app.recipefork.app.print.Printing
+import app.recipefork.app.print.assertPrintProgress
+import app.recipefork.app.print.printProgressShown
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
@@ -39,10 +41,12 @@ import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -101,10 +105,14 @@ class CardPrintTest {
         }
 
         override suspend fun share(context: Context, document: PrintDocument): Boolean {
+            // Set, the PDF is still being written until it completes.
+            gate?.await()
             documents += document
             return platform.share(context, document)
         }
     }
+
+    private var gate: CompletableDeferred<Unit>? = null
 
     /** Лимонный кекс for 4: 300 g of flour and 100 g of butter. */
     private val cake = Recipe.create(now, null).copy(
@@ -126,6 +134,7 @@ class CardPrintTest {
 
     @After
     fun close() {
+        gate?.complete(Unit)
         compose.unregisterIdlingResource(book.idling)
         book.close()
     }
@@ -262,4 +271,33 @@ class CardPrintTest {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(notice, useUnmergedTree = true).fetchSemanticsNodes().size == 1 }
         assertTrue(jobs.isEmpty())
     }
+
+    // v0.38, T-269 (scenario 5): while the PDF is made, the card shows the book's progress under its tabs, its words
+    // drawn; a second tap — on either item — starts nothing; once the sheet opens the progress goes.
+    private fun assertProgressWhileMade(words: String) {
+        open(cake)
+        assertFalse(compose.printProgressShown())
+        val waiting = CompletableDeferred<Unit>()
+        gate = waiting
+        take(CardTags.SHARE_PDF)
+        compose.waitUntil(PATIENCE_MS) { compose.printProgressShown() }
+        compose.assertPrintProgress(words, CardTags.TABS)
+        take(CardTags.PRINT)
+        take(CardTags.SHARE_PDF)
+        compose.waitForIdle()
+        assertTrue(documents.isEmpty() && jobs.isEmpty())
+        assertTrue(compose.printProgressShown())
+
+        waiting.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { documents.size == 1 && !compose.printProgressShown() }
+        assertEquals(Intent.ACTION_CHOOSER, sheet().action)
+        assertTrue(jobs.isEmpty())
+    }
+
+    @Test
+    fun whileThePdfIsMadeTheCardShowsItsProgress() = assertProgressWhileMade("Preparing the document")
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun inRussianWhileThePdfIsMadeTheCardShowsItsProgress() = assertProgressWhileMade("Готовим документ")
 }

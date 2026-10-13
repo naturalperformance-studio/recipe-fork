@@ -163,12 +163,13 @@ class AddToCollectionSheetTest {
 
     private fun own() = runBlocking { collections.listed(CollectionOrigin.OWN).first() }
 
-    // The ⋮ read top to bottom, as since v0.33: the shopping item, then "Add to collection", on View and on Cooking.
+    // The ⋮ read top to bottom, as every ⋮ of a recipe since v0.38 (T-269): "Add to collection" first, then the shopping
+    // item, on View and on Cooking.
     @Test
-    fun theItemStandsRightAfterTheShoppingItemOnBothTabs() {
+    fun theItemStandsFirstBeforeTheShoppingItemOnBothTabs() {
         open(CardMode.VIEW)
         assertEquals(
-            listOf(CardTags.SHOPPING, CardTags.COLLECTION, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.DELETE),
+            listOf(CardTags.COLLECTION, CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.DELETE),
             compose.cardMenuItems(),
         )
         compose.openTheCardMenu()
@@ -177,9 +178,9 @@ class AddToCollectionSheetTest {
     }
 
     @Test
-    fun cookingsMenuHoldsItTooRightAfterTheShoppingItem() {
+    fun cookingsMenuHoldsItTooFirstBeforeTheShoppingItem() {
         open(CardMode.COOKING)
-        assertEquals(listOf(CardTags.SHOPPING, CardTags.COLLECTION, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
+        assertEquals(listOf(CardTags.COLLECTION, CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF), compose.cardMenuItems())
     }
 
     // Scenario 1: tick "New Year's menu" and "Salads" — the recipe is in both as each is ticked; the card says so.
