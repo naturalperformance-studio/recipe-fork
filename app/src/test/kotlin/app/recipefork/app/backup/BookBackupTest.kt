@@ -164,7 +164,17 @@ class BookBackupTest {
             }
         }
         await(SettingsTags.CLEAR_MEDIA)
+        awaitCounted()
         return tester
+    }
+
+    /**
+     * Waits until the saved media's item has counted what clearing would delete: its query reads the book, which the
+     * test closes as it ends.
+     */
+    private fun awaitCounted() = compose.waitUntil(PATIENCE_MS) {
+        exists(SettingsTags.CLEAR_MEDIA) &&
+            compose.onAllNodes(hasTestTag(SettingsTags.CLEAR_MEDIA) and hasText("Counting…", substring = true)).fetchSemanticsNodes().isEmpty()
     }
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
@@ -198,6 +208,8 @@ class BookBackupTest {
         await(SettingsTags.BACKUP_RESTORE)
         assertTrue(shows("Backup") && shows("Save the book to a file") && shows("Restore from a file"))
         AccessibilityChecks.assertTouchTargets(compose)
+        // The screen shown anew counts its saved media again: done before the test lets go of the book.
+        awaitCounted()
     }
 
     @Test

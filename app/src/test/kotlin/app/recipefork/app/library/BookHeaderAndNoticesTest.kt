@@ -3,6 +3,7 @@ package app.recipefork.app.library
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextContains
@@ -33,6 +34,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import app.recipefork.app.Mode
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
@@ -62,6 +64,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExternalResource
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -77,7 +80,19 @@ import java.time.Instant
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "w320dp-h640dp")
 class BookHeaderAndNoticesTest {
-    @get:Rule
+    /**
+     * The screen in touch mode, as a phone's is once touched, where focus moves only as the reader or the application
+     * moves it; Robolectric starts a window outside it. Set before the activity's window is added, which takes the mode
+     * from the window session.
+     */
+    @get:Rule(order = 0)
+    val touchMode = object : ExternalResource() {
+        override fun before() = InstrumentationRegistry.getInstrumentation().setInTouchMode(true)
+
+        override fun after() = InstrumentationRegistry.getInstrumentation().setInTouchMode(false)
+    }
+
+    @get:Rule(order = 1)
     val compose = createAndroidComposeRule<ComponentActivity>()
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
@@ -438,7 +453,8 @@ class BookHeaderAndNoticesTest {
     // --- The header lets go of the focus, and settles ---------------------------------------------------------------
 
     // A search field focused, the header scrolled wholly away: the field is focused no more, so that what the keyboard
-    // types never goes out of sight.
+    // types never goes out of sight. Told while the finger is still on the list: once it lifts, the pager the views
+    // stand in takes the fling's end as a scroll of its own and clears the focus by itself, header or none.
     @Test
     fun theHeaderScrolledAwayLetsGoOfTheFocus() {
         val all = many(20)
@@ -446,12 +462,24 @@ class BookHeaderAndNoticesTest {
         await(LibraryTags.entry(all.first().id.value))
         compose.onNodeWithTag(LibraryTags.SEARCH).performClick()
         compose.waitUntil(PATIENCE_MS) { focused(LibraryTags.SEARCH) }
+        assertTrue("the screen is in touch mode, as a phone's is", compose.activity.window.decorView.isInTouchMode)
+        val full = headerHeight()
 
-        repeat(3) { compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput { swipeUp(durationMillis = 1_000) } }
+        // Dragged up, slowly and well past the header's height and the top bar's, the finger kept down.
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput {
+            down(Offset(centerX, bottom - 10f))
+            val step = with(compose.density) { 8.dp.toPx() }
+            repeat((with(compose.density) { (full + 300f).dp.toPx() } / step).toInt()) { moveBy(Offset(0f, -step), delayMillis = 16) }
+        }
 
         compose.waitUntil(PATIENCE_MS) { headerHeight() < 0.5f }
-        compose.waitUntil(PATIENCE_MS) { !focused(LibraryTags.SEARCH) }
+        compose.waitUntil(PATIENCE_MS) { !focused(LibraryTags.SEARCH) && !headerHoldsFocus() }
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput { up() }
     }
+
+    /** Whether any node of the book's header — its search field, its filters — holds the focus. */
+    private fun headerHoldsFocus() = compose.onAllNodes(hasAnyAncestor(hasTestTag(LibraryTags.HEADER_AREA)), useUnmergedTree = true)
+        .fetchSemanticsNodes().any { it.config.getOrNull(SemanticsProperties.Focused) == true }
 
     private fun focused(tag: String) =
         compose.onNodeWithTag(tag).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Focused) == true
