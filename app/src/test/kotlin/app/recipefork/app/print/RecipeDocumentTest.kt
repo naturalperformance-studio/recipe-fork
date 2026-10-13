@@ -81,6 +81,7 @@ class RecipeDocumentTest {
             is PrintBlock.Numbered -> "${block.number}. ${block.text}"
             is PrintBlock.Box -> "box: ${block.text}"
             is PrintBlock.Picture -> "picture: ${block.file.name}"
+            PrintBlock.PageBreak -> "page break"
         }.replace(' ', ' ').replace(' ', ' ')
     }
 
