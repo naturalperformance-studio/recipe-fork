@@ -18,7 +18,7 @@
     <string name="print_servings_fraction_below_one">%1$s serving</string>
     <!-- Under a step that only shows a clip, which paper cannot play. -->
     <string name="print_step_video">Video in the app</string>
-    <!-- The ⋮ items of a recipe's card and of the shopping list (FLOW-075). -->
+    <!-- The ⋮ items of a recipe's card, of the shopping list and of a collection (FLOW-075). -->
     <string name="print_menu_print">Print</string>
     <string name="print_menu_share">Share as PDF</string>
     <!-- Said when no PDF could be written to share; nothing has changed. -->

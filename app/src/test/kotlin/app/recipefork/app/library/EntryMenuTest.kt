@@ -47,9 +47,10 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * The book's entries keep their actions in a menu at the end of the title line: an own entry's Export (serverless
- * build only) and Delete (where offered), a found entry's Export (serverless build only) and Remove. Nothing stands under
- * an entry, and an entry with no action carries no menu. The ⋮ is 48 dp, named by the recipe it acts on, and shows
+ * The book's entries keep their actions in a menu at the end of the title line, from the top: "Add to collection" and
+ * "Add to shopping list" (v0.37, T-263), Print and Share as PDF (T-264), then an own entry's Export (serverless build only) and Delete (where offered), a
+ * found entry's Export (serverless build only) and Remove. Nothing stands under an entry, and an entry with no action —
+ * one marked whose content the book does not hold — carries no menu. The ⋮ is 48 dp, named by the recipe it acts on, and shows
  * that name in a tooltip on a long press. Each test passes the mode it is about.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -110,7 +111,28 @@ class EntryMenuTest {
 
     private fun dp(value: Float) = with(compose.density) { value.dp.toPx() }
 
-    private fun items(id: String) = listOf(LibraryTags.export(id), LibraryTags.delete(id), LibraryTags.remove(id))
+    private fun items(id: String) =
+        listOf(
+            LibraryTags.addToCollection(id), LibraryTags.addToShopping(id), LibraryTags.print(id), LibraryTags.sharePdf(id),
+            LibraryTags.export(id), LibraryTags.delete(id), LibraryTags.remove(id),
+        )
+
+    /**
+     * The four items every entry with content offers first, in both builds, as they read in English: the adding ones
+     * (T-263), then Print and Share as PDF (T-264).
+     */
+    private fun adding(
+        id: String,
+        collection: String = "Add to collection",
+        shopping: String = "Add to shopping list",
+        print: String = "Print",
+        pdf: String = "Share as PDF",
+    ) = listOf(
+        LibraryTags.addToCollection(id) to collection, LibraryTags.addToShopping(id) to shopping,
+        LibraryTags.print(id) to print, LibraryTags.sharePdf(id) to pdf,
+    )
+
+    private fun addingRu(id: String) = adding(id, "Добавить в коллекцию", "Добавить в список покупок", "Печать", "Поделиться PDF")
 
     /**
      * The entry of [id] carries a menu, 48 dp, at its card's end beside its text, and no offer stands outside it; opened,
@@ -150,12 +172,13 @@ class EntryMenuTest {
     }
 
     @Test
-    fun inStandardModeAnOwnEntryHoldsDeleteWhereOfferedAndOtherwiseNoMenu() {
+    fun inStandardModeAnOwnEntryHoldsTheAddingItemsAndDeleteWhereOffered() {
         val draft = own("Pilaf")
         val published = own("Borscht", RecipeState.PUBLISHED, minutesAgo = 1)
         show(LibraryView.OWN, Mode.Standard)
-        assertMenu(LibraryTags.OWN_LIST, draft.id.value, listOf(LibraryTags.delete(draft.id.value) to "Delete"))
-        assertNoMenu(LibraryTags.OWN_LIST, published.id.value)
+        assertMenu(LibraryTags.OWN_LIST, draft.id.value, adding(draft.id.value) + (LibraryTags.delete(draft.id.value) to "Delete"))
+        // One its owner may not delete still offers to add it (T-263).
+        assertMenu(LibraryTags.OWN_LIST, published.id.value, adding(published.id.value))
     }
 
     @Test
@@ -165,9 +188,9 @@ class EntryMenuTest {
         show(LibraryView.OWN, Mode.Serverless)
         assertMenu(
             LibraryTags.OWN_LIST, draft.id.value,
-            listOf(LibraryTags.export(draft.id.value) to "Export", LibraryTags.delete(draft.id.value) to "Delete"),
+            adding(draft.id.value) + listOf(LibraryTags.export(draft.id.value) to "Export", LibraryTags.delete(draft.id.value) to "Delete"),
         )
-        assertMenu(LibraryTags.OWN_LIST, published.id.value, listOf(LibraryTags.export(published.id.value) to "Export"))
+        assertMenu(LibraryTags.OWN_LIST, published.id.value, adding(published.id.value) + (LibraryTags.export(published.id.value) to "Export"))
     }
 
     @Test
@@ -175,7 +198,7 @@ class EntryMenuTest {
         val recipe = found("Pilaf")
         markedOnly("m", "Marked pie")
         show(LibraryView.MARKED, Mode.Standard)
-        assertMenu(LibraryTags.MARKED_LIST, recipe.id.value, listOf(LibraryTags.remove(recipe.id.value) to "Remove"))
+        assertMenu(LibraryTags.MARKED_LIST, recipe.id.value, adding(recipe.id.value) + (LibraryTags.remove(recipe.id.value) to "Remove"))
         assertNoMenu(LibraryTags.MARKED_LIST, "m")
     }
 
@@ -186,7 +209,7 @@ class EntryMenuTest {
         show(LibraryView.MARKED, Mode.Serverless)
         assertMenu(
             LibraryTags.MARKED_LIST, recipe.id.value,
-            listOf(LibraryTags.export(recipe.id.value) to "Export", LibraryTags.remove(recipe.id.value) to "Remove"),
+            adding(recipe.id.value) + listOf(LibraryTags.export(recipe.id.value) to "Export", LibraryTags.remove(recipe.id.value) to "Remove"),
         )
         assertNoMenu(LibraryTags.MARKED_LIST, "m")
     }
@@ -199,14 +222,14 @@ class EntryMenuTest {
         show(LibraryView.OWN, Mode.Serverless)
         assertMenu(
             LibraryTags.OWN_LIST, own.id.value,
-            listOf(LibraryTags.export(own.id.value) to "Экспорт", LibraryTags.delete(own.id.value) to "Удалить"),
+            addingRu(own.id.value) + listOf(LibraryTags.export(own.id.value) to "Экспорт", LibraryTags.delete(own.id.value) to "Удалить"),
         )
         assertNamed(own.id.value, "Действия с рецептом «Плов»", "Показать действия с рецептом")
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.actions(found.id.value)), PATIENCE_MS)
         assertMenu(
             LibraryTags.MARKED_LIST, found.id.value,
-            listOf(LibraryTags.export(found.id.value) to "Экспорт", LibraryTags.remove(found.id.value) to "Убрать"),
+            addingRu(found.id.value) + listOf(LibraryTags.export(found.id.value) to "Экспорт", LibraryTags.remove(found.id.value) to "Убрать"),
         )
         assertNamed(found.id.value, "Действия с рецептом «Шакшука»", "Показать действия с рецептом")
     }

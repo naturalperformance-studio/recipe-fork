@@ -101,6 +101,50 @@ class PaginationTest {
         assertEquals(a4.textWidth, pictureSize(160, 80, a4.textWidth, a4.height / 3).width, 0.01f)
     }
 
+    // v0.37, T-262: what follows a break begins a page, its space dropped there.
+    @Test
+    fun aPageBreakStartsTheNextPage() {
+        val slabs = listOf(Slab(0f, listOf(14f)), Slab(0f, emptyList(), newPage = true), Slab(6f, listOf(14f, 14f)))
+        val pages = paginate(slabs, 100f)
+
+        assertEquals(listOf(listOf(Placement(0, 0, 1, 0f)), listOf(Placement(2, 0, 2, 0f))), pages)
+    }
+
+    // A break opens no blank page: not at the start, not after another break, not at a page already begun by an
+    // overflow, not at the end.
+    @Test
+    fun aPageBreakNeverLeavesABlankPage() {
+        val brk = Slab(0f, emptyList(), newPage = true)
+        assertEquals(listOf(listOf(Placement(1, 0, 1, 0f))), paginate(listOf(brk, Slab(6f, listOf(14f))), 100f))
+        assertEquals(
+            listOf(listOf(Placement(0, 0, 1, 0f)), listOf(Placement(3, 0, 1, 0f))),
+            paginate(listOf(Slab(0f, listOf(14f)), brk, brk, Slab(6f, listOf(14f))), 100f),
+        )
+        assertEquals(listOf(listOf(Placement(0, 0, 1, 0f))), paginate(listOf(Slab(0f, listOf(14f)), brk), 100f))
+        // Seven lines fill the page exactly; the eighth begins the next, and the break after it moves nothing more.
+        val full = paginate(listOf(Slab(0f, List(8) { 14f }), brk, Slab(6f, listOf(14f))), 100f)
+        assertEquals(3, full.size)
+        assertEquals(listOf(Placement(0, 7, 8, 0f)), full[1])
+        assertEquals(listOf(Placement(2, 0, 1, 0f)), full[2])
+        val exactly = paginate(listOf(Slab(0f, List(7) { 14f }), brk, Slab(6f, listOf(14f))), 100f)
+        assertEquals(listOf(listOf(Placement(0, 0, 7, 0f)), listOf(Placement(2, 0, 1, 0f))), exactly)
+    }
+
+    // A heading just before a break is not held to what comes after it.
+    @Test
+    fun aHeadingBeforeABreakIsKeptWithNothingAfterIt() {
+        val slabs = listOf(
+            Slab(0f, List(4) { 14f }),
+            Slab(6f, listOf(20f), keepWithNext = true),
+            Slab(0f, emptyList(), newPage = true),
+            Slab(6f, listOf(60f)),
+        )
+        val pages = paginate(slabs, 100f)
+
+        assertEquals(listOf(Placement(0, 0, 4, 0f), Placement(1, 0, 1, 62f)), pages[0])
+        assertEquals(listOf(Placement(3, 0, 1, 0f)), pages[1])
+    }
+
     @Test
     fun theMarginsAreFifteenMillimetres() {
         assertEquals(42.52f, PageSize.A4.margin, 0.01f)

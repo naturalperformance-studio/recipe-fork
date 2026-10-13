@@ -31,4 +31,10 @@ sealed interface PrintBlock {
 
     /** A picture kept on the device; one that cannot be read is left out. */
     data class Picture(val file: File) : PrintBlock
+
+    /**
+     * What follows begins a new page: never a blank one — nothing at all is drawn for it at a page's top, at the
+     * document's end, or after another break.
+     */
+    data object PageBreak : PrintBlock
 }

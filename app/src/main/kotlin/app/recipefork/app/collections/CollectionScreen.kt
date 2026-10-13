@@ -46,8 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -66,8 +65,6 @@ import app.recipefork.app.R
 import app.recipefork.app.book.CollectionRecipeRow
 import app.recipefork.app.book.CollectionRow
 import app.recipefork.app.card.CardEnvironment
-import app.recipefork.app.card.cardLanguage
-import app.recipefork.app.card.openingServings
 import app.recipefork.app.card.rememberCardEnvironment
 import app.recipefork.app.data.DragHandleSide
 import app.recipefork.app.data.HeldDragHandleSide
@@ -91,14 +88,16 @@ import app.recipefork.app.library.RemovalNotice
 import app.recipefork.app.library.TITLE_CLEARANCE
 import app.recipefork.app.library.coverOf
 import app.recipefork.app.library.rememberCoverThumbnails
+import app.recipefork.app.media.PhotoStore
+import app.recipefork.app.print.PrintWay
+import app.recipefork.app.print.RecipesDocument
+import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.recipe.RecipeRepository
-import app.recipefork.app.shopping.ListedRecipe
 import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeCollection
 import app.recipefork.core.recipe.RecipeId
-import app.recipefork.core.scaling.InterfaceLanguage
-import kotlinx.coroutines.CancellationException
+import app.recipefork.app.shopping.rememberAddAllToShopping
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -114,6 +113,10 @@ import kotlinx.coroutines.launch
  * The ⋮ of a collection with recipes, own or imported, puts them all on the shopping list ("Add all to shopping list"),
  * each at the count its card would open with; one listed already keeps its count. The screen says how many were added,
  * with Open, which opens the list above it.
+ *
+ * Its ⋮ then offers Print and Share as PDF (v0.37, T-262, scenario 7), in both modes: a document named by the
+ * collection — a first page with its name and its recipes in order, then each recipe from a new page, at the count its
+ * card would open with — handed to the system's printing or written as a PDF and shared, as a card's are.
  *
  * Once the book holds the collection no more — deleted here, or its book replaced — the screen closes.
  */
@@ -146,7 +149,11 @@ fun CollectionScreen(
     var moved by remember { mutableStateOf<List<CollectionRecipeRow>?>(null) }
     LaunchedEffect(listed) { moved = null }
     val rows = moved ?: listed
-    val addAll = rememberAddAllToShopping(id, session, collections, recipes, card, snackbars)
+    // Every recipe of it on the shopping list (v0.36, T-257), in its order, at the counts their cards open with; Open opens
+    // the list above the collection.
+    val addAllToShopping = rememberAddAllToShopping(recipes, card, session::heldScale, snackbars, session::openShoppingAboveCollection)
+    val addAll = { addAllToShopping { collections.recipes(id).first().map { RecipeId(it.recipeId) } } }
+    val print = rememberPrintCollection(id, session, collections, recipes, card, snackbars)
     var renaming by rememberSaveable { mutableStateOf(false) }
     if (renaming && collection != null) {
         RenameDialog(
@@ -189,6 +196,7 @@ fun CollectionScreen(
                             editable = collection.origin.editable,
                             onShare = if (mode == Mode.Serverless) share::start else null,
                             onAddAll = addAll.takeIf { listed?.isNotEmpty() == true },
+                            onPrint = { way: PrintWay -> print(collection.name, way) }.takeIf { listed?.isNotEmpty() == true },
                             onRename = { renaming = true },
                             onDelete = delete,
                         )
@@ -330,92 +338,30 @@ private fun CollectionEntry(
 }
 
 /**
- * Puts every recipe of the collection [id] on the shopping list of [card] (v0.36, T-257), in the collection's order,
- * each at the count its card would open with ([openingServings]) — one listed already keeps its count — and says how
- * many were added in [snackbars], in place of whatever they said, with Open, which opens the list above the collection —
- * or, none added, that every recipe of it is listed already, or that none could be read. One tap at a time: a second
- * while the first is read adds nothing.
+ * Prints, or writes as a PDF and shares, the collection [id] under the name it is given (v0.37, T-262): its recipes as
+ * they stand in it when the item is taken, each at the count its card would open with, read as [RecipesDocument.read]
+ * reads them. A failure — none of them read back, no PDF written — is said in [snackbars]; a tap while one is being
+ * made starts nothing ([rememberPrintOut]).
  */
 @Composable
-private fun rememberAddAllToShopping(
+private fun rememberPrintCollection(
     id: CollectionId,
     session: LibrarySession,
     collections: CollectionRepository,
     recipes: RecipeRepository,
     card: CardEnvironment,
     snackbars: SnackbarHostState,
-): () -> Unit {
-    val scope = rememberCoroutineScope()
-    val resources = LocalResources.current
-    val language = cardLanguage(LocalConfiguration.current)
-    val allListed = stringResource(R.string.collection_all_in_shopping)
-    val unread = stringResource(R.string.collection_shopping_unread)
-    val open = stringResource(R.string.collection_shopping_open)
-    var adding by remember { mutableStateOf(false) }
-    return {
-        if (!adding) {
-            adding = true
-            scope.launch {
-                val outcome = try {
-                    addAll(id, session, collections, recipes, card, language)
-                } finally {
-                    adding = false
-                }
-                val added = outcome.added
-                val said = when {
-                    added > 0 -> resources.getQuantityString(R.plurals.collection_added_to_shopping, added, added)
-                    outcome.allListed -> allListed
-                    else -> unread
-                }
-                snackbars.currentSnackbarData?.dismiss()
-                // Nothing to open when nothing could be read.
-                val action = open.takeIf { added > 0 || outcome.allListed }
-                val result = snackbars.showSnackbar(said, actionLabel = action, duration = SnackbarDuration.Long)
-                if (result == SnackbarResult.ActionPerformed) session.openShoppingAboveCollection()
-            }
+): (String, PrintWay) -> Unit {
+    val printOut = rememberPrintOut(snackbars)
+    val context = LocalContext.current
+    return { name, way ->
+        val resources = context.resources
+        val photos = PhotoStore(context.applicationContext.filesDir)
+        printOut(way) {
+            val members = collections.recipes(id).first().map { RecipeId(it.recipeId) }
+            RecipesDocument.read(name, members, recipes, card, session::heldScale, resources, photos)
         }
     }
-}
-
-/** What adding a whole collection came to: how many recipes were [added], and whether every recipe of it is listed now. */
-private class AddedAll(val added: Int, val allListed: Boolean)
-
-/** Puts the recipes of the collection [id] on the list as [rememberAddAllToShopping] says. */
-private suspend fun addAll(
-    id: CollectionId,
-    session: LibrarySession,
-    collections: CollectionRepository,
-    recipes: RecipeRepository,
-    card: CardEnvironment,
-    language: InterfaceLanguage,
-): AddedAll {
-    val book = recipes.bookName().fileName
-    // Read once, as the card reads it on opening.
-    val usual = card.usualServings.count.value
-    // Rows whose entry cannot be read are counted as the card counts them: without it.
-    val entries = try {
-        card.ingredients.entries()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        emptyList()
-    }.associateBy { it.id }
-    val members = collections.recipes(id).first().map { RecipeId(it.recipeId) }
-    val wanted = members.mapNotNull { member ->
-        // A recipe that does not read back — read as its card reads it — is left out; the rest go on.
-        val recipe = try {
-            recipes.observe(member).first()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            null
-        } ?: return@mapNotNull null
-        ListedRecipe(book, recipe.id, openingServings(recipe, session.heldScale(recipe.id), usual, entries, language))
-    }
-    var added = 0
-    card.shopping.update { list -> list.withAll(wanted).also { added = it.recipes.size - list.recipes.size } }
-    val listed = card.shopping.list.value.recipes
-    return AddedAll(added, members.all { member -> listed.any { it.isOf(book, member) } })
 }
 
 /**
@@ -471,14 +417,15 @@ private fun BackAction(onBack: () -> Unit) {
 
 /**
  * The collection's ⋮: Share, where [onShare] is given (files are a [Mode.Serverless] feature), then "Add all to shopping
- * list" while it has recipes ([onAddAll]), then Rename for an own collection, then Delete collection, in the theme's
- * error colour. An imported collection offers no Rename.
+ * list" while it has recipes ([onAddAll]), then Print and Share as PDF while it has recipes ([onPrint]), then Rename for
+ * an own collection, then Delete collection, in the theme's error colour. An imported collection offers no Rename.
  */
 @Composable
 private fun CollectionMenu(
     editable: Boolean,
     onShare: (() -> Unit)?,
     onAddAll: (() -> Unit)?,
+    onPrint: ((PrintWay) -> Unit)?,
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -511,6 +458,25 @@ private fun CollectionMenu(
                         onAddAll()
                     },
                     modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionScreenTags.ADD_ALL_TO_SHOPPING),
+                )
+            }
+            // Worded as on a recipe's card.
+            if (onPrint != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.print_menu_print)) },
+                    onClick = {
+                        expanded = false
+                        onPrint(PrintWay.PRINT)
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionScreenTags.PRINT),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.print_menu_share)) },
+                    onClick = {
+                        expanded = false
+                        onPrint(PrintWay.SHARE)
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionScreenTags.SHARE_PDF),
                 )
             }
             if (editable) {
@@ -586,6 +552,8 @@ object CollectionScreenTags {
     const val RENAME = "collection-rename"
     const val DELETE = "collection-delete"
     const val ADD_ALL_TO_SHOPPING = "collection-add-all-to-shopping"
+    const val PRINT = "collection-print"
+    const val SHARE_PDF = "collection-share-pdf"
     const val RENAME_DIALOG = "collection-rename-dialog"
     const val RENAME_FIELD = "collection-rename-field"
     const val RENAME_CONFIRM = "collection-rename-confirm"

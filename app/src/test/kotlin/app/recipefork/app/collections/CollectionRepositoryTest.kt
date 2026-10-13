@@ -119,6 +119,28 @@ class CollectionRepositoryTest {
         assertEquals(CollectionChange.MISSING, collections.rename(CollectionId.mint(), "Nothing"))
     }
 
+    // The book's selection (v0.37, T-263): several recipes into one own collection, in the order given, at its end; one
+    // it holds already, one given twice and one the book does not hold go in once at most. An imported collection, or
+    // one the book does not hold, takes nothing.
+    @Test
+    fun severalRecipesGoIntoOneCollectionInTheirOrderOnceEach() = runBlocking {
+        val soup = own("Soup")
+        val pie = found("Pie", "anna")
+        val bread = own("Bread")
+        val salad = own("Salad")
+        val dinner = create("Dinner")
+        collections.addTo(pie, listOf(dinner))
+        val annas = imported("Anna's pies", "anna", listOf(pie))
+
+        assertEquals(3, collections.addAll(dinner, listOf(bread, pie, soup, bread, RecipeId("not-in-the-book"), salad)))
+        assertEquals(listOf(pie, bread, soup, salad), order(dinner))
+        assertEquals(0, collections.addAll(dinner, listOf(soup, pie)))
+        assertEquals(listOf(pie, bread, soup, salad), order(dinner))
+        assertNull(collections.addAll(annas, listOf(soup)))
+        assertEquals(listOf(pie), order(annas))
+        assertNull(collections.addAll(CollectionId.mint(), listOf(soup)))
+    }
+
     @Test
     fun aRecipeIsAddedToSeveralCollectionsAtTheirEnds() = runBlocking {
         val soup = own("Soup")

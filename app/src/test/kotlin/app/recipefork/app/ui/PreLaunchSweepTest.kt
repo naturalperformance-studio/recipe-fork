@@ -18,6 +18,8 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
@@ -143,7 +145,7 @@ import kotlin.time.Duration.Companion.minutes
  *  - every text drawn reaches its contrast against what is drawn behind it (A11Y-002).
  *
  * The screens: the book — the marked and the own view, each empty and with recipes, the own one filtered by "Enough
- * equipment", an entry's menu, a recipe file's
+ * equipment", an entry's menu, the selection with its bar's menu open, a recipe file's
  * notice and failure, and the notice of a deletion with its Undo; the card of a recipe with equipment — an item of it not
  * in My kitchen, so marked on both tabs — ingredient groups, notes, a step's author's note,
  * a cover, a step's photo and clip, several timers on a step and one running, and done marks, on its View and its
@@ -426,6 +428,16 @@ class PreLaunchSweepTest {
         compose.openEntryMenu(cake.id.value)
         checkScreen("the book, own, an entry's menu")
         compose.closeEntryMenu(cake.id.value)
+        // The selection: one entry chosen, the others not, the bar's ⋮ open.
+        compose.onNodeWithTag(LibraryTags.entry(cake.id.value)).performTouchInput { longClick() }
+        await(LibraryTags.SELECTION_MENU)
+        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
+        await(LibraryTags.SELECT_ALL)
+        checkScreen("the book, own, selecting, the bar's menu open")
+        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
+        awaitGone(LibraryTags.SELECT_ALL)
+        compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
+        awaitGone(LibraryTags.SELECTION_BAR)
         compose.runOnIdle { session.choose(LibraryView.MARKED) }
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.MARKED_LIST) && !exists(LibraryTags.MARKED_EMPTY) }
         compose.waitForIdle()
@@ -779,7 +791,7 @@ class PreLaunchSweepTest {
 
     private companion object {
         /** The screen states the walk checks. */
-        const val SCREENS = 49
+        const val SCREENS = 50
 
         /** Two items of the shipped equipment dictionary, the frying pan and the oven. */
         const val FRYING_PAN = 10001L
