@@ -27,27 +27,38 @@ data class Placement(val block: Int, val from: Int, val to: Int, val top: Float)
 /**
  * A block as pagination sees it: [space] above it (none at a page's top), its lines' heights top to bottom, whether
  * it is kept with the first line of the block after it, and whether its lines go to one page together where they fit
- * on one.
+ * on one. A [newPage] slab has no lines: what follows it begins a page.
  */
 internal class Slab(
     val space: Float,
     val lines: List<Float>,
     val keepWithNext: Boolean = false,
     val whole: Boolean = false,
+    val newPage: Boolean = false,
 )
 
 /**
  * [slabs] put on pages whose text area is [bodyHeight] tall, top to bottom: a line goes on the page only where all
  * of it fits, else it begins the next page; a block longer than a page breaks between its lines; a [Slab.whole] block
  * and a [Slab.keepWithNext] block with the first line after it move to the next page together when they do not fit
- * where they would begin (unless they would not fit on any page). Placements name slabs by their index. Always at
- * least one page.
+ * where they would begin (unless they would not fit on any page); after a [Slab.newPage] slab the next line begins a
+ * page, unless the page is still empty — so a break opens no blank page, at the start, the end or after another break.
+ * Placements name slabs by their index. Always at least one page.
  */
 internal fun paginate(slabs: List<Slab>, bodyHeight: Float): List<List<Placement>> {
     val pages = mutableListOf(mutableListOf<Placement>())
     var y = 0f
+    var breaking = false
     slabs.forEachIndexed { index, slab ->
+        if (slab.newPage) breaking = true
         if (slab.lines.isEmpty()) return@forEachIndexed
+        if (breaking) {
+            breaking = false
+            if (pages.last().isNotEmpty()) {
+                pages += mutableListOf<Placement>()
+                y = 0f
+            }
+        }
         val together = when {
             slab.keepWithNext -> keptHeight(slabs, index)
             slab.whole -> slab.lines.sum()
@@ -75,10 +86,14 @@ internal fun paginate(slabs: List<Slab>, bodyHeight: Float): List<List<Placement
     return pages
 }
 
-/** The height slab [index] needs to stay with what follows it: all of it, and the first line (or more) after it. */
+/**
+ * The height slab [index] needs to stay with what follows it: all of it, and the first line (or more) after it — only
+ * itself where a page break follows it.
+ */
 private fun keptHeight(slabs: List<Slab>, index: Int): Float {
     val slab = slabs[index]
-    val next = (index + 1 until slabs.size).firstOrNull { slabs[it].lines.isNotEmpty() } ?: return slab.lines.sum()
+    val next = (index + 1 until slabs.size).firstOrNull { slabs[it].lines.isNotEmpty() || slabs[it].newPage }
+    if (next == null || slabs[next].newPage) return slab.lines.sum()
     val after = slabs[next]
     val following = when {
         after.keepWithNext -> keptHeight(slabs, next)
