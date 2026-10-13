@@ -412,7 +412,8 @@ class KitchenScreenTest {
         assertTrue(session.settings.value)
     }
 
-    // At twice the font scale on a 320 dp screen every target stays 48 dp, nothing spills sideways and no text is cut.
+    // At twice the font scale on a 320 dp screen every target stays 48 dp, nothing spills sideways, no text is cut and no
+    // word breaks inside itself.
     @Test
     @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
     fun atTwiceTheFontScaleOnANarrowScreen() = narrowAtTwiceTheFontScale()
@@ -457,6 +458,8 @@ class KitchenScreenTest {
                 assertFalse("${node.config[SemanticsProperties.Text]} is cut", cut)
             }
         }
+        // T-273: and no word of it breaks inside itself (A11Y-004).
+        app.recipefork.app.ui.WholeWords.assertWhole(compose, hasAnyAncestor(hasTestTag(KitchenTags.SCREEN)), "My kitchen")
     }
 
     // L10N: My kitchen reads in Russian, every word of the interface from the resources.

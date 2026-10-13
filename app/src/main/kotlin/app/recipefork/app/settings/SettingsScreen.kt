@@ -53,6 +53,7 @@ import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.kitchen.KitchenEnvironment
 import app.recipefork.app.recipe.RecipeRepository
+import app.recipefork.app.ui.WordFitText
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.RequestedServings
 import kotlinx.coroutines.CoroutineScope
@@ -296,14 +297,15 @@ private fun KitchenItem(kitchen: KitchenEnvironment, onOpen: () -> Unit) {
 
 /**
  * The editor's drag column on the right of each block, for a left hand: a switch, the whole row toggling it; beneath its
- * name, that it is the editor's.
+ * name, that it is the editor's. A word too wide for the line beside the switch — «перетаскивания» at a large font
+ * scale — is drawn smaller rather than broken ([WordFitText]).
  */
 @Composable
 private fun DragHandleItem(handleSide: DragHandleSide) {
     val right by handleSide.right.collectAsState()
     ListItem(
-        headlineContent = { Text(stringResource(R.string.library_drag_handle_right)) },
-        supportingContent = { Text(stringResource(R.string.settings_handle_right_hint)) },
+        headlineContent = { WordFitText(stringResource(R.string.library_drag_handle_right)) },
+        supportingContent = { WordFitText(stringResource(R.string.settings_handle_right_hint)) },
         trailingContent = { Switch(checked = right, onCheckedChange = null) },
         modifier = Modifier
             .toggleable(value = right, role = Role.Switch, onValueChange = { handleSide.set(it) })
@@ -390,15 +392,16 @@ private fun rememberMediaClearing(): MediaClearing = viewModel(
 private const val MEDIA_CLEARING_KEY = "media-clearing"
 
 /**
- * One setting: its name, and beneath it the value in force; the whole row opens its choice. A row not [enabled] shows
+ * One setting: its name, and beneath it the value in force, each wrapped between words — a word too wide for the line
+ * at a large font scale drawn smaller ([WordFitText]); the whole row opens its choice. A row not [enabled] shows
  * its name dimmed, as a disabled control is, and its value — then the reason — as it is.
  */
 @Composable
 private fun Item(headline: String, value: String, tag: String, enabled: Boolean = true, onClick: () -> Unit) {
     val dimmed = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
     ListItem(
-        headlineContent = { Text(headline) },
-        supportingContent = { Text(value, Modifier.testTag(SettingsTags.value(tag))) },
+        headlineContent = { WordFitText(headline) },
+        supportingContent = { WordFitText(value, Modifier.testTag(SettingsTags.value(tag))) },
         colors = if (enabled) ListItemDefaults.colors() else ListItemDefaults.colors(headlineColor = dimmed),
         modifier = Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick).testTag(tag),
     )
