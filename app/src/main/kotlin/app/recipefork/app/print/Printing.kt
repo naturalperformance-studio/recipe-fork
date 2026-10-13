@@ -62,11 +62,17 @@ enum class PrintWay { PRINT, SHARE }
  * The ⋮'s Print and Share as PDF of a screen: the document is made when the item is taken — by `make`, null for
  * nothing to print — and printed or shared; a failure says so in [snackbars], replacing what it said before, and changes
  * nothing. A tap while a document is being made or written starts no second one. [onBusy] hears true as one starts and
- * false once it is over, handed over or failed.
+ * false once it stops, however it stops; [onOver] is called once it has run to its end — handed over, or failed and
+ * about to say so — and never when it was cancelled (the screen gone or recreated meanwhile).
  */
 @Composable
-fun rememberPrintOut(snackbars: SnackbarHostState, onBusy: (Boolean) -> Unit = {}): (PrintWay, suspend () -> PrintDocument?) -> Unit {
+fun rememberPrintOut(
+    snackbars: SnackbarHostState,
+    onBusy: (Boolean) -> Unit = {},
+    onOver: () -> Unit = {},
+): (PrintWay, suspend () -> PrintDocument?) -> Unit {
     val busyNow by rememberUpdatedState(onBusy)
+    val overNow by rememberUpdatedState(onOver)
     val context = LocalContext.current
     val printing = LocalPrinting.current
     val scope = rememberCoroutineScope()
@@ -97,6 +103,8 @@ fun rememberPrintOut(snackbars: SnackbarHostState, onBusy: (Boolean) -> Unit = {
                         busy[0] = false
                         busyNow(false)
                     }
+                    // Reached only when it was not cancelled.
+                    overNow()
                     if (!done) {
                         snackbars.currentSnackbarData?.dismiss()
                         snackbars.showSnackbar(if (way == PrintWay.PRINT) printFailed else shareFailed)

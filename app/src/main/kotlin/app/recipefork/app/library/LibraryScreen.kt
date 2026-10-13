@@ -483,7 +483,8 @@ private fun ListedForSelection(view: LibraryView, session: LibrarySession, liste
  * and Share as PDF ([printing]) of those, in the order the view lists them, as one document; then Delete in
  * the own view, Remove in the marked one, offered while it applies to one of them at least, and taking only those it
  * applies to — at once, asking nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection;
- * Print and Share as PDF end it once they are over, the document handed over or its failure said.
+ * Print and Share as PDF end it once they have run to their end, the document handed over or its failure said, if it
+ * is still the selection on.
  */
 private fun selectionActions(
     selection: BookSelection,
@@ -1330,8 +1331,8 @@ private fun MarkedList(
 /**
  * A marked recipe's entry, a card: its title, any stated author and its tags; one whose content the book holds opens,
  * and its menu, at the end of its title line, offers "Add to collection" and "Add to shopping list" ([adding]), Print and
- * Share as PDF ([printing]), in [Mode.Serverless] its export (FLOW-063 (2)), and its removal ([entryActions]). One whose content the book does not
- * hold offers nothing.
+ * Share as PDF ([printing]), in [Mode.Serverless] its export (FLOW-063 (2)), and its removal ([entryActions]). One whose
+ * content the book does not hold offers nothing.
  */
 @Composable
 private fun MarkedEntry(

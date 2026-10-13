@@ -407,6 +407,56 @@ class BookPrintingTest {
         assertEquals(1, printed.size)
     }
 
+    // An action cancelled before its end — the screen recreated while the document is made — prints nothing and leaves
+    // the reader's selection as it was.
+    @Test
+    fun aCancelledActionLeavesTheSelection() {
+        val soup = own("Soup", servings = 4, minutesAgo = 1)
+        val bread = own("Bread", servings = 2)
+        show(LibraryView.OWN)
+        choose(soup, bread)
+        val waiting = CompletableDeferred<Unit>()
+        gate = waiting
+        takeFromSelection(LibraryTags.SELECTION_PRINT)
+        await(LibraryTags.PRINT_PROGRESS)
+
+        compose.activityRule.scenario.recreate()
+        gate = null
+        waiting.complete(Unit)
+        compose.waitForIdle()
+
+        assertTrue(printed.isEmpty() && shared.isEmpty())
+        assertEquals(setOf(soup.id.value, bread.id.value), session.selection.value?.ids)
+    }
+
+    // A selection made while an earlier one's document was being made is not the one the action was taken from: the
+    // action's end leaves it.
+    @Test
+    fun theActionsEndLeavesALaterSelection() {
+        val soup = own("Soup", servings = 4, minutesAgo = 2)
+        val bread = own("Bread", servings = 2, minutesAgo = 1)
+        val tea = own("Tea", servings = 1)
+        show(LibraryView.OWN)
+        choose(soup, bread)
+        val waiting = CompletableDeferred<Unit>()
+        gate = waiting
+        takeFromSelection(LibraryTags.SELECTION_PRINT)
+        await(LibraryTags.PRINT_PROGRESS)
+
+        compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
+        awaitNoSelection()
+        choose(tea)
+        gate = null
+        waiting.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { printed.size == 1 }
+        awaitGone(LibraryTags.PRINT_PROGRESS)
+        compose.waitForIdle()
+
+        assertEquals(setOf(tea.id.value), session.selection.value?.ids)
+        assertTrue(exists(LibraryTags.SELECTION_BAR))
+        assertEquals(setOf("Soup", "Bread"), contents(printed.single()).map { it.second }.toSet())
+    }
+
     // On the platform's printing the job is named "Recipes". A PDF that cannot be written is said to have failed, and
     // recipes none of which read back cannot be printed, which is said too; either way the selection ends.
     @Test

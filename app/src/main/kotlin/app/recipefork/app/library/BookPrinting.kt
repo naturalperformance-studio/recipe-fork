@@ -30,7 +30,8 @@ import app.recipefork.core.recipe.RecipeId
  *
  * - [one]: one recipe, the document its card prints ([RecipesDocument.one]).
  * - [all]: the recipes in the order given, under the title "Recipes": a first page listing them, then each from a new
- *   page ([RecipesDocument.read]); once it is over, handed over or failed, the selection ends.
+ *   page ([RecipesDocument.read]); once it has run to its end, handed over or failed, the selection it was taken from
+ *   ends, if it is still the one on — not when it was cancelled.
  * - [busy]: whether a document is being made or written; meanwhile a tap on either starts nothing.
  *
  * A failure — the recipes do not read back, no PDF written — is said as the card says it ([rememberPrintOut]).
@@ -50,15 +51,18 @@ internal fun rememberBookPrinting(
     snackbars: SnackbarHostState,
 ): BookPrinting {
     var busy by remember { mutableStateOf(false) }
-    // Whether the action under way came from the selection, which ends once it is over.
-    var fromSelection by remember { mutableStateOf(false) }
-    val printOut = rememberPrintOut(snackbars) { now ->
-        busy = now
-        if (!now && fromSelection) {
-            fromSelection = false
-            session.endSelection()
-        }
-    }
+    // The selection the action under way was taken from, if it was: it ends once the action has run to its end, if it
+    // is still the selection then — not when the action was cancelled, nor a later selection.
+    val takenFrom = remember { arrayOfNulls<BookSelection>(1) }
+    val printOut = rememberPrintOut(
+        snackbars,
+        onBusy = { busy = it },
+        onOver = {
+            val selection = takenFrom[0]
+            takenFrom[0] = null
+            if (selection != null && session.selection.value == selection) session.endSelection()
+        },
+    )
     val context = LocalContext.current
     val title = stringResource(R.string.library_selection_document)
     return BookPrinting(
@@ -70,7 +74,7 @@ internal fun rememberBookPrinting(
         all = { recipeIds, way ->
             val resources = context.resources
             val photos = PhotoStore(context.applicationContext.filesDir)
-            if (!busy) fromSelection = true
+            if (!busy) takenFrom[0] = session.selection.value
             printOut(way) { RecipesDocument.read(title, recipeIds.map(::RecipeId), recipes, card, session::heldScale, resources, photos) }
         },
         busy = busy,
