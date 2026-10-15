@@ -320,6 +320,9 @@ class TextLayoutTest {
             "Ingredients\n" + "x:\n- 1 egg\n".repeat(20_000) + "Method\nMix it.",
             "Method\n" + "## x\n".repeat(20_000) + "1. Mix it.",
             "время " + "1".repeat(40_000),
+            "Method\n" + "x:\n".repeat(80_000),
+            "Method\n" + "**x**\nMix it.\n".repeat(40_000),
+            "Instructions\n" + "Step:\n".repeat(40_000),
         )
         for (input in inputs) {
             val took = measureTime { TextLayout.read(input) }
@@ -630,5 +633,76 @@ class TextLayoutTest {
         assertEquals(listOf("Приятного аппетита! 😋"), layout.notes)
         val tea = read("Чай\nИнгредиенты\n- 1 пакетик чая\nПриготовление\nЗаварить чай.\n🥰 Приятного аппетита!")
         assertEquals(listOf("Приятного аппетита!"), tea.notes)
+    }
+
+    @Test
+    fun `a colon line stating the servings above a shape-found ingredient run is not a group`() {
+        val layout = read("Сырники\nНа 4 порции:\n500 г творога\n1 яйцо\n2 ст. л. сахара\nСмешать всё и сформовать сырники.\nЖарить по 3 минуты.")
+        assertEquals(4, layout.servings)
+        assertEquals(listOf("На 4 порции"), layout.description)
+        assertEquals(listOf("500 г творога", "1 яйцо", "2 ст. л. сахара"), layout.ingredients.map { it.text })
+        assertTrue(layout.ingredients.all { it.group == null })
+    }
+
+    @Test
+    fun `only a time line is description, a storage time under the notes stays a note`() {
+        val layout = read(
+            "Сырники\nВремя приготовления: 40 минут\nИнгредиенты\n- 500 г творога\nПриготовление\nЖарить по 3 минуты.\n" +
+                "Заметки\nВремя хранения: 3 дня в холодильнике",
+        )
+        assertEquals(listOf("Время приготовления: 40 минут"), layout.description)
+        assertEquals(listOf("Время хранения: 3 дня в холодильнике"), layout.notes)
+    }
+
+    @Test
+    fun `Состав and Инструкция open a section only as the whole heading`() {
+        assertEquals(Section.INGREDIENTS, PasteLines.sectionOf("Состав:"))
+        assertEquals(Section.INGREDIENTS, PasteLines.sectionOf("Состав"))
+        assertEquals(Section.STEPS, PasteLines.sectionOf("Инструкция"))
+        assertEquals(Section.STEPS, PasteLines.sectionOf("Инструкция приготовления"))
+        assertEquals(Section.STEPS, PasteLines.sectionOf("Инструкция по приготовлению:"))
+        assertNull(PasteLines.sectionOf("Состав на 100 г:"))
+        assertNull(PasteLines.sectionOf("Инструкция по хранению:"))
+        val layout = read(
+            "Сырники\nИнгредиенты\n- 500 г творога\nПриготовление\nЖарить по 3 минуты.\nИнструкция по хранению:\n" +
+                "Хранить в холодильнике два дня.",
+        )
+        assertEquals(listOf("Жарить по 3 минуты.", "Хранить в холодильнике два дня."), layout.steps)
+    }
+
+    @Test
+    fun `a Markdown heading with a leading emoji is recognised`() {
+        val layout = read("# Сырники\n## 🛒 Ингредиенты\n- 500 г творога\n- 1 яйцо\n## 👩‍🍳 Приготовление\n1. Жарить по 3 минуты.")
+        assertEquals("Сырники", layout.title)
+        assertEquals(listOf("500 г творога", "1 яйцо"), layout.ingredients.map { it.text })
+        assertEquals(listOf("Жарить по 3 минуты."), layout.steps)
+    }
+
+    @Test
+    fun `in an unmarked list a For line is a group only above an ingredient line and without a number of its own`() {
+        val layout = read(
+            """
+            Сырники
+            Ингредиенты
+            For 4 servings
+            Для теста
+            500 г творога
+            1 яйцо
+            Для жарки масло
+            Соль
+            Приготовление
+            Смешать всё и жарить по 3 минуты.
+            """,
+        )
+        assertEquals(4, layout.servings)
+        assertEquals(
+            listOf(
+                IngredientLine("500 г творога", "Для теста"),
+                IngredientLine("1 яйцо", "Для теста"),
+                IngredientLine("Для жарки масло", "Для теста"),
+                IngredientLine("Соль", "Для теста"),
+            ),
+            layout.ingredients,
+        )
     }
 }

@@ -57,6 +57,9 @@ private class LayoutReader(private val text: String) {
     private var stepsSeen = false
     private var listedUnderHeading = false
 
+    /** Per line: a numbered line comes after it before the next Markdown heading. */
+    private var numberedBelow = BooleanArray(0)
+
     fun read(): TextLayout? {
         val lines = PasteLines.split(text).toMutableList()
         val hasIngredientHeading = lines.any { it is PasteLine.Heading && PasteLines.sectionOf(it.text) == Section.INGREDIENTS }
@@ -65,6 +68,7 @@ private class LayoutReader(private val text: String) {
             lines.removeAt(0)
             servingsSources += title
         }
+        numberedBelow = numberedBelow(lines)
         lines.forEachIndexed { i, line ->
             when (line) {
                 is PasteLine.Heading -> heading(lines, i)
@@ -125,7 +129,7 @@ private class LayoutReader(private val text: String) {
         val groupOfItsLevel = section == Section.INGREDIENTS && !stepsSeen && next is PasteLine.Item &&
             (next.fromTable || PasteLines.ingredientLed(next.text))
         // "## Утром: аэрогриль" level with "## Приготовление" and numbered lines under it: the method goes on.
-        val methodGoesOn = section == Section.STEPS && numberedBelow(lines, i)
+        val methodGoesOn = section == Section.STEPS && numberedBelow[i]
         val closes = h.markdown && h.level <= level && !groupOfItsLevel && !methodGoesOn
         when (section) {
             Section.INGREDIENTS, Section.STEPS, Section.EQUIPMENT -> when {
@@ -146,14 +150,17 @@ private class LayoutReader(private val text: String) {
         }
     }
 
-    /** A numbered line among the lines under the heading at [i], up to the next Markdown heading. */
-    private fun numberedBelow(lines: List<PasteLine>, i: Int): Boolean {
-        for (j in i + 1 until lines.size) {
+    /** For each line, whether a numbered line follows it before the next Markdown heading: one backward pass. */
+    private fun numberedBelow(lines: List<PasteLine>): BooleanArray {
+        val below = BooleanArray(lines.size)
+        var ahead = false
+        for (j in lines.indices.reversed()) {
+            below[j] = ahead
             val line = lines[j]
-            if (line is PasteLine.Heading && line.markdown) return false
-            if (line is PasteLine.Item && line.numbered) return true
+            if (line is PasteLine.Heading && line.markdown) ahead = false
+            if (line is PasteLine.Item && line.numbered) ahead = true
         }
-        return false
+        return below
     }
 
     private fun item(line: PasteLine.Item, next: PasteLine?, fromHeading: Boolean = false) {
@@ -169,6 +176,11 @@ private class LayoutReader(private val text: String) {
             }
         }
         if (section == Section.INGREDIENTS && !line.marked && !line.fromTable) {
+            // "For 4 servings", "На 4 порции": the servings, never a group or an ingredient.
+            if (line.text.length <= COMPANION_MAX && !PasteLines.ingredientLed(line.text) && Servings.find(listOf(line.text)) != null) {
+                servingsSources += line.text
+                return
+            }
             groupLine(line.text, next)?.let { group = it; return }
         }
         when {
@@ -189,7 +201,9 @@ private class LayoutReader(private val text: String) {
     /**
      * The group an unmarked line under the ingredient heading opens, or null when it is not a group: a colon line up to
      * [COLON_GROUP_MAX] between ingredient lines ("Сырники-основа (базовое тесто, 8–10 сырников):"), or a short line
-     * that is not an ingredient and either starts with "For " / "Для " or stands above a marked line (WP Recipe Maker).
+     * that is not an ingredient and either stands above a marked line (WP Recipe Maker) or starts with "For " / "Для ",
+     * holds no number and stands above an ingredient line ("Для теста" over "200 г муки", not "Для жарки масло" over
+     * "Соль").
      */
     private fun groupLine(text: String, next: PasteLine?): String? {
         val ingredientNext = next is PasteLine.Item && (next.marked || PasteLines.ingredientLed(next.text))
@@ -197,8 +211,9 @@ private class LayoutReader(private val text: String) {
             return text.trimEnd(':').trim().takeIf { text.length <= COLON_GROUP_MAX && listedUnderHeading && ingredientNext }
         }
         if (text.length > COMPANION_MAX || PasteLines.ingredientLed(text) || PasteLines.endsSentence(text)) return null
-        val forPart = FOR_PART.containsMatchIn(text)
-        return text.takeIf { forPart || (next is PasteLine.Item && next.marked && !next.fromTable) }
+        if (next !is PasteLine.Item) return null
+        val forPart = FOR_PART.containsMatchIn(text) && text.none(Char::isDigit) && PasteLines.ingredientLed(next.text)
+        return text.takeIf { forPart || (next.marked && !next.fromTable) }
     }
 
     /**
@@ -216,7 +231,9 @@ private class LayoutReader(private val text: String) {
             val groups = mutableSetOf<Entry>()
             var current: String? = null
             (listOfNotNull(above) + run).forEach {
-                if (it.fromHeading && !PasteLines.ingredientLed(it.text)) {
+                if (it.fromHeading && Servings.find(listOf(it.text)) != null) {
+                    Unit // "На 4 порции:" states the servings: it stays in the description
+                } else if (it.fromHeading && !PasteLines.ingredientLed(it.text)) {
                     current = it.text
                     groups += it
                 } else {
