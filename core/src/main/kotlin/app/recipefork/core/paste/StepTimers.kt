@@ -73,10 +73,6 @@ internal object StepTimers {
         "четвёртую", "четвертую", "четвёртой", "четвертой", "пятую", "пятой", "first", "second", "third", "last", "final",
     )
 
-    /**
-     * A minute or an hour with no number before one of these is how much longer or sooner, or another thing: "на минуту
-     * меньше", "an hour before baking", "час пик".
-     */
     /** Before these, "an hour before …" is still how long: "Chill for an hour before rolling", "let cool a minute before". */
     private val WAITING = setOf("for", "least", "cool", "rest", "stand", "sit", "chill", "marinate", "set")
 
@@ -85,6 +81,10 @@ internal object StepTimers {
         "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто",
     )
 
+    /**
+     * A minute or an hour with no number before one of these is how much longer or sooner, or another thing: "на минуту
+     * меньше", "an hour before baking", "час пик".
+     */
     private val COMPARISONS = setOf(
         "меньше", "больше", "раньше", "позже", "дольше", "короче", "earlier", "later", "less", "more", "longer", "sooner",
         "before", "пик",
@@ -133,9 +133,9 @@ internal object StepTimers {
         return before in ORDINALS || comparison || before == "за" && after == "до" || figureBefore(text, found.range.first)
     }
 
-    /** A number word right after a hyphen or a tens word: the end of a number in words, not a number of its own. */
+    /** A number word after a tens word, spaced or hyphened: the end of a number in words ("двадцать пять", "twenty-five"). */
     private fun partOfANumber(text: String, at: Int): Boolean =
-        text.getOrNull(at - 1) == '-' || wordBefore(text, at) in TENS
+        wordBefore(text, at) in TENS || text.getOrNull(at - 1) == '-' && wordBefore(text, at - 1) in TENS
 
     /** The run of non-spaces right before [at], spaces between, holds a digit: "20-й", "5th". */
     private fun figureBefore(text: String, at: Int): Boolean {

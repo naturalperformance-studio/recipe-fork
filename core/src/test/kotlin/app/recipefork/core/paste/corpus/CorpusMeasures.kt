@@ -224,7 +224,7 @@ object WrittenDurations {
     private val OTHER_THING = Regex("""^\s*+(?:before|пик)(?!\p{L})""", RegexOption.IGNORE_CASE)
     private val WAITING = Regex("""(?<!\p{L})(?:for|least|cool|rest|stand|sit|chill|marinate|set)\s*+$""", RegexOption.IGNORE_CASE)
     private val TENS = Regex(
-        """(?:-|(?<!\p{L})(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|двадцать|тридцать|сорок|пятьдесят|шестьдесят|семьдесят|восемьдесят|девяносто)\s++)$""",
+        """(?<!\p{L})(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|двадцать|тридцать|сорок|пятьдесят|шестьдесят|семьдесят|восемьдесят|девяносто)(?:\s++|-)$""",
         RegexOption.IGNORE_CASE,
     )
 

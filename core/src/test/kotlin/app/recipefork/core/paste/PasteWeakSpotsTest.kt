@@ -323,5 +323,9 @@ class PasteWeakSpotsTest {
         assertEquals(0, WrittenDurations.count("Bake for twenty-five minutes."))
         assertEquals(0, WrittenDurations.count("Варить двадцать пять минут."))
         assertEquals(1, WrittenDurations.count("Chill for an hour before rolling out."))
+        // A range in words with a hyphen is still a range.
+        assertEquals(listOf(10L), minutes("Варить пять-десять минут."))
+        assertEquals(listOf(3L), minutes("Cook two-three minutes."))
+        assertEquals(1, WrittenDurations.count("Варить пять-десять минут."))
     }
 }
