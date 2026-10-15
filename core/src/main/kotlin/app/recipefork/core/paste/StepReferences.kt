@@ -163,6 +163,9 @@ internal class StepReferences(
                 ?.takeIf { next - 1 > used && it.range.first >= previousEnd }?.let { before(text, it, mention) }
             val after = quantities.getOrNull(next)?.takeIf { next > used && it.range.first - mention.end in 0..MAX_GAP }
                 ?.takeIf { TRAIL_GAP.matches(text.substring(mention.end, it.range.first)) }
+                // Only a number with its unit trails a name; a bare number or a unit word does so only where the clause
+                // ends with it ("Соль щепотка."), else it counts what follows: "яйца два половника", "eggs one at a time".
+                ?.takeIf { it.groups["u"] != null || clauseEndsAt(text, it.range.last + 1) }
             if (before != null) {
                 amounts[i] = before
                 used = next - 1
@@ -172,6 +175,13 @@ internal class StepReferences(
             }
         }
         return amounts
+    }
+
+    /** Nothing but spaces before the end of the text or a mark that ends a clause. */
+    private fun clauseEndsAt(text: String, from: Int): Boolean {
+        var i = from
+        while (i < text.length && text[i].isWhitespace()) i++
+        return i == text.length || text[i] in CLAUSE_ENDS
     }
 
     /** [found] as the quantity of the [mention] after it; null when it is not: too far, or more than words between. */
@@ -207,7 +217,9 @@ internal class StepReferences(
             { row -> amount != null && amount.readable && taken(rows[row], amount.found)?.let { it.share == null } == true },
             { row -> amount != null && amount.readable && taken(rows[row], amount.found) != null },
             { row -> groupOf[row] >= 0 && names(groupOf[row]) },
-            { row -> groupOf[row] in others },
+            // A row outside every group is no worse a match than one in the others' group: "Поставить кастрюлю с водой и
+            // солью" with the salt only in the sauce says nothing of which water.
+            { row -> candidates.none { groupOf[it] < 0 } && groupOf[row] in others },
         )
         var left = candidates
         for (keep in narrowing) {
@@ -237,6 +249,7 @@ internal class StepReferences(
     private companion object {
         val WORD = Regex("""[\p{L}\p{N}]++""")
         val PAREN = Regex("""\([^()]*\)""")
+        const val CLAUSE_ENDS = ".,;:!?)"
 
         /** A quantity as an ingredient line writes it, a unit word or both, and what leads from it to a name. */
         val QUANTITY = Regex(

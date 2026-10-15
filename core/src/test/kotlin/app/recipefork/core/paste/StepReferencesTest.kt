@@ -147,6 +147,17 @@ class StepReferencesTest {
                 val owners = steps(read(File("src/test/resources/paste/$name").readText())).single { "Плотный комок" in it }
                 assertTrue(owners.endsWith("Плотный комок, ничего не течёт — сметана [60 г] и мука [50 г]."), "$name: $owners")
             }
+        // A bare number or a unit word after a name counts what follows it, unless the clause ends with it.
+        fun eggShares(rows: String, step: String) =
+            read(rows + step).steps.single().ingredientReferences.filter { it.ingredientPosition == 0 }.map { it.share }
+        val ruEggs = "Т\n\nИнгредиенты\n- 2 яйца\n- 500 мл бульона\n\nПриготовление\n1. "
+        assertEquals(listOf(null), eggShares(ruEggs, "Влить в яйца два половника бульона."))
+        assertEquals(listOf(null), eggShares(ruEggs, "Добавить яйца одно за другим."))
+        assertEquals(listOf(null), eggShares(ruEggs, "Варить яйца 3 или 4 минуты."))
+        val enEggs = "Cake\n\nIngredients\n- 4 eggs\n\nMethod\n1. "
+        assertEquals(listOf(null), eggShares(enEggs, "Add the eggs one at a time."))
+        assertEquals(listOf(null), eggShares(enEggs, "Add the eggs two at a time."))
+        assertEquals(listOf("Посолить, соль щепотка."), steps(read(ru("- 1 щепотка соли", "Посолить, соль щепотка."))).map { it.replace("[1 щепотка]", "щепотка").replace("  ", " ") })
     }
 
     // Fix round 1, must 2.
@@ -165,6 +176,18 @@ class StepReferencesTest {
         val filling = peach.steps.single { it.text.startsWith("Персиковая начинка.") }
         val sugar = filling.ingredientReferences.map { it.ingredientPosition }.filter { it in sugars }
         assertEquals(listOf(sugars.last()), sugar, "the filling's sugar, where the step names the filling: $sugars")
+        // A group named with a parenthesis is named by its words outside it.
+        val parenthesised = read(
+            "Тест\n\n### Ингредиенты\n\n#### Тесто\n\n- 20 г сахара\n\n#### Начинка (ягодная, густая)\n\n- 15 г сахара\n\n" +
+                "### Приготовление\n\n1. Для начинки смешать сахар.",
+        ).steps.single().ingredientReferences.map { it.ingredientPosition }
+        assertEquals(listOf(1), parenthesised)
+        // A row outside every group is as good a match as one in the others' group: no reference (the owner's pelmeni).
+        val water = read(
+            "Тест\n\n### Ингредиенты\n\n- 2 л воды\n\n#### Соус\n\n- 40 г воды\n- 1 ч. л. соли\n\n" +
+                "### Приготовление\n\n1. Поставить кастрюлю с водой и солью.",
+        ).steps.single().ingredientReferences.map { it.ingredientPosition }
+        assertTrue(1 !in water, "$water")
     }
 
     // Fix round 1, must 3.
@@ -178,6 +201,8 @@ class StepReferencesTest {
         val english = read("Eggs\n\nIngredients\n- 4 eggs\n\nMethod\n1. Beat for 2 minutes the eggs.").steps.single()
         assertEquals("Beat for 2 minutes the  eggs.", english.text)
         assertEquals(listOf(null), english.ingredientReferences.map { it.share })
+        val englishBefore = read("Eggs\n\nIngredients\n- 4 eggs\n\nMethod\n1. Beat 2 minutes eggs with sugar.").steps.single()
+        assertEquals(listOf(null), englishBefore.ingredientReferences.map { it.share }, "2 minutes is no count of eggs")
     }
 
     // Fix round 1, must 4 and fold-in 5: a row holding no quantity that scales has no reference by its name.
