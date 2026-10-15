@@ -8,6 +8,8 @@ import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.MediaAttachment
 import app.recipefork.core.recipe.MediaKind
 import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.RecipeBounds
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.recipe.Step
@@ -46,8 +48,14 @@ object RecipeFile {
      * adds the US units `ounce`, `pound` and `fluid_ounce` (v0.35), and is written only by a document holding one, in
      * a row or a part: any other is written as format 6 ([LAST_FORMAT_WITHOUT_US_UNITS]), so that an application
      * reading at most format 6 still opens it, and refuses one with US units as later rather than damaged (FLOW-064).
+     * Format 8 adds the recipe's `source_text`, the text it was made from, exactly as pasted, and is written only by a
+     * document holding one; any other is written as format 7 or 6, as before. A document of formats 1 to 7 reads as one
+     * with none. A source text longer than [RecipeBounds.MAX_SOURCE_TEXT] is read cut at that length.
      */
-    const val FORMAT_VERSION = 7
+    const val FORMAT_VERSION = 8
+
+    /** The last format that wrote no `source_text`. */
+    private const val LAST_FORMAT_WITHOUT_SOURCE_TEXT = 7
 
     /** The format written for a document holding no US unit: the last format before them. */
     const val LAST_FORMAT_WITHOUT_US_UNITS = 6
@@ -97,6 +105,7 @@ object RecipeFile {
                 .also { it.checkTimerShape() }
                 .also { it.checkEquipmentShape() }
                 .also { it.checkStepNoteShape() }
+                .also { it.checkSourceTextShape() }
                 .toContent(entryOf)
         } catch (e: UnreadableRecipeFile) {
             throw e
@@ -114,7 +123,11 @@ object RecipeFile {
             steps.any { step -> step.ingredientReferences.any { it.share?.unit?.system == UnitSystem.US } }
 
     private fun RecipeFileContent.toDocument() = RecipeDocument(
-        formatVersion = if (holdsUsUnit()) FORMAT_VERSION else LAST_FORMAT_WITHOUT_US_UNITS,
+        formatVersion = when {
+            sourceText != null -> FORMAT_VERSION
+            holdsUsUnit() -> LAST_FORMAT_WITHOUT_SOURCE_TEXT
+            else -> LAST_FORMAT_WITHOUT_US_UNITS
+        },
         recipe = DocumentRecipe(
             id = id.value,
             title = title,
@@ -132,6 +145,7 @@ object RecipeFile {
             ingredients = ingredients.map { it.toDocument() },
             ingredientGroups = ingredientGroups.map { DocumentGroup(it.name, it.firstPosition) },
             steps = steps.map { it.toDocument() },
+            sourceText = sourceText,
         ),
         author = author?.let(::DocumentAuthor),
         parent = parent?.let { DocumentParent(it.id.value, it.title, it.nickname) },
@@ -194,6 +208,13 @@ object RecipeFile {
         }
     }
 
+    /** A format before 8 wrote no source text: a document of it that holds one is no document of its format. */
+    private fun RecipeDocument.checkSourceTextShape() {
+        if (formatVersion <= LAST_FORMAT_WITHOUT_SOURCE_TEXT && recipe.sourceText != null) {
+            throw UnreadableRecipeFile("format $formatVersion holds a source text, which it does not write")
+        }
+    }
+
     /** The document's equipment as its format writes it, with the labels format 5 gives its entries. */
     private fun RecipeDocument.equipmentOf(entryOf: (String) -> Long?): Pair<List<EquipmentItem>, Map<Long, EntryLabels>> {
         if (formatVersion <= LAST_TEXT_EQUIPMENT_FORMAT) {
@@ -230,6 +251,8 @@ object RecipeFile {
         ingredients = recipe.ingredients.map { it.toIngredient() },
         ingredientGroups = recipe.ingredientGroups.map { IngredientGroup(it.name, it.firstIngredient) },
         steps = recipe.steps.map { it.toStep() },
+        // Kept exactly as written, cut at its limit where it is longer; an empty one is none.
+        sourceText = Recipe.sourceTextOf(recipe.sourceText),
         author = author?.nickname,
         parent = parent?.let { FileParent(RecipeId(it.id), it.title, it.nickname) },
         media = media.map {

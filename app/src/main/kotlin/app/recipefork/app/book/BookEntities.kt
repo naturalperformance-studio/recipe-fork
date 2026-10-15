@@ -36,6 +36,8 @@ data class RecipeEntity(
     @ColumnInfo(name = "safety_flag") val safetyFlag: Boolean,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "content_changed_at") val contentChangedAt: Instant,
+    /** The text the recipe was made from, exactly as pasted; null for none (version 10). */
+    @ColumnInfo(name = "source_text") val sourceText: String? = null,
 )
 
 private const val CASCADE = ForeignKey.CASCADE

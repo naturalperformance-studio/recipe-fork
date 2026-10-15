@@ -306,6 +306,13 @@ data class Recipe(
      * editor adds an item through [withEquipment], which refuses one more than that.
      */
     val equipment: List<EquipmentItem> = emptyList(),
+    /**
+     * The text the recipe was made from, exactly as the owner pasted or shared it, kept so that it can be read and copied
+     * again; null for a recipe not made from text. It is never empty, and at most [RecipeBounds.MAX_SOURCE_TEXT]
+     * characters where it was set through [sourceTextOf]. It lives on the device, in a saved book and in a recipe file
+     * only: it is the owner's own paste, and nothing sends it to the server.
+     */
+    val sourceText: String? = null,
 ) {
     init {
         require(servings == null || servings >= 1) { "servings must be 1 or more" }
@@ -324,6 +331,9 @@ data class Recipe(
         val item = equipmentItemOf(typed) ?: return this
         return copy(equipment = equipment + item)
     }
+
+    /** This recipe made from [text], kept as [sourceTextOf] keeps it. */
+    fun withSourceText(text: String?): Recipe = copy(sourceText = sourceTextOf(text))
 
     /** The time FLOW-039 orders by under `newest`. */
     val newestKey: Instant get() = contentChangedAt
@@ -349,6 +359,21 @@ data class Recipe(
     )
 
     companion object {
+        /**
+         * The source text [text] gives a recipe: as it stands, cut at [RecipeBounds.MAX_SOURCE_TEXT] characters — never
+         * between the two halves of a character outside the basic plane — and none when it is empty or only blank.
+         */
+        fun sourceTextOf(text: String?): String? {
+            if (text.isNullOrBlank()) return null
+            if (text.length <= RecipeBounds.MAX_SOURCE_TEXT) return text
+            val end = if (Character.isHighSurrogate(text[RecipeBounds.MAX_SOURCE_TEXT - 1])) {
+                RecipeBounds.MAX_SOURCE_TEXT - 1
+            } else {
+                RecipeBounds.MAX_SOURCE_TEXT
+            }
+            return text.substring(0, end)
+        }
+
         /** The item of equipment the author's [typed] text gives: free text, trimmed, and none when blank. */
         fun equipmentItemOf(typed: String): EquipmentItem? = typed.trim().takeIf { it.isNotEmpty() }?.let(EquipmentItem::free)
 

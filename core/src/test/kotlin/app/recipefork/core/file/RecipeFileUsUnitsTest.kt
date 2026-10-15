@@ -65,7 +65,6 @@ class RecipeFileUsUnitsTest {
     // FLOW-064: a document holding a US unit is format 7, which an application reading at most 6 refuses as later.
     @Test
     fun `a document holding a US unit, in a row or only in a part, is written as format 7`() {
-        assertEquals(7, RecipeFile.FORMAT_VERSION)
         assertEquals(7, versionOf(RecipeFile.encode(RecipeFileContent.of(recipe, null, null))))
         val onlyAPart = metric.copy(
             steps = listOf(Step(0, "Cream the butter", listOf(IngredientReference(0, 10, IngredientShare(Rational.of(4), QuantityUnit.OUNCE))))),
@@ -75,7 +74,7 @@ class RecipeFileUsUnitsTest {
         assertEquals(RecipeFileContent.of(onlyAPart, null, null), RecipeFile.decode(written))
     }
 
-    // A metric document stays format 6, so an application of v0.34 still opens it; 6 reads as before, 8 is later.
+    // A metric document stays format 6, so an application of v0.34 still opens it; 6 reads as before, 9 is later.
     @Test
     fun `a document in metric units alone is written as format 6, and reads back`() {
         val content = RecipeFileContent.of(metric, null, null)
@@ -83,7 +82,7 @@ class RecipeFileUsUnitsTest {
         assertEquals(6, versionOf(written))
         assertEquals(RecipeFile.LAST_FORMAT_WITHOUT_US_UNITS, versionOf(written))
         assertEquals(content, RecipeFile.decode(written))
-        val later = RecipeFile.encode(RecipeFileContent.of(recipe, null, null)).replace("\"format_version\": 7", "\"format_version\": 8")
-        assertEquals(8, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
+        val later = RecipeFile.encode(RecipeFileContent.of(recipe, null, null)).replace("\"format_version\": 7", "\"format_version\": 9")
+        assertEquals(9, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
     }
 }

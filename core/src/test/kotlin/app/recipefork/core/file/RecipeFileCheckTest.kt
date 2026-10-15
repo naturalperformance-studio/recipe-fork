@@ -234,11 +234,11 @@ class RecipeFileCheckTest {
     // FLOW-064 (5): a document from a later version is told apart from a damaged one.
     @Test
     fun aLaterFormatIsToldApart() {
-        val later = RecipeFile.encode(valid).replace("\"format_version\": 6", "\"format_version\": 8")
-        assertTrue("\"format_version\": 8" in later)
+        val later = RecipeFile.encode(valid).replace("\"format_version\": 6", "\"format_version\": 9")
+        assertTrue("\"format_version\": 9" in later)
         val thrown = runCatching { RecipeFile.decode(later) }.exceptionOrNull()
         assertTrue(thrown is LaterRecipeFile, "$thrown")
-        assertEquals(8, thrown.formatVersion)
+        assertEquals(9, thrown.formatVersion)
         val damaged = runCatching { RecipeFile.decode("{") }.exceptionOrNull()
         assertTrue(damaged is UnreadableRecipeFile && damaged !is LaterRecipeFile)
         val huge = RecipeFile.encode(valid).replace("\"3/2\"", "\"${"9".repeat(100_000)}/2\"")

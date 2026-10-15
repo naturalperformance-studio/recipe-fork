@@ -66,6 +66,8 @@ object RecipeBounds {
     const val MAX_EQUIPMENT = 15
     /** One item of equipment, as it reads: its free text, or its entry's label with its qualifier. */
     const val MAX_EQUIPMENT_NAME = 40
+    /** The text a recipe was made from ([Recipe.sourceText]): longer is cut here, never refused. */
+    const val MAX_SOURCE_TEXT = 20_000
 
     /**
      * How [part] of [recipe] stands against its bound; null where it is within it, or where the recipe has no such part.

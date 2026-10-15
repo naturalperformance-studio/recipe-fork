@@ -307,7 +307,7 @@ internal fun Recipe.toRows(): RecipeRows {
             statedParentNickname = statedParent?.nickname, title = title, description = description,
             language = language, servings = servings, state = state, replacesParent = replacesParent,
             wasPublished = wasPublished, safetyFlag = safetyFlag, createdAt = createdAt,
-            contentChangedAt = contentChangedAt,
+            contentChangedAt = contentChangedAt, sourceText = sourceText,
         ),
         ingredients = ingredients.map {
             IngredientEntity(
@@ -384,5 +384,6 @@ internal fun RecipeRows.toRecipe(): Recipe {
         contentChangedAt = recipe.contentChangedAt,
         ingredientGroups = groups.map { IngredientGroup(it.name, it.firstIngredient) },
         equipment = equipment.sortedBy { it.position }.map { EquipmentItem(it.dictionaryEntry, it.qualifier, it.freeTextName) },
+        sourceText = recipe.sourceText,
     )
 }

@@ -38,6 +38,8 @@ internal data class DocumentRecipe(
     /** The headings of the ingredient list, in order; added in format 2, absent from format 1. */
     @SerialName("ingredient_groups") val ingredientGroups: List<DocumentGroup> = emptyList(),
     val steps: List<DocumentStep>,
+    /** The text the recipe was made from, exactly as it was pasted; added in format 8, absent for none. */
+    @SerialName("source_text") val sourceText: String? = null,
 )
 
 /**

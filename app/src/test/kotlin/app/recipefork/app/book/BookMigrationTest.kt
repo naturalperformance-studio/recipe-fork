@@ -225,6 +225,51 @@ class BookMigrationTest {
         }
     }
 
+    /** A book file of version 9, its tables exactly as that version created them, holding one own recipe. */
+    private fun writeVersion9() {
+        val file = context.getDatabasePath(book.fileName).also { it.parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            VERSION_9.forEach(db::execSQL)
+            db.execSQL(
+                "insert into recipe values ('r9', null, null, 'NEVER', null, null, null, 'Pancakes', 'Thin', 'EN', 4, " +
+                    "'LOCAL', 0, 0, 0, 1000, 9000)",
+            )
+            db.execSQL("insert into step values ('r9', 0, 'Fry', null)")
+            db.version = 9
+        }
+    }
+
+    // v0.39, T-279: a version-9 book, written before a recipe kept the text it was made from, opens with every recipe
+    // intact and none keeping one; then one is given a text, and the book reopens with it exactly.
+    @Test
+    fun aVersion9BookOpensWithEveryRecipeIntactAndNoSourceText() = runBlocking {
+        writeVersion9()
+        val expected = Recipe.create(Instant.ofEpochMilli(1000), null, id = RecipeId("r9")).copy(
+            title = "Pancakes",
+            description = "Thin",
+            language = RecipeLanguage.EN,
+            servings = 4,
+            steps = listOf(Step(0, "Fry")),
+            contentChangedAt = Instant.ofEpochMilli(9000),
+        )
+        val pasted = "Pancakes\n\n  200 g flour\r\n\t500 ml milk\n"
+        val database = BookDatabase.open(context, book) { error("a book of version 9 reads no dictionary") }
+        try {
+            assertEquals(10, database.openHelper.readableDatabase.version)
+            val repository = RecipeRepository(ActiveBook(book, database))
+            assertEquals(expected, repository.get(RecipeId("r9")))
+            repository.save(expected.withSourceText(pasted))
+        } finally {
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book)
+        try {
+            assertEquals(pasted, RecipeRepository(ActiveBook(book, reopened)).get(RecipeId("r9"))!!.sourceText)
+        } finally {
+            reopened.close()
+        }
+    }
+
     // A version-8 book, written before the book held collections, opens with every recipe intact — own and found — and
     // no collection; then both recipes are put in one, and the book reopens with it.
     @Test
@@ -242,7 +287,7 @@ class BookMigrationTest {
         )
         val database = BookDatabase.open(context, book) { error("a book of version 8 reads no dictionary") }
         val menu = try {
-            assertEquals(9, database.openHelper.readableDatabase.version)
+            assertEquals(BookDatabase.VERSION, database.openHelper.readableDatabase.version)
             val repository = RecipeRepository(ActiveBook(book, database))
             assertEquals(expected, repository.get(RecipeId("r8")))
             assertEquals("Found pie", repository.get(RecipeId("f8"))!!.title)
@@ -632,6 +677,17 @@ class BookMigrationTest {
     }
 
     internal companion object {
+        /**
+         * What Room generated for the book at version 9: version 8 with the book's collections. The identity hash stands
+         * in for that version's, which an upgrade does not read.
+         */
+        val VERSION_9: List<String> get() = VERSION_8.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `collection` (`collection_id` TEXT NOT NULL, `name` TEXT NOT NULL, `origin` TEXT NOT NULL, `stated_author` TEXT, `created_at` INTEGER NOT NULL, PRIMARY KEY(`collection_id`))",
+            "CREATE TABLE IF NOT EXISTS `collection_recipe` (`collection_id` TEXT NOT NULL, `recipe_id` TEXT NOT NULL, `position` INTEGER NOT NULL, PRIMARY KEY(`collection_id`, `recipe_id`), FOREIGN KEY(`collection_id`) REFERENCES `collection`(`collection_id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`recipe_id`) REFERENCES `recipe`(`recipe_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+            "CREATE INDEX IF NOT EXISTS `index_collection_recipe_recipe_id` ON `collection_recipe` (`recipe_id`)",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '00000000000000000000000000000009')",
+        )
+
         /**
          * What Room generated for the book at version 8: version 7 with a step's note. The identity hash stands in for
          * that version's, which an upgrade does not read.

@@ -139,4 +139,9 @@
     <string name="card_equipment_open_kitchen_action">Open My kitchen</string>
     <!-- Under the equipment on View while My kitchen has nothing ticked: the way to set it up. -->
     <string name="card_equipment_set_up_kitchen">Set up My kitchen</string>
+    <!-- The card's ⋮ where the recipe keeps the text it was made from (v0.39): it opens that text, exactly as pasted, in a
+         sheet of the same name, whose one action copies the whole of it; the card then says so. -->
+    <string name="card_source_text">Original text</string>
+    <string name="card_source_text_copy">Copy</string>
+    <string name="card_source_text_copied">Text copied</string>
 </resources>
