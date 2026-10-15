@@ -5,6 +5,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 
 class TextLayoutTest {
     private fun read(text: String) = assertNotNull(TextLayout.read(text.trimIndent()))
@@ -306,8 +309,22 @@ class TextLayoutTest {
             "## Ingredients " + "(".repeat(10_000),
             "на " + "1 ".repeat(5000),
             "a".repeat(20_000) + ".",
+            "# x" + " ".repeat(40_000) + "y",
+            "# x" + " ".repeat(40_000) + "#".repeat(40_000) + "y",
+            ">".repeat(320_000) + " 1 egg",
+            "> ".repeat(160_000) + "1 egg",
+            "a".repeat(40_000) + ".b.",
+            "🔸".repeat(100_000) + " 1 egg",
+            "1️⃣".repeat(100_000) + " Mix.",
+            "Ingredients\n" + "a — ".repeat(20_000) + "1 g",
+            "Ingredients\n" + "x:\n- 1 egg\n".repeat(20_000) + "Method\nMix it.",
+            "Method\n" + "## x\n".repeat(20_000) + "1. Mix it.",
+            "время " + "1".repeat(40_000),
         )
-        for (input in inputs) TextLayout.read(input)
+        for (input in inputs) {
+            val took = measureTime { TextLayout.read(input) }
+            assertTrue(took < 2.seconds, "${input.take(20)}… took $took")
+        }
         assertEquals(listOf("2 eggs", "1 l milk"), read(inputs[0]).ingredients.map { it.text })
     }
 
@@ -419,5 +436,199 @@ class TextLayoutTest {
         )
         assertEquals(listOf("50 г тёртого пармезана", "40 г моцареллы", "4 яйца"), layout.ingredients.map { it.text })
         assertEquals(listOf("На одну корзинку — 25 г пармезана и 20 г моцареллы."), layout.notes)
+    }
+
+    @Test
+    fun `a servings line under the ingredients is read for the servings and never becomes an ingredient`() {
+        // povarenok.ru: the servings and the time stand under the ingredient list.
+        val povarenok = read(
+            """
+            Сырники из творога
+            Ингредиенты
+            Творог — 500 г
+            Яйцо куриное — 1 шт
+            Мука пшеничная — 3 ст. л.
+            Сахар — 2 ст. л.
+            Количество порций: 6
+            Время приготовления: 40 минут
+            Приготовление
+            Творог размять вилкой, добавить яйцо и сахар.
+            Всыпать муку, сформовать сырники и обжарить с двух сторон.
+            """,
+        )
+        assertEquals(6, povarenok.servings)
+        assertEquals(
+            listOf("Творог — 500 г", "Яйцо куриное — 1 шт", "Мука пшеничная — 3 ст. л.", "Сахар — 2 ст. л."),
+            povarenok.ingredients.map { it.text },
+        )
+        assertEquals(listOf("Время приготовления: 40 минут"), povarenok.description)
+        assertEquals(2, povarenok.steps.size)
+
+        // NYT Cooking: the yield heads the ingredient list.
+        val nyt = read(
+            """
+            Simple Roast Chicken
+            INGREDIENTS
+            Yield: 4 servings
+            1 whole chicken, 3 to 4 pounds
+            Kosher salt and black pepper
+            2 tablespoons unsalted butter
+            PREPARATION
+            Step 1
+            Heat oven to 450 degrees.
+            Step 2
+            Season the chicken all over and roast for 1 hour.
+            """,
+        )
+        assertEquals(4, nyt.servings)
+        assertEquals("1 whole chicken, 3 to 4 pounds", nyt.ingredients.first().text)
+        assertEquals(3, nyt.ingredients.size)
+        assertEquals(listOf("Heat oven to 450 degrees.", "Season the chicken all over and roast for 1 hour."), nyt.steps)
+
+        // A servings line among the notes is read too; among the steps it stays a step.
+        val notes = read("Блюдо\nИнгредиенты\n- 2 яйца\nПриготовление\nВзбить яйца.\nЗаметки\nПорций: 3")
+        assertEquals(3, notes.servings)
+        assertEquals(emptyList(), notes.notes)
+    }
+
+    @Test
+    fun `a Telegram post with Russian headings reads as ingredients and steps`() {
+        val layout = read(
+            "Нам понадобится:\nтворог — 500 г\nяйцо — 1 шт\nсахар — 2 ст. л.\nПриготовление:\nСмешать творог с яйцом и сахаром.\n" +
+                "Жарить на сковороде по 3 минуты с каждой стороны.",
+        )
+        assertEquals(listOf("творог — 500 г", "яйцо — 1 шт", "сахар — 2 ст. л."), layout.ingredients.map { it.text })
+        assertEquals(listOf("Смешать творог с яйцом и сахаром.", "Жарить на сковороде по 3 минуты с каждой стороны."), layout.steps)
+
+        for (ingredients in listOf("Потребуется:", "Состав:", "Для сырников нам понадобится:", "Что потребуется", "Нам понадобится")) {
+            for (steps in listOf("Инструкция приготовления", "Инструкция приготовления:", "Приготовление:")) {
+                val other = read("Сырники\n$ingredients\n- 500 г творога\n- 1 яйцо\n$steps\nЖарить по 3 минуты с каждой стороны.")
+                assertEquals(2, other.ingredients.size, "$ingredients / $steps")
+                assertEquals(emptyList(), other.description, "$ingredients / $steps")
+                assertEquals(listOf("Жарить по 3 минуты с каждой стороны."), other.steps, "$ingredients / $steps")
+            }
+        }
+        assertEquals(null, PasteLines.sectionOf("Составить", bare = true))
+        assertEquals(null, PasteLines.sectionOf("Составить меню на неделю"))
+    }
+
+    @Test
+    fun `a WP Recipe Maker paste reads its box markers and its group lines`() {
+        val layout = read(
+            """
+            Classic Apple Crumble
+            A warm, easy dessert for autumn.
+            Prep Time 15 minutes
+            Cook Time 40 minutes
+            Servings 6
+            Ingredients
+            For the filling
+            ▢ 6 apples, peeled and sliced
+            ▢ 2 tbsp sugar
+            ☐ 1 tsp cinnamon
+            Crumble topping
+            □ 1 cup flour
+            ▢ ½ cup cold butter, cubed
+            ▢ ½ cup brown sugar
+            Instructions
+            Heat the oven to 180C.
+            Toss the apples with the sugar and cinnamon and spread them in a dish.
+            Rub the butter into the flour and sugar, scatter over the apples and bake for 40 minutes.
+            """,
+        )
+        assertEquals("Classic Apple Crumble", layout.title)
+        assertEquals(6, layout.servings)
+        assertEquals(listOf("A warm, easy dessert for autumn.", "Prep Time 15 minutes", "Cook Time 40 minutes"), layout.description)
+        assertEquals(
+            listOf(
+                IngredientLine("6 apples, peeled and sliced", "For the filling"),
+                IngredientLine("2 tbsp sugar", "For the filling"),
+                IngredientLine("1 tsp cinnamon", "For the filling"),
+                IngredientLine("1 cup flour", "Crumble topping"),
+                IngredientLine("½ cup cold butter, cubed", "Crumble topping"),
+                IngredientLine("½ cup brown sugar", "Crumble topping"),
+            ),
+            layout.ingredients,
+        )
+        assertEquals(3, layout.steps.size)
+
+        val ru = read(
+            "Пирог\nИнгредиенты\nДля теста\n▢ 200 г муки\n▢ 100 г масла\nДля начинки\n▢ 3 яблока\nПриготовление\nИспечь пирог за 40 минут.",
+        )
+        assertEquals(listOf("Для теста", "Для теста", "Для начинки"), ru.ingredients.map { it.group })
+    }
+
+    @Test
+    fun `name-first lines are ingredient lines when the ingredients are found by shape`() {
+        val layout = read(
+            """
+            Сырники за 15 минут
+            Творог — 500 г
+            Яйцо — 1 шт
+            Соль — щепотка
+            Сахар — по вкусу
+            Смешать всё и сформовать сырники.
+            Жарить по 3 минуты с каждой стороны.
+            """,
+        )
+        assertEquals("Сырники за 15 минут", layout.title)
+        assertEquals(listOf("Творог — 500 г", "Яйцо — 1 шт", "Соль — щепотка", "Сахар — по вкусу"), layout.ingredients.map { it.text })
+        assertEquals(2, layout.steps.size)
+
+        val en = read("Rice Pudding\nMilk – 500 ml\nRice – 80 g\nSugar – 40 g\nSimmer everything for 40 minutes, stirring often.")
+        assertEquals(listOf("Milk – 500 ml", "Rice – 80 g", "Sugar – 40 g"), en.ingredients.map { it.text })
+
+        // A colon heading above or inside such a run is the group of the lines below it.
+        val groups = read("Пирог\nДля теста:\nМука — 200 г\nМасло — 100 г\nДля начинки:\nЯблоки — 3 шт\nИспечь пирог за 40 минут.")
+        assertEquals(
+            listOf(
+                IngredientLine("Мука — 200 г", "Для теста"),
+                IngredientLine("Масло — 100 г", "Для теста"),
+                IngredientLine("Яблоки — 3 шт", "Для начинки"),
+            ),
+            groups.ingredients,
+        )
+        assertEquals(emptyList(), groups.description)
+    }
+
+    @Test
+    fun `Telegram emoji bullets, keycap numbers and bare number lines are markers, the closing wish is a note`() {
+        val layout = read(
+            """
+            🍰 Ленивые сырники
+            🛒 Ингредиенты:
+            🔸 Творог — 500 г
+            ▪️ Яйцо — 1 шт
+            ✅ Сахар — 2 ст. л.
+            🔹Мука — 3 ст. л.
+            • Соль — щепотка
+            👩‍🍳 Приготовление:
+            1️⃣ Смешать творог, яйцо и сахар.
+            2️⃣ Всыпать муку и соль, вымесить.
+            1
+            Сформовать сырники.
+            2
+            Жарить по 3 минуты с каждой стороны.
+            Приятного аппетита! 😋
+            #рецепты #сырники
+            """,
+        )
+        assertEquals("Ленивые сырники", layout.title)
+        assertEquals(
+            listOf("Творог — 500 г", "Яйцо — 1 шт", "Сахар — 2 ст. л.", "Мука — 3 ст. л.", "Соль — щепотка"),
+            layout.ingredients.map { it.text },
+        )
+        assertEquals(
+            listOf(
+                "Смешать творог, яйцо и сахар.",
+                "Всыпать муку и соль, вымесить.",
+                "Сформовать сырники.",
+                "Жарить по 3 минуты с каждой стороны.",
+            ),
+            layout.steps,
+        )
+        assertEquals(listOf("Приятного аппетита! 😋"), layout.notes)
+        val tea = read("Чай\nИнгредиенты\n- 1 пакетик чая\nПриготовление\nЗаварить чай.\n🥰 Приятного аппетита!")
+        assertEquals(listOf("Приятного аппетита!"), tea.notes)
     }
 }

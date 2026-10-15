@@ -7,17 +7,28 @@ internal sealed interface PasteLine {
     /** A Markdown heading ([markdown], [level] 1–6), or a bold-only, a short colon-ended or a bare keyword line. */
     data class Heading(val text: String, val level: Int, val markdown: Boolean) : PasteLine
 
-    /** A line of text; [marked] when it had a bullet or a number, [numbered] when that was a number. */
-    data class Item(val text: String, val numbered: Boolean, val marked: Boolean, val fromTable: Boolean = false) : PasteLine
+    /**
+     * A line of text; [marked] when it had a bullet, a number or a leading pictograph ("✅", "▢", "1️⃣"), [numbered] when
+     * that was a number, [symbol] when it was only a pictograph.
+     */
+    data class Item(
+        val text: String,
+        val numbered: Boolean,
+        val marked: Boolean,
+        val fromTable: Boolean = false,
+        val symbol: Boolean = false,
+    ) : PasteLine
 }
 
 internal object PasteLines {
     private const val MINOR = 7
     private const val COLON_HEADING_MAX = 40
+    private const val NAME_MAX = 40
+    private const val TIME_LINE_MAX = 60
 
-    private val MD_HEADING = Regex("""^(#{1,6})\s+(.*?)\s*#*$""")
+    private val MD_HEADING = Regex("""^(#{1,6})\s+(.*)$""")
     private val MARKER = Regex("""^(?:([-*+•–—])|\d{1,2}[.)]|(?:step|шаг)\s*\d{1,2}[.:)]?)\s+(?:\[[ xX]]\s+)?""", RegexOption.IGNORE_CASE)
-    private val LABEL_ONLY = Regex("""^(?:(?:step|шаг)\s*\d{1,3}\s*[.:)]?|\d{1,2}[.)])$""", RegexOption.IGNORE_CASE)
+    private val LABEL_ONLY = Regex("""^(?:(?:step|шаг)\s*\d{1,3}\s*[.:)]?|\d{1,2}[.)]?)$""", RegexOption.IGNORE_CASE)
     private val WIKI_LINK = Regex("""\[\[([^\[\]|]+)(?:\|([^\[\]]+))?]]""")
     private val LINK = Regex("""\[([^\[\]]+)]\([^()]*\)""")
     private val STAR = Regex("""(?<![\p{L}\d*])\*(\S(?:[^*]*\S)?)\*(?![\p{L}\d*])""")
@@ -30,19 +41,39 @@ internal object PasteLines {
     )
     private val EQUIPMENT_LINE = Regex("""^(?:посуда|оборудование|инвентарь|equipment|tools)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
     private val ABBREVIATIONS = setOf("л", "ч", "ст", "г", "гр", "кг", "мл", "шт", "tsp", "tbsp", "oz", "lb", "lbs", "pkg", "c")
-    private val LAST_WORD = Regex("""(\p{L}+)\.$""")
+    private val NAME_DASH = Regex("""\s[—–-]\s""")
+    private val TO_TASTE = Regex("""^(?:по вкусу|to taste)""", RegexOption.IGNORE_CASE)
+    private val TIME_LINE = Regex(
+        """^(?:(?:общее |активное )?время(?: приготовления| готовки| подготовки)?|""" +
+            """(?:prep(?:aration)?|cook(?:ing)?|total|active)\s+time|ready in)(?!\p{L})""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val CLOSING = Regex("""^(?:приятного аппетита|bon app[eé]tit)(?!\p{L})""", RegexOption.IGNORE_CASE)
+
+    /** Symbols that open a line as text, not as a list marker. */
+    private val NOT_MARKERS = setOf('°'.code, '№'.code, '©'.code, '®'.code, '™'.code, '℃'.code, '℉'.code)
+
+    /** A keyword that opens a section only as a whole word ("Состав:", not "Составить"). */
+    private val WHOLE_WORDS = setOf("состав")
+    private val INGREDIENT_WORDS_INSIDE = listOf("понадобится", "потребуется")
 
     private val SECTIONS: List<Pair<Section, List<String>>> = listOf(
         Section.EQUIPMENT to listOf("посуда", "что нужно из посуды", "оборудование", "инвентарь", "equipment", "tools"),
         Section.INGREDIENTS to listOf(
-            "ингредиент", "вам понадобится", "что понадобится", "понадобится", "продукты",
+            "ингредиент", "вам понадобится", "нам понадобится", "что понадобится", "понадобится", "что потребуется",
+            "потребуется", "продукты", "состав",
             "ingredient", "you will need", "you'll need", "what you need", "what you'll need",
         ),
         Section.STEPS to listOf(
             "приготовление", "способ приготовления", "как приготовить", "как готовить", "порядок приготовления", "шаги",
+            "инструкция приготовления", "инструкция по приготовлению", "инструкция",
             "method", "directions", "instructions", "preparation", "steps", "how to make", "how to cook",
         ),
-        Section.NOTES to listOf("заметки", "примечани", "совет", "хранение", "notes", "note", "tips", "storage", "cook's note"),
+        // A shopping list names what to buy, not what goes in: its lines are notes.
+        Section.NOTES to listOf(
+            "заметки", "примечани", "совет", "хранение", "список покупок", "notes", "note", "tips", "storage", "cook's note",
+            "shopping list",
+        ),
     )
 
     /** The lines of [text]; a run of table rows becomes its ingredient lines, or nothing (PasteTables). */
@@ -67,33 +98,86 @@ internal object PasteLines {
 
     fun classify(raw: String): PasteLine? {
         var line = raw.trim().removePrefix("\uFEFF").trim()
-        while (line.startsWith('>')) line = line.removePrefix(">").trim()
-        if (line.isEmpty() || line.startsWith('|') || line.startsWith("```") || isRule(line)) return null
+        if (line.startsWith('>')) {
+            val start = line.indexOfFirst { it != '>' && !it.isWhitespace() }
+            line = if (start < 0) "" else line.substring(start)
+        }
+        if (line.isEmpty() || line.startsWith('|') || line.startsWith("```") || isRule(line) || isHashtags(line)) return null
         MD_HEADING.matchEntire(line)?.let { m ->
-            val text = clean(m.groupValues[2]).trimEnd(':').trim()
+            val text = clean(m.groupValues[2].trimEnd { it == '#' || it.isWhitespace() }).trimEnd(':').trim()
             return if (text.isEmpty()) null else PasteLine.Heading(text, m.groupValues[1].length, markdown = true)
         }
         // Markers are read after emphasis is gone, so "- **Шаг 1.** Промыть" loses both the bullet and the label.
         var text = clean(line)
-        var marked = false
+        var listed = false
         var numbered = false
-        repeat(2) {
-            MARKER.find(text)?.let { m ->
-                marked = true
-                numbered = numbered || m.groups[1] == null
-                text = text.substring(m.range.last + 1).trim()
+        var symbol = false
+        repeat(3) {
+            val keycaps = keycapsEnd(text)
+            val symbols = if (keycaps == 0) symbolsEnd(text) else 0
+            when {
+                keycaps > 0 -> {
+                    listed = true
+                    numbered = true
+                    text = text.substring(keycaps).trim()
+                }
+                symbols > 0 -> {
+                    symbol = true
+                    text = text.substring(symbols).trim()
+                }
+                else -> MARKER.find(text)?.let { m ->
+                    listed = true
+                    numbered = numbered || m.groups[1] == null
+                    text = text.substring(m.range.last + 1).trim()
+                }
             }
         }
         if (text.isEmpty() || LABEL_ONLY.matches(text)) return null
-        if (marked) return PasteLine.Item(text, numbered, marked = true)
+        if (listed) return PasteLine.Item(text, numbered, marked = true)
+        // A line led by a pictograph alone ("🔸 Для теста:", "📝 Ингредиенты") may still be a heading.
         val name = text.trimEnd(':').trim()
         return when {
             isBoldOnly(line) && !endsSentence(name) -> PasteLine.Heading(name, MINOR, markdown = false)
             text.endsWith(':') && text.length <= COLON_HEADING_MAX -> PasteLine.Heading(name, MINOR, markdown = false)
             sectionOf(name, bare = true) != null -> PasteLine.Heading(name, MINOR, markdown = false)
-            else -> PasteLine.Item(text, numbered = false, marked = false)
+            else -> PasteLine.Item(text, numbered = false, marked = symbol, symbol = symbol)
         }
     }
+
+    /** The end of a run of keycap numbers ("1️⃣", "1️⃣0️⃣") at the start of [text]; 0 when it has none. */
+    private fun keycapsEnd(text: String): Int {
+        var i = 0
+        while (i < text.length && (text[i].isDigit() || text[i] == '#' || text[i] == '*')) {
+            var j = i + 1
+            if (text.getOrNull(j) == '\uFE0F') j++
+            if (text.getOrNull(j) != '\u20E3') break
+            i = j + 1
+        }
+        return i
+    }
+
+    /**
+     * The end of a run of pictographs ("🔸", "▪️", "✅", "▢", "👩‍🍳") at the start of [text], their variation selectors,
+     * joiners and skin tones included; 0 when it has none.
+     */
+    private fun symbolsEnd(text: String): Int {
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            val type = Character.getType(cp)
+            val pictograph = type == Character.OTHER_SYMBOL.toInt() && cp !in NOT_MARKERS
+            val joining = i > 0 && (
+                cp == 0xFE0F || cp == 0xFE0E || cp == 0x200D || cp == 0x20E3 || type == Character.MODIFIER_SYMBOL.toInt()
+                )
+            if (!pictograph && !joining) break
+            i += Character.charCount(cp)
+        }
+        return i
+    }
+
+    /** "#рецепт #сырники": a line of hashtags only. */
+    private fun isHashtags(line: String): Boolean =
+        line.length > 1 && line[1] != '#' && !line[1].isWhitespace() && line.split(SPACES).all { it.startsWith('#') && it.length > 1 }
 
     /** A thematic break: three or more of one of - * _ = and nothing else but spaces. */
     private fun isRule(line: String): Boolean {
@@ -116,10 +200,16 @@ internal object PasteLines {
      */
     fun sectionOf(heading: String, bare: Boolean = false): Section? {
         val name = heading.lowercase().replace('ё', 'е').replace(PARENTHESES, " ").trim().trimEnd(':').trim()
-        return SECTIONS.firstOrNull { (_, words) ->
-            words.any { name.startsWith(it) && (!bare || name.length - it.length <= 3) }
+        val byStart = SECTIONS.firstOrNull { (_, words) ->
+            words.any { opens(name, it) && (!bare || name.length - it.length <= 3) }
         }?.first
+        if (byStart != null || bare) return byStart
+        // "Для сырников нам понадобится:": a short heading that says something will be needed.
+        return Section.INGREDIENTS.takeIf { name.length <= COLON_HEADING_MAX && INGREDIENT_WORDS_INSIDE.any { it in name } }
     }
+
+    private fun opens(name: String, word: String) =
+        name.startsWith(word) && (word !in WHOLE_WORDS || name.getOrNull(word.length)?.isLetter() != true)
 
     /** Strips Markdown emphasis and links (Obsidian's included) and folds runs of whitespace. */
     fun clean(text: String): String = text
@@ -133,10 +223,27 @@ internal object PasteLines {
 
     fun quantityLed(text: String): Boolean = QUANTITY.containsMatchIn(text.lowercase())
 
+    /** "Творог — 500 г", "Соль — щепотка", "Milk – 500 ml": a short name, a dash, then a quantity. */
+    fun nameFirst(text: String): Boolean {
+        val dash = NAME_DASH.find(text) ?: return false
+        val name = text.substring(0, dash.range.first)
+        val rest = text.substring(dash.range.last + 1).trim()
+        return name.length <= NAME_MAX && name.any(Char::isLetter) && (quantityLed(rest) || TO_TASTE.containsMatchIn(rest))
+    }
+
+    /** Led by a quantity, or [nameFirst]: the shape of an ingredient line. */
+    fun ingredientLed(text: String): Boolean = quantityLed(text) || nameFirst(text)
+
+    /** "Время приготовления: 40 минут", "Prep Time 15 minutes": how long it takes, not a part of the recipe. */
+    fun timeLine(text: String): Boolean = text.length <= TIME_LINE_MAX && TIME_LINE.containsMatchIn(text) && text.any(Char::isDigit)
+
+    /** "Приятного аппетита!", "Bon appétit": a closing wish, not a step. */
+    fun closing(text: String): Boolean = CLOSING.containsMatchIn(text)
+
     /** Ends as a sentence does: "!", "?", "…", or a full stop that does not close a unit's abbreviation ("1 ч. л."). */
     fun endsSentence(text: String): Boolean = when (text.lastOrNull()) {
         '!', '?', '…' -> true
-        '.' -> LAST_WORD.find(text)?.groupValues?.get(1)?.lowercase() !in ABBREVIATIONS
+        '.' -> text.dropLast(1).takeLastWhile(Char::isLetter).lowercase() !in ABBREVIATIONS
         else -> false
     }
 

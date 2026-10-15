@@ -32,13 +32,16 @@ data class TextLayout(
 /** [OTHER]: under an unknown heading after the ingredients or the steps; notes, unless no heading names the steps. */
 internal enum class Section { DESCRIPTION, INGREDIENTS, EQUIPMENT, STEPS, NOTES, OTHER }
 
+/** [pinned]: stays where it was put, whatever its shape; [fromHeading]: a colon or bold heading line read as text. */
 private class Entry(
     var section: Section,
     val text: String,
     val numbered: Boolean,
-    val group: String?,
+    var group: String?,
     val marked: Boolean = false,
     val fromTable: Boolean = false,
+    val pinned: Boolean = false,
+    val fromHeading: Boolean = false,
 )
 
 private class LayoutReader(private val text: String) {
@@ -52,6 +55,7 @@ private class LayoutReader(private val text: String) {
     private var ingredientsHeading = false
     private var stepsHeading = false
     private var stepsSeen = false
+    private var listedUnderHeading = false
 
     fun read(): TextLayout? {
         val lines = PasteLines.split(text).toMutableList()
@@ -63,8 +67,8 @@ private class LayoutReader(private val text: String) {
         }
         lines.forEachIndexed { i, line ->
             when (line) {
-                is PasteLine.Heading -> heading(line, lines.getOrNull(i + 1))
-                is PasteLine.Item -> item(line)
+                is PasteLine.Heading -> heading(lines, i)
+                is PasteLine.Item -> item(line, lines.getOrNull(i + 1))
             }
         }
         if (!ingredientsHeading) ingredientsByShape()
@@ -73,6 +77,7 @@ private class LayoutReader(private val text: String) {
         }
         entries.filter { it.section == Section.OTHER }.forEach { it.section = Section.NOTES }
         sentencesAmongBulletsToNotes()
+        entries.filter { it.section == Section.STEPS && PasteLines.closing(it.text) }.forEach { it.section = Section.NOTES }
 
         val ingredients = entries.filter { it.section == Section.INGREDIENTS }.map { IngredientLine(it.text, it.group) }
         val steps = of(Section.STEPS)
@@ -95,17 +100,20 @@ private class LayoutReader(private val text: String) {
     private fun titleOf(line: PasteLine, hasIngredientHeading: Boolean): String? = when (line) {
         is PasteLine.Heading -> line.text.takeIf { PasteLines.sectionOf(it) == null }
         is PasteLine.Item -> line.text.takeIf {
-            !line.numbered && !line.marked && !line.fromTable && it.length <= TITLE_MAX && !it.endsWith('.') &&
-                !it.endsWith(':') && (hasIngredientHeading || !PasteLines.quantityLed(it))
+            !line.numbered && (!line.marked || line.symbol) && !line.fromTable && it.length <= TITLE_MAX &&
+                !it.endsWith('.') && !it.endsWith(':') && (hasIngredientHeading || !PasteLines.ingredientLed(it))
         }
     }
 
-    private fun heading(h: PasteLine.Heading, next: PasteLine?) {
+    private fun heading(lines: List<PasteLine>, i: Int) {
+        val h = lines[i] as PasteLine.Heading
+        val next = lines.getOrNull(i + 1)
         val known = PasteLines.sectionOf(h.text)
         if (known != null) {
             section = known
             level = h.level
             group = null
+            listedUnderHeading = false
             if (known == Section.INGREDIENTS || known == Section.STEPS) seenMain = true
             if (known == Section.INGREDIENTS) ingredientsHeading = true
             if (known == Section.STEPS) stepsHeading = true
@@ -115,8 +123,10 @@ private class LayoutReader(private val text: String) {
         }
         // A heading level with the ingredient heading but followed by quantity lines, before any step: a group.
         val groupOfItsLevel = section == Section.INGREDIENTS && !stepsSeen && next is PasteLine.Item &&
-            (next.fromTable || PasteLines.quantityLed(next.text))
-        val closes = h.markdown && h.level <= level && !groupOfItsLevel
+            (next.fromTable || PasteLines.ingredientLed(next.text))
+        // "## Утром: аэрогриль" level with "## Приготовление" and numbered lines under it: the method goes on.
+        val methodGoesOn = section == Section.STEPS && numberedBelow(lines, i)
+        val closes = h.markdown && h.level <= level && !groupOfItsLevel && !methodGoesOn
         when (section) {
             Section.INGREDIENTS, Section.STEPS, Section.EQUIPMENT -> when {
                 closes -> {
@@ -131,36 +141,90 @@ private class LayoutReader(private val text: String) {
             Section.DESCRIPTION, Section.NOTES, Section.OTHER -> if (h.markdown) {
                 if (section == Section.DESCRIPTION) servingsSources += h.text
             } else {
-                item(PasteLine.Item(h.text, numbered = false, marked = false))
+                item(PasteLine.Item(h.text, numbered = false, marked = false), next, fromHeading = true)
             }
         }
     }
 
-    private fun item(line: PasteLine.Item) {
+    /** A numbered line among the lines under the heading at [i], up to the next Markdown heading. */
+    private fun numberedBelow(lines: List<PasteLine>, i: Int): Boolean {
+        for (j in i + 1 until lines.size) {
+            val line = lines[j]
+            if (line is PasteLine.Heading && line.markdown) return false
+            if (line is PasteLine.Item && line.numbered) return true
+        }
+        return false
+    }
+
+    private fun item(line: PasteLine.Item, next: PasteLine?, fromHeading: Boolean = false) {
         if (section != Section.STEPS) {
             PasteLines.equipmentLine(line.text)?.let { equipment += it; return }
+            if (Servings.isServingsLine(line.text)) {
+                servingsSources += line.text
+                return
+            }
+            if (PasteLines.timeLine(line.text)) {
+                entries += Entry(Section.DESCRIPTION, line.text, false, null, pinned = true)
+                return
+            }
+        }
+        if (section == Section.INGREDIENTS && !line.marked && !line.fromTable) {
+            groupLine(line.text, next)?.let { group = it; return }
         }
         when {
             section == Section.DESCRIPTION && line.fromTable ->
                 entries += Entry(Section.INGREDIENTS, line.text, false, null, marked = true, fromTable = true)
-            section == Section.DESCRIPTION && Servings.isServingsLine(line.text) -> servingsSources += line.text
             section == Section.INGREDIENTS && !line.marked && line.text.endsWith(':') ->
                 entries += Entry(Section.DESCRIPTION, line.text, false, null)
-            else -> entries += Entry(
-                section, line.text, line.numbered, group.takeIf { section == Section.INGREDIENTS }, line.marked, line.fromTable,
-            )
+            else -> {
+                if (section == Section.INGREDIENTS) listedUnderHeading = true
+                entries += Entry(
+                    section, line.text, line.numbered, group.takeIf { section == Section.INGREDIENTS }, line.marked,
+                    line.fromTable, fromHeading = fromHeading,
+                )
+            }
         }
     }
 
-    /** No ingredient heading: the first run of short lines led by a quantity, among the lines before any section. */
+    /**
+     * The group an unmarked line under the ingredient heading opens, or null when it is not a group: a colon line up to
+     * [COLON_GROUP_MAX] between ingredient lines ("Сырники-основа (базовое тесто, 8–10 сырников):"), or a short line
+     * that is not an ingredient and either starts with "For " / "Для " or stands above a marked line (WP Recipe Maker).
+     */
+    private fun groupLine(text: String, next: PasteLine?): String? {
+        val ingredientNext = next is PasteLine.Item && (next.marked || PasteLines.ingredientLed(next.text))
+        if (text.endsWith(':')) {
+            return text.trimEnd(':').trim().takeIf { text.length <= COLON_GROUP_MAX && listedUnderHeading && ingredientNext }
+        }
+        if (text.length > COMPANION_MAX || PasteLines.ingredientLed(text) || PasteLines.endsSentence(text)) return null
+        val forPart = FOR_PART.containsMatchIn(text)
+        return text.takeIf { forPart || (next is PasteLine.Item && next.marked && !next.fromTable) }
+    }
+
+    /**
+     * No ingredient heading: the first run of short lines led by a quantity or a name and a dash, among the lines before
+     * any section. A heading line inside the run or right above it ("Для теста:") is the group of the lines below it.
+     */
     private fun ingredientsByShape() {
-        val candidates = entries.filter { it.section == Section.DESCRIPTION }
-        val start = candidates.indexOfFirst { ingredientShaped(it) && PasteLines.quantityLed(it.text) }
+        val candidates = entries.filter { it.section == Section.DESCRIPTION && !it.pinned }
+        val start = candidates.indexOfFirst { ingredientShaped(it) && PasteLines.ingredientLed(it.text) }
         var end = start
         while (start >= 0 && end + 1 < candidates.size && staysInRun(candidates, end + 1)) end++
         val run = if (start < 0) emptyList() else candidates.subList(start, end + 1)
-        if (run.count { PasteLines.quantityLed(it.text) } >= 2) {
-            run.forEach { it.section = Section.INGREDIENTS }
+        if (run.count { PasteLines.ingredientLed(it.text) } >= 2) {
+            val above = candidates.getOrNull(start - 1)?.takeIf { it.fromHeading }
+            val groups = mutableSetOf<Entry>()
+            var current: String? = null
+            (listOfNotNull(above) + run).forEach {
+                if (it.fromHeading && !PasteLines.ingredientLed(it.text)) {
+                    current = it.text
+                    groups += it
+                } else {
+                    it.section = Section.INGREDIENTS
+                    it.group = current
+                }
+            }
+            entries.removeAll(groups)
             if (!stepsHeading) stepsByShape(candidates.drop(end + 1), afterIngredient = false)
         } else if (!stepsHeading) {
             // An ingredient table with no heading above it: the steps are found by shape in the lines after it.
@@ -198,12 +262,12 @@ private class LayoutReader(private val text: String) {
         if (ingredientShaped(line)) return true
         val next = lines.getOrNull(i + 1) ?: return false
         return !line.numbered && line.text.length <= COMPANION_MAX && next.section == line.section &&
-            ingredientShaped(next) && PasteLines.quantityLed(next.text)
+            ingredientShaped(next) && PasteLines.ingredientLed(next.text)
     }
 
     private fun ingredientShaped(e: Entry) =
         !e.numbered && e.text.length <= INGREDIENT_MAX && !PasteLines.endsSentence(e.text) &&
-            (PasteLines.quantityLed(e.text) || e.text.length <= COMPANION_MAX)
+            (PasteLines.ingredientLed(e.text) || e.text.length <= COMPANION_MAX)
 
     private fun stepShaped(e: Entry) =
         (e.numbered && !PasteLines.quantityLed(e.text)) || e.text.length > INGREDIENT_MAX || PasteLines.endsSentence(e.text)
@@ -212,5 +276,7 @@ private class LayoutReader(private val text: String) {
         const val TITLE_MAX = 120
         const val INGREDIENT_MAX = 80
         const val COMPANION_MAX = 40
+        const val COLON_GROUP_MAX = 60
+        val FOR_PART = Regex("""^(?:for|для)\s""", RegexOption.IGNORE_CASE)
     }
 }
