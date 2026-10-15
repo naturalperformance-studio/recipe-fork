@@ -14,13 +14,19 @@ import app.recipefork.core.search.WordPrefix
  *
  * Precision before recall, in a step: a word that is part of an ingredient's name there ("grill seasoning", "свиную
  * лопатку") is no mention, nor is an English word that is also a verb unless an article or a preposition marks it as a
- * noun ("whisk the eggs", but "with a whisk"), nor a few words that read as something else ("весом", "таймер").
+ * noun ("whisk the eggs", but "with a whisk"), nor a few words that read as something else ("весом", "таймер"). Nor is
+ * one word that is part of a longer name ([partOfAnotherName]): "Crock-Pot", "Instant Pot", "rice cooker", "pot roast",
+ * and a container holding an ingredient ("a jar of salsa", "банка фасоли").
  */
 internal class EquipmentMentions(
     equipment: List<EquipmentEntryDto>,
     private val ingredients: DictionaryMatch<IngredientEntryDto>,
 ) {
     private val match = DictionaryMatch(equipment.filter { it.parentId != null })
+
+    /** The entries under the dictionary's storage heading: jars, bottles and the like, which hold what a recipe uses. */
+    private val containers: Set<Long> = equipment.filter { it.labelEn == "Storage" }.map { it.id }.toSet()
+        .let { headings -> equipment.filter { it.parentId in headings }.mapTo(HashSet()) { it.id } }
 
     /**
      * Every form of every word an entry's name holds, with the most words of a name holding it: a word with none of
@@ -50,7 +56,11 @@ internal class EquipmentMentions(
                 for (to in end downTo i + 1) {
                     val bound = bind(text.substring(words[i].start, words[to - 1].end))
                     if (bound == null || bound.unused.isNotEmpty()) continue
-                    if (inStep && (verbHere(text, words, i, to) || ingredientHere(text, words, i, to))) break
+                    if (inStep && (verbHere(text, words, i, to) || ingredientHere(text, words, i, to) ||
+                            partOfAnotherName(text, words, i, to, bound.entry))
+                    ) {
+                        break
+                    }
                     found += bound.entry
                     size = to - i
                     break
@@ -80,17 +90,43 @@ internal class EquipmentMentions(
         return (from until to).none { unused.remove(words[it].folded) }
     }
 
+    /**
+     * One word bound alone where it is part of a longer name the dictionary does not hold: joined by a hyphen to the
+     * next or the last word ("Crock-Pot"); in English, capitalised within a sentence ("Instant Pot"), after an
+     * ingredient's name ("rice cooker") or before any word but one that may follow a noun ("pot roast"); or a container
+     * before "of" or an ingredient's name ("a jar of salsa", "банка фасоли").
+     */
+    private fun partOfAnotherName(text: String, words: List<Word>, from: Int, to: Int, entry: EquipmentEntryDto): Boolean {
+        if (to - from != 1) return false
+        val word = words[from]
+        val before = words.getOrNull(from - 1)?.takeIf { joined(text, it, word) }
+        val after = words.getOrNull(to)?.takeIf { joined(text, word, it) }
+        fun hyphen(a: Word, b: Word) = text.substring(a.end, b.start) == "-"
+        fun ingredient(w: Word) = ingredients.bind(text.substring(w.start, w.end))?.unused?.isEmpty() == true
+        if (before != null && hyphen(before, word) || after != null && hyphen(word, after)) return true
+        if (entry.id in containers && after != null && (after.folded == "of" || ingredient(after))) return true
+        if (word.folded.any { it !in 'a'..'z' }) return false
+        return before != null && (text[word.start].isUpperCase() || ingredient(before)) ||
+            after != null && after.folded !in FOLLOWERS
+    }
+
     private class Word(val start: Int, val end: Int, val folded: String)
 
     private companion object {
         val WORD = Regex("""[\p{L}\p{N}]++""")
 
         /** Words that would name an entry but in a recipe's text mostly mean something else, folded. */
-        val STOP = setOf("весом", "веса", "весу", "весе", "таймер", "таймера", "таймером", "timer", "timers")
+        val STOP = setOf("вес", "весь", "весом", "веса", "весу", "весе", "таймер", "таймера", "таймером", "timer", "timers")
 
         val VERBS = setOf("whisk", "grill", "ladle", "sieve", "skewer", "funnel", "scale", "torch", "microwave", "barbecue", "bbq", "foil", "mill")
         val DETERMINERS = setOf("a", "an", "the", "your", "this", "that")
         val PREPOSITIONS = setOf("with", "on", "in", "into", "onto", "under", "over", "using", "from", "through")
+
+        /** The words that may follow an English noun in a step: no part of a longer name. */
+        val FOLLOWERS = PREPOSITIONS + DETERMINERS + setOf(
+            "to", "for", "and", "or", "of", "then", "at", "until", "till", "while", "as", "by", "about", "before", "after",
+            "so", "when", "if", "is", "are", "again", "along", "without", "halfway", "uncovered", "covered", "preheated",
+        )
 
         /** Two neighbouring words with nothing but spaces and hyphens between them. */
         fun joined(text: String, a: Word, b: Word) = (a.end until b.start).all { text[it].isWhitespace() || text[it] == '-' }

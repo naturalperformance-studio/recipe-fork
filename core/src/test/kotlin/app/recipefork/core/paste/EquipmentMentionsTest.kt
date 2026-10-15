@@ -50,9 +50,24 @@ class EquipmentMentionsTest {
     @Test
     fun wordsThatReadAsSomethingElseAreNoEquipment() {
         assertEquals(emptyList(), named("Жидкости по весу, кусок весом 200 г."))
+        assertEquals(emptyList(), named("Соскоблить пригар — в нём весь вкус. Вес готового блюда 500 г."))
         assertEquals(listOf("Refrigerator"), named("Хранение: холодильник, 2 дня."))
         assertEquals(emptyList(), named("Техника простая: поставить таймер на 10 минут."))
         assertEquals(emptyList(), named("Форму поставить по центру корзины."))
+    }
+
+    @Test
+    fun oneWordOfALongerNameIsNoEquipment() {
+        listOf("Cook in the Instant Pot for 10 minutes.", "Put everything in the Crock-Pot.", "Cook the rice in a rice cooker.", "Serve the pot roast.")
+            .forEach { assertEquals(emptyList(), named(it), it) }
+        assertEquals(listOf("Saucepan"), named("Bring a large pot to a boil."))
+    }
+
+    @Test
+    fun aContainerOfAnIngredientIsNoEquipment() {
+        listOf("Add a jar of salsa.", "Pour in a bottle of wine.", "Добавить банка фасоли.")
+            .forEach { assertEquals(emptyList(), named(it), it) }
+        assertEquals(listOf("Jar"), named("Переложить в банку и закрыть."))
     }
 
     @Test
