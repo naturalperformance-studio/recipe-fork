@@ -166,7 +166,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
         }
     }
 
-    private companion object {
+    internal companion object {
         val GLYPHS = mapOf(
             '¼' to Rational.of(1, 4), '½' to Rational.of(1, 2), '¾' to Rational.of(3, 4), '⅓' to Rational.of(1, 3),
             '⅔' to Rational.of(2, 3), '⅕' to Rational.of(1, 5), '⅖' to Rational.of(2, 5), '⅗' to Rational.of(3, 5),

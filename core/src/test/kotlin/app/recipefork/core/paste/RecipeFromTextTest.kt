@@ -54,7 +54,8 @@ class RecipeFromTextTest {
         )
         assertEquals((0 until 9).toList(), recipe.ingredients.map { it.position })
         assertEquals(listOf(0, 1, 2), recipe.steps.map { it.position })
-        assertEquals("Крахмал. Размешать крахмал с ложкой йогурта до гладкости, чтобы не было комков.", recipe.steps[0].text)
+        // The references in it (T-283) stand between spaces of its own.
+        assertEquals("Крахмал. Размешать  крахмал с ложкой  йогурта до гладкости, чтобы не было комков.", recipe.steps[0].text)
         // The description lines, then the notes.
         assertTrue(recipe.description.startsWith("~160 г — на 4 закрытых бургера\nЗамена майонезно-кетчупового соуса."), recipe.description)
         assertTrue(recipe.description.endsWith("\nХранение: холодильник, 2 дня."), recipe.description)
