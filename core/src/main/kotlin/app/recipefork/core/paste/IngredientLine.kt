@@ -224,6 +224,8 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
             ).joinToString("|", """(?<![\p{L}\p{N}])(?:""", """)(?![\p{L}\p{N}])"""),
             RegexOption.IGNORE_CASE,
         )
+        /** A note that is only one of these says nothing: "macaroni and cheese" leaves "and" when cheese is no part of it. */
+        val CONJUNCTIONS = setOf("и", "или", "and", "or")
         val SPACES = Regex("""\s+""")
         val UNICODE_SPACE = Regex("""[\p{Z}\t]""")
         val WORD_SEPARATORS = Regex("""[^\p{L}\p{N}]+""")
@@ -269,7 +271,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
          * parenthesis that still fits, and none that does not.
          */
         fun noteOf(parts: List<String>, parens: List<String>): String? {
-            var note = parts.filter { it.isNotBlank() }.joinToString(", ")
+            var note = parts.filter { it.isNotBlank() && it.lowercase() !in CONJUNCTIONS }.joinToString(", ")
             if (note.length > RecipeBounds.MAX_NOTE) {
                 val cut = note.take(RecipeBounds.MAX_NOTE - 1)
                 note = cut.substringBeforeLast(' ', cut).trimEnd(*EDGES) + "…"
