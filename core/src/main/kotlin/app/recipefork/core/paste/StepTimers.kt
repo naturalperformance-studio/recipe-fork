@@ -8,7 +8,8 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * The timers a pasted step's text names: every duration in it ("20 минут", "1 ч 30 мин", "полчаса", "1½ hours",
- * "1 hr 15 mins"), a range read as its larger end ("35–40 минут" is 40), in whole minutes. A duration outside a timer's
+ * "1 hr 15 mins", a minute or an hour with no number: "прогреть минуту", "минимум час", "по минуте", "an hour"), a range
+ * read as its larger end ("35–40 минут" is 40), in whole minutes. A duration outside a timer's
  * range (1 minute to 99 h 59 min) is none; the first [RecipeBounds.MAX_TIMERS] are kept, unnamed, so that each takes its
  * name from the step. The text itself is left as it is.
  */
@@ -24,7 +25,7 @@ internal object StepTimers {
 
     /** "ч" is an hour unless a spoon follows it: "1 ч. л.", "1 ч ложку", "1 ч/л" — but "2 ч. Лук нарезать" is two hours. */
     private const val HOURS = """(?:час(?:а|ов)?|ч(?!\.?\s*+/?\s*+(?:л(?!\p{L})|лож))\.?|hours?|hrs?\.?|h)(?!\p{L})"""
-    private const val MINUTES = """(?:минут[аыу]?|мин\.?|minutes?|mins?\.?)(?!\p{L})"""
+    private const val MINUTES = """(?:минут[аыуе]?|мин\.?|minutes?|mins?\.?)(?!\p{L})"""
     private val DURATION = Regex(
         """(?<![\p{L}\p{N}.,/])(?:""" +
             """${range("h")}\s*+$HOURS(?:\s*+(?:и\s++|and\s++)?${range("hm")}\s*+(?:$MINUTES|m(?!\p{L})))?""" +
@@ -32,6 +33,8 @@ internal object StepTimers {
             """|(?<half>полчаса|half\s++an\s++hour)(?!\p{L})""" +
             """|(?<oneAndHalf>полтора\s++часа|an\s++hour\s++and\s++a\s++half|one\s++and\s++a\s++half\s++hours?)(?!\p{L})""" +
             """|(?<hour>(?:an|one)\s++hour)(?!\p{L})""" +
+            """|(?<minute>минуту|минутку|(?:по|около)\s++минут[еы]|(?:a|one)\s++minute)(?!\p{L})""" +
+            """|(?<bareHour>час)(?!\p{L})""" +
             """)""",
         RegexOption.IGNORE_CASE,
     )
@@ -41,6 +44,17 @@ internal object StepTimers {
 
     /** A duration after one of these is how often, not how long: "помешивать каждые 5 минут". */
     private val EVERY = setOf("каждые", "каждых", "каждую", "каждый", "every")
+
+    /**
+     * A minute or an hour with no number after one of these is when, not how long: "в первую минуту", "за минуту до
+     * конца".
+     */
+    private val WHEN = setOf("первую", "вторую", "третью", "последнюю", "первый", "последний", "за", "first", "last", "final")
+
+    /** A minute or an hour with no number before one of these is how much longer or sooner: "на минуту меньше". */
+    private val COMPARISONS = setOf(
+        "меньше", "больше", "раньше", "позже", "дольше", "короче", "earlier", "later", "less", "more", "longer", "sooner",
+    )
 
     /**
      * The timers [text] names, in its order, at most [RecipeBounds.MAX_TIMERS]. Two durations joined as a range are
@@ -61,6 +75,7 @@ internal object StepTimers {
                 }
                 gap != null && gap.trimStart().startsWith('(') && ')' !in gap && isRange(found) -> false
                 wordBefore(text, found.range.first) in EVERY -> false
+                isBare(found) && (wordBefore(text, found.range.first) in WHEN || wordAfter(text, found.range.last + 1) in COMPARISONS) -> false
                 value == null -> false
                 else -> true.also { minutes += value }
             }
@@ -68,6 +83,18 @@ internal object StepTimers {
             previousKept = kept
         }
         return minutes.take(RecipeBounds.MAX_TIMERS).map { Timer(it.minutes, label = null) }
+    }
+
+    /** A minute or an hour named by a word alone: "прогреть минуту", "минимум час", "an hour". */
+    private fun isBare(found: MatchResult) = listOf("minute", "bareHour", "hour").any { (found.groups as MatchNamedGroupCollection)[it] != null }
+
+    /** The word right after [at], lowercased, with only spaces between; null where there is none. */
+    private fun wordAfter(text: String, at: Int): String? {
+        var start = at
+        while (start < text.length && text[start].isWhitespace()) start++
+        var end = start
+        while (end < text.length && text[end].isLetter()) end++
+        return text.substring(start, end).lowercase().takeIf { it.isNotEmpty() }
     }
 
     private fun isRange(found: MatchResult) = listOf("hb", "hmb", "mb").any { (found.groups as MatchNamedGroupCollection)[it] != null }
@@ -90,7 +117,8 @@ internal object StepTimers {
         val minutes = when {
             groups["half"] != null -> 30.0
             groups["oneAndHalf"] != null -> 90.0
-            groups["hour"] != null -> 60.0
+            groups["hour"] != null || groups["bareHour"] != null -> 60.0
+            groups["minute"] != null -> 1.0
             groups["ha"] != null -> (larger("h") ?: return null) * 60 + (larger("hm") ?: 0.0)
             else -> larger("m") ?: return null
         }

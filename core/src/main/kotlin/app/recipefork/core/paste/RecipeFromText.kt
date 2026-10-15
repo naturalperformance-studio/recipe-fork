@@ -23,12 +23,13 @@ object RecipeFromText {
         val layout = TextLayout.read(text) ?: return null
         val ingredientMatch = DictionaryMatch(dictionaries.ingredients)
         val reader = IngredientLineReader(ingredientMatch)
-        val lines = layout.ingredients.take(RecipeBounds.MAX_INGREDIENTS)
+        val section = IngredientSection(layout.ingredients, reader, EquipmentMentions(dictionaries.equipment, ingredientMatch))
+        val lines = section.ingredients.take(RecipeBounds.MAX_INGREDIENTS)
         val groups = lines.indices.filter { i -> lines[i].group != null && (i == 0 || lines[i].group != lines[i - 1].group) }
             .mapNotNull { i -> lines[i].group?.trim()?.takeIf { it.isNotEmpty() }?.let { IngredientGroup(fit(it, RecipeBounds.MAX_GROUP_NAME), i) } }
         val steps = layout.steps.take(RecipeBounds.MAX_STEPS).mapIndexed(::step)
         val mentions = EquipmentMentions(dictionaries.equipment, ingredientMatch)
-        val equipment = (layout.equipment.flatMap { mentions.of(it, inStep = false) } + steps.flatMap { mentions.of(it.text, inStep = true) })
+        val equipment = ((layout.equipment + section.equipment).flatMap { mentions.of(it, inStep = false) } + steps.flatMap { mentions.of(it.text, inStep = true) })
             .distinctBy { it.id }.take(RecipeBounds.MAX_EQUIPMENT).map { EquipmentItem.entry(it.id) }
         val fallback = if (layout.language == RecipeLanguage.RU) "Рецепт" else "Recipe"
         return Recipe.create(at, owner).copy(

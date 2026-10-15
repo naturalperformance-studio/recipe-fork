@@ -24,6 +24,21 @@ data class CorpusText(val set: String, val name: String, val text: String) {
             File(root, set).listFiles().orEmpty().filter { it.isFile }.sortedBy { it.name }
                 .map { CorpusText(set, it.name, it.readText()) }
         }
+
+        /**
+         * Every `*.txt` under [dir], at any depth, in path order: its set the first segment of its path below [dir] where
+         * that is "ru" or "en", "extra" otherwise; its name the rest of the path.
+         */
+        fun loadExtra(dir: File): List<CorpusText> = dir.walkTopDown().filter { it.isFile && it.extension == "txt" }
+            .map { it.relativeTo(dir).invariantSeparatorsPath to it }.sortedBy { it.first }
+            .map { (path, file) ->
+                val set = path.substringBefore('/').takeIf { '/' in path && it in EXTRA_SETS }
+                CorpusText(set ?: EXTRA, if (set == null) path else path.substringAfter('/'), file.readText())
+            }
+            .toList()
+
+        private const val EXTRA = "extra"
+        private val EXTRA_SETS = setOf("ru", "en")
     }
 }
 
@@ -74,15 +89,13 @@ data class CorpusTotals(val measures: List<TextMeasure>) {
 /** The corpus measures, read with any reader so the same figures come out of the test and the report. */
 object CorpusMeasures {
     /**
-     * The corpus floors (T-281): the share of rows with a quantity read, bound to the dictionary, durations timed. The
-     * quantity floor is the measured 87.5 % rounded down, below the 95 % aimed at: the eda.ru shape (a name and its
-     * quantity on lines of their own), quantities left in a note after a comma ("куриная грудка, замороженная — 350 г"),
-     * quantities in words ("пучок", "of half a") and units the reader does not know ("мультистакан", "головка") are left
-     * to T-284, which raises it. The measure errs low: every qualifier on a to-taste row counts as a missed quantity.
+     * The corpus floors: the share of rows with a quantity read, bound to the dictionary, durations timed — each what
+     * the corpus measured after T-284 (99.2 %, 95.9 %, 99.6 %), rounded down to a whole percent. The measure errs low:
+     * every qualifier on a to-taste row counts as a missed quantity ("Вода холодная", "whole-milk yogurt").
      */
-    const val QUANTIFIED_FLOOR = 0.87
-    const val BOUND_FLOOR = 0.80
-    const val TIMER_FLOOR = 0.90
+    const val QUANTIFIED_FLOOR = 0.99
+    const val BOUND_FLOOR = 0.95
+    const val TIMER_FLOOR = 0.99
 
     fun measure(texts: List<CorpusText>, read: (String) -> Recipe?, dictionaries: DictionariesDto): List<TextMeasure> {
         val labels = dictionaries.equipment.associate { it.id to EntryLabels(it.labelRu, it.labelEn) }
@@ -176,8 +189,9 @@ object CorpusMeasures {
  * A count of the durations a step's text names, kept apart from the parser's own reading: a number (or a range of
  * numbers) followed by a minute or hour word, a minute or an hour with no number ("прогреть минуту", "минимум час",
  * "по минуте", "около минуты", "a minute", "an hour"), or "полчаса" / "half an hour". An hour followed by its minutes ("1 ч 30 мин"), and two
- * durations joined as a range ("45 mins - 1 hr"), count once; one after "каждые" / "every" says how often, and one in a
- * comparison ("на минуту меньше", "an hour later") says how much longer or sooner: neither is counted. Seconds and days
+ * durations joined as a range ("45 mins - 1 hr"), count once; one after "каждые" / "every" says how often, one in a
+ * comparison ("на минуту меньше", "an hour later") says how much longer or sooner, and a minute or an hour with no
+ * number after an ordinal or "за" ("в первую минуту", "за минуту до конца") says when: none of them is counted. Seconds and days
  * are no timer and are not counted.
  */
 object WrittenDurations {
@@ -193,6 +207,7 @@ object WrittenDurations {
     private val BEFORE_COMPARISON = Regex("""(?<!\p{L})на\s*+$""", RegexOption.IGNORE_CASE)
     private val COMPARATIVE = Regex("""^\s*+(?:меньше|больше|раньше|позже|дольше|короче)(?!\p{L})""", RegexOption.IGNORE_CASE)
     private val COMPARATIVE_EN = Regex("""^\s*+(?:earlier|later|less)(?!\p{L})""", RegexOption.IGNORE_CASE)
+    private val WHEN = Regex("""(?<!\p{L})(?:первую|вторую|третью|последнюю|за|first|last)\s*+$""", RegexOption.IGNORE_CASE)
 
     fun count(text: String): Int {
         var count = 0
@@ -203,7 +218,9 @@ object WrittenDurations {
             val after = text.substring(found.range.last + 1, minOf(text.length, found.range.last + 13))
             val every = EVERY.containsMatchIn(before)
             val comparison = BEFORE_COMPARISON.containsMatchIn(before) && COMPARATIVE.containsMatchIn(after) || COMPARATIVE_EN.containsMatchIn(after)
-            if (!joined && !every && !comparison) count++
+            val bare = found.value.first().let { !it.isDigit() && it !in "½¼¾⅓⅔" }
+            val at = bare && WHEN.containsMatchIn(before)
+            if (!joined && !every && !comparison && !at) count++
             previousEnd = found.range.last + 1
         }
         return count
