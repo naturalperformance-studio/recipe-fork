@@ -84,8 +84,12 @@ object WordPrefix {
  * never under three.
  */
 object Inflection {
-    /** The forms of one [folded][WordPrefix.fold] [word]; a word under four letters is its only form. */
+    /**
+     * The forms of one [folded][WordPrefix.fold] [word]; a word under four letters is its only form, unless it is a short
+     * form whose stem changes ([SHORT]: "яиц" is "яйцо").
+     */
     fun forms(word: String): Set<String> {
+        SHORT[word]?.let { return setOf(it) }
         if (word.length < MIN_WORD) return setOf(word)
         val stem = if (word.any { it in 'а'..'я' }) russian(word) else english(word)
         val fleeting = fleeting(stem)
@@ -145,6 +149,8 @@ object Inflection {
         "ов", "ев", "ам", "ям", "ах", "ях", "ом", "ем", "ию", "ия", "ье", "ья", "ью",
         "а", "я", "о", "е", "ы", "и", "у", "ю", "ь",
     )
+    /** Short forms whose stem changes, by the stem of their word: the genitive plural "5 яиц" of "яйцо". */
+    private val SHORT = mapOf("яиц" to "яйц")
     private val FLEETING = listOf("ец", "ок", "ек", "ен")
     private val VOWELS = "аеиоуыэюя".toSet()
     private val ENGLISH_ES = listOf("ches", "shes", "sses", "xes", "zes")
