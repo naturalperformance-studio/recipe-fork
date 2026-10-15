@@ -32,6 +32,7 @@ object RecipeFileCheck {
     const val MAX_GROUP_NAME = RecipeBounds.MAX_GROUP_NAME
     const val MAX_EQUIPMENT = RecipeBounds.MAX_EQUIPMENT
     const val MAX_EQUIPMENT_NAME = RecipeBounds.MAX_EQUIPMENT_NAME
+    const val MAX_SOURCE_TEXT = RecipeBounds.MAX_SOURCE_TEXT
 
     /**
      * The tags one recipe of a file carries: well above the whole dictionary's (293 in its snapshot), which is the most
@@ -63,6 +64,11 @@ object RecipeFileCheck {
         check(content.servings == null || content.servings >= 1) { "a serving count below one" }
         check(content.tags.size <= MAX_TAGS) { "more than $MAX_TAGS tags" }
         check(content.tags.all { it >= 0 }) { "a tag that is none" }
+        // The text the recipe was made from: never empty, and within its limit, which reading a file cuts it at.
+        content.sourceText?.let { text ->
+            check(text.isNotBlank()) { "the source text is blank" }
+            check(text.length <= MAX_SOURCE_TEXT) { "the source text is over $MAX_SOURCE_TEXT characters" }
+        }
         content.author?.let { check(it.isNotBlank() && it.length <= MAX_NICKNAME) { "the author's nickname is not one" } }
         content.parent?.let { parent ->
             check(IDENTITY.matches(parent.id.value)) { "the parent's identity is not one" }

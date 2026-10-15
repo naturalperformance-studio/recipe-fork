@@ -170,8 +170,8 @@ class RecipeImportTest {
     // FLOW-064 (5): a document of a later format, written by a later version of the application.
     @Test
     fun aLaterFormatIsRefused() {
-        val later = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 8")
-        assertTrue(later.contains("\"format_version\": 8"))
+        val later = RecipeFile.encode(soup()).replace("\"format_version\": 6", "\"format_version\": 9")
+        assertTrue(later.contains("\"format_version\": 9"))
         assertRefused(Refusal.LATER_VERSION, zip(RecipeFile.DOCUMENT to later.toByteArray()))
     }
 

@@ -249,7 +249,8 @@ object CollectionArchiveReader {
         fun text(value: String?): Long = if (value == null) 0L else OBJECT + 2L * value.length
         fun number(value: Rational?): Long =
             if (value == null) 0L else OBJECT + 2 * NUMBER + (value.numerator.bitLength() + value.denominator.bitLength()) / 8L
-        var total = 4 * OBJECT + text(content.id.value) + text(content.title) + text(content.description) + text(content.author)
+        var total = 4 * OBJECT + text(content.id.value) + text(content.title) + text(content.description) + text(content.author) +
+            text(content.sourceText)
         content.parent?.let { total += OBJECT + text(it.id.value) + text(it.title) + text(it.nickname) }
         total += content.tags.size * TAG
         content.equipment.forEach { total += OBJECT + text(it.qualifier) + text(it.freeTextName) }

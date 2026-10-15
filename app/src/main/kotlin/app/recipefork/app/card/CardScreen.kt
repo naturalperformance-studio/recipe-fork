@@ -379,6 +379,8 @@ fun CardScreen(
     // The sheet of the reader's collections, open over the card while it is asked for; its notice is the card's statement.
     val collections = environment.collections
     var collecting by rememberSaveable(recipeId) { mutableStateOf(false) }
+    // The sheet of the text the recipe was made from, open over the card while it is asked for; a copy is said by the card.
+    var readingSource by rememberSaveable(recipeId) { mutableStateOf(false) }
     val say = rememberStatement(snackbars)
     // The recipe on paper or in a PDF, made at the tap from what the card holds then: its scale, the dictionaries, the
     // parent's title as the book holds it, the cover and step photos the device holds, the interface's language. While it
@@ -458,6 +460,7 @@ fun CardScreen(
                     },
                     onAddToCollection = if (collections != null) { { collecting = true } } else null,
                     onPrint = printRecipe,
+                    onSourceText = if (recipe?.sourceText != null) { { readingSource = true } } else null,
                 )
                 // The tabs stay under the bar and never scroll with the recipe.
                 if (recipe != null) CardTabs(pager)
@@ -559,6 +562,14 @@ fun CardScreen(
         AddToCollectionSheet(recipeId, collections) { notice ->
             collecting = false
             notice?.let(say)
+        }
+    }
+    val sourceText = recipe?.sourceText
+    if (readingSource && sourceText != null) {
+        val copied = stringResource(R.string.card_source_text_copied)
+        SourceTextSheet(sourceText) { done ->
+            readingSource = false
+            if (done) say(copied)
         }
     }
 }
@@ -864,6 +875,7 @@ private fun TopBar(
     onAddToShopping: () -> Unit,
     onAddToCollection: (() -> Unit)?,
     onPrint: ((PrintWay) -> Unit)?,
+    onSourceText: (() -> Unit)?,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
     var last by remember { mutableStateOf(title) }
@@ -895,7 +907,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onAddToCollection, onPrint)
+                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onAddToCollection, onPrint, onSourceText)
             }
         },
         // On the colour the column holding the bar and the tabs draws: the bar's, turning to its scrolled colour.
@@ -1403,7 +1415,8 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
  * The card's ⋮, after its other actions, always shown, in the order every ⋮ of a recipe keeps (v0.38, T-269): first
  * "Add to collection" where the card is given the book's collections ([onAddToCollection], v0.36), then the
  * shopping-list action — "Add to shopping list", or "Update in shopping list" while the recipe is [listed] (FLOW-074) —
- * then, once the recipe is read with its scale, Print and Share as PDF ([onPrint], FLOW-075), then Clear marks while
+ * then, once the recipe is read with its scale, Print and Share as PDF ([onPrint], FLOW-075), then "Original text"
+ * where the recipe keeps the text it was made from ([onSourceText], v0.39), which opens it in a sheet, then Clear marks while
  * the recipe has done marks (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal —
  * Delete for an own recipe in a deletable state, Remove for a found one — in the theme's error colour. Each item is the
  * card's [CardTarget] tall.
@@ -1418,6 +1431,7 @@ private fun CardMenu(
     onAddToShopping: () -> Unit,
     onAddToCollection: (() -> Unit)?,
     onPrint: ((PrintWay) -> Unit)?,
+    onSourceText: (() -> Unit)?,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -1463,6 +1477,16 @@ private fun CardMenu(
                         onPrint(PrintWay.SHARE)
                     },
                     modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHARE_PDF),
+                )
+            }
+            if (onSourceText != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.card_source_text)) },
+                    onClick = {
+                        expanded = false
+                        onSourceText()
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SOURCE_TEXT),
                 )
             }
             if (marked) {
@@ -1559,6 +1583,7 @@ object CardTags {
     const val COLLECTION = "card-collection"
     const val PRINT = "card-print"
     const val SHARE_PDF = "card-share-pdf"
+    const val SOURCE_TEXT = "card-source-text"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
     const val SUMMARY = "card-summary"

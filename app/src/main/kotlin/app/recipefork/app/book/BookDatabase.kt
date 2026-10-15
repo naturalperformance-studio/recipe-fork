@@ -63,7 +63,7 @@ abstract class BookDatabase : RoomDatabase() {
             Room.databaseBuilder(context, BookDatabase::class.java, name).addMigrations(*migrations(equipment)).build()
 
         /** The schema version of a book this application writes; an older book is migrated up to it as it is opened. */
-        const val VERSION = 9
+        const val VERSION = 10
 
         /** The equipment dictionary the application ships (decisions/20260928-dictionaries-ship-with-the-application.md). */
         fun shippedEquipment(context: Context): List<DictionaryEntry> =
@@ -155,6 +155,12 @@ abstract class BookDatabase : RoomDatabase() {
                             "ON UPDATE NO ACTION ON DELETE CASCADE )",
                     )
                     db.execSQL("create index if not exists `index_collection_recipe_recipe_id` on `collection_recipe` (`recipe_id`)")
+                }
+            },
+            // 9 → 10: a recipe may keep the text it was made from (v0.39); every recipe already in the book keeps none.
+            object : Migration(9, 10) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table recipe add column source_text text")
                 }
             },
         )
