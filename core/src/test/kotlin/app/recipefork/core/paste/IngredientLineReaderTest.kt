@@ -161,6 +161,12 @@ class IngredientLineReaderTest {
                     // Fix round 1: several words before an amount, a plus between two amounts, a long word.
                     "zest " + "and juice ".repeat(5_000) + "of 1 lemon", "сок " + "а".repeat(20_000) + " 1 лимона",
                     "сок, ".repeat(10_000) + "1 лимона", "1 cup" + " + 2 tbsp".repeat(5_000) + " flour", "1 can " + "butter ".repeat(5_000) + "beans",
+                    // T-285: equal amounts, a fraction slash, a package's size, "plus", a dash.
+                    "Лук 1 шт." + " = 80 г".repeat(5_000), "=".repeat(20_000), "1 г соли = " + "1 ".repeat(10_000) + "г",
+                    "1" + "⁄1".repeat(10_000) + " tsp salt", "2 x " + "4".repeat(20_000) + "g cans", "2 " + "x ".repeat(10_000) + "400g cans",
+                    "4 8" + "-".repeat(20_000) + "ounce packages", "4 " + "8-ounce ".repeat(5_000) + "packages", "1 cup" + " plus 2 tbsp".repeat(5_000) + " flour",
+                    "plus ".repeat(10_000) + "1 g salt", "dash ".repeat(10_000) + "salt", "Лук" + " 1".repeat(10_000) + "x = 5 г",
+                    "Лук " + "1".repeat(20_000) + "x = 5 г", "Лук" + " 1x".repeat(10_000) + "! = 5 г", "Лук" + " ".repeat(20_000) + "1x = 5 г",
                 ),
             )
             .forEach { text ->

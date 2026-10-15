@@ -22,9 +22,10 @@ import app.recipefork.core.search.DictionaryMatch
  * чеснока", "small bunch parsley") counts pieces and qualifies the entry. What follows the name and says what it is
  * ("9%", "без кожи") qualifies the entry it is bound to; how it is prepared, what a dash or a colon adds to a bound
  * name ("мука — обвалять"), what follows a plus, a clause after a comma and a parenthesis go to the row's note, within
- * its bound — a parenthesis is left out where it does not fit (the original text keeps it). A quantity off its unit's
- * grid is moved to the nearest value on it, and less than ¼ teaspoon is a pinch; a quantity that cannot be read is kept
- * as typed. A line with no quantity at all is to taste. Nothing of a line is lost: an unbound name is free text.
+ * its bound — a parenthesis is left out where it does not fit (the original text keeps it). Of two equal amounts ("1 шт.
+ * = 80 г") the first is the quantity and the second a note, as the size of each thing counted is ("2 x 400g cans"); a
+ * fraction slash ("1⁄2") is a slash, "plus" a plus and a dash a pinch. A quantity off its unit's grid is moved to the
+ * nearest value on it, and less than ¼ teaspoon is a pinch; a quantity that cannot be read is kept as typed. A line with no quantity at all is to taste. Nothing of a line is lost: an unbound name is free text.
  */
 class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto>) {
 
@@ -54,7 +55,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
      * when no amount of a bound name follows the colon ("Яйца: 2", "Соль: по вкусу").
      */
     private fun labelled(line: IngredientLine): IngredientLine? {
-        val found = LABEL.matchEntire(squeeze(line.text.replace(UNICODE_SPACE, " "))) ?: return null
+        val found = LABEL.matchEntire(squeeze(normal(line.text))) ?: return null
         val label = found.groups["label"]!!.value
         val rest = found.groups["rest"]!!.value
         val row = read(IngredientLine(rest, null), 0)
@@ -63,9 +64,28 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
 
     /** The row [line] reads as, at [position] of its recipe. */
     fun read(line: IngredientLine, position: Int): Ingredient {
-        val text = line.text.replace(UNICODE_SPACE, " ")
+        val text = normal(line.text)
         val parens = PAREN.findAll(text).map { it.groupValues[1].trim() }.filter { it.isNotEmpty() }.toMutableList()
         var body = PAREN.replace(text, " ")
+        // "Лук репчатый 1 шт. = 80 г": an amount, then the same in another unit — the first is the quantity, "= 80 г" a
+        // note; where the first cannot be read ("3 пучочка = 15 г"), the second is the quantity and the first the note.
+        var equal: String? = null
+        val eq = body.indexOf('=')
+        val right = if (eq > 0) body.substring(eq + 1) else ""
+        val end = CLAUSE.find(right)?.range?.first ?: right.length
+        val same = squeeze(right.substring(0, end))
+        if (amountOnly(same)) {
+            val left = squeeze(body.substring(0, eq))
+            val first = Amount.lead(left) ?: Amount.trail(left)
+            val unread = UNREAD_TAIL.matchEntire(left)?.takeIf { it.groups["name"]!!.value.any(Char::isLetter) }
+            if (first?.quantity != null) {
+                equal = "= $same"
+                body = left + right.substring(end)
+            } else if (first == null && unread != null) {
+                equal = unread.groups["amount"]!!.value
+                body = unread.groups["name"]!!.value + " " + same + right.substring(end)
+            }
+        }
         // "40 г муки + немного на подпыл": what follows a plus goes to the note, unless an alternative before holds it.
         // "1 cup + 2 tbsp flour": an amount with no name before the plus is of the name after it, the first its quantity.
         var plus: String? = null
@@ -131,7 +151,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
         }
 
         val entry = named.entry
-        val notes = listOfNotNull(amount?.before) + listOf(named.preparation) + listOfNotNull(added, amount?.after) + clauses + listOfNotNull(plus)
+        val notes = listOfNotNull(amount?.before) + listOf(named.preparation) + listOfNotNull(added, amount?.after, amount?.pack, equal) + clauses + listOfNotNull(plus)
         val base = Ingredient(
             position = position,
             dictionaryEntry = entry?.id,
@@ -269,7 +289,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
      * [entered]; the unit word, as written ([wordText]), and the size before it ([size], "small bunch"); a word for a
      * whole thing after a unit ([countAfter], "400g can"); the [name] around them; and the words of the line the
      * quantity was found among that are no part of the name, for the note — [before] it (a label, "juice of", a clause's
-     * own words) and [after] it ("с горкой").
+     * own words) and [after] it ("с горкой"); the size of each of the whole things counted ([pack], "8-ounce", "400g").
      */
     private data class Amount(
         val quantity: Rational?,
@@ -281,6 +301,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
         val countAfter: UnitWord.Count? = null,
         val before: String? = null,
         val after: String? = null,
+        val pack: String? = null,
     ) {
         /** A word for a whole thing counts the quantity, or follows its unit. */
         val counted: Boolean get() = word is UnitWord.Count || countAfter != null
@@ -307,6 +328,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
                         return of(value ?: Rational.ONE, null, unitText, found.groups["rest"]!!.value).copy(
                             size = found.groups["size"]?.value,
                             countAfter = found.groups["c"]?.value?.let(UnitWords::of) as? UnitWord.Count,
+                            pack = (found.groups["pack"] ?: found.groups["packed"])?.value?.let(::squeeze),
                         )
                     }
                 }
@@ -400,8 +422,14 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
 
         /** "~", "примерно", "about" before a quantity: the quantity is read as written. */
         const val ABOUT = """(?:(?:[~≈]|примерно|около|about|approx\.?|approximately)\s*+)?+"""
+        /**
+         * The size of each thing a quantity counts, after "x" ("2 x 400g cans", "1 × 100 g bag") or before a word for a
+         * whole thing ("4 8-ounce packages"): a number and a unit, its digits and spaces taken whole.
+         */
+        val PACK_SIZE = """\d++(?:[.,]\d++)?+[\s-]*+${UnitWords.UNIT_PATTERN}"""
+        val PACK = """(?:(?:[x×]\s*+(?<pack>$PACK_SIZE)|(?<packed>$PACK_SIZE)(?=\s++${UnitWords.COUNT_PATTERN}))\s*+)?"""
         val LEAD = Regex(
-            """^$ABOUT(?<q>$QUANTITY)?\s*(?:(?<size>${UnitWords.SIZE})\s++(?=${UnitWords.COUNT_PATTERN}))?(?<u>$UNIT)?\s*""" +
+            """^$ABOUT(?<q>$QUANTITY)?\s*$PACK(?:(?<size>${UnitWords.SIZE})\s++(?=${UnitWords.COUNT_PATTERN}))?(?<u>$UNIT)?\s*""" +
                 """(?:(?<c>${UnitWords.COUNT_PATTERN})\s++)?(?:of\s+)?(?<rest>.*)$""",
             RegexOption.IGNORE_CASE,
         )
@@ -443,11 +471,14 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
          */
         const val HEAD_WORDS = 6
 
+        /** "Лук зелёный 3 пучочка": a name, then a number and a word that is no unit; the digits and letters taken whole. */
+        val UNREAD_TAIL = Regex("""^(?<name>.*?)\s++(?<amount>\d++(?:[.,]\d++)?+\s*+\p{L}++\.?+)$""")
+
         val SHARE_OF = Regex("""^\s*+(?:от|of)\s++\d""", RegexOption.IGNORE_CASE)
 
         /** An alternative to what is named before it: "или 1 желток", "or 2 eggs". */
         val ALTERNATIVE = Regex("""(?<![\p{L}])(?:или|or)(?![\p{L}])""", RegexOption.IGNORE_CASE)
-        val EDGES = charArrayOf(' ', ',', ';', ':', '—', '–', '-', '.')
+        val EDGES = charArrayOf(' ', ',', ';', ':', '—', '–', '-', '.', '=')
 
         /** How an ingredient is prepared, or what may stand for it ("или по вкусу"), never what it is: the row's note. */
         val PREPARATION = Regex(
@@ -469,6 +500,12 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
         val CONJUNCTIONS = setOf("и", "или", "and", "or")
         val SPACES = Regex("""\s+""")
         val UNICODE_SPACE = Regex("""[\p{Z}\t]""")
+
+        /** The fraction slash between two digits ("1⁄2"): the slash a quantity is read with. */
+        val FRACTION_SLASH = Regex("""(?<=\d)\u2044(?=\d)""")
+
+        /** [text] with any Unicode space as a space and a fraction slash as a slash. */
+        fun normal(text: String) = text.replace(UNICODE_SPACE, " ").replace(FRACTION_SLASH, "/")
         val WORD_SEPARATORS = Regex("""[^\p{L}\p{N}]+""")
 
         fun squeeze(text: String) = text.replace(SPACES, " ").trim()
@@ -478,14 +515,17 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
          * quantity is read — in any form, with any unit or word for a whole thing, or a unit word alone.
          */
         fun amountOnly(text: String): Boolean {
-            val written = squeeze(text.replace(UNICODE_SPACE, " ")).trim(*EDGES)
+            val written = squeeze(normal(text)).trim(*EDGES)
             if (written.isEmpty()) return false
             if (UnitWords.TO_TASTE.replace(written, "").isBlank() || written.lowercase() == "по желанию") return true
             val amount = Amount.lead(written) ?: return false
             return amount.name.isEmpty() && (amount.quantity != null || amount.entered != null || amount.word != null)
         }
 
-        /** [text] cut at each plus with a space on either side and outside a parenthesis, the parts trimmed. */
+        /**
+         * [text] cut at each plus — "+" or the word "plus" — with a space on either side and outside a parenthesis, the
+         * parts trimmed.
+         */
         fun plusParts(text: String): List<String> {
             val parts = mutableListOf<String>()
             var depth = 0
@@ -494,9 +534,13 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
                 when (text[i]) {
                     '(' -> depth++
                     ')' -> if (depth > 0) depth--
-                    '+' -> if (depth == 0 && i > 0 && i < text.lastIndex && text[i - 1].isWhitespace() && text[i + 1].isWhitespace()) {
-                        parts += text.substring(from, i).trim()
-                        from = i + 1
+                    '+', 'p', 'P' -> {
+                        val length = if (text[i] == '+') 1 else if (text.regionMatches(i, "plus", 0, 4, ignoreCase = true)) 4 else 0
+                        val end = i + length
+                        if (length > 0 && depth == 0 && i > 0 && end < text.length && text[i - 1].isWhitespace() && text[end].isWhitespace()) {
+                            parts += text.substring(from, i).trim()
+                            from = end
+                        }
                     }
                 }
             }
