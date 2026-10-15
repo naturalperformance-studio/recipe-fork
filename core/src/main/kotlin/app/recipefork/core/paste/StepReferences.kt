@@ -219,7 +219,8 @@ internal class StepReferences(
             { row -> groupOf[row] >= 0 && names(groupOf[row]) },
             // A row outside every group is no worse a match than one in the others' group: "Поставить кастрюлю с водой и
             // солью" with the salt only in the sauce says nothing of which water.
-            { row -> candidates.none { groupOf[it] < 0 } && groupOf[row] in others },
+            // unless the others are themselves outside every group: then that is the group they say.
+            { row -> (-1 in others || candidates.none { groupOf[it] < 0 }) && groupOf[row] in others },
         )
         var left = candidates
         for (keep in narrowing) {

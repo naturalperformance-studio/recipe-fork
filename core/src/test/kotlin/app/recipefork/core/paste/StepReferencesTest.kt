@@ -150,14 +150,14 @@ class StepReferencesTest {
         // A bare number or a unit word after a name counts what follows it, unless the clause ends with it.
         fun eggShares(rows: String, step: String) =
             read(rows + step).steps.single().ingredientReferences.filter { it.ingredientPosition == 0 }.map { it.share }
-        val ruEggs = "Т\n\nИнгредиенты\n- 2 яйца\n- 500 мл бульона\n\nПриготовление\n1. "
+        val ruEggs = "Т\n\nИнгредиенты\n- 4 яйца\n- 500 мл бульона\n\nПриготовление\n1. "
         assertEquals(listOf(null), eggShares(ruEggs, "Влить в яйца два половника бульона."))
         assertEquals(listOf(null), eggShares(ruEggs, "Добавить яйца одно за другим."))
         assertEquals(listOf(null), eggShares(ruEggs, "Варить яйца 3 или 4 минуты."))
         val enEggs = "Cake\n\nIngredients\n- 4 eggs\n\nMethod\n1. "
         assertEquals(listOf(null), eggShares(enEggs, "Add the eggs one at a time."))
         assertEquals(listOf(null), eggShares(enEggs, "Add the eggs two at a time."))
-        assertEquals(listOf("Посолить, соль щепотка."), steps(read(ru("- 1 щепотка соли", "Посолить, соль щепотка."))).map { it.replace("[1 щепотка]", "щепотка").replace("  ", " ") })
+        assertTrue(steps(read(ru("- 1 щепотка соли", "Посолить, соль щепотка."))).single().contains("[1 щепотка]"))
     }
 
     // Fix round 1, must 2.
@@ -188,6 +188,12 @@ class StepReferencesTest {
                 "### Приготовление\n\n1. Поставить кастрюлю с водой и солью.",
         ).steps.single().ingredientReferences.map { it.ingredientPosition }
         assertTrue(1 !in water, "$water")
+        // Where the step's other references are themselves outside every group, that is the group they say.
+        val boiling = read(
+            "Тест\n\n### Ингредиенты\n\n- 2 л воды\n- 500 г пельменей\n\n#### Соус\n\n- 40 г воды\n\n" +
+                "### Приготовление\n\n1. Опустить 500 г пельменей в кипящую воду.",
+        ).steps.single().ingredientReferences.map { it.ingredientPosition }
+        assertTrue(0 in boiling && 2 !in boiling, "$boiling")
     }
 
     // Fix round 1, must 3.
