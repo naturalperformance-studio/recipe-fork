@@ -34,7 +34,7 @@ object RecipeFromText {
         val groups = lines.indices.filter { i -> lines[i].group != null && (i == 0 || lines[i].group != lines[i - 1].group) }
             .mapNotNull { i -> lines[i].group?.trim()?.takeIf { it.isNotEmpty() }?.let { IngredientGroup(fit(it, RecipeBounds.MAX_GROUP_NAME), i) } }
         val ingredients = lines.mapIndexed { i, line -> reader.read(line, i) }
-        val references = StepReferences(ingredients, ingredientMatch, firstMention)
+        val references = StepReferences(ingredients, groups, ingredientMatch, firstMention)
         val steps = layout.steps.take(RecipeBounds.MAX_STEPS).mapIndexed(::step).map(references::read)
         val mentions = EquipmentMentions(dictionaries.equipment, ingredientMatch)
         val equipment = (layout.equipment.flatMap { mentions.of(it, inStep = false) } + steps.flatMap { mentions.of(it.text, inStep = true) })

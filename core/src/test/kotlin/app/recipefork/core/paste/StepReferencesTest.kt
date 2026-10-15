@@ -129,13 +129,78 @@ class StepReferencesTest {
     fun aStepNamingNoRowStaysAsItWas() {
         val step = Step(0, "Перемешать и оставить на 10 минут.")
         val rows = read(ru("- 200 г сахара", "Перемешать.")).ingredients
-        assertSame(step, StepReferences(rows, DictionaryMatch(shipped.ingredients), FirstMention.BEFORE).read(step))
+        assertSame(step, StepReferences(rows, emptyList(), DictionaryMatch(shipped.ingredients), FirstMention.BEFORE).read(step))
+    }
+
+    // Fix round 1, must 1.
+    @Test
+    fun aQuantityRightAfterANameIsThatNamesNeverTheNext() {
+        val rows = "- 60 г сметаны\n- 100 г муки"
+        assertEquals(listOf("Плотный комок — сметана [60 г] и мука [50 г]."), steps(read(ru(rows, "Плотный комок — сметана 60 г и мука 50 г."))))
+        assertEquals(listOf("Сверху сметана 2 ст. л. и [100 г] мука."), steps(read(ru(rows, "Сверху сметана 2 ст. л. и мука."))))
+        // The dot of a unit word is its own where the sentence goes on; a quantity before a name and one after it.
+        assertEquals(listOf("Добавить [100 г] муки."), steps(read(ru(rows, "Добавить 100 г. муки."))))
+        assertEquals(listOf("Добавить [50 г] сметаны [100 г] муки."), steps(read(ru(rows, "Добавить 50 г сметаны 100 г муки."))))
+        // The owner's syrniki with peach (S3), with apple (S3) and with ganache (S4).
+        listOf("layout/syrniki-peach-freezer.md", "layout/syrniki-apple-freezer.md", "corpus/owner/Сырники с текучей сердцевиной (шоколадный ганаш).md")
+            .forEach { name ->
+                val owners = steps(read(File("src/test/resources/paste/$name").readText())).single { "Плотный комок" in it }
+                assertTrue(owners.endsWith("Плотный комок, ничего не течёт — сметана [60 г] и мука [50 г]."), "$name: $owners")
+            }
+    }
+
+    // Fix round 1, must 2.
+    @Test
+    fun aNameOfSeveralRowsMeansTheOneItsQuantityOrItsGroupSays() {
+        fun rows(step: String) = read(
+            "Тест\n\n### Ингредиенты\n\n#### Тесто\n\n- 20 г сахара\n- 200 г муки\n\n#### Начинка\n\n- 15 г сахара\n- 100 г ягод\n\n" +
+                "### Приготовление\n\n1. $step",
+        ).steps.single().ingredientReferences.map { it.ingredientPosition }
+        assertEquals(listOf(2), rows("Добавить 15 г сахара."))
+        assertEquals(listOf(2), rows("Для начинки смешать сахар."))
+        assertEquals(listOf(1, 0), rows("Смешать муку и сахар."))
+        assertEquals(listOf(), rows("Добавить сахар."))
+        val peach = read(File("src/test/resources/paste/layout/syrniki-peach-freezer.md").readText())
+        val sugars = peach.ingredients.filter { it.dictionaryEntry == peach.ingredients[4].dictionaryEntry }.map { it.position }
+        val filling = peach.steps.single { it.text.startsWith("Персиковая начинка.") }
+        val sugar = filling.ingredientReferences.map { it.ingredientPosition }.filter { it in sugars }
+        assertEquals(listOf(sugars.last()), sugar, "the filling's sugar, where the step names the filling: $sugars")
+    }
+
+    // Fix round 1, must 3.
+    @Test
+    fun aBareNumberOfMinutesIsNoCountOfAnIngredient() {
+        val rows = "- 4 яйца\n- 100 г сахара"
+        assertEquals(listOf("Через 2 минуты добавить [4 шт] яйца."), steps(read(ru(rows, "Через 2 минуты добавить яйца."))))
+        assertEquals(listOf("Взбить 3 минуты [4 шт] яйца с [100 г] сахаром."), steps(read(ru(rows, "Взбить 3 минуты яйца с сахаром."))))
+        assertEquals(listOf("Взять [2 шт] крупных яйца."), steps(read(ru(rows, "Взять 2 крупных яйца."))))
+        assertEquals(listOf("Взять 2 очень крупных [4 шт] яйца."), steps(read(ru(rows, "Взять 2 очень крупных яйца."))), "one word at most after a bare number")
+        val english = read("Eggs\n\nIngredients\n- 4 eggs\n\nMethod\n1. Beat for 2 minutes the eggs.").steps.single()
+        assertEquals("Beat for 2 minutes the  eggs.", english.text)
+        assertEquals(listOf(null), english.ingredientReferences.map { it.share })
+    }
+
+    // Fix round 1, must 4 and fold-in 5: a row holding no quantity that scales has no reference by its name.
+    @Test
+    fun aRowWithNoQuantityThatScalesHasNoReferenceByItsName() {
+        assertEquals(emptyList(), read(ru("- соль по вкусу", "Посолить, добавить соль.")).steps.single().ingredientReferences)
+        val pieces = read(ru("- 2 шмурдяка", "Добавить шмурдяк."))
+        assertEquals(listOf(null, null), with(pieces.ingredients.single()) { listOf(dictionaryEntry, authoredQuantity) })
+        assertEquals(emptyList(), pieces.steps.single().ingredientReferences)
+    }
+
+    // Fold-in 6.
+    @Test
+    fun aQuantityTheReaderCannotBeSureOfBeforeANameGivesItNoReference() {
+        val recipe = read(ru("- 200 г сахара\n- 18 г кофе", "Добавить (100 г) сахара.", "Засыпать ~9 г кофе."))
+        assertEquals(listOf("Добавить (100 г) сахара.", "Засыпать ~9 г кофе."), recipe.steps.map { it.text })
+        assertTrue(recipe.steps.all { it.ingredientReferences.isEmpty() })
     }
 
     @Test
     fun aReferenceByANameThatWouldTakeTheStepOverItsLimitIsLeftOut() {
         val rows = read(ru("- 200 г сахара", "Перемешать.")).ingredients
-        val references = StepReferences(rows, DictionaryMatch(shipped.ingredients), FirstMention.BEFORE)
+        val references = StepReferences(rows, emptyList(), DictionaryMatch(shipped.ingredients), FirstMention.BEFORE)
         val full = "сахар " + "м".repeat(RecipeBounds.MAX_STEP_TEXT - 6)
         assertEquals(emptyList(), references.read(Step(0, full)).ingredientReferences)
         val cut = references.read(Step(1, "100 г сахара " + "м".repeat(RecipeBounds.MAX_STEP_TEXT - 13)))
@@ -165,7 +230,7 @@ class StepReferencesTest {
             "100 г сахара ".repeat(10_000), "1 - ".repeat(20_000), "2 cups of ".repeat(10_000), "ч. ".repeat(20_000),
             "мелкого ".repeat(20_000) + "сахара", "сахар-".repeat(20_000), "½".repeat(50_000), "a ".repeat(50_000) + "flour",
         ).forEach { text ->
-            val references = StepReferences(rows, DictionaryMatch(shipped.ingredients), FirstMention.BEFORE)
+            val references = StepReferences(rows, emptyList(), DictionaryMatch(shipped.ingredients), FirstMention.BEFORE)
             val took = measureTime { references.read(Step(0, text)) }
             assertTrue(took.inWholeMilliseconds < 2_000, "${text.take(12)}…: $took")
         }
