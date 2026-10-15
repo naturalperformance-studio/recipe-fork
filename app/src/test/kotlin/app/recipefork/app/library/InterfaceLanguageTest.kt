@@ -221,7 +221,9 @@ class InterfaceLanguageTest {
         // Kept where it outlives the process: the platform's per-app language.
         assertEquals(LocaleList.forLanguageTags("ru"), platform().applicationLocales)
         assertEquals("ru", activity().resources.configuration.locales[0].language)
-        assertTheScreenReadsInItsLanguage(setOf("Борщ"))
+        // The book's entry may show the recipe's tag once the dictionary is read: a dictionary label, not a resource.
+        val tagLabels = DictionarySnapshot.parse(File("src/main/assets/${DictionarySnapshot.ASSET}").readText()).tags.map { it.labelRu }
+        assertTheScreenReadsInItsLanguage(setOf("Борщ"), tagLabels)
 
         // A card: its words, its numbers grouped the Russian way and its dictionary labels in Russian.
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
