@@ -93,8 +93,9 @@ internal class EquipmentMentions(
     /**
      * One word bound alone where it is part of a longer name the dictionary does not hold: joined by a hyphen to the
      * next or the last word ("Crock-Pot"); in English, capitalised within a sentence ("Instant Pot"), after an
-     * ingredient's name ("rice cooker") or before any word but one that may follow a noun ("pot roast"); or a container
-     * before "of" or an ingredient's name ("a jar of salsa", "банка фасоли").
+     * ingredient's name ("rice cooker") or before a word that makes it another thing ("pot roast", "oven mitts"); or a
+     * container before "of", or before an ingredient's name unless it is where something goes ("a jar of salsa",
+     * "банка фасоли", but "уложить в банку огурцы").
      */
     private fun partOfAnotherName(text: String, words: List<Word>, from: Int, to: Int, entry: EquipmentEntryDto): Boolean {
         if (to - from != 1) return false
@@ -104,10 +105,11 @@ internal class EquipmentMentions(
         fun hyphen(a: Word, b: Word) = text.substring(a.end, b.start) == "-"
         fun ingredient(w: Word) = ingredients.bind(text.substring(w.start, w.end))?.unused?.isEmpty() == true
         if (before != null && hyphen(before, word) || after != null && hyphen(word, after)) return true
-        if (entry.id in containers && after != null && (after.folded == "of" || ingredient(after))) return true
+        val destination = words.getOrNull(from - 1)?.folded in DESTINATIONS
+        if (entry.id in containers && after != null && (after.folded == "of" || !destination && ingredient(after))) return true
         if (word.folded.any { it !in 'a'..'z' }) return false
         return before != null && (text[word.start].isUpperCase() || ingredient(before)) ||
-            after != null && after.folded !in FOLLOWERS
+            after != null && after.folded in TAILS
     }
 
     private class Word(val start: Int, val end: Int, val folded: String)
@@ -122,11 +124,14 @@ internal class EquipmentMentions(
         val DETERMINERS = setOf("a", "an", "the", "your", "this", "that")
         val PREPOSITIONS = setOf("with", "on", "in", "into", "onto", "under", "over", "using", "from", "through")
 
-        /** The words that may follow an English noun in a step: no part of a longer name. */
-        val FOLLOWERS = PREPOSITIONS + DETERMINERS + setOf(
-            "to", "for", "and", "or", "of", "then", "at", "until", "till", "while", "as", "by", "about", "before", "after",
-            "so", "when", "if", "is", "are", "again", "along", "without", "halfway", "uncovered", "covered", "preheated",
+        /** Words after an English equipment word that make the two another thing: "pot roast", "oven mitts". */
+        val TAILS = setOf(
+            "roast", "roasts", "pie", "pies", "mitt", "mitts", "glove", "gloves", "liner", "liners", "holder", "holders",
+            "cleaner", "spray",
         )
+
+        /** Words before a container that make it where something goes: "в банку огурцы". */
+        val DESTINATIONS = setOf("в", "во", "на", "in", "into", "to")
 
         /** Two neighbouring words with nothing but spaces and hyphens between them. */
         fun joined(text: String, a: Word, b: Word) = (a.end until b.start).all { text[it].isWhitespace() || text[it] == '-' }

@@ -37,6 +37,9 @@ class StepTimersTest {
     fun aSpoonWrittenOutIsNoHour() {
         listOf("Добавить 1 ч. ложку соли", "Всыпать ½ ч. ложки соды", "1 ч ложку", "1 ч/л сахара", "1 ст. ложку масла", "1 ст/л")
             .forEach { assertEquals(emptyList(), minutes(it), it) }
+        assertEquals(listOf(60L), minutes("через 1 ч лепить"))
+        assertEquals(listOf(120L), minutes("Оставить на 2 ч. Лук нарезать."))
+        assertEquals(listOf(120L), minutes("Убрать в холодильник на 2 ч. Летом — на 3."))
     }
 
     @Test
@@ -71,7 +74,13 @@ class StepTimersTest {
         assertEquals(listOf(10L, 5L), minutes("Тушить 10 минут (до мягкости), потом ещё 5 минут."))
         // The owner's peach filling: an alternative, not a restatement.
         assertEquals(listOf(7L, 4L), minutes("выпаривать сок 6–7 минут в сотейнике (на сковороде — первые 4 минуты)"))
+        // A parenthesis further on is a duration of its own.
+        assertEquals(listOf(10L, 25L), minutes("Варить 10 минут. Затем запекать (180°C, 20–25 минут)."))
+        assertEquals(listOf(10L, 3L), minutes("Bake 10 minutes. Then broil (on high, 2-3 minutes)."))
     }
+
+    @Test
+    fun aLineBreakIsNoRange() = assertEquals(listOf(10L, 5L), minutes("Rest 10 minutes\n- 5 minutes more"))
 
     @Test
     fun whatIsNoDurationIsNoTimer() {

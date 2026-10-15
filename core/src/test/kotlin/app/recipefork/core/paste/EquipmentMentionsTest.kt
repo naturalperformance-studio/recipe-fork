@@ -58,9 +58,18 @@ class EquipmentMentionsTest {
 
     @Test
     fun oneWordOfALongerNameIsNoEquipment() {
-        listOf("Cook in the Instant Pot for 10 minutes.", "Put everything in the Crock-Pot.", "Cook the rice in a rice cooker.", "Serve the pot roast.")
-            .forEach { assertEquals(emptyList(), named(it), it) }
+        listOf(
+            "Cook in the Instant Pot for 10 minutes.", "Put everything in the Crock-Pot.", "Put everything in the crock-pot.",
+            "Cook the rice in a rice cooker.", "Serve the pot roast.", "Bake a chicken pot pie.",
+        ).forEach { assertEquals(emptyList(), named(it), it) }
+        assertEquals(listOf("Oven mitt"), named("Take it out with oven mitts."))
         assertEquals(listOf("Saucepan"), named("Bring a large pot to a boil."))
+        // An equipment word before any other word is still the equipment.
+        assertEquals(listOf("Oven"), named("Bake in the preheated oven 25 to 30 minutes."))
+        assertEquals(listOf("Frying pan"), named("Toast in a dry skillet 2 minutes."))
+        assertEquals(listOf("Frying pan"), named("Set the skillet aside."))
+        assertEquals(listOf("Saucepan"), named("Cover the pot partially and simmer."))
+        assertEquals(listOf("Barbecue"), named("Grill on the barbecue 5 minutes per side."))
     }
 
     @Test
@@ -68,6 +77,7 @@ class EquipmentMentionsTest {
         listOf("Add a jar of salsa.", "Pour in a bottle of wine.", "Добавить банка фасоли.")
             .forEach { assertEquals(emptyList(), named(it), it) }
         assertEquals(listOf("Jar"), named("Переложить в банку и закрыть."))
+        assertEquals(listOf("Jar"), named("Уложить в банку огурцы, залить рассолом."))
     }
 
     @Test

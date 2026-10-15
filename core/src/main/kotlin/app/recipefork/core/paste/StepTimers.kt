@@ -18,12 +18,12 @@ internal object StepTimers {
     private const val GLYPHS = "½¼¾⅓⅔"
     private val GLYPH_VALUES = mapOf('½' to 0.5, '¼' to 0.25, '¾' to 0.75, '⅓' to 1.0 / 3, '⅔' to 2.0 / 3)
 
-    // Every quantifier is possessive and a match starts only where a number does, so the scan is linear on any text.
+    // Every quantifier is possessive and a match starts only at a number or a number word, so the scan is linear on any text.
     private const val NUM = """(?:\d++(?:[.,]\d++|\s?+[$GLYPHS]|\s++\d++/\d++|/\d++)?|[$GLYPHS])"""
     private fun range(name: String) = """(?<${name}a>$NUM)(?:\s*+(?:[-–—]|до|to)\s*+(?<${name}b>$NUM))?"""
 
-    /** "ч" is an hour unless a spoon follows it: "1 ч. л.", "1 ч ложку", "1 ч/л". */
-    private const val HOURS = """(?:час(?:а|ов)?|ч(?!\.?\s*+/?\s*+л)\.?|hours?|hrs?\.?|h)(?!\p{L})"""
+    /** "ч" is an hour unless a spoon follows it: "1 ч. л.", "1 ч ложку", "1 ч/л" — but "2 ч. Лук нарезать" is two hours. */
+    private const val HOURS = """(?:час(?:а|ов)?|ч(?!\.?\s*+/?\s*+(?:л(?!\p{L})|лож))\.?|hours?|hrs?\.?|h)(?!\p{L})"""
     private const val MINUTES = """(?:минут[аыу]?|мин\.?|minutes?|mins?\.?)(?!\p{L})"""
     private val DURATION = Regex(
         """(?<![\p{L}\p{N}.,/])(?:""" +
@@ -55,11 +55,11 @@ internal object StepTimers {
             val value = minutesOf(found)?.takeIf { it in 1..MAX_MINUTES }
             val gap = previous?.let { text.substring(it.range.last + 1, found.range.first) }
             val kept = when {
-                gap != null && gap.trim().lowercase() in RANGE_JOINERS -> {
+                gap != null && '\n' !in gap && gap.trim().lowercase() in RANGE_JOINERS -> {
                     if (previousKept && value != null) minutes[minutes.lastIndex] = maxOf(minutes.last(), value)
                     previousKept
                 }
-                gap != null && '(' in gap && ')' !in gap && isRange(found) -> false
+                gap != null && gap.trimStart().startsWith('(') && ')' !in gap && isRange(found) -> false
                 wordBefore(text, found.range.first) in EVERY -> false
                 value == null -> false
                 else -> true.also { minutes += value }
