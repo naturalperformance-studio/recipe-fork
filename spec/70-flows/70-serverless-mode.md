@@ -158,9 +158,12 @@ marked every time it is shown as stated in the file and not verified.
 - Given a file holding a draft — ingredient rows incomplete or off the grid, parts
   of the minimum missing — when it is imported, then it is added as it is, those
   rows kept as written; only a file whose structure cannot be read is refused.
-- Given a file holding a clip longer than 15 seconds, when it is imported, then the
+- Given a file holding a clip longer than 15 seconds — beyond the half second
+  MEDIA-007 allows for how a duration is recorded — when it is imported, then the
   whole file is refused with a message naming the 15-second limit, and nothing is
   added.
+- Given a collection file (FLOW-077), when it is opened, then each recipe it holds
+  is imported by the rules above and the collection by FLOW-077.
 - Given a file holding a photo larger than 1 MB (1,000,000 bytes), the limit the
   device's own processing keeps (MEDIA-002), when it is imported, then it is
   refused, the person is told why, and nothing is added.
@@ -246,24 +249,41 @@ the parent is not in the book — user decision of that date, FORK-010, see
 ### FLOW-073 — The whole recipe book is saved and restored
 
 Where serverless mode is on, the system shall let a person save their whole
-recipe book — every recipe with its media, own and found — to one file of their
-choosing, and restore a book from such a file, so that a lost or reset phone does
-not lose it. This shall exist before the first public release.
+recipe book — every recipe with its media, own and found, its collections
+(FLOW-076) and My kitchen — to one file of their choosing, and restore a book from
+such a file, so that a lost or reset phone does not lose it. Restoring into a book
+that holds recipes shall ask whether to add the file's recipes to it or to replace
+it. This shall exist before the first public release.
 
 **Acceptance criteria**
 - Given a book of recipes with photos and clips, when it is saved and restored on
   another device, then every recipe is there, readable and cookable as before, own
-  recipes still editable and found ones still found.
+  recipes still editable and found ones still found, with its collections and My
+  kitchen.
+- Given a book that holds recipes, when a file is restored into it, then the person
+  is asked to add or to replace, and replacing asks once more before anything goes.
+- Given "add", when the restore is done, then every recipe the book lacked is added
+  and every recipe it already held is unchanged; the collections it lacked are
+  added, and one it holds gains the file's recipes it lacks.
+- Given "replace", when the restore is done, then the book holds exactly what the
+  file holds.
+- Given an empty book, when a file is restored, then it is restored with no
+  question.
 - Given a saved book, when it is restored, then nothing is sent anywhere: like
   FLOW-063, the file goes only where the person puts it.
+- Given done marks, a shopping list and the settings, when a book is saved, then
+  they do not travel with it.
 - Given a file that cannot be read, when it is restored, then nothing changes in
   the book and the person is told why.
+- Given a book file opened from another application, when the person opens it,
+  then it leads to the same restore.
 
-What a restore does to a book that already holds recipes is open (OQ-041). The
-file's format and the controls are the team's; done marks, My kitchen and settings
-may or may not travel with it, the team decides.
+The file's format and where the controls sit are the team's.
 
-**Source:** user decision, 2026-10-10: the analyst's hypothesis H-001 ("a whole-book
-backup is a must-have before release", `analytics/hypotheses.md`) adopted; it also
-answers fork F-1 of v0.25. Written at the sync of 2026-10-11 as intent; its rules
-are settled when an increment is planned for it.
+**Source:** user decision, 2026-10-10: the analyst's hypothesis H-001 ("a
+whole-book backup is a must-have before release", `analytics/hypotheses.md`)
+adopted; it also answers fork F-1 of v0.25. Written at the sync of 2026-10-11 as
+intent. **Changed 2026-10-15 (sync v0.31–v0.38):** add or replace is the owner's
+answer to OQ-041 at the planning of v0.34 (2026-10-12); what travels and the rest
+of the criteria are the lead's rules built in v0.34 («Сборка ок, мержи»,
+2026-10-12), and collections travel since v0.36.

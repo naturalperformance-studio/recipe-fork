@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: []
 ---
 
@@ -27,7 +27,8 @@ in section `scaling-rules`.
 | `taste_unmeasured` | pepper to taste | no | never — the ingredient has no quantity to scale |
 
 The examples of `piece` are ingredients counted in pieces, not units. The units
-themselves are a closed list of twelve, each assigned to one type (DOM-016).
+themselves are a closed list of fifteen, each assigned to one type and to the
+metric system, the US system or both (DOM-016).
 
 An `exact` ingredient may be authored in any unit of its type, including tonnes
 and cubic metres, so that a production card can be written in the units it is
@@ -35,9 +36,11 @@ already kept in. What is displayed is governed by the rounding grid in section
 `scaling-rules`, not by the unit the author chose.
 
 `household` quantities are never converted to mass: a tablespoon of flour and a
-tablespoon of honey do not weigh the same, and the product displays no ingredient
-weight and scales with none. The dictionary's comparison factors are invisible and
-only order the ingredient filter (DOM-011). `piece` quantities may be held internally in grams so that scaling
+tablespoon of honey do not weigh the same, and the product scales with no
+ingredient weight. The dictionary's comparison factors are invisible; they order
+the ingredient filter, and since 2026-10-15 they also turn a mass into cups or
+spoons for a US reader and merge a shopping list's lines, always marked "≈"
+(DOM-011). `piece` quantities may be held internally in grams so that scaling
 stays smooth, while being displayed in pieces.
 
 ## Entities
@@ -115,7 +118,7 @@ presentation choice and is not specified here.
 | `synonyms` | per language, list of text | Other words for the same ingredient; they find the entry, never replace its label (DOM-021). |
 | `parent` | IngredientEntry or none | The broader entry this one belongs to, e.g. `крылышки` under `курица`. An entry that is itself a parent has none: the dictionary is two levels deep at most (DOM-010). |
 | `divisible` | boolean or unset | `piece` divisibility for every ingredient of this entry. The author does not override it (`scaling-rules`). Unset where the product owner has not decided it; then the author answers for that ingredient exactly as for free text (FLOW-001). Every entry carrying a factor for `шт` carries it set. |
-| `comparison_factors` | unit → positive number | What one of that unit counts for on this entry's own comparison scale. Absent for a unit the product owner has not filled in. Used for ordering only, never displayed, never scaled with (DOM-011). |
+| `comparison_factors` | unit → positive number | What one of that unit counts for on this entry's own comparison scale. Absent for a unit the product owner has not filled in. Used for ordering, and for quantities shown as "≈" — a mass in cups or spoons for a US reader, a shopping list's merged line; never shown as a number, never scaled with (DOM-011). |
 | `removed` | boolean | Set when the product owner withdraws the entry. A removed entry is never deleted: it stays resolvable in every recipe that names it (DOM-009) and is not offered for new use. |
 
 The ingredient dictionary is maintained by the product owner, exactly as the tag
@@ -248,5 +251,5 @@ split and never will.
 | Part | What is in it | Requirements |
 |---|---|---|
 | [10-invariants.md](10-invariants.md) | Invariants over the entities: nickname, quantity, household measure, parent, media ownership, the submission minimum, step references, tags, the authored serving count; and what is deliberately not modelled yet | DOM-001–DOM-008, DOM-015 |
-| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, where the dictionaries are kept, the twelve units, the values a quantity may hold, how a typed number is read, and what the dictionaries hold | DOM-009–DOM-012, DOM-014, DOM-016–DOM-020 |
-| [30-recipe-additions.md](30-recipe-additions.md) | Synonyms of a dictionary entry, ingredient groups, an ingredient's note, up to five timers on a step, the equipment a recipe needs and its dictionary, and the author's note on a step | DOM-021–DOM-027 |
+| [20-ingredients-and-limits.md](20-ingredients-and-limits.md) | Ingredients and the dictionaries, comparison factors, the submission maximum, where the dictionaries are kept, the fifteen units and their systems, the values a quantity may hold, how a typed number is read, and what the dictionaries hold | DOM-009–DOM-012, DOM-014, DOM-016–DOM-020 |
+| [30-recipe-additions.md](30-recipe-additions.md) | Synonyms of a dictionary entry, ingredient groups, an ingredient's note, up to five timers on a step, the equipment a recipe needs and its dictionary, the author's note on a step, and collections | DOM-021–DOM-028 |

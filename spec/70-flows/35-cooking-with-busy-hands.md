@@ -32,8 +32,10 @@ by a tap or a horizontal swipe. Each tab keeps its own place.
   marks a line done (FLOW-068), and timers start here. The first step not yet
   marked done is shown as the current one, labelled on the screen with its
   position — "current step · N of M" — and not only for the screen reader; after
-  a step is marked the tab brings the next unmarked step into view. A list whose lines are all marked folds
-  into one line that opens it again.
+  a step is marked the tab brings the next unmarked step into view. A step marked
+  done folds to one line, unless one of its timers runs or rings; a tap on a folded
+  step unmarks it and opens it again. An ingredient or equipment list whose lines
+  are all marked folds into one line that opens it again.
 
 The current step is derived from the done marks and nothing else: no step is
 stored as current, and there is no control that advances from one step to the
@@ -53,6 +55,9 @@ next.
   seven steps, and the screen reader reads the same.
 - Given every ingredient marked done, when Cooking is shown, then the ingredient
   list is folded into one line, and opening it shows every line again.
+- Given step two marked done, when Cooking is shown, then step two is one line;
+  given its timer running, then it stays open until the timer is cancelled or
+  stopped; given a tap on the folded step, then it is unmarked and opens.
 - Given a timer's announcement, when the reader follows it, then the card opens on
   Cooking at the timer's step (FLOW-013).
 - Given a card, when the reader opens a recipe, then it opens on the tab last
@@ -74,7 +79,9 @@ the Origin stands above the title (interface recommendation 2); the current step
 states its position on the screen, not only to the screen reader (recommendation
 4); the fork action stays on screen on own recipes as well as found ones — the
 proposal to move it into the menu on own recipes was rejected, because a version
-of one's own recipe is a main path too ("the original stays"). See
+of one's own recipe is a main path too ("the original stays"). Also at the sync of
+2026-10-15: each done step folds on its own, as built in v0.31 from the owner's
+notes on v0.30 («Всё супер», 2026-10-12). See
 [ADR — the card has a tab for reading and a tab for cooking](../decisions/20261011-the-card-has-a-reading-and-a-cooking-tab.md).
 
 ### FLOW-068 — The reader marks ingredients and steps as done

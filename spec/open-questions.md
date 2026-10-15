@@ -1,7 +1,7 @@
 ---
 slug: OQ
 status: open
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
   OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
   OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
@@ -558,33 +558,23 @@ of the application imports, and the book survives an application update with
 nothing lost. Until then, the user's decision stands.
 Touches: FLOW-063, FLOW-064, FLOW-051. Raised at the sync of v0.3–v0.14, 2026-10-03.
 
-### OQ-041 — What restoring a saved book does to a book that holds recipes (next)
-Unresolved: FLOW-073 restores a whole book from a file; nothing says what happens
-when the device's book is not empty — replace it, add what is missing, or ask.
-Proposal: add every recipe the book does not hold yet and leave the ones it
-holds untouched (the same rule as importing a file twice, FLOW-064); nothing is
-ever deleted by a restore.
-Touches: FLOW-073, FLOW-064. Raised at the sync of v0.22–v0.30, 2026-10-11.
+### OQ-041 — What restoring a saved book does to a book that holds recipes — RESOLVED 2026-10-12
+Resolved by the product owner at the planning of v0.34: a restore into a book that
+holds recipes asks whether to add to it or replace it; adding never changes a
+recipe the book already holds, and a restore into an empty book asks nothing. The
+proposal above it (add only, never ask) was not taken. Written into FLOW-073 at the
+sync of 2026-10-15.
 
-### OQ-042 — The rules of showing US units (next)
-Unresolved: L10N-008 lets a reader see a recipe in US units; which units convert to
-which, how converted values round, whether volume ever converts to mass, and where
-the reader asks for it are not decided.
-Proposal: convert within a dimension only — grams and kilograms to ounces and
-pounds, millilitres and litres to teaspoons, tablespoons, cups and fluid ounces —
-rounded to the halves and quarters a US cook measures with; no volume ↔ mass, so
-DOM-011's factors stay for ordering only; one switch in the settings, shown on the
-card as converted.
-Touches: L10N-008, DOM-011, `scaling-rules`. Raised at the sync of v0.22–v0.30,
-2026-10-11 (the user adopted H-003 on 2026-10-10).
+### OQ-042 — The rules of showing US units — RESOLVED 2026-10-12
+Resolved by the product owner at the planning of v0.35, over the proposal to
+convert within a dimension only: one setting for the application, the editor offers
+the chosen system, recipes are shown converted where they differ, and a mass
+converts into cups and spoons through the dictionary, marked "≈". The household
+units belong to both systems (owner, 2026-10-15). Written as L10N-008 and DOM-011.
 
-### OQ-043 — Writing recipes in imperial or US units (later)
-Unresolved: the user decided on 2026-10-11 that writing in imperial units is to be
-allowed by a later increment, not forbidden. How such quantities sit in the unit
-model (DOM-002, DOM-016), on which grid they round and scale, how a metric reader
-sees them, and how they compare in the filters' ordering and merge in a shopping
-list (FLOW-074) are all open.
-Proposal: decide together with that increment's planning; until then L10N-008's
-metric writing stands.
-Touches: L10N-008, DOM-002, DOM-016, DOM-011, FLOW-074. Raised at the sync of
-v0.22–v0.30, 2026-10-11.
+### OQ-043 — Writing recipes in imperial or US units — RESOLVED 2026-10-12
+Resolved with OQ-042: the editor under the US setting offers ounces, pounds and
+fluid ounces (DOM-016), which round on the grids of DOM-017 and are stored as
+written; a metric reader sees them converted exactly (L10N-008); a shopping list
+merges them with an entry's metric lines (FLOW-074). Imperial units other than the
+US ones are not offered.

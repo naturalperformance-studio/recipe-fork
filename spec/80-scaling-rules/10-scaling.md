@@ -1,7 +1,7 @@
 ---
 slug: SCALE
 status: closed
-updated: 2026-10-02
+updated: 2026-10-15
 ids: [SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017,
   SCALE-018]
 ---
@@ -259,7 +259,11 @@ for, and taking it as one would compute from a rounded value (SCALE-003).
 
 The system shall accept as the fixed amount of an ingredient only a value that the
 quantity field of its unit type holds by DOM-017, stated in a unit the author's
-unit can be read in without conversion, and shall accept nothing else.
+unit can be read in without conversion or in the unit the line is shown in after
+conversion into the reader's unit system (L10N-008), and shall accept nothing
+else. An amount stated in the shown unit is converted back to the author's unit —
+exactly, or through the same comparison factor that converted it (DOM-011) — to
+set the scale.
 
 A unit the author's unit can be read in without conversion is, by unit type:
 for `exact`, any unit of the same dimension — g, kg, t for a mass and ml, l, m³ for
@@ -276,8 +280,14 @@ a volume; for `household`, the author's own unit and no other; for `piece` and
   change.
 - Given an indivisible piece ingredient, when the reader enters `2,5 шт` or `½ шт`,
   then the control does not hold it; given a divisible one, `2½ шт` is held.
-- Given an ingredient authored in grams, when the reader looks for a unit to fix it
-  in, then ml, l and m³ are not offered: nothing converts a mass to a volume.
+- Given an ingredient authored in grams and shown in grams, when the reader looks
+  for a unit to fix it in, then ml, l and m³ are not offered: nothing converts a
+  mass to a volume.
+- Given 500 g of beef shown to a US reader as 17½ oz, when the reader fixes `10 oz`,
+  then it is accepted, converted exactly to grams, and the scale follows from it.
+- Given 260 g of flour shown to a US reader as "≈ 2 cups", when the reader fixes
+  `1 cup`, then it is accepted and converted back through the same factor, so the
+  line then reads "≈ 1 cup".
 - Given an ingredient authored in `ст. л.`, when the reader fixes it, then the
   control accepts tablespoons only, on the `household` grid, and offers neither
   `ч. л.` nor `стакан` (DOM-003).
@@ -298,3 +308,6 @@ decimal mark, no grouping separator — is DOM-019 (SD-037).
 **Cost, stated:** a reader holding 2 teaspoons of an ingredient written in
 tablespoons converts in their head; the product holds no ratio between household
 units, and a cup has no single volume to hold one for.
+**Changed 2026-10-15 (sync v0.31–v0.38):** a fixed amount may be typed in the unit
+a converted line is shown in, as built in v0.35 by the owner's decision at its
+planning. See [ADR — one unit system, converted on display](../decisions/20261015-one-unit-system-converted-on-display.md).

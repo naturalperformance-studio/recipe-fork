@@ -1,7 +1,7 @@
 ---
 slug: L10N
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [L10N-001, L10N-002, L10N-003, L10N-004, L10N-005, L10N-006, L10N-007,
   L10N-008, L10N-009]
 ---
@@ -12,8 +12,8 @@ Two languages from the first release, and everything that follows from that:
 which of them a reader gets, what a recipe declares about itself, what a text
 query looks at and what counts as a match in a language where words decline.
 
-Recipes are written in metric for now; a reader may see US units, and writing in
-imperial units is a later increment, not a refusal (L10N-008).
+One unit setting, metric or US, decides the units the editor offers and the units
+every quantity is shown in; what the author wrote is never rewritten (L10N-008).
 
 ### L10N-001 — Russian and English from the first release
 
@@ -217,51 +217,72 @@ not a wrong recipe. Amended 2026-10-03 (sync v0.3–v0.14): scoped to the server
 catalogue — req-forge proposal from the sync of v0.3–v0.14, accepted by the user,
 2026-10-03.
 
-### L10N-008 — Recipes are written in metric for now; a reader may see US units
+### L10N-008 — One unit system, metric or US, chosen once and shown everywhere
 
-The system shall store and write every quantity in the units of DOM-002 and
-DOM-016, whatever the interface language, the declared recipe language or the
-device setting. Where the reader asks for it, the card shall show a recipe's
-measured quantities converted to US customary units; the recipe itself — its
-stored quantities, its file, its forks, its scaling — stays in the units its
-author wrote.
+The system shall hold one unit setting for the whole application, Metric or US,
+whose first value follows the device's region (United States, Liberia and Myanmar
+give US, every other region Metric). The editor shall offer the units of the chosen
+system and those of both (DOM-016). Wherever a quantity is shown — both tabs of the
+card, the shopping list, a printed page — the system shall show it in the chosen
+system, converting a quantity written in a unit of the other system, and shall show
+a unit of both systems as written. The recipe itself — its stored quantities, its
+file, its forks, its scaling — stays in the units its author wrote.
 
-Writing a recipe in imperial or US units is not refused for good: it is a
-capability a later increment adds (OQ-043), and nothing in this requirement is to
-be read as closing it.
+How a quantity is converted:
+- It is scaled in the unit it was written in, then converted, then rounded once on
+  the grid of the unit it is shown in (SCALE-003: rounding only on display).
+- Into Metric: ounces and pounds become grams or kilograms, fluid ounces
+  millilitres, exactly.
+- Into US: a mass becomes cups (on the kitchen fractions, from ¼ cup up) where its
+  entry has a comparison factor for the cup, else tablespoons or teaspoons where it
+  has one for those, marked "≈" (DOM-011); otherwise ounces — on ¼ oz below 4 oz,
+  ½ oz up to 2 lb, written in pounds where a whole ¼ lb — then pounds on ¼ lb,
+  exactly. A volume becomes cups, tablespoons or teaspoons by the US cup of
+  8 fl oz, exactly, on the kitchen fractions.
+- An exact conversion reads like any scaled amount; only a conversion through a
+  factor carries "≈".
 
 **Acceptance criteria**
-- Given a device configured for a non-metric region, when a recipe is read and
-  the reader has not asked for conversion, then nothing about its quantities
-  changes.
-- Given the reader asks for US units, when a card is shown, then its measured
-  quantities read in US units, marked as converted (A11Y-008: not by colour
-  alone), and the recipe, its export and its forks still hold the authored units.
-- Given a quantity "to taste" or in pieces, when the reader asks for US units,
-  then it reads as written.
-- Given the household units, when they are shown in English without conversion,
-  then they are the translated names of the same units and not a different
-  measure.
+- Given a device set to the United States, when the application starts for the
+  first time, then the setting is US; given any other region, then Metric; given
+  the setting changed, then every open screen follows at once.
+- Given a recipe of 260 g flour, 4 oz butter and 250 ml milk whose flour entry has
+  a factor for the cup, when a US reader opens it, then it reads "≈ 2 cups" of
+  flour, 4 oz of butter and 1 cup of milk; when a metric reader opens it, then
+  260 g of flour, 113 g of butter and 250 ml of milk.
+- Given 2 cups («2 стакана») of flour, a tablespoon, a pinch, a quantity in pieces
+  or "to taste", when the recipe is read in either system, then it reads as written
+  (DOM-003).
+- Given any recipe, when it is read, then its quantities are in one system: never
+  both systems at once on one line.
+- Given the US setting, when the author opens the unit field, then it offers oz,
+  lb, fl oz and the shared units, not g, kg, t, ml, l or m³; a row already written
+  in grams keeps its unit, shown in its place.
+- Given a recipe written in ounces, when it is exported, forked or scaled, then the
+  file, the fork and the scaling hold ounces; nothing stored is rewritten by a
+  reader's setting.
+- Given the household units, when they are shown in English, then they are the
+  translated names of the same units and not a different measure.
 
-Which units convert to which, whether volume ever converts to mass, how converted
-values round, and where the reader asks for it are open (OQ-042) and are settled
-when an increment is planned for it.
-
-**Verification:** read one recipe in both languages on a device set to a
-non-metric region, then with US units asked for; export and fork it and inspect
-the units.
-**Source:** DOM-002 admits grams, kilograms, tonnes, millilitres, litres and cubic
-metres alongside pieces and household measures and nothing else.
-**Changed 2026-10-11 (sync v0.22–v0.30):** until then this requirement said no
-conversion is offered at all. On 2026-10-10 the user adopted the analyst's
-hypothesis H-003 (metric ↔ US conversion, free; `analytics/hypotheses.md`); at the
-sync of 2026-10-11 the user chose conversion on display with the authored units
-kept, and added that writing in imperial units is to be allowed by a later
-increment rather than forbidden. See
-[ADR — US units on display, imperial writing later](../decisions/20261011-us-units-on-display-imperial-writing-later.md).
-**Cost, stated:** a second system means a second rounding grid per unit type in
-`scaling-rules`; converting volume to mass would need the comparison factors of
-DOM-011, which today are never displayed or used for anything but ordering.
+**Verification:** read one recipe holding every unit type in both systems; switch
+the setting with a card open; write a recipe under each setting; export and fork it
+and inspect the units.
+**Source:** user decision, 2026-10-12 (planning of v0.35): one setting, the editor
+offers the chosen system, recipes shown converted where they differ and never in
+both systems at once, the full kitchen conversion through the dictionary marked
+approximate. The conversion rules above are the lead's, built in v0.35 and accepted
+by the owner on the review's word (2026-10-12). The household units belong to both
+systems — user decision at the sync of 2026-10-15, over the v0.35 build, which
+turns a cup into grams for a metric reader. Answers OQ-042 and OQ-043. See
+[ADR — one unit system, converted on display](../decisions/20261015-one-unit-system-converted-on-display.md).
+**Changed 2026-10-11 (sync v0.22–v0.30)** and **2026-10-15 (sync v0.31–v0.38):**
+until 2026-10-11 no conversion was offered at all; from 2026-10-11 to 2026-10-15
+recipes were written in metric only, with US units on display
+([ADR — US units on display, imperial writing later](../decisions/20261011-us-units-on-display-imperial-writing-later.md),
+superseded).
+**Cost, stated:** a "≈" amount moves when the dictionary's factor is corrected, and
+two US readers of the same recipe with different dictionary versions may read
+slightly different cups.
 
 ### L10N-009 — Numbers are written the way the interface language writes them
 

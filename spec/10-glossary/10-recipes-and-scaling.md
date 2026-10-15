@@ -179,6 +179,10 @@ scaling: `exact` (grams, millilitres and the larger units above them),
 never picks a unit type: it follows from the unit they chose (DOM-002,
 FLOW-023).
 
+**Unit system** — Metric or US, one setting for the application: the units the
+editor offers and the units every quantity is shown in. A unit belongs to one
+system or to both; the household units belong to both (DOM-016, L10N-008).
+
 **Divisible / indivisible** — whether a `piece` quantity may show halves or only
 whole pieces. It comes from the ingredient's dictionary entry and the author
 does not override it; a free-text ingredient, which has no entry, and one whose
@@ -216,8 +220,9 @@ ingredient filter — permanently, once the recipe is published (DOM-009,
 FLOW-022).
 
 **Comparison factor** — what one unit of an entry counts for on the comparison
-scale its family shares. Never displayed, never scaled with, used only to put
-quantities in order (DOM-011).
+scale its family shares. Never shown as a number, never scaled with; it puts
+quantities in order, and turns a mass into cups or spoons for a US reader or merges
+a shopping list's lines, always marked "≈" (DOM-011).
 
 **Comparable quantity** — an ingredient line's quantity for one serving
 multiplied by its comparison factor. What the ingredient filter orders results
