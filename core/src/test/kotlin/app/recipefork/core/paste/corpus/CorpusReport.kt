@@ -42,7 +42,7 @@ object CorpusReport {
             append("<h1>${esc(heading)}</h1>")
             append("<p class=\"lede\">Each text as pasted, beside the recipe the parser made of it. ")
             append("<span class=\"free\">Free text</span> names no dictionary entry; ")
-            append("<span class=\"as-written\">as written</span> is a quantity the parser did not read. ")
+            append("<span class=\"as-written\">Not read</span> marks a row whose quantity the parser did not read. ")
             append("Dictionary: ${esc(dictionaries.version.take(12))}.</p>")
 
             // The corpus measures, whole and by set.
@@ -64,7 +64,7 @@ object CorpusReport {
 
             // Per text.
             append("<h2>Texts</h2><div class=\"scroll\"><table class=\"sum\"><thead><tr><th>Text</th><th>Rows</th><th>Bound</th><th>Free</th>")
-            append("<th>As written</th><th>Refs</th><th>Timers</th><th>Equip.</th><th>Check</th></tr></thead><tbody>")
+            append("<th>Not read</th><th>Refs</th><th>Timers</th><th>Equip.</th><th>Check</th></tr></thead><tbody>")
             measures.forEachIndexed { i, m ->
                 append("<tr><th><a href=\"#t$i\">${esc(m.text.set)}/${esc(m.text.name.substringBeforeLast('.'))}</a></th>")
                 if (m.recipe == null) {
@@ -93,12 +93,14 @@ object CorpusReport {
                     if (recipe.description.isNotBlank()) append("<p class=\"desc\">${esc(recipe.description)}</p>")
 
                     append("<h4>Ingredients</h4><div class=\"scroll\"><table class=\"rows\"><thead><tr><th>Quantity</th><th>Ingredient</th><th>Qualifier</th><th>Note</th></tr></thead><tbody>")
-                    recipe.ingredients.forEach { row ->
+                    val readRows = CorpusMeasures.readRows(recipe.ingredients)
+                    recipe.ingredients.forEachIndexed { i, row ->
                         recipe.ingredientGroups.filter { it.firstPosition == row.position }.forEach {
                             append("<tr class=\"group\"><td colspan=\"4\">${esc(it.name)}</td></tr>")
                         }
-                        val read = CorpusMeasures.quantityRead(row)
-                        append("<tr><td class=\"${if (read) "qty" else "qty as-written"}\">${esc(quantity(row, ui))}</td>")
+                        val read = readRows[i]
+                        val notRead = if (read) "" else " <small class=\"tag\">not read</small>"
+                        append("<tr${if (read) "" else " class=\"not-read\""}><td class=\"qty\">${esc(quantity(row, ui))}$notRead</td>")
                         val entry = row.dictionaryEntry?.let(ingredients::get)
                         if (entry != null) {
                             append("<td><span class=\"entry\" title=\"${esc("#${entry.id} ${entry.labelRu} / ${entry.labelEn}")}\">${esc(label(entry.labelRu, entry.labelEn, language))}</span></td>")
@@ -211,7 +213,7 @@ object CorpusReport {
         table.sum td{white-space:nowrap}table.sum th{white-space:nowrap}
         .ok{color:var(--ok-fg)}.bad{background:var(--bad-bg);color:var(--bad-fg)}.warn{background:var(--free-bg);color:var(--free-fg)}
         .free{background:var(--free-bg);color:var(--free-fg);padding:0 3px;border-radius:3px}
-        .as-written{background:var(--bad-bg);color:var(--bad-fg)}
+        .as-written,tr.not-read td{background:var(--bad-bg);color:var(--bad-fg)}.tag{font-weight:600;color:inherit}
         .text{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:18px 0}
         .text h2{margin:0 0 .5em;font-size:1.05rem;word-break:break-word}.set{font-size:.75rem;background:var(--group);padding:1px 6px;border-radius:8px;vertical-align:middle}
         .pair{display:grid;grid-template-columns:1fr;gap:16px}@media (min-width:900px){.pair{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}}
