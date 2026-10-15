@@ -1,0 +1,201 @@
+package app.recipefork.core.paste
+
+import app.recipefork.core.recipe.RecipeLanguage
+
+/** One non-blank line of a pasted text, its Markdown markers and emphasis already stripped. */
+internal sealed interface PasteLine {
+    /** A Markdown heading ([markdown], [level] 1–6), or a bold-only, a short colon-ended or a bare keyword line. */
+    data class Heading(val text: String, val level: Int, val markdown: Boolean) : PasteLine
+
+    /** A line of text; [marked] when it had a bullet or a number, [numbered] when that was a number. */
+    data class Item(val text: String, val numbered: Boolean, val marked: Boolean, val fromTable: Boolean = false) : PasteLine
+}
+
+internal object PasteLines {
+    private const val MINOR = 7
+    private const val COLON_HEADING_MAX = 40
+
+    private val MD_HEADING = Regex("""^(#{1,6})\s+(.*?)\s*#*$""")
+    private val MARKER = Regex("""^(?:([-*+•–—])|\d{1,2}[.)]|(?:step|шаг)\s*\d{1,2}[.:)]?)\s+(?:\[[ xX]]\s+)?""", RegexOption.IGNORE_CASE)
+    private val LABEL_ONLY = Regex("""^(?:(?:step|шаг)\s*\d{1,3}\s*[.:)]?|\d{1,2}[.)])$""", RegexOption.IGNORE_CASE)
+    private val WIKI_LINK = Regex("""\[\[([^\[\]|]+)(?:\|([^\[\]]+))?]]""")
+    private val LINK = Regex("""\[([^\[\]]+)]\([^()]*\)""")
+    private val STAR = Regex("""(?<![\p{L}\d*])\*(\S(?:[^*]*\S)?)\*(?![\p{L}\d*])""")
+    private val UNDERSCORE = Regex("""(?<![\p{L}\d_])_(\S(?:[^_]*\S)?)_(?![\p{L}\d_])""")
+    private val SPACES = Regex("""\s+""")
+    private val PARENTHESES = Regex("""\([^()]*\)""")
+    private val QUANTITY = Regex(
+        """^[~≈]?\s*(?:\d|[½¼¾⅓⅔⅛⅜⅝⅞]|(?:one|two|three|four|five|six|half|pinch|dash|handful|щепотк\p{L}*|пучок|пол|""" +
+            """половин\p{L}*|один|одна|одно|два|две|три|четыре|пять|несколько)(?!\p{L}))""",
+    )
+    private val EQUIPMENT_LINE = Regex("""^(?:посуда|оборудование|инвентарь|equipment|tools)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+    private val ABBREVIATIONS = setOf("л", "ч", "ст", "г", "гр", "кг", "мл", "шт", "tsp", "tbsp", "oz", "lb", "lbs", "pkg", "c")
+    private val LAST_WORD = Regex("""(\p{L}+)\.$""")
+
+    private val SECTIONS: List<Pair<Section, List<String>>> = listOf(
+        Section.EQUIPMENT to listOf("посуда", "что нужно из посуды", "оборудование", "инвентарь", "equipment", "tools"),
+        Section.INGREDIENTS to listOf(
+            "ингредиент", "вам понадобится", "что понадобится", "понадобится", "продукты",
+            "ingredient", "you will need", "you'll need", "what you need", "what you'll need",
+        ),
+        Section.STEPS to listOf(
+            "приготовление", "способ приготовления", "как приготовить", "как готовить", "порядок приготовления", "шаги",
+            "method", "directions", "instructions", "preparation", "steps", "how to make", "how to cook",
+        ),
+        Section.NOTES to listOf("заметки", "примечани", "совет", "хранение", "notes", "note", "tips", "storage", "cook's note"),
+    )
+
+    /** The lines of [text]; a run of table rows becomes its ingredient lines, or nothing (PasteTables). */
+    fun split(text: String): List<PasteLine> {
+        val lines = mutableListOf<PasteLine>()
+        val table = mutableListOf<String>()
+        fun endTable() {
+            lines += PasteTables.ingredientLines(table)
+            table.clear()
+        }
+        text.lines().forEach { raw ->
+            if (raw.trim().startsWith('|')) {
+                table += raw
+            } else {
+                endTable()
+                classify(raw)?.let { lines += it }
+            }
+        }
+        endTable()
+        return lines
+    }
+
+    fun classify(raw: String): PasteLine? {
+        var line = raw.trim().removePrefix("\uFEFF").trim()
+        while (line.startsWith('>')) line = line.removePrefix(">").trim()
+        if (line.isEmpty() || line.startsWith('|') || line.startsWith("```") || isRule(line)) return null
+        MD_HEADING.matchEntire(line)?.let { m ->
+            val text = clean(m.groupValues[2]).trimEnd(':').trim()
+            return if (text.isEmpty()) null else PasteLine.Heading(text, m.groupValues[1].length, markdown = true)
+        }
+        // Markers are read after emphasis is gone, so "- **Шаг 1.** Промыть" loses both the bullet and the label.
+        var text = clean(line)
+        var marked = false
+        var numbered = false
+        repeat(2) {
+            MARKER.find(text)?.let { m ->
+                marked = true
+                numbered = numbered || m.groups[1] == null
+                text = text.substring(m.range.last + 1).trim()
+            }
+        }
+        if (text.isEmpty() || LABEL_ONLY.matches(text)) return null
+        if (marked) return PasteLine.Item(text, numbered, marked = true)
+        val name = text.trimEnd(':').trim()
+        return when {
+            isBoldOnly(line) && !endsSentence(name) -> PasteLine.Heading(name, MINOR, markdown = false)
+            text.endsWith(':') && text.length <= COLON_HEADING_MAX -> PasteLine.Heading(name, MINOR, markdown = false)
+            sectionOf(name, bare = true) != null -> PasteLine.Heading(name, MINOR, markdown = false)
+            else -> PasteLine.Item(text, numbered = false, marked = false)
+        }
+    }
+
+    /** A thematic break: three or more of one of - * _ = and nothing else but spaces. */
+    private fun isRule(line: String): Boolean {
+        val marks = line.filterNot { it.isWhitespace() }
+        return marks.length >= 3 && marks[0] in "-*_=" && marks.all { it == marks[0] }
+    }
+
+    /** "**Тесто**", "__Тесто:__", "**Тесто**:" — wholly bold. */
+    private fun isBoldOnly(line: String): Boolean {
+        val body = line.removeSuffix(":")
+        val mark = body.take(2).takeIf { it == "**" || it == "__" } ?: return false
+        if (body.length <= 4 || !body.endsWith(mark)) return false
+        val inner = body.substring(2, body.length - 2)
+        return "**" !in inner && "__" !in inner
+    }
+
+    /**
+     * The section a heading opens, by its words; null for any other heading. A [bare] line (no Markdown, no bold, no
+     * colon) counts only when it is the keyword itself, give or take an inflection ending.
+     */
+    fun sectionOf(heading: String, bare: Boolean = false): Section? {
+        val name = heading.lowercase().replace('ё', 'е').replace(PARENTHESES, " ").trim().trimEnd(':').trim()
+        return SECTIONS.firstOrNull { (_, words) ->
+            words.any { name.startsWith(it) && (!bare || name.length - it.length <= 3) }
+        }?.first
+    }
+
+    /** Strips Markdown emphasis and links (Obsidian's included) and folds runs of whitespace. */
+    fun clean(text: String): String = text
+        .replace(WIKI_LINK) { it.groupValues[2].ifEmpty { it.groupValues[1] } }
+        .replace(LINK, "$1")
+        .replace("**", "").replace("__", "").replace("~~", "")
+        .replace(STAR, "$1")
+        .replace(UNDERSCORE, "$1")
+        .replace(SPACES, " ")
+        .trim()
+
+    fun quantityLed(text: String): Boolean = QUANTITY.containsMatchIn(text.lowercase())
+
+    /** Ends as a sentence does: "!", "?", "…", or a full stop that does not close a unit's abbreviation ("1 ч. л."). */
+    fun endsSentence(text: String): Boolean = when (text.lastOrNull()) {
+        '!', '?', '…' -> true
+        '.' -> LAST_WORD.find(text)?.groupValues?.get(1)?.lowercase() !in ABBREVIATIONS
+        else -> false
+    }
+
+    /** The equipment a "Посуда: …" / "Equipment: …" line names, or null for any other line. */
+    fun equipmentLine(text: String): String? = EQUIPMENT_LINE.matchEntire(text)?.groupValues?.get(1)?.trim()?.trimEnd('.')
+
+    /** Russian when more of the text's words are written in Cyrillic than in Latin, English otherwise. */
+    fun language(text: String): RecipeLanguage {
+        var cyrillic = 0
+        var latin = 0
+        Regex("""\p{L}+""").findAll(text).forEach {
+            when (Character.UnicodeScript.of(it.value[0].code)) {
+                Character.UnicodeScript.CYRILLIC -> cyrillic++
+                Character.UnicodeScript.LATIN -> latin++
+                else -> Unit
+            }
+        }
+        return if (latin > cyrillic) RecipeLanguage.EN else RecipeLanguage.RU
+    }
+}
+
+/** The serving count a recipe text states: "на 4 порции", "Порций: 4", "Serves 4", "Yield: 4 servings", "на 4 бургера". */
+internal object Servings {
+    private const val NUM = """(?<![\p{L}\d.,/])(\d{1,3}|одн[аоу]|один|две|два|три|четыре|пять|шесть|one|two|three|four|five|six)""" +
+        """(?:\s*[–—-]\s*\d{1,3})?"""
+    private val WORDS = mapOf(
+        "одна" to 1, "одно" to 1, "одну" to 1, "один" to 1, "две" to 2, "два" to 2, "три" to 3, "четыре" to 4,
+        "пять" to 5, "шесть" to 6, "one" to 1, "two" to 2, "three" to 3, "four" to 4, "five" to 5, "six" to 6,
+    )
+    private val EXPLICIT = listOf(
+        Regex("""$NUM\s+порци"""),
+        Regex("""порци[йия]?\s*[:—–-]\s*$NUM"""),
+        Regex("""serves\s*:?\s*$NUM"""),
+        Regex("""servings?\s*[:—–-]?\s*$NUM"""),
+        Regex("""$NUM\s+servings?"""),
+        Regex("""feeds\s+$NUM"""),
+        Regex("""for\s+$NUM\s+(?:people|persons)"""),
+    )
+
+    /** "на N <что-то>": for N of something, which is servings; time, weight and the like are not. */
+    private val FOR_COUNT = Regex("""(?<!\p{L})на\s+$NUM\s+(\p{L}+)""")
+    private val UNITS = setOf("ч", "г", "гр", "кг", "мл", "л", "см", "мм")
+    private val UNIT_STEMS = listOf("мин", "сек", "час", "град", "дн", "ден", "сут", "недел", "месяц", "раз", "част", "процент")
+    private val SERVINGS_LINE = Regex("""^(?:serves|servings?|yields?|makes|порций|порции|количество порций)(?!\p{L})""")
+
+    fun find(sources: List<String>): Int? {
+        val lower = sources.map { it.lowercase() }
+        lower.forEach { s -> EXPLICIT.forEach { r -> r.find(s)?.let { m -> value(m.groupValues[1])?.let { return it } } } }
+        lower.forEach { s ->
+            FOR_COUNT.findAll(s).forEach { m ->
+                val word = m.groupValues[2]
+                if (word !in UNITS && UNIT_STEMS.none(word::startsWith)) value(m.groupValues[1])?.let { return it }
+            }
+        }
+        return null
+    }
+
+    /** A line that only states the servings ("Serves 4", "Порций: 4"): read for them, not kept as description. */
+    fun isServingsLine(text: String): Boolean = SERVINGS_LINE.containsMatchIn(text.lowercase()) && find(listOf(text)) != null
+
+    private fun value(token: String): Int? = (token.toIntOrNull() ?: WORDS[token])?.takeIf { it in 1..99 }
+}
