@@ -3,6 +3,7 @@ package app.recipefork.core.paste
 import app.recipefork.core.recipe.RecipeLanguage
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -666,6 +667,7 @@ class TextLayoutTest {
         )
         assertEquals(listOf("500 г творога", "1 яйцо"), byShape.ingredients.map { it.text })
         assertEquals(listOf("Время запекания в духовке: 40 минут"), byShape.description)
+        assertFalse(PasteLines.timeLine("Время жаркими днями 2 часа")) // a kind of time is a whole word
     }
 
     @Test
