@@ -25,7 +25,7 @@ object RecipeFromText {
         dictionaries: DictionariesDto,
         at: Instant,
         owner: AccountId?,
-        firstMention: FirstMention = FirstMention.BEFORE,
+        firstMention: FirstMention = FirstMention.AFTER,
     ): Recipe? {
         val layout = TextLayout.read(text) ?: return null
         val ingredientMatch = DictionaryMatch(dictionaries.ingredients)

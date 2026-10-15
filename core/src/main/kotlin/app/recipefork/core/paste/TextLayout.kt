@@ -190,6 +190,10 @@ private class LayoutReader(private val text: String) {
             }
             groupLine(line.text, next)?.let { group = it; return }
         }
+        // "- ## Соус", "- STIR-FRY" over ingredient lines: a group, marked or not.
+        if (section == Section.INGREDIENTS && !line.fromTable && next is PasteLine.Item && PasteLines.ingredientLed(next.text)) {
+            PasteLines.partHeading(line.text, next.text)?.let { group = it; return }
+        }
         when {
             section == Section.DESCRIPTION && line.fromTable ->
                 entries += Entry(Section.INGREDIENTS, line.text, false, null, marked = true, fromTable = true)
@@ -225,7 +229,8 @@ private class LayoutReader(private val text: String) {
 
     /**
      * No ingredient heading: the first run of short lines led by a quantity or a name and a dash, among the lines before
-     * any section. A heading line inside the run or right above it ("Для теста:") is the group of the lines below it.
+     * any section. A heading line inside the run or right above it ("Для теста:", "FOR THE GLAZE") is the group of the
+     * lines below it.
      */
     private fun ingredientsByShape() {
         val candidates = entries.filter { it.section == Section.DESCRIPTION && !it.pinned }
@@ -234,18 +239,21 @@ private class LayoutReader(private val text: String) {
         while (start >= 0 && end + 1 < candidates.size && staysInRun(candidates, end + 1)) end++
         val run = if (start < 0) emptyList() else candidates.subList(start, end + 1)
         if (run.count { PasteLines.ingredientLed(it.text) } >= 2) {
-            val above = candidates.getOrNull(start - 1)?.takeIf { it.fromHeading }
+            val above = candidates.getOrNull(start - 1)?.takeIf { it.fromHeading || PasteLines.partHeading(it.text, candidates[start].text) != null }
             val groups = mutableSetOf<Entry>()
             var current: String? = null
-            (listOfNotNull(above) + run).forEach {
-                if (it.fromHeading && Servings.find(listOf(it.text)) != null) {
+            val lines = listOfNotNull(above) + run
+            lines.forEachIndexed { i, line ->
+                val next = lines.getOrNull(i + 1)
+                val part = next?.takeIf { PasteLines.ingredientLed(it.text) }?.let { PasteLines.partHeading(line.text, it.text) }
+                if (line.fromHeading && Servings.find(listOf(line.text)) != null) {
                     current = null // "На 4 порции:" states the servings: it stays in the description, and ends a group
-                } else if (it.fromHeading && !PasteLines.ingredientLed(it.text)) {
-                    current = it.text
-                    groups += it
+                } else if ((line.fromHeading || part != null) && !PasteLines.ingredientLed(line.text)) {
+                    current = if (line.fromHeading) line.text else part
+                    groups += line
                 } else {
-                    it.section = Section.INGREDIENTS
-                    it.group = current
+                    line.section = Section.INGREDIENTS
+                    line.group = current
                 }
             }
             entries.removeAll(groups)

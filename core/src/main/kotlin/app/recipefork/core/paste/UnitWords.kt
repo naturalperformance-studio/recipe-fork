@@ -20,7 +20,7 @@ internal sealed interface UnitWord {
  * The unit words of a pasted ingredient line in Russian and English — abbreviated, with or without a dot, and inflected
  * ("г", "гр", "граммов", "ст. л.", "столовые ложки", "tbsp", "cups") — each mapped to the unit of the model it means.
  * A Russian "стакан" is the model's cup, and so is a multicooker's ("мультистакан"), which qualifies the entry. The
- * words for whole things ([UnitWord.Count]) count pieces.
+ * words for whole things ([UnitWord.Count]) count pieces. A dash is a pinch.
  */
 internal object UnitWords {
     private val units: List<Pair<UnitWord, String>> = listOf(
@@ -34,7 +34,7 @@ internal object UnitWords {
         QuantityUnit.OUNCE to """oz|ounces?""",
         QuantityUnit.POUND to """lbs?|pounds?|фунт(?:а|ов)?""",
         QuantityUnit.CUP to """стакан(?:а|ов|ы)?|cups?""",
-        QuantityUnit.PINCH to """щепотк[аиу]|щепоток|щепоть|pinch(?:es)?""",
+        QuantityUnit.PINCH to """щепотк[аиу]|щепоток|щепоть|pinch(?:es)?|dash(?:es)?""",
         QuantityUnit.PIECE to """шт|штук[аи]?|штучк[аиу]|pcs?|pieces?""",
     ).map { (unit, pattern) -> UnitWord.Of(unit) to pattern } +
         (UnitWord.Of(QuantityUnit.CUP, qualifier = "мультистакан") to """мультистакан(?:а|ов|ы)?""")
@@ -56,6 +56,7 @@ internal object UnitWords {
         "упаковка" to """упаковк[аиу]|упаковок""",
         "ломтик" to """ломтик(?:а|ов|и)?""",
         "стебель" to """стебель|стебл(?:я|и|ей)""",
+        "перо" to """перо|пера|перьев|п[её]рышк[оаи]|п[её]рышек""",
         "clove" to """cloves?""",
         "bunch" to """bunch(?:es)?""",
         "handful" to """handfuls?""",
@@ -69,7 +70,12 @@ internal object UnitWords {
         "slice" to """slices?""",
         "pack" to """packs?""",
         "package" to """packages?""",
+        "bag" to """bags?""",
+        "box" to """box(?:es)?""",
+        "bottle" to """bottles?""",
+        "carton" to """cartons?""",
         "stick" to """sticks?""",
+        "block" to """blocks?""",
     ).map { (base, pattern) -> UnitWord.Count(base) to pattern }
 
     private val words = units + counts
@@ -85,6 +91,9 @@ internal object UnitWords {
 
     /** Every word of an ingredient line's quantity: the units and the words for whole things, written as [PATTERN] is. */
     val LINE_PATTERN: String = alternation(words)
+
+    /** The units alone, no word for a whole thing, written as [PATTERN] is: what a package's size is in ("8-ounce"). */
+    val UNIT_PATTERN: String = alternation(units)
 
     /** The words for whole things alone, written as [PATTERN] is. */
     val COUNT_PATTERN: String = alternation(counts)

@@ -332,6 +332,11 @@ class TextLayoutTest {
             "Ингредиенты\n" + "1 " + "1".repeat(40_000) + " г\n1. Mix.",
             "Ингредиенты\n" + "~".repeat(40_000) + "1 г\n1. Mix.",
             "Суп (порций " + "1 ".repeat(20_000) + ")\nИнгредиенты\n- 1 egg\n1. Mix.",
+            // T-285: parts of the list headed by capitals or hashes.
+            "Ingredients\n" + "- SAUCE\n- 1 egg\n".repeat(20_000) + "Method\n1. Mix.",
+            "Ingredients\n- " + "#".repeat(40_000) + " x\n- 1 egg\nMethod\n1. Mix.",
+            "Ingredients\n- ## " + " ".repeat(40_000) + "x\n- 1 egg\nMethod\n1. Mix.",
+            "SAUCE\n1 egg\n".repeat(20_000) + "Mix it all together well.",
         )
         for (input in inputs) {
             val took = measureTime { TextLayout.read(input) }
