@@ -20,6 +20,7 @@ import app.recipefork.app.file.ImportOutcome
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.file.importSafely
 import app.recipefork.app.file.message
+import app.recipefork.app.paste.PasteRun
 import app.recipefork.app.timer.TimerStep
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -361,9 +362,17 @@ class LibrarySession(
 
     /**
      * The text the paste screen was opened with — shared to the application — or null when it fills its field from the
-     * clipboard. Read once, as the screen opens, with [pasteOpening].
+     * clipboard. Read once, as the screen opens, with [pasteOpening]; the field keeps it from then on ([pasteTaken]).
      */
     val pasteGiven: StateFlow<String?> = saved.getStateFlow(PASTE_TEXT_KEY, null)
+
+    /** The paste screen's field holds the text it was opened with: the session keeps it no longer, so it is kept once. */
+    fun pasteTaken() {
+        saved[PASTE_TEXT_KEY] = null
+    }
+
+    /** The paste screen's reading, run here so that the screen turning does not cancel it. */
+    val pasteRun = PasteRun(viewModelScope)
 
     /** Counts the paste screen's openings, so that a text shared while it is open replaces what its field holds. */
     val pasteOpening: StateFlow<Int> = saved.getStateFlow(PASTE_OPENING_KEY, 0)
@@ -374,6 +383,7 @@ class LibrarySession(
      */
     fun openPaste(text: String? = null) {
         showHeld()
+        pasteRun.clear()
         saved[PASTE_TEXT_KEY] = text
         saved[PASTE_OPENING_KEY] = pasteOpening.value + 1
         saved[PASTE_KEY] = true

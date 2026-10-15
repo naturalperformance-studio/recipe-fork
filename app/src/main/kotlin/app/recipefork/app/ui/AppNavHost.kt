@@ -211,8 +211,14 @@ fun AppNavHost(
             // it clears the session's, while it still slides away.
             val opening by session.pasteOpening.collectAsState()
             val given = remember(opening) { session.pasteGiven.value }
+            // The field has it from here on: the session keeps it no longer.
+            LaunchedEffect(opening) { session.pasteTaken() }
             val reading = remember(recipes, editor) { PasteReading(recipes, editor) }
-            PasteScreen(given, opening, reading, onBack = session::closePaste, onRead = { session.openEditor(it.value) })
+            PasteScreen(
+                given, opening, reading, session.pasteRun,
+                onBack = session::closePaste,
+                onRead = { session.openEditor(it.value) },
+            )
         }
         composable(Destinations.CARD_ROUTE, arguments = recipeArgument) { entry ->
             RecipeCard(RecipeId(entry.recipeId()), session, recipes, editor, card)

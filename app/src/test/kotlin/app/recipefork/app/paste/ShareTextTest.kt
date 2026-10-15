@@ -14,7 +14,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.MainActivity
 import app.recipefork.app.editor.PATIENCE_MS
+import app.recipefork.app.editor.textsOf
+import app.recipefork.app.file.BookFileIntents
+import app.recipefork.app.file.CollectionFileIntents
+import app.recipefork.app.file.FileMessageTags
 import app.recipefork.app.file.OpenRecipeFileActivity
+import app.recipefork.app.file.RecipeFileIntents
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -87,7 +92,7 @@ class ShareTextTest {
         assertEquals(ComponentName(context, MainActivity::class.java), forwarded.component)
         assertTrue(forwarded.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
         assertEquals("Блины\n- 200 г муки", PasteIntents.textOf(forwarded))
-        // A share holding no text hands nothing on.
+        // A share holding no text, nor any file, hands nothing on.
         assertNull(handedOn(send(null)))
     }
 
@@ -108,8 +113,48 @@ class ShareTextTest {
     fun theSubjectIsTheFirstLineUnlessTheTextBeginsWithIt() {
         assertEquals("Блины\n- 200 г муки", PasteIntents.textOf(send("- 200 г муки", subject = "Блины")))
         assertEquals(shared, PasteIntents.textOf(send(shared, subject = "Блины")))
+        // Begun with, though its first line says more.
+        assertEquals("Блины на молоке\n- 200 г муки", PasteIntents.textOf(send("Блины на молоке\n- 200 г муки", subject = "Блины")))
+        assertEquals("  Блины — рецепт\n- 200 г муки", PasteIntents.textOf(send("  Блины — рецепт\n- 200 г муки", subject = "Блины — рецепт")))
         assertEquals(shared, PasteIntents.textOf(send(shared, subject = "  ")))
         assertEquals(shared, PasteIntents.textOf(send(shared, type = "text/*")))
+    }
+
+    private fun sendStream(uri: Uri, type: String) = Intent(Intent.ACTION_SEND).setType(type).putExtra(Intent.EXTRA_STREAM, uri)
+
+    private val telegram = "content://org.telegram.messenger.provider/media/Android/data/org.telegram.messenger/files/Telegram/Telegram Files/"
+
+    // A recipe file shared as text — as Telegram shares a file, its address in EXTRA_STREAM alone — is handed on as the
+    // file it is, to be imported, as when it is opened; so are a book and a collection.
+    @Test
+    fun aRecipeFileSharedAsTextIsHandedOnAsAFile() {
+        for (name in listOf("lemon-cake.recipefork", "LEMON CAKE.RECIPEFORK")) {
+            val file = Uri.parse(telegram + name)
+            val shared = sendStream(file, "text/plain")
+            assertEquals(listOf(OpenRecipeFileActivity::class.java.name), offered(shared))
+            val forwarded = requireNotNull(handedOn(shared))
+            assertEquals(Intent.ACTION_VIEW, forwarded.action)
+            assertEquals(ComponentName(context, MainActivity::class.java), forwarded.component)
+            assertEquals(file, RecipeFileIntents.fileOf(forwarded))
+        }
+        val book = Uri.parse(telegram + "Recipe book.recipefork-book")
+        assertEquals(book, BookFileIntents.toRestore(handedOn(sendStream(book, "text/plain"))))
+        val collection = Uri.parse(telegram + "menu.recipefork-collection")
+        assertEquals(collection, CollectionFileIntents.toImport(handedOn(sendStream(collection, "text/plain"))))
+    }
+
+    // A file of another kind shared as text says it is no recipe file: nothing is silent.
+    @Test
+    fun anotherFileSharedAsTextSaysItIsNoRecipeFile() {
+        val forwarded = requireNotNull(handedOn(sendStream(Uri.parse(telegram + "notes.txt"), "text/plain")))
+        assertEquals(RecipeFileIntents.ACTION_NOT_OURS, forwarded.action)
+        assertEquals(ComponentName(context, MainActivity::class.java), forwarded.component)
+        assertNull(RecipeFileIntents.fileOf(forwarded))
+        assertNull(PasteIntents.textOf(forwarded))
+
+        opened = Robolectric.buildActivity(MainActivity::class.java, forwarded).setup()
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(FileMessageTags.TEXT)).fetchSemanticsNodes().size == 1 }
+        assertEquals(listOf("This file is not a recipe file, so nothing was added"), compose.textsOf(FileMessageTags.TEXT))
     }
 
     // What shares no text opens nothing.

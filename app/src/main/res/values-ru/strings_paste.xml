@@ -9,6 +9,6 @@
     <string name="paste_read">Разобрать</string>
     <string name="paste_read_action">Разобрать текст в новый рецепт</string>
     <string name="paste_reading">Текст разбирается</string>
-    <string name="paste_no_recipe">Не нашёл в тексте рецепта — нужны ингредиенты и шаги.</string>
+    <string name="paste_no_recipe">В тексте не найден рецепт — нужны ингредиенты и шаги.</string>
     <string name="paste_failed">Не удалось сохранить рецепт. Попробуйте ещё раз.</string>
 </resources>

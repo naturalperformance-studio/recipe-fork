@@ -251,20 +251,43 @@ class RecipeImport(
 
 /**
  * A recipe file handed to the application by another (FLOW-064): the `content:` or `file:` address an `ACTION_VIEW`
- * intent carries, or the stream an `ACTION_SEND` of the product's type carries — never a saved book ([BookFileIntents]),
- * which the import would refuse. A timer's notification is a view of the application's own address, and is no file.
+ * intent carries, or the stream an `ACTION_SEND` carries of the product's type, or named with its extension whatever
+ * type it declares (Telegram shares a file as `text/plain`) — never a saved book ([BookFileIntents]), which the import
+ * would refuse. A timer's notification is a view of the application's own address, and is no file.
  */
 object RecipeFileIntents {
     internal val FILE_SCHEMES = setOf(android.content.ContentResolver.SCHEME_CONTENT, android.content.ContentResolver.SCHEME_FILE)
 
     fun fileOf(intent: Intent?): Uri? = when (intent?.action) {
         Intent.ACTION_VIEW -> intent.data
-        Intent.ACTION_SEND -> intent.takeIf { it.type == RecipeFile.MIME_TYPE }?.let(::streamOf)
+        Intent.ACTION_SEND -> streamOf(intent)?.takeIf { intent.type == RecipeFile.MIME_TYPE || isRecipeFile(it) }
         else -> null
     }?.takeIf { it.scheme in FILE_SCHEMES && !BookFileIntents.isBookFile(it) && !CollectionFileIntents.isCollectionFile(it, intent?.type) }
 
     @Suppress("DEPRECATION")
     internal fun streamOf(intent: Intent): Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
+
+    /** Whether [uri] names a recipe file by its extension. */
+    private fun isRecipeFile(uri: Uri): Boolean = uri.path?.endsWith("." + RecipeFile.EXTENSION, ignoreCase = true) == true
+
+    /**
+     * The action that hands on to [MainActivity] a share holding neither a file of the application's nor a text (T-280)
+     * — a file of another kind shared as text — so that the person is told it is no recipe file rather than nothing
+     * happening.
+     */
+    const val ACTION_NOT_OURS = "app.recipefork.action.NOT_A_RECIPE_FILE"
+
+    /**
+     * The intent that tells [MainActivity] that [intent] — a file shared as text, with no text of its own — holds nothing
+     * it takes ([ACTION_NOT_OURS]); null for any other intent.
+     */
+    fun notOurs(context: Context, intent: Intent?): Intent? = intent
+        ?.takeIf { it.action == Intent.ACTION_SEND && it.type?.startsWith("text/") == true && streamOf(it) != null }
+        ?.let { notOurs(context) }
+
+    private fun notOurs(context: Context): Intent = Intent(context, MainActivity::class.java)
+        .setAction(ACTION_NOT_OURS)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
     /**
      * The intent that hands the file [intent] opens or shares on to [MainActivity], in the application's own task —

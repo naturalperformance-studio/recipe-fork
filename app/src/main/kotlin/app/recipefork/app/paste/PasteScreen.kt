@@ -24,8 +24,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -41,16 +41,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.core.recipe.RecipeId
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
-
-/** What went wrong with the last reading: no recipe in the text, or a recipe that could not be written. */
-private enum class PasteProblem { NO_RECIPE, FAILED }
 
 /**
  * The paste screen (T-280): one multi-line field holding a recipe's text — the [given] text shared to the application,
  * else the clipboard's text — and "Read", which reads it through [reading] into a new recipe of the owner's and hands
- * it to [onRead]. A text that holds no recipe keeps the screen, saying so under the field, and writes nothing. The
+ * it to [onRead] — in the session's [run], which the screen turning does not cancel. A text that holds no recipe keeps
+ * the screen, saying so under the field, and writes nothing. The
  * field's text survives the screen turning and the process ending; [opening] — the session's count of openings —
  * starts it anew when a text is shared while the screen is open.
  */
@@ -60,39 +56,17 @@ fun PasteScreen(
     given: String?,
     opening: Int,
     reading: PasteReading,
+    run: PasteRun,
     onBack: () -> Unit,
     onRead: (RecipeId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var text by rememberSaveable(opening) { mutableStateOf(given ?: clipboardText(context).orEmpty()) }
-    var problem by rememberSaveable(opening) { mutableStateOf<PasteProblem?>(null) }
-    // Not saved: a reading ends with the process that ran it.
-    var busy by remember(opening) { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val read: () -> Unit = {
-        if (!busy && text.isNotBlank()) {
-            busy = true
-            problem = null
-            val asRead = text
-            scope.launch {
-                val outcome = try {
-                    reading.read(asRead)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    problem = PasteProblem.FAILED
-                    null
-                } finally {
-                    busy = false
-                }
-                when {
-                    outcome != null -> onRead(outcome)
-                    problem == null -> problem = PasteProblem.NO_RECIPE
-                }
-            }
-        }
-    }
+    // Saved with the screen, at most MAX_SAVED_TEXT characters of it, so that a long share keeps saved state small.
+    var text by rememberSaveable(opening, stateSaver = SavedText) { mutableStateOf(given ?: clipboardText(context).orEmpty()) }
+    val problem by run.problem.collectAsState()
+    val busy by run.busy.collectAsState()
+    val read: () -> Unit = { run.read(text, reading, onRead) }
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(PasteTags.SCREEN),
         topBar = {
@@ -154,7 +128,7 @@ fun PasteScreen(
                 value = text,
                 onValueChange = {
                     text = it
-                    problem = null
+                    run.clear()
                 },
                 label = { Text(stringResource(R.string.paste_field)) },
                 isError = problem != null,
@@ -177,6 +151,17 @@ fun PasteScreen(
         }
     }
 }
+
+/** The most of the field's text kept in saved state. */
+internal const val MAX_SAVED_TEXT = 100_000
+
+/** The field's text as saved state keeps it: cut at [MAX_SAVED_TEXT] characters, never inside a character. */
+private val SavedText = Saver<String, String>(
+    save = { text ->
+        if (text.length <= MAX_SAVED_TEXT) text else text.take(if (text[MAX_SAVED_TEXT - 1].isHighSurrogate()) MAX_SAVED_TEXT - 1 else MAX_SAVED_TEXT)
+    },
+    restore = { it },
+)
 
 /** The clipboard's text, or null when it holds none. */
 private fun clipboardText(context: Context): String? {

@@ -52,8 +52,7 @@ object PasteIntents {
         val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()?.takeIf { it.isNotBlank() } ?: return null
         val subject = intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
             ?: return text
-        val first = text.trimStart().lineSequence().first().trim()
-        return if (first == subject) text else subject + "\n" + text
+        return if (text.trimStart().startsWith(subject)) text else subject + "\n" + text
     }
 
     /**

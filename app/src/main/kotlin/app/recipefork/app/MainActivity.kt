@@ -125,6 +125,11 @@ class MainActivity : ComponentActivity() {
             librarySession.openPaste(text)
             return
         }
+        // A file of another kind shared to it is no recipe file: the person is told so rather than nothing happening.
+        if (intent?.action == RecipeFileIntents.ACTION_NOT_OURS) {
+            librarySession.tell(FileMessage(FileMessage.Kind.NOT_A_RECIPE_FILE))
+            return
+        }
         val timer = TimerIntents.timerOf(intent) ?: return
         // That timer's ringing alone: another of its step, or of its recipe, rings on.
         (application as RecipeForkApplication).container.timerRinging.forget(timer)

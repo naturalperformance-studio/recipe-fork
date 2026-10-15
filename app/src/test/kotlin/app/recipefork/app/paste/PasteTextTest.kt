@@ -24,6 +24,7 @@ import app.recipefork.app.editor.EditorTags
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.editor.waitUntilWithMainThread
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.library.LibraryView
@@ -192,6 +193,17 @@ class PasteTextTest {
         assertEquals(listOf("Разобрать"), compose.textsOf(PasteTags.READ))
     }
 
+    // A text handed to the screen is kept by its field alone once it shows: the session holds it no longer.
+    @Test
+    fun aGivenTextIsKeptOnce() {
+        clipboard(null)
+        show()
+        compose.runOnIdle { session.openPaste(biscuits) }
+        compose.waitUntil(PATIENCE_MS) { exists(PasteTags.FIELD) && fieldText() == biscuits }
+        compose.waitUntil(PATIENCE_MS) { session.pasteGiven.value == null }
+        assertEquals(biscuits, fieldText())
+    }
+
     // Back leaves the paste screen for the book, writing nothing.
     @Test
     fun backReturnsToTheBook() {
@@ -212,7 +224,8 @@ class PasteTextTest {
         show()
         openPaste()
         read()
-        compose.waitUntil(PATIENCE_MS) { session.editing.value != null && exists(EditorTags.FORM) }
+        // The reading runs in the session's scope, resuming on the main thread: its looper is let run meanwhile.
+        compose.waitUntilWithMainThread { session.editing.value != null && exists(EditorTags.FORM) }
         val id = requireNotNull(session.editing.value)
         assertEquals(listOf(id), written())
         assertFalse(session.pasting.value)
@@ -240,7 +253,8 @@ class PasteTextTest {
         openPaste()
         compose.onNodeWithTag(PasteTags.FIELD).performTextReplacement(biscuits)
         read()
-        compose.waitUntil(PATIENCE_MS) { session.editing.value != null && exists(EditorTags.FORM) }
+        // The reading runs in the session's scope, resuming on the main thread: its looper is let run meanwhile.
+        compose.waitUntilWithMainThread { session.editing.value != null && exists(EditorTags.FORM) }
         val recipe = stored(requireNotNull(session.editing.value))
         assertEquals(biscuits, recipe.sourceText)
         assertEquals("Butter Biscuits", recipe.title)
@@ -255,14 +269,14 @@ class PasteTextTest {
 
     @Test
     @Config(qualifiers = "ru")
-    fun proseSaysNoRecipeInRussian() = assertNoRecipe("Не нашёл в тексте рецепта — нужны ингредиенты и шаги.")
+    fun proseSaysNoRecipeInRussian() = assertNoRecipe("В тексте не найден рецепт — нужны ингредиенты и шаги.")
 
     private fun assertNoRecipe(message: String) {
         clipboard(prose)
         show()
         openPaste()
         read()
-        awaitTag(PasteTags.MESSAGE)
+        compose.waitUntilWithMainThread { exists(PasteTags.MESSAGE) }
         assertEquals(listOf(message), compose.textsOf(PasteTags.MESSAGE))
         val field = compose.onNodeWithTag(PasteTags.FIELD).fetchSemanticsNode().config
         assertTrue(SemanticsProperties.Error in field)
