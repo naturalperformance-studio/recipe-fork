@@ -75,6 +75,7 @@ internal object UnitWords {
         "bottle" to """bottles?""",
         "carton" to """cartons?""",
         "stick" to """sticks?""",
+        "block" to """blocks?""",
     ).map { (base, pattern) -> UnitWord.Count(base) to pattern }
 
     private val words = units + counts

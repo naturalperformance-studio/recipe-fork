@@ -192,7 +192,7 @@ private class LayoutReader(private val text: String) {
         }
         // "- ## Соус", "- STIR-FRY" over ingredient lines: a group, marked or not.
         if (section == Section.INGREDIENTS && !line.fromTable && next is PasteLine.Item && PasteLines.ingredientLed(next.text)) {
-            PasteLines.partHeading(line.text)?.let { group = it; return }
+            PasteLines.partHeading(line.text, next.text)?.let { group = it; return }
         }
         when {
             section == Section.DESCRIPTION && line.fromTable ->
@@ -239,13 +239,13 @@ private class LayoutReader(private val text: String) {
         while (start >= 0 && end + 1 < candidates.size && staysInRun(candidates, end + 1)) end++
         val run = if (start < 0) emptyList() else candidates.subList(start, end + 1)
         if (run.count { PasteLines.ingredientLed(it.text) } >= 2) {
-            val above = candidates.getOrNull(start - 1)?.takeIf { it.fromHeading || PasteLines.partHeading(it.text) != null }
+            val above = candidates.getOrNull(start - 1)?.takeIf { it.fromHeading || PasteLines.partHeading(it.text, candidates[start].text) != null }
             val groups = mutableSetOf<Entry>()
             var current: String? = null
             val lines = listOfNotNull(above) + run
             lines.forEachIndexed { i, line ->
                 val next = lines.getOrNull(i + 1)
-                val part = PasteLines.partHeading(line.text)?.takeIf { next != null && PasteLines.ingredientLed(next.text) }
+                val part = next?.takeIf { PasteLines.ingredientLed(it.text) }?.let { PasteLines.partHeading(line.text, it.text) }
                 if (line.fromHeading && Servings.find(listOf(line.text)) != null) {
                     current = null // "На 4 порции:" states the servings: it stays in the description, and ends a group
                 } else if ((line.fromHeading || part != null) && !PasteLines.ingredientLed(line.text)) {

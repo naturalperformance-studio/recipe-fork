@@ -41,6 +41,12 @@ class PasteSiteShapesTest {
         assertEquals(listOf(Rational.of(2), TABLESPOON, "sugar", null, "= 50 г"), shown("2 ст. л. сахара = 50 г"))
         assertEquals(listOf(Rational.of(2), PIECE, "carrot", null, "= 150 г, натереть"), shown("Морковь 2 шт. = 150 г, натереть"))
         assertEquals(listOf(Rational.of(100), GRAM, "hard cheese", null, "= 1 стакан"), shown("Сыр твёрдый 100 г = 1 стакан"))
+        // Two amounts, then the name.
+        assertEquals(listOf(Rational.ONE, CUP, "water", null, "= 240 ml"), shown("1 cup = 240 ml water"))
+        assertEquals(listOf(Rational.ONE, CUP, "milk", null, "= 250 мл"), shown("1 стакан = 250 мл молока"))
+        assertEquals(listOf(Rational.of(1, 2), CUP, "sugar", null, "= 100 г"), shown("0,5 стакана = 100 г сахара"))
+        // An amount in a parenthesis is the quantity as before, its equal sign kept in the note.
+        assertEquals(listOf(Rational.ONE, TEASPOON, "salt", null, "= 6 г"), shown("Соль (1 ч. л. = 6 г)"))
         // A first amount in no unit the reader knows: the second is the quantity, the first the note.
         assertEquals(listOf(Rational.of(15), GRAM, "scallion", null, "3 пучочка"), shown("Лук зелёный 3 пучочка = 15 г"))
         listOf(
@@ -75,17 +81,29 @@ class PasteSiteShapesTest {
         assertEquals(listOf(Rational.of(1, 2), PIECE, "cream cheese", "package", "8-ounce"), shown("1/2 8-ounce package cream cheese"))
         listOf("2 (14.5 oz) cans diced tomatoes", "1 x 500g bag frozen peas", "6 x 330ml bottles beer", "2 1-litre cartons milk")
             .forEach(::noNumberInTheQualifier)
+        // A size joined by a hyphen right after the quantity, with no word for a whole thing.
+        assertEquals(listOf(Rational.ONE, PIECE, "cream cheese", null, "8-ounce"), shown("1 8-ounce cream cheese"))
+        assertEquals(listOf(Rational.of(2), PIECE, "black beans", null, "15-ounce, drained"), shown("2 15-ounce black beans, drained"))
+        assertEquals(listOf(Rational.ONE, PIECE, "coconut milk", null, "14-oz"), shown("1 14-oz coconut milk"))
+        assertEquals(listOf(Rational.ONE, PIECE, "cream cheese", "block", "8-ounce"), shown("1 8-ounce block cream cheese"))
+        listOf("3 6-oz salmon fillets", "1 2-pound chicken", "2 250-g packs butter").forEach(::noNumberInTheQualifier)
         // A unit after the quantity with no "x" and no word for a whole thing after it is the quantity's own.
         assertEquals(listOf(Rational.of(400), GRAM, "beans", "butter, can"), shown("400g can butter beans").take(4))
     }
 
     @Test
     fun whatFollowsPlusAfterAQuantityGoesToTheNote() {
-        assertEquals(listOf(Rational.of(2), CUP, "flour", null, "+ 2 tablespoons"), shown("2 cups plus 2 tablespoons flour"))
-        assertEquals(listOf(Rational.ONE, CUP, "sugar", null, "+ 1 tbsp"), shown("1 cup plus 1 tbsp sugar"))
-        assertEquals(listOf(Rational.of(1, 3), CUP, "cornstarch", null, "+ 1 tablespoon"), shown("1/3 cup Plus 1 tablespoon cornstarch"))
-        assertEquals(listOf(Rational.of(3), TABLESPOON, "butter", null, "+ extra for greasing"), shown("3 tbsp butter plus extra for greasing"))
-        // A word that only holds "plus" is no plus.
+        assertEquals(listOf(Rational.of(2), CUP, "flour", null, "plus 2 tablespoons"), shown("2 cups plus 2 tablespoons flour"))
+        assertEquals(listOf(Rational.ONE, CUP, "sugar", null, "plus 1 tbsp"), shown("1 cup plus 1 tbsp sugar"))
+        assertEquals(listOf(Rational.of(1, 3), CUP, "cornstarch", null, "Plus 1 tablespoon"), shown("1/3 cup Plus 1 tablespoon cornstarch"))
+        assertEquals(listOf(Rational.of(3), TABLESPOON, "butter", null, "plus extra for greasing"), shown("3 tbsp butter plus extra for greasing"))
+        assertEquals(listOf(Rational.of(2), TABLESPOON, "olive oil", null, "plus more for drizzling"), shown("2 tbsp olive oil, plus more for drizzling"))
+        assertEquals(listOf(Rational.of(40), GRAM, "flour", null, "плюс 1 ст. л."), shown("40 г муки плюс 1 ст. л."))
+        assertEquals(listOf(Rational.of(2), TABLESPOON, "sugar", null, "+ для посыпки"), shown("сахар — 2 ст. л. + для посыпки"))
+        // Two amounts of two names joined by "plus" are two rows, as with "+".
+        assertEquals(listOf("20 г укропа", "15 г петрушки"), reader.lines(IngredientLine("20 г укропа плюс 15 г петрушки", null)).map { it.text })
+        // A "plus" before no amount and no "more" is part of the name; a word that only holds "plus" is no plus.
+        assertTrue(row("2 tbsp Whey Plus protein").let { it.note == null && "Plus" in (it.qualifier ?: it.freeTextName).orEmpty() }, "${shown("2 tbsp Whey Plus protein")}")
         assertEquals("surplus", row("1 cup surplus flour").qualifier)
     }
 
@@ -118,6 +136,21 @@ class PasteSiteShapesTest {
         assertEquals(
             listOf(null to "2 cups flour", "FOR THE GLAZE" to "1 cup icing sugar", "FOR THE GLAZE" to "2 tbsp milk"),
             groups("Cake\n\n2 cups flour\nFOR THE GLAZE\n1 cup icing sugar\n2 tbsp milk\n\nBake the cake for 20 minutes until golden.\nGlaze it when cool."),
+        )
+        // In a recipe written in capitals, a line of capitals between ingredient lines is an ingredient.
+        val pancakes = assertNotNull(TextLayout.read("PANCAKES\n\nINGREDIENTS\n2 CUPS FLOUR\nSALT\n1 TBSP OLIVE OIL\n2 EGGS\n\nDIRECTIONS\n1. MIX ALL."))
+        assertEquals(listOf(null to "2 CUPS FLOUR", null to "SALT", null to "1 TBSP OLIVE OIL", null to "2 EGGS"), pancakes.ingredients.map { it.group to it.text })
+        assertEquals(
+            listOf(null to "2 CUPS FLOUR", null to "SALT AND PEPPER", null to "2 EGGS"),
+            groups("PANCAKES\n\nINGREDIENTS\n- 2 CUPS FLOUR\n- SALT AND PEPPER\n- 2 EGGS\n\nDIRECTIONS\n1. MIX ALL."),
+        )
+        assertEquals(
+            listOf(null to "2 ЯЙЦА", null to "СОЛЬ", null to "200 Г МУКИ", null to "500 МЛ МОЛОКА"),
+            groups("БЛИНЫ\n\nИНГРЕДИЕНТЫ\n2 ЯЙЦА\nСОЛЬ\n200 Г МУКИ\n500 МЛ МОЛОКА\n\nПРИГОТОВЛЕНИЕ\n1. СМЕШАТЬ ВСЁ."),
+        )
+        assertEquals(
+            listOf(null to "2 CUPS FLOUR", null to "SALT", null to "2 EGGS"),
+            groups("PANCAKES\n\n2 CUPS FLOUR\nSALT\n2 EGGS\n\nMIX ALL OF IT TOGETHER WELL AND FRY FOR 2 MINUTES.\nSERVE HOT."),
         )
         // Only over an ingredient line: capitals over none, or over a line with no quantity, are ingredients.
         assertEquals(listOf(null to "500 г картофеля", null to "СОЛЬ", null to "ПЕРЕЦ"), groups("Суп\n\nИнгредиенты:\n- 500 г картофеля\n- СОЛЬ\n- ПЕРЕЦ\n\nПриготовление:\n1. Сварить."))

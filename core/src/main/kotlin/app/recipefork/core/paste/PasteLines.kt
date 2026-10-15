@@ -245,14 +245,15 @@ internal object PasteLines {
     fun timeLine(text: String): Boolean = text.length <= TIME_LINE_MAX && TIME_LINE.containsMatchIn(text) && text.any(Char::isDigit)
 
     /**
-     * The part of a list a line names when it reads as a heading of it — "## Соус", "DILL DIPPING SAUCE", "FOR THE
-     * GLAZE:": the words after Markdown hashes, or a short line of capitals with no digit; null for any other line.
+     * The part of a list a line names when it reads as a heading of the line [under] it — "## Соус", "DILL DIPPING
+     * SAUCE", "FOR THE GLAZE:": the words after Markdown hashes, or a short line of capitals with no digit over a line
+     * that is not in capitals (in a recipe written in capitals, "SALT" is an ingredient); null for any other line.
      */
-    fun partHeading(text: String): String? {
+    fun partHeading(text: String, under: String): String? {
         val hashed = HASHES.matchEntire(text)
         val name = (hashed?.groupValues?.get(1) ?: text).trimEnd(':', '#', ' ').trim()
         val letters = name.filter(Char::isLetter)
-        val capitals = letters.length >= 3 && letters.all(Char::isUpperCase) && name.none(Char::isDigit)
+        val capitals = letters.length >= 3 && letters.all(Char::isUpperCase) && name.none(Char::isDigit) && under.any(Char::isLowerCase)
         return name.takeIf { (hashed != null || capitals) && letters.isNotEmpty() && it.length <= PART_MAX }
     }
 

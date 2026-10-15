@@ -167,6 +167,9 @@ class IngredientLineReaderTest {
                     "4 8" + "-".repeat(20_000) + "ounce packages", "4 " + "8-ounce ".repeat(5_000) + "packages", "1 cup" + " plus 2 tbsp".repeat(5_000) + " flour",
                     "plus ".repeat(10_000) + "1 g salt", "dash ".repeat(10_000) + "salt", "Лук" + " 1".repeat(10_000) + "x = 5 г",
                     "Лук " + "1".repeat(20_000) + "x = 5 г", "Лук" + " 1x".repeat(10_000) + "! = 5 г", "Лук" + " ".repeat(20_000) + "1x = 5 г",
+                    // Fix round 1: a hyphenated size, amount = amount then a name, "plus" before an amount.
+                    "1 " + "8".repeat(20_000) + "-ounce cream cheese", "1 8-" + "ounce-".repeat(5_000) + "cheese", "1 cup = " + "240 ".repeat(5_000) + "ml water",
+                    "1 г соли" + " plus".repeat(10_000) + " 1 г", "1 г соли" + " plus ".repeat(5_000) + " ".repeat(20_000) + "1 г", "1 г" + " плюс 1 г".repeat(5_000),
                 ),
             )
             .forEach { text ->
