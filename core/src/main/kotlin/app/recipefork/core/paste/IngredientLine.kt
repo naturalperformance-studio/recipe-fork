@@ -26,8 +26,9 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
 
     /** The row [line] reads as, at [position] of its recipe. */
     fun read(line: IngredientLine, position: Int): Ingredient {
-        val parens = PAREN.findAll(line.text).map { it.groupValues[1].trim() }.filter { it.isNotEmpty() }.toList()
-        val clauses = PAREN.replace(line.text, " ").split(CLAUSE).map(::squeeze).filter { it.isNotEmpty() }.toMutableList()
+        val text = line.text.replace(UNICODE_SPACE, " ")
+        val parens = PAREN.findAll(text).map { it.groupValues[1].trim() }.filter { it.isNotEmpty() }.toList()
+        val clauses = PAREN.replace(text, " ").split(CLAUSE).map(::squeeze).filter { it.isNotEmpty() }.toMutableList()
         var main = clauses.removeFirstOrNull() ?: ""
 
         val amount = Amount.lead(main) ?: Amount.trail(main)
@@ -57,7 +58,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
             position = position,
             dictionaryEntry = entry?.id,
             qualifier = named.qualifier,
-            freeTextName = if (entry == null) named.freeText.ifEmpty { squeeze(line.text) } else null,
+            freeTextName = if (entry == null) named.freeText.ifEmpty { squeeze(text) }.ifEmpty { null } else null,
             unitType = UnitType.TASTE_UNMEASURED,
             unit = null,
             quantity = null,
@@ -189,7 +190,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
         val UNIT = UnitWords.PATTERN
         val ATOM = """\d+\s+\d+/\d+|\d*\s?[$GLYPH_CLASS]|\d+/\d+|\d+(?:[.,]\d+)?"""
         val WORD = NUMBER_WORDS.keys.sortedByDescending { it.length }.joinToString("|") { it.replace(" ", """\s+""") } .let {
-            """(?:$it)(?![\p{L}\p{N}])|пол-|пол(?=$UNIT)"""
+            """пол-|пол(?=$UNIT)|(?:$it)(?![\p{L}\p{N}])"""
         }
         val NUMBER = """(?:$ATOM|$WORD)"""
         val QUANTITY = """(?:от\s+)?$NUMBER(?:\s*(?:[-–—]|(?:до|to)(?![\p{L}]))\s*$NUMBER)?"""
@@ -198,16 +199,17 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
 
         val LEAD = Regex("""^(?<q>$QUANTITY)?\s*(?<u>$UNIT)?\s*(?:of\s+)?(?<rest>.*)$""", RegexOption.IGNORE_CASE)
         val RAW_LEAD = Regex("""^(?<raw>[\d$GLYPH_CLASS][\d$GLYPH_CLASS./,\-–—]*)\s*(?<u>$UNIT)?\s*(?:of\s+)?(?<rest>.*)$""", RegexOption.IGNORE_CASE)
-        val TRAIL = Regex("""^(?<name>.+?)[\s—–:-]+(?<q>$QUANTITY)\s*(?<u>$UNIT)?[\s.]*$""", RegexOption.IGNORE_CASE)
-        val TRAIL_UNIT = Regex("""^(?<name>.+?)[\s—–:-]+(?<u>$UNIT)[\s.]*$""", RegexOption.IGNORE_CASE)
+        // The name ends at a letter or a digit and the separator after it is taken whole: no backtracking on a run of dashes.
+        val TRAIL = Regex("""^(?<name>.*?[^\s—–:-])[\s—–:-]++(?<q>$QUANTITY)\s*(?<u>$UNIT)?[\s.]*$""", RegexOption.IGNORE_CASE)
+        val TRAIL_UNIT = Regex("""^(?<name>.*?[^\s—–:-])[\s—–:-]++(?<u>$UNIT)[\s.]*$""", RegexOption.IGNORE_CASE)
 
         val PAREN = Regex("""\(([^()]*)\)""")
 
         /** A comma between two digits is a decimal mark; any other, or a semicolon, ends a clause. */
-        val CLAUSE = Regex("""\s*(?:;|,(?!\d)|(?<!\d),)\s*""")
+        val CLAUSE = Regex(""";|,(?!\d)|(?<!\d),""")
         val EDGES = charArrayOf(' ', ',', ';', ':', '—', '–', '-', '.')
 
-        /** How an ingredient is prepared, never what it is: these words go to the row's note. */
+        /** How an ingredient is prepared, or what may stand for it ("или по вкусу"), never what it is: the row's note. */
         val PREPARATION = Regex(
             listOf(
                 "мелко", "крупно", "тонко", "грубо", """кубик\p{L}*""", """соломк\p{L}*""", """(?:полу)?кольц\p{L}*""",
@@ -215,7 +217,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
                 """\p{L}*т[её]рт\p{L}*""", """измельч\p{L}*""", """очищен\p{L}*""", "очистить", """растоплен\p{L}*""",
                 "растопить", """размягч\p{L}*""", """взбит\p{L}*""", """просеян\p{L}*""", "просеять", """охлажд\p{L}*""",
                 """нашинков\p{L}*""", """\p{L}*давлен\p{L}*""", """промыт\p{L}*""", """разморож\p{L}*""",
-                """комнатной\s+температуры""", """по\s+желанию""", """для\s.*""",
+                """комнатной\s+температуры""", """по\s+желанию""", """для\s.*""", """(?:или|и|or|and)\s.*""",
                 "finely", "coarsely", "thinly", "roughly", "freshly", "chopped", "diced", "minced", "sliced", "grated",
                 "shredded", "sifted", "melted", "softened", "beaten", "peeled", "crushed", "cubed", "halved", "quartered",
                 "divided", """(?:at\s+)?room\s+temperature""", "optional", """for\s.*""",
@@ -223,6 +225,7 @@ class IngredientLineReader(private val match: DictionaryMatch<IngredientEntryDto
             RegexOption.IGNORE_CASE,
         )
         val SPACES = Regex("""\s+""")
+        val UNICODE_SPACE = Regex("""[\p{Z}\t]""")
         val WORD_SEPARATORS = Regex("""[^\p{L}\p{N}]+""")
 
         fun squeeze(text: String) = text.replace(SPACES, " ").trim()

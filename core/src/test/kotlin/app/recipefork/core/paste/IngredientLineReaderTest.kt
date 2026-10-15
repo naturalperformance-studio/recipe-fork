@@ -106,7 +106,52 @@ class IngredientLineReaderTest {
             assertEquals(UnitType.TASTE_UNMEASURED, row.unitType, text)
             assertEquals(id("salt"), row.dictionaryEntry, text)
             assertNull(row.note, text)
+            assertNull(row.qualifier, text)
         }
+        assertNull(read("salt to taste").qualifier)
+    }
+
+    @Test
+    fun whatMayStandForTheIngredientGoesToTheNoteNotTheQualifier() {
+        val salt = read("1 ч. л. соли или по вкусу")
+        assertEquals(listOf(id("salt"), null, "или по вкусу", Rational.ONE, TEASPOON), listOf(salt.dictionaryEntry, salt.qualifier, salt.note, salt.quantity, salt.unit))
+        val pepper = read("salt and pepper to taste")
+        assertEquals(listOf(id("salt"), null, "and pepper", UnitType.TASTE_UNMEASURED), listOf(pepper.dictionaryEntry, pepper.qualifier, pepper.note, pepper.unitType))
+    }
+
+    @Test
+    fun aHyphenatedHalfIsRead() {
+        val milk = read("пол-литра молока")
+        assertEquals(Triple(id("milk"), half(), QuantityUnit.LITRE), Triple(milk.dictionaryEntry, milk.quantity, milk.unit))
+        val lemon = read("пол-лимона")
+        assertEquals(Triple(id("lemon"), half(), PIECE), Triple(lemon.dictionaryEntry, lemon.quantity, lemon.unit))
+        val salt = read("пол-ложки соли")
+        assertEquals(Triple(id("salt"), half(), TABLESPOON), Triple(salt.dictionaryEntry, salt.quantity, salt.unit))
+        val onion = read("пол-луковицы")
+        assertEquals(Triple(id("onion"), half(), PIECE), Triple(onion.dictionaryEntry, onion.quantity, onion.unit))
+    }
+
+    @Test
+    fun anyUnicodeSpaceSeparatesAsASpaceDoes() {
+        listOf("2\u00A0г соли", "2\u2009г соли", "2\u202Fг\tсоли").forEach { text ->
+            val row = read(text)
+            assertEquals(listOf(id("salt"), null, Rational.of(2), GRAM), listOf(row.dictionaryEntry, row.qualifier, row.quantity, row.unit), text)
+        }
+    }
+
+    @Test
+    fun milkIsMilkInTheGenitive() {
+        listOf("1 л молока", "200 мл молока", "пол стакана молока").forEach { assertEquals(id("milk"), read(it).dictionaryEntry, it) }
+        assertEquals(id("milt"), read("200 г молоки").dictionaryEntry)
+    }
+
+    @Test
+    fun aLongRunOfDashesIsReadAtOnce() {
+        listOf("-".repeat(20_000), "Соль " + "—".repeat(20_000) + " 5 г", "a" + "-".repeat(20_000) + "b", "соль" + " -".repeat(10_000) + "по вкусу")
+            .forEach { text ->
+                val took = kotlin.time.measureTime { read(text) }
+                assertTrue(took.inWholeMilliseconds < 1_000, "${text.take(10)}…: $took")
+            }
     }
 
     @Test
@@ -210,6 +255,16 @@ class IngredientLineReaderTest {
         }
         val free = read("2..5 штуки чего-то")
         assertEquals(listOf(null, "чего-то", "2..5", PIECE), listOf(free.dictionaryEntry, free.freeTextName, free.enteredQuantity, free.unit))
+    }
+
+    @Test
+    fun aNameOfNothingButPreparationOrAParenthesisKeepsTheLine() {
+        val chopped = read("2 cups chopped")
+        assertEquals(listOf(null, "2 cups chopped", Rational.of(2), CUP), listOf(chopped.dictionaryEntry, chopped.freeTextName, chopped.quantity, chopped.unit))
+        val paren = read("(неведомое)")
+        assertEquals(listOf(null, "(неведомое)", "неведомое"), listOf(paren.dictionaryEntry, paren.freeTextName, paren.note))
+        val blank = read(" ")
+        assertEquals(listOf(null, null), listOf(blank.dictionaryEntry, blank.freeTextName))
     }
 
     @Test

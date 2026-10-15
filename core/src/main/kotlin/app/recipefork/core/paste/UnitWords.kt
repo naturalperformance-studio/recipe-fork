@@ -20,7 +20,7 @@ internal object UnitWords {
         QuantityUnit.KILOGRAM to """кг|килограмм(?:а|ов|ы)?|кило|kg|kilos?|kilogram(?:me)?s?""",
         QuantityUnit.GRAM to """г|гр|грамм(?:а|ов|ы)?|g|gr|gram(?:me)?s?""",
         QuantityUnit.MILLILITRE to """мл|миллилитр(?:а|ов|ы)?|ml|millilit(?:re|er)s?""",
-        QuantityUnit.TABLESPOON to """ст\.?\s*л|ст\.?\s*ложк[аиу]?|столов\p{L}*\s+лож\p{L}*|tbsp|tbs|tablespoons?""",
+        QuantityUnit.TABLESPOON to """ст\.?\s*л|ст\.?\s*ложк[аиу]?|столов\p{L}*\s+лож\p{L}*|ложк[аиу]?|ложек|tbsp|tbs|tablespoons?""",
         QuantityUnit.TEASPOON to """ч\.?\s*л|ч\.?\s*ложк[аиу]?|чайн\p{L}*\s+лож\p{L}*|tsp|teaspoons?""",
         QuantityUnit.LITRE to """л|литр(?:а|ов|ы)?|l|lit(?:re|er)s?""",
         QuantityUnit.FLUID_OUNCE to """fl\.?\s*oz|fluid\s+ounces?""",
@@ -40,6 +40,6 @@ internal object UnitWords {
     /** The unit word [written] is, as a line's pattern found it; null when it is none. */
     fun of(written: String): UnitWord? = each.firstOrNull { it.second.matches(written.trim()) }?.first
 
-    /** "по вкусу", "to taste": the row is to taste. */
-    val TO_TASTE = Regex("""(?:^|[\s—–:-]+)(?:по\s+вкусу|to\s+taste)(?![\p{L}])[\s.]*""", RegexOption.IGNORE_CASE)
+    /** "по вкусу", "to taste": the row is to taste. A run of separators before it is taken once, never backtracked. */
+    val TO_TASTE = Regex("""(?:^[\s—–:-]*+|(?<![\s—–:-])[\s—–:-]++)(?:по\s+вкусу|to\s+taste)(?![\p{L}])[\s.]*""", RegexOption.IGNORE_CASE)
 }

@@ -130,7 +130,9 @@ class DictionaryMatch<T : DictionaryEntry>(val dictionary: List<T>) {
      * flour", "греческого йогурта") — is bound to, or null when no entry is: the one some of whose names' words the
      * name holds every one of, each in some form, by the exact-match cascade. The entry whose name uses the most of
      * the name's words wins ("greek yogurt" is Greek yogurt, not yogurt); among those, the earlier step of the cascade,
-     * then the name found earlier in the text, then the earlier entry of the dictionary. A removed entry is never bound.
+     * then the name found earlier and closer together in the text ("куриного филе без кожи" is the fillet), then the one
+     * a word of the name is the genitive of ("молока" is milk, not "молоки"), then the earlier entry of the dictionary.
+     * A removed entry is never bound.
      */
     fun bind(name: String): Bound<T>? {
         val written = WordPrefix.words(name).let { folded -> splitWritten(name).takeIf { it.size == folded.size } ?: folded }
@@ -146,15 +148,18 @@ class DictionaryMatch<T : DictionaryEntry>(val dictionary: List<T>) {
                 literal -> if (entryName.isSynonym) 1 else 0
                 else -> if (entryName.isSynonym) 3 else 2
             }
-            Candidate(indexed, used.map { it.second }.toSet(), step)
+            val genitive = used.any { (label, typed) -> Inflection.genitive(label) == words[typed] }
+            Candidate(indexed, used.map { it.second }.toSet(), step, genitive)
         }.minWithOrNull(
             compareByDescending<Candidate<T>> { it.used.size }.thenBy { it.step }.thenBy { it.used.min() }
+                .thenBy { it.used.max() }.thenBy { !it.genitive }
                 .thenBy { it.indexed.position },
         ) ?: return null
         return Bound(best.indexed.entry, written.filterIndexed { i, _ -> i !in best.used })
     }
 
-    private class Candidate<T>(val indexed: Indexed<T>, val used: Set<Int>, val step: Int)
+    /** [genitive]: one of the name's words is the genitive of the label's — how a recipe writes an amount of it. */
+    private class Candidate<T>(val indexed: Indexed<T>, val used: Set<Int>, val step: Int, val genitive: Boolean)
 
     /**
      * For every word of [label], the index of a distinct word of [words] that is it in some form — the same word
