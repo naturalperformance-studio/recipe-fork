@@ -96,6 +96,32 @@ class OwnerRecipesLayoutTest {
     }
 
     @Test
+    fun `the lemon bars read their ingredient table as name and quantity lines and skip the nutrition table`() {
+        val layout = read("lemon-bars.md")
+        assertEquals(
+            listOf(
+                IngredientLine("Сливочное масло 100 г", "Тесто"),
+                IngredientLine("Мацони 1–3% 50 г", "Тесто"),
+                IngredientLine("Сахар 180 г", "Тесто"),
+                IngredientLine("Ванильный сахар 5 г", "Тесто"),
+                IngredientLine("Цедра 1 лимона", "Тесто"),
+                IngredientLine("Яйца 2 шт", "Тесто"),
+                IngredientLine("Лимонный сок 40 г", "Тесто"),
+                IngredientLine("Пшеничная мука 110 г", "Тесто"),
+                IngredientLine("Овсяные хлопья 40 г", "Тесто"),
+                IngredientLine("Кукурузный крахмал 15 г", "Тесто"),
+                IngredientLine("Разрыхлитель 3 г", "Тесто"),
+                IngredientLine("Соль щепотка", "Тесто"),
+                IngredientLine("40 г сахарной пудры", "Глазурь"),
+                IngredientLine("10–12 г лимонного сока", "Глазурь"),
+            ),
+            layout.ingredients,
+        )
+        assertTrue(layout.description.none { it.contains("Ккал") || it.contains("385") })
+        assertEquals(8, layout.equipment.size)
+    }
+
+    @Test
     fun `a sentence ending in a colon above the ingredient list is description, not an ingredient`() {
         val layout = read("buckwheat.md")
         assertEquals(5, layout.ingredients.size)

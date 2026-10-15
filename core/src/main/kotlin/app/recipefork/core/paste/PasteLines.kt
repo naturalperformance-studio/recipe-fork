@@ -8,7 +8,7 @@ internal sealed interface PasteLine {
     data class Heading(val text: String, val level: Int, val markdown: Boolean) : PasteLine
 
     /** A line of text; [marked] when it had a bullet or a number, [numbered] when that was a number. */
-    data class Item(val text: String, val numbered: Boolean, val marked: Boolean) : PasteLine
+    data class Item(val text: String, val numbered: Boolean, val marked: Boolean, val fromTable: Boolean = false) : PasteLine
 }
 
 internal object PasteLines {
@@ -45,6 +45,26 @@ internal object PasteLines {
         ),
         Section.NOTES to listOf("заметки", "примечани", "совет", "хранение", "notes", "note", "tips", "storage", "cook's note"),
     )
+
+    /** The lines of [text]; a run of table rows becomes its ingredient lines, or nothing (PasteTables). */
+    fun split(text: String): List<PasteLine> {
+        val lines = mutableListOf<PasteLine>()
+        val table = mutableListOf<String>()
+        fun endTable() {
+            lines += PasteTables.ingredientLines(table)
+            table.clear()
+        }
+        text.lines().forEach { raw ->
+            if (raw.trim().startsWith('|')) {
+                table += raw
+            } else {
+                endTable()
+                classify(raw)?.let { lines += it }
+            }
+        }
+        endTable()
+        return lines
+    }
 
     fun classify(raw: String): PasteLine? {
         val line = raw.trim()

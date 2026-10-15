@@ -46,7 +46,7 @@ private class LayoutReader(private val text: String) {
     private var stepsHeading = false
 
     fun read(): TextLayout? {
-        val lines = text.lines().mapNotNull(PasteLines::classify).toMutableList()
+        val lines = PasteLines.split(text).toMutableList()
         val title = lines.firstOrNull()?.let(::titleOf)
         if (title != null) {
             lines.removeAt(0)
@@ -126,6 +126,7 @@ private class LayoutReader(private val text: String) {
             PasteLines.equipmentLine(line.text)?.let { equipment += it; return }
         }
         when {
+            section == Section.DESCRIPTION && line.fromTable -> entries += Entry(Section.INGREDIENTS, line.text, false, null)
             section == Section.DESCRIPTION && Servings.isServingsLine(line.text) -> servingsSources += line.text
             section == Section.INGREDIENTS && !line.marked && line.text.endsWith(':') ->
                 entries += Entry(Section.DESCRIPTION, line.text, false, null)
@@ -137,13 +138,17 @@ private class LayoutReader(private val text: String) {
     private fun ingredientsByShape() {
         val candidates = entries.filter { it.section == Section.DESCRIPTION }
         val start = candidates.indexOfFirst { ingredientShaped(it) && PasteLines.quantityLed(it.text) }
-        if (start < 0) return
         var end = start
-        while (end + 1 < candidates.size && ingredientShaped(candidates[end + 1])) end++
-        val run = candidates.subList(start, end + 1)
-        if (run.count { PasteLines.quantityLed(it.text) } < 2) return
-        run.forEach { it.section = Section.INGREDIENTS }
-        if (!stepsHeading) stepsByShape(candidates.drop(end + 1), afterIngredient = false)
+        while (start >= 0 && end + 1 < candidates.size && ingredientShaped(candidates[end + 1])) end++
+        val run = if (start < 0) emptyList() else candidates.subList(start, end + 1)
+        if (run.count { PasteLines.quantityLed(it.text) } >= 2) {
+            run.forEach { it.section = Section.INGREDIENTS }
+            if (!stepsHeading) stepsByShape(candidates.drop(end + 1), afterIngredient = false)
+        } else if (!stepsHeading) {
+            // An ingredient table with no heading above it: the steps are found by shape in the lines after it.
+            val tableEnd = entries.indexOfLast { it.section == Section.INGREDIENTS }
+            if (tableEnd >= 0) stepsByShape(entries.drop(tableEnd + 1).filter { it.section == Section.DESCRIPTION }, afterIngredient = false)
+        }
     }
 
     /**

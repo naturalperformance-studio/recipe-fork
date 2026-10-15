@@ -200,6 +200,42 @@ class TextLayoutTest {
     }
 
     @Test
+    fun `an ingredient table with no heading above it gives name and quantity lines, and the steps follow by shape`() {
+        val layout = read(
+            """
+            Tomato Salad
+            | Ingredient | Amount | Why |
+            |---|---|---|
+            | Tomatoes | 300 g | The base |
+            | Olive oil | 2 tbsp | Richness |
+            | Basil | — | Smell |
+            | Salt | to taste | |
+            Slice the tomatoes and dress them with the oil and salt.
+            """,
+        )
+        assertEquals(listOf("Tomatoes 300 g", "Olive oil 2 tbsp", "Basil", "Salt to taste"), layout.ingredients.map { it.text })
+        assertEquals(listOf("Slice the tomatoes and dress them with the oil and salt."), layout.steps)
+    }
+
+    @Test
+    fun `a nutrition table stays skipped, under the ingredient heading too`() {
+        val layout = read(
+            """
+            Сырники
+            Ингредиенты
+            | | Ккал | Белки | Жиры |
+            |---|---|---|---|
+            | На 100 г | 183 | 16,5 | 7,5 |
+            | Всего | ~860 | 78 | 36 |
+            - 400 г творога
+            Приготовление
+            Жарить по 3 минуты с каждой стороны.
+            """,
+        )
+        assertEquals(listOf("400 г творога"), layout.ingredients.map { it.text })
+    }
+
+    @Test
     fun `a servings line is read for the servings and not kept as description`() {
         val layout = read("Блюдо\nПорций: 4\nКороткое описание.\nИнгредиенты\n- 2 яйца\nПриготовление\nВзбить яйца.")
         assertEquals(listOf("Короткое описание."), layout.description)
