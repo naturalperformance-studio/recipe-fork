@@ -1,5 +1,6 @@
 package app.recipefork.core.api
 
+import app.recipefork.core.search.DictionaryEntry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.security.MessageDigest
@@ -55,16 +56,16 @@ data class DictionariesDto(
  */
 @Serializable
 data class IngredientEntryDto(
-    val id: Long,
-    val labelRu: String,
-    val labelEn: String,
-    val parentId: Long? = null,
+    override val id: Long,
+    override val labelRu: String,
+    override val labelEn: String,
+    override val parentId: Long? = null,
     val divisible: Boolean? = null,
     val factors: Map<String, Double> = emptyMap(),
-    val removed: Boolean = false,
-    val synonymsRu: List<String> = emptyList(),
-    val synonymsEn: List<String> = emptyList(),
-) {
+    override val removed: Boolean = false,
+    override val synonymsRu: List<String> = emptyList(),
+    override val synonymsEn: List<String> = emptyList(),
+) : DictionaryEntry {
     companion object {
         /**
          * The unit codes a factor may be given for: `g` and `ml` for the exact units — a kilogram or a litre is
@@ -95,11 +96,11 @@ data class TagDto(
  */
 @Serializable
 data class EquipmentEntryDto(
-    val id: Long,
-    val labelRu: String,
-    val labelEn: String,
-    val parentId: Long? = null,
-    val removed: Boolean = false,
-    val synonymsRu: List<String> = emptyList(),
-    val synonymsEn: List<String> = emptyList(),
-)
+    override val id: Long,
+    override val labelRu: String,
+    override val labelEn: String,
+    override val parentId: Long? = null,
+    override val removed: Boolean = false,
+    override val synonymsRu: List<String> = emptyList(),
+    override val synonymsEn: List<String> = emptyList(),
+) : DictionaryEntry

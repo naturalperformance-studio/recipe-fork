@@ -10,19 +10,8 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
-/**
- * What a dictionary search reads of an entry, whichever dictionary holds it: its labels and synonyms in both languages,
- * its parent (null at the top level) and whether it is [removed] upstream.
- */
-interface DictionaryEntry {
-    val id: Long
-    val labelRu: String
-    val labelEn: String
-    val parentId: Long?
-    val removed: Boolean
-    val synonymsRu: List<String>
-    val synonymsEn: List<String>
-}
+/** What a dictionary search reads of an entry, whichever dictionary holds it ([app.recipefork.core.search.DictionaryEntry]). */
+typealias DictionaryEntry = app.recipefork.core.search.DictionaryEntry
 
 /**
  * An ingredient dictionary entry as the device holds it (FLOW-001, DOM-010), with its divisibility, its comparison
