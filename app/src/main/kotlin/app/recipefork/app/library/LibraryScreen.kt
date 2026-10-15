@@ -147,6 +147,8 @@ import app.recipefork.app.print.PrintTags
 import app.recipefork.app.print.PrintWay
 import app.recipefork.app.recipe.BookFilters
 import app.recipefork.app.recipe.BookLanguage
+import app.recipefork.app.media.SourceItem
+import app.recipefork.app.media.SourceSheet
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.SettingsTags
@@ -248,6 +250,10 @@ fun LibraryScreen(
     // Whether each view, as it last showed, offers its action at the bottom (its empty state carries its own).
     val offers = remember { mutableStateMapOf<LibraryView, Boolean>() }
     val write = rememberWrite(recipes, session, editor)
+    // "New recipe" offers its two ways to start — from scratch, or from a pasted text (T-280) — in a small sheet.
+    var choosing by rememberSaveable { mutableStateOf(false) }
+    val chooseNew: () -> Unit = { choosing = true }
+    if (choosing) NewRecipeChoice(onWrite = write, onPaste = { session.openPaste() }, onDismiss = { choosing = false })
     val import = rememberImport(files, session)
     val bar = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val shown = VIEWS[pager.currentPage]
@@ -349,7 +355,7 @@ fun LibraryScreen(
                 shown, mode, offered = offers[shown] == true && selection == null,
                 list = if (shown == LibraryView.OWN) ownList else markedList,
                 way = way,
-                onWrite = write, onImport = import,
+                onWrite = chooseNew, onImport = import,
                 // The tallest it has been: shrunk to its icon as a list goes down, it moves nothing.
                 modifier = Modifier.onSizeChanged { actionHeight = maxOf(actionHeight, it.height) },
             )
@@ -388,7 +394,7 @@ fun LibraryScreen(
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
-                    ownList, bottom, notice, write, adding, printing, onOffer = { offers[LibraryView.OWN] = it },
+                    ownList, bottom, notice, chooseNew, adding, printing, onOffer = { offers[LibraryView.OWN] = it },
                     collections = rememberListed(collections, CollectionOrigin.OWN),
                     selection = selection?.takeIf { it.view == LibraryView.OWN },
                     selecting = selecting,
@@ -960,6 +966,22 @@ private fun NothingWritten(onWrite: () -> Unit, modifier: Modifier = Modifier) {
         action = EmptyAction(stringResource(R.string.library_own_new), R.drawable.ic_new_recipe, LibraryTags.WRITE, onWrite),
         tag = LibraryTags.OWN_EMPTY,
         modifier = modifier,
+    )
+}
+
+/**
+ * What "New recipe" offers (T-280): writing one from scratch — a new recipe in the active book, opened in the editor
+ * ([onWrite]) — or reading one from a pasted text, on the paste screen ([onPaste]).
+ */
+@Composable
+private fun NewRecipeChoice(onWrite: () -> Unit, onPaste: () -> Unit, onDismiss: () -> Unit) {
+    SourceSheet(
+        stringResource(R.string.library_own_new),
+        listOf(
+            SourceItem(R.drawable.ic_edit, stringResource(R.string.paste_choice_write), LibraryTags.FROM_SCRATCH, onClick = onWrite),
+            SourceItem(R.drawable.ic_paste_text, stringResource(R.string.paste_choice_paste), LibraryTags.PASTE, onClick = onPaste),
+        ),
+        onDismiss = onDismiss,
     )
 }
 
@@ -1592,6 +1614,9 @@ object LibraryTags {
     const val OWN_EMPTY = "library-own-empty"
     const val WRITE = "library-write"
     const val NEW = "library-new"
+    /** "New recipe"'s two ways to start (T-280): from scratch, and from a pasted text. */
+    const val FROM_SCRATCH = "library-from-scratch"
+    const val PASTE = "library-paste"
     /** The header above a view's list: its search field and its order. */
     const val HEADER = "library-header"
     /** The room the header takes above the list, less what has scrolled away of it (v0.38). */

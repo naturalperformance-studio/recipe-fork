@@ -58,6 +58,8 @@ import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.rememberBookCollections
 import app.recipefork.app.library.rememberCoverThumbnails
 import app.recipefork.app.library.rememberRecipeImport
+import app.recipefork.app.paste.PasteReading
+import app.recipefork.app.paste.PasteScreen
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.settings.SettingsScreen
 import app.recipefork.app.shopping.ShoppingEnvironment
@@ -77,6 +79,7 @@ object Destinations {
     const val SETTINGS_ROUTE = "settings"
     const val KITCHEN_ROUTE = "kitchen"
     const val SHOPPING_ROUTE = "shopping"
+    const val PASTE_ROUTE = "paste"
 
     /** The argument the card and the editor carry: the identity of their recipe. */
     const val RECIPE_ID_KEY = "recipeId"
@@ -203,6 +206,14 @@ fun AppNavHost(
             }
             KitchenScreen(kitchen, onBack = session::closeKitchen, at = at, from = from)
         }
+        composable(Destinations.PASTE_ROUTE) {
+            // What it opened with, read as it opens — and again as a text shared while it is open opens it anew: closing
+            // it clears the session's, while it still slides away.
+            val opening by session.pasteOpening.collectAsState()
+            val given = remember(opening) { session.pasteGiven.value }
+            val reading = remember(recipes, editor) { PasteReading(recipes, editor) }
+            PasteScreen(given, opening, reading, onBack = session::closePaste, onRead = { session.openEditor(it.value) })
+        }
         composable(Destinations.CARD_ROUTE, arguments = recipeArgument) { entry ->
             RecipeCard(RecipeId(entry.recipeId()), session, recipes, editor, card)
         }
@@ -218,8 +229,9 @@ fun AppNavHost(
     val kitchenOpen by session.kitchen.collectAsState()
     val shoppingOpen by session.shopping.collectAsState()
     val collection by session.collection.collectAsState()
-    LaunchedEffect(sync, viewing, editing, settings, kitchenOpen, shoppingOpen, collection) {
-        sync.show(shownFor(viewing, editing, settings, kitchenOpen, shoppingOpen, collection))
+    val pasting by session.pasting.collectAsState()
+    LaunchedEffect(sync, viewing, editing, settings, kitchenOpen, shoppingOpen, collection, pasting) {
+        sync.show(shownFor(viewing, editing, settings, kitchenOpen, shoppingOpen, collection, pasting))
     }
 }
 
@@ -319,6 +331,10 @@ internal sealed interface Shown {
     data class Collection(val collectionId: String) : Shown {
         override val route get() = Destinations.collection(collectionId)
     }
+
+    data object Paste : Shown {
+        override val route = Destinations.PASTE_ROUTE
+    }
 }
 
 /**
@@ -327,7 +343,8 @@ internal sealed interface Shown {
  * above the book alone: a card or the editor open is shown in their place. My [kitchen] lies above the settings while
  * they are shown, and otherwise above the card or the book, opened from it, while no editor is open. The [shopping] list
  * lies above the book, as the settings do, or above the [collection] open when opened from it; the collection lies
- * between the book and the card: a card opened from it lies above it.
+ * between the book and the card: a card opened from it lies above it. The [paste] screen lies above the book alone, as
+ * the settings do.
  */
 internal fun shownFor(
     viewing: String?,
@@ -336,12 +353,15 @@ internal fun shownFor(
     kitchen: Boolean = false,
     shopping: Boolean = false,
     collection: String? = null,
+    paste: Boolean = false,
 ): List<Shown> = buildList {
     add(Shown.Book)
     collection?.let { add(Shown.Collection(it)) }
     (editing ?: viewing)?.let { add(Shown.Card(it)) }
     editing?.let { add(Shown.Editor(it)) }
-    if (settings && size == 1) {
+    if (paste && size == 1) {
+        add(Shown.Paste)
+    } else if (settings && size == 1) {
         add(Shown.Settings)
         if (kitchen) add(Shown.Kitchen)
     } else if (shopping && (size == 1 || (size == 2 && last() is Shown.Collection))) {
@@ -360,6 +380,7 @@ internal fun NavController.shown(): List<Shown> = currentBackStack.value.mapNotN
         Destinations.SETTINGS_ROUTE -> Shown.Settings
         Destinations.KITCHEN_ROUTE -> Shown.Kitchen
         Destinations.SHOPPING_ROUTE -> Shown.Shopping
+        Destinations.PASTE_ROUTE -> Shown.Paste
         Destinations.COLLECTION_ROUTE -> Shown.Collection(requireNotNull(entry.arguments?.getString(Destinations.COLLECTION_ID_KEY)))
         else -> null
     }
@@ -396,6 +417,7 @@ private class BackStackSync(private val nav: NavController, private val session:
         if (now.none { it is Shown.Kitchen } && session.kitchen.value) session.closeKitchen()
         if (now.none { it is Shown.Shopping } && session.shopping.value) session.closeShopping()
         if (now.none { it is Shown.Collection } && session.collection.value != null) session.closeCollection()
+        if (now.none { it is Shown.Paste } && session.pasting.value) session.closePaste()
     }
 }
 

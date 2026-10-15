@@ -181,6 +181,7 @@ class LibrarySession(
     fun openEditor(recipeId: String) {
         closeNotice()
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
@@ -204,6 +205,7 @@ class LibrarySession(
     fun openCard(recipeId: String, from: LibraryView? = null) {
         closeNotice()
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
@@ -230,6 +232,7 @@ class LibrarySession(
 
     fun openSettings() {
         finishRemoval()
+        shutPaste()
         shutKitchen()
         shutCollection()
         saved[SHOPPING_KEY] = false
@@ -282,6 +285,7 @@ class LibrarySession(
     /** The shopping list opens above the book; a removal the book still offers to undo is final now. */
     fun openShopping() {
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         shutKitchen()
         shutCollection()
@@ -313,6 +317,7 @@ class LibrarySession(
         endSelection()
         closeNotice()
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
@@ -335,6 +340,7 @@ class LibrarySession(
     fun openShoppingAboveCollection() {
         if (collection.value == null) return openShopping()
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         shutKitchen()
         saved[VIEWING_KEY] = null
@@ -344,6 +350,40 @@ class LibrarySession(
 
     private fun shutCollection() {
         saved[COLLECTION_KEY] = null
+    }
+
+    /**
+     * Whether the paste screen is open, above the book (T-280): kept like the settings, so that it is open again when
+     * the screen turns or the process ends. Whatever else the session opens — the editor on the recipe read from it, a
+     * card, the settings — is shown in its place.
+     */
+    val pasting: StateFlow<Boolean> = saved.getStateFlow(PASTE_KEY, false)
+
+    /**
+     * The text the paste screen was opened with — shared to the application — or null when it fills its field from the
+     * clipboard. Read once, as the screen opens, with [pasteOpening].
+     */
+    val pasteGiven: StateFlow<String?> = saved.getStateFlow(PASTE_TEXT_KEY, null)
+
+    /** Counts the paste screen's openings, so that a text shared while it is open replaces what its field holds. */
+    val pasteOpening: StateFlow<Int> = saved.getStateFlow(PASTE_OPENING_KEY, 0)
+
+    /**
+     * The paste screen opens above the book, in place of whatever was open — an editor keeps what was entered as it is
+     * typed — its field holding [text], or the clipboard's text where [text] is null.
+     */
+    fun openPaste(text: String? = null) {
+        showHeld()
+        saved[PASTE_TEXT_KEY] = text
+        saved[PASTE_OPENING_KEY] = pasteOpening.value + 1
+        saved[PASTE_KEY] = true
+    }
+
+    fun closePaste() = shutPaste()
+
+    private fun shutPaste() {
+        saved[PASTE_KEY] = false
+        saved[PASTE_TEXT_KEY] = null
     }
 
     private val deletedCollection = MutableStateFlow<RecipeCollection?>(null)
@@ -398,6 +438,7 @@ class LibrarySession(
      */
     fun showHeld() {
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
@@ -424,6 +465,7 @@ class LibrarySession(
     fun showStep(recipeId: String, position: Int) {
         closeNotice()
         finishRemoval()
+        shutPaste()
         saved[SETTINGS_KEY] = false
         saved[SHOPPING_KEY] = false
         shutKitchen()
@@ -641,5 +683,8 @@ class LibrarySession(
         const val VIEWING_KEY = "library.viewing"
         const val CARD_FROM_KEY = "library.card_from"
         const val COLLECTION_KEY = "library.collection"
+        const val PASTE_KEY = "library.paste"
+        const val PASTE_TEXT_KEY = "library.paste_text"
+        const val PASTE_OPENING_KEY = "library.paste_opening"
     }
 }

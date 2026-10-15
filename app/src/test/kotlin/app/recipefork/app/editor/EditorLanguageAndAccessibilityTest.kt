@@ -144,6 +144,7 @@ class EditorLanguageAndAccessibilityTest {
 
         // The editor on a new recipe, with the tag search over the dictionary: nothing is offered until typed.
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
         checkTheScreen(expectInteractive = 6) // back, title, the language's two segments, clear, search
         assertAnnounces(EditorTags.BACK, w.back)

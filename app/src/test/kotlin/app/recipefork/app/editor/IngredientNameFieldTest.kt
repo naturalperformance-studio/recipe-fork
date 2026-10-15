@@ -121,6 +121,7 @@ class IngredientNameFieldTest {
         show()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return RecipeId(requireNotNull(session.editing.value))
     }
