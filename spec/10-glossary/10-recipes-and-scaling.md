@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: []
 ---
 
@@ -29,7 +29,19 @@ product never enumerates descendants for a reader; the one place the relation is
 used is a moderator's removal of a dangerous recipe (MOD-008).
 
 **Provenance** — what a card shows about where the recipe came from: its direct
-parent, where that parent is or has been published (FORK-004, FORK-005).
+parent, where that parent is or has been published (FORK-004, FORK-005), shown as
+the Origin (FORK-010).
+
+**Origin** («Происхождение») — the one line on a card, and the words on a book
+entry, that name the direct parent by its title and lead to it: "after the recipe
+«…»", «по рецепту «…»» (FORK-010). The parent's author is on the parent's own
+card. The name is the one design documents use; it names one parent, never a
+chain.
+
+**Version** («своя версия») — the interface's word for a fork, and the name of the
+control that makes one. The product's story is told in it: someone else's recipe
+— from a blog, received as a file — becomes the person's own version, and
+sometimes a friend makes a version of that (GOAL-002).
 
 **Fork count** — the number of recipes naming this one as parent. Two numbers
 exist where they differ: the total, and how many of those are published. Only

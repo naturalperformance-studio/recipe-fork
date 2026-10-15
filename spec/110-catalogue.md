@@ -1,7 +1,7 @@
 ---
 slug: CAT
 status: closed
-updated: 2026-10-03
+updated: 2026-10-15
 ids: [CAT-001, CAT-002, CAT-003, CAT-004, CAT-005, CAT-006, CAT-007, CAT-008, CAT-009,
   CAT-010]
 ---
@@ -131,8 +131,9 @@ authored for.
 - Given any entry, when it is shown, then it carries nothing that identifies the
   author beyond the nickname (CON-001).
 - Given an entry in the device's recipe book (FLOW-034), when it is shown, then it
-  shows the recipe's cover where it has one and nothing in its place where it has
-  none, as a catalogue entry does.
+  shows the recipe's cover where it has one, and where it has none, the first
+  letter of the recipe's title in the cover's place — never a picture of a dish,
+  because the product does not know what dish a recipe is.
 
 **Verification:** list four recipes — one complete, one without a cover image,
 one unrated, one flagged — and compare each entry against this field list.
@@ -140,7 +141,10 @@ one unrated, one flagged — and compare each entry against this field list.
 with a recipe; what it does not show cannot influence what they open; amended
 2026-10-03 (sync v0.3–v0.14): the recipe book's entries show the cover too —
 req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03
-(user decision, v0.6).
+(user decision, v0.6). Changed 2026-10-15: a book entry with no cover shows the
+first letter of its title in the cover's place — user decision of that date
+(`docs/brand/identity/decisions.md`, interface recommendation 10); the catalogue
+entry keeps no placeholder.
 **Where import is present** (not in the first release), an imported recipe has
 no author and shows its source mark in the nickname's place (IMPORT-017).
 

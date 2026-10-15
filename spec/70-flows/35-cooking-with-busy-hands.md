@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [FLOW-068, FLOW-069, FLOW-070]
 ---
 
@@ -18,19 +18,21 @@ The recipe card shall hold two tabs, always in sight under its top bar — **Vie
 compact, for reading and deciding, and **Cooking**, large, for busy hands — switched
 by a tap or a horizontal swipe. Each tab keeps its own place.
 
-- **View** shows the whole recipe in this order: the title block (title, a summary
-  of what the recipe holds, the stated author, where a fork came from), the
-  description, the equipment, the ingredients, the steps. Its lines are compact.
-  Done marks are shown but not changed. Timers show their duration and do not
-  start. The serving count can be changed. Forking is View's primary action,
-  always in reach on the screen, never hidden in a menu; the edit action sits in
-  the bar (FLOW-029).
+- **View** shows the whole recipe in this order: the title block (where a fork
+  came from — the Origin line of FORK-010 — above the title, then a summary of what
+  the recipe holds and the recipe's own stated author), the description, the
+  equipment, the ingredients, the steps. Its lines are compact. Done marks are
+  shown but not changed. Timers show their duration and do not start. The serving
+  count can be changed. Forking is View's primary action, always in reach on the
+  screen, never hidden in a menu, on every recipe alike — own and found; the edit
+  action sits in the bar (FLOW-029).
 - **Cooking** holds only what cooking needs: the equipment, the ingredients and the
   steps, with no cover, no description, no fork and no edit action. It is the
   cooking card of A11Y-003 and A11Y-007: larger targets and larger step text. A tap
   marks a line done (FLOW-068), and timers start here. The first step not yet
-  marked done is shown as the current one, and after a step is marked the tab
-  brings the next unmarked step into view. A list whose lines are all marked folds
+  marked done is shown as the current one, labelled on the screen with its
+  position — "current step · N of M" — and not only for the screen reader; after
+  a step is marked the tab brings the next unmarked step into view. A list whose lines are all marked folds
   into one line that opens it again.
 
 The current step is derived from the done marks and nothing else: no step is
@@ -41,11 +43,14 @@ next.
 - Given a card, when it is opened, then both tabs are in sight and one tap or one
   swipe switches them.
 - Given a card on View, when the reader looks for the fork action, then it is on
-  the screen and not inside a menu.
+  the screen and not inside a menu, the same on an own recipe and on a found one.
 - Given a card on Cooking, when its controls are listed, then there is neither a
   fork nor an edit action.
 - Given marks on steps one and two of a recipe, when Cooking is shown, then step
   three is shown as the current step; given no marks, then step one is.
+- Given a current step on Cooking, when the screen is looked at, then it reads
+  "current step · 3 of 7" (in Russian «Текущий шаг · 3 из 7») for the third of
+  seven steps, and the screen reader reads the same.
 - Given every ingredient marked done, when Cooking is shown, then the ingredient
   list is folded into one line, and opening it shows every line again.
 - Given a timer's announcement, when the reader follows it, then the card opens on
@@ -53,8 +58,8 @@ next.
 - Given a card, when the reader opens a recipe, then it opens on the tab last
   chosen on this device.
 
-Which tab opens the first time, the summary's wording, and how the current step and
-the folded line look are the team's.
+Which tab opens the first time, the summary's wording, and how the current step's
+label and the folded line look are the team's.
 
 **Source:** user decision, 2026-10-09 (planning of v0.27): two tabs, always
 visible, switched by swipe too; nothing on Cooking that distracts from cooking — no
@@ -63,7 +68,13 @@ fork, no edit. Forking as View's primary action, not hidden: user decision,
 screen"). The description before the ingredients: user decision, 2026-10-10. The
 current step, the folding, the larger step text and the summary are the lead's
 ideas, taken with the user's agreement at that planning and accepted with the
-builds at the sync of 2026-10-11. See
+builds at the sync of 2026-10-11.
+**Changed 2026-10-15** (user decisions of that date, `docs/brand/identity/decisions.md`):
+the Origin stands above the title (interface recommendation 2); the current step
+states its position on the screen, not only to the screen reader (recommendation
+4); the fork action stays on screen on own recipes as well as found ones — the
+proposal to move it into the menu on own recipes was rejected, because a version
+of one's own recipe is a main path too ("the original stays"). See
 [ADR — the card has a tab for reading and a tab for cooking](../decisions/20261011-the-card-has-a-reading-and-a-cooking-tab.md).
 
 ### FLOW-068 — The reader marks ingredients and steps as done

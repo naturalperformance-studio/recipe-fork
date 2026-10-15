@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -88,6 +88,12 @@ is in the foreground, in the background, or closed.
 - Given a step's timer, when it runs and ends, then it is the application's own
   timer, counted down on its step; it is not handed to the device's clock
   application.
+- Given a running timer, wherever it is shown with its controls — on its step or
+  among the running timers gathered on the card — when the reader looks for how to
+  cancel it, then cancelling is a control of its own, apart from the control that
+  shows the time, so that a hand reaching for the timer cannot cancel it by
+  accident; and a cancel can be undone while its notice shows, which puts the
+  timer back as it was.
 
 **Verification:** start a timer, close the application from the task switcher,
 lock the device and wait for the end; repeat with notifications refused; start a
@@ -129,6 +135,10 @@ demo: the first build announced an ended timer with one short sound, easy to tak
 for a messenger message in a kitchen. Handing timers to the device's clock
 application was considered and rejected. See
 [ADR — a timer is the application's own and rings like an alarm](../decisions/20261002-a-timer-rings-like-an-alarm.md).
+**Changed 2026-10-15:** criterion 17 added by user decision of that date
+(`docs/brand/identity/decisions.md`, fixes to the redesign): cancelling a running
+timer is a separate, quiet control, and the undo that follows it stays. Its look
+and placement are the team's.
 **Note:** this states what the reader observes. Whether it is implemented by a
 system alarm or otherwise is an engineering choice, provided a closed
 application still announces the timer.

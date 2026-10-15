@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-04
+updated: 2026-10-15
 ids: [FLOW-033, FLOW-034, FLOW-035, FLOW-036, FLOW-037, FLOW-038, FLOW-039,
   FLOW-040, FLOW-041, FLOW-042, FLOW-043]
 ---
@@ -61,8 +61,8 @@ built for meeting recipes they do not know.
 ### FLOW-034 — The recipe book holds two views
 
 The system shall present the favourites section under the name "My recipe book"
-(«Моя книга рецептов») as two views — the recipes marked in the active recipe
-book, and every recipe written in it — and shall let the reader switch between
+(«Моя книга рецептов») as two views — every recipe written in the active recipe
+book, first, and the recipes marked in it — and shall let the reader switch between
 them inside the section without leaving it.
 
 **Acceptance criteria**
@@ -81,7 +81,9 @@ them inside the section without leaving it.
   returns — in the same session or after the application was closed — then it
   opens on the view they last left, kept on the device.
 - Given a device on which the section has never been opened, when it is opened,
-  then it opens on the view of marked recipes, whatever the account holds.
+  then it opens on the view of own recipes, whatever the account holds.
+- Given the switch between the views, when it is shown, then the own-recipes view
+  comes first.
 - Given no account active, when the section is opened, then both views and the
   switch are there, holding the pool of AUTH-026: what was marked and what was
   written with no account.
@@ -105,6 +107,10 @@ recipes and paste in the ones they found
 **Changed 2026-10-04 (sync v0.15–v0.24):** the section opens on the view last
 left, kept across sessions, rather than on the marked recipes at each new session
 (user decision F-1 of v0.16, 2026-10-04).
+**Changed 2026-10-15:** the own-recipes view comes first and is the one a section
+never opened before opens on, replacing the marked recipes of 2026-09-27 — user
+decision of that date (`docs/brand/identity/decisions.md`, interface
+recommendation 1).
 **Source:** user decision, 2026-09-20: finding one's own recipe must be simple,
 and the author's own work is not discovery, so it lives beside favourites rather
 than in the catalogue. Two views rather than two sections, because a state of a
