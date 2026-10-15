@@ -148,6 +148,21 @@ class IngredientLineReaderTest {
     @Test
     fun aLongRunOfDashesIsReadAtOnce() {
         listOf("-".repeat(20_000), "Соль " + "—".repeat(20_000) + " 5 г", "a" + "-".repeat(20_000) + "b", "a" + " ".repeat(20_000) + "b", "соль" + " -".repeat(10_000) + "по вкусу")
+            .plus(
+                // T-284: approximators, dashes and colons, labels, a word before an amount, alternatives, pluses, clauses.
+                listOf(
+                    "~".repeat(20_000) + "1 г соли", "примерно ".repeat(5_000) + "5 г", "соль " + "~ ".repeat(10_000) + "5 г",
+                    "a — ".repeat(10_000) + "1 г", "a: ".repeat(10_000) + "1 г соли", "Крем: " + "1 ".repeat(10_000) + "г",
+                    "Крем" + "-".repeat(20_000) + ": 1 г соли", "juice of " + "1 ".repeat(10_000) + "lime", "сок " + "1".repeat(20_000) + " лайма",
+                    "соль " + "или ".repeat(10_000), "1 г соли " + "+ ".repeat(10_000), "1 г соли" + " + 1 г соли".repeat(2_000),
+                    "Ааааа. Б".repeat(5_000), "a→".repeat(10_000), "соль, " + "1 ".repeat(10_000) + "x", "соль (" + "1 г ".repeat(5_000) + ")",
+                    "1 " + "small ".repeat(10_000) + "bunch", "четверть " + "от ".repeat(10_000) + "1", "400g " + "can ".repeat(10_000) + "beans",
+                    "мука" + " — 1".repeat(10_000),
+                    // Fix round 1: several words before an amount, a plus between two amounts, a long word.
+                    "zest " + "and juice ".repeat(5_000) + "of 1 lemon", "сок " + "а".repeat(20_000) + " 1 лимона",
+                    "сок, ".repeat(10_000) + "1 лимона", "1 cup" + " + 2 tbsp".repeat(5_000) + " flour", "1 can " + "butter ".repeat(5_000) + "beans",
+                ),
+            )
             .forEach { text ->
                 val took = kotlin.time.measureTime { read(text) }
                 assertTrue(took.inWholeMilliseconds < 1_000, "${text.take(10)}…: $took")

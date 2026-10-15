@@ -36,7 +36,7 @@ internal object PasteLines {
     private val SPACES = Regex("""\s+""")
     private val PARENTHESES = Regex("""\([^()]*\)""")
     private val QUANTITY = Regex(
-        """^[~≈]?\s*(?:\d|[½¼¾⅓⅔⅛⅜⅝⅞]|(?:one|two|three|four|five|six|half|pinch|dash|handful|щепотк\p{L}*|пучок|пол|""" +
+        """^[~≈]?\s*(?:\d|[½¼¾⅓⅔⅛⅜⅝⅞]|(?:one|two|three|four|five|six|half|quarter|pinch|dash|handful|четверть|щепотк\p{L}*|пучок|пол|""" +
             """половин\p{L}*|один|одна|одно|два|две|три|четыре|пять|несколько)(?!\p{L}))""",
     )
     private val EQUIPMENT_LINE = Regex("""^(?:посуда|оборудование|инвентарь|equipment|tools)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
@@ -49,6 +49,7 @@ internal object PasteLines {
         RegexOption.IGNORE_CASE,
     )
     private val CLOSING = Regex("""^(?:приятного аппетита|bon app[eé]tit)(?!\p{L})""", RegexOption.IGNORE_CASE)
+
 
     /** Symbols that open a line as text, not as a list marker. */
     private val NOT_MARKERS = setOf('°'.code, '№'.code, '©'.code, '®'.code, '™'.code, '℃'.code, '℉'.code)
@@ -224,6 +225,9 @@ internal object PasteLines {
 
     fun quantityLed(text: String): Boolean = QUANTITY.containsMatchIn(text.lowercase())
 
+    /** "800 г", "3 штуки", "4 горошины", "по вкусу": an amount alone, the half of an ingredient written on two lines. */
+    fun amountOnly(text: String): Boolean = IngredientLineReader.amountOnly(text)
+
     /** "Творог — 500 г", "Соль — щепотка", "Milk – 500 ml": a short name, a dash, then a quantity. */
     fun nameFirst(text: String): Boolean {
         val dash = NAME_DASH.find(text) ?: return false
@@ -277,6 +281,7 @@ internal object Servings {
     private val EXPLICIT = listOf(
         Regex("""$NUM\s+порци"""),
         Regex("""порци[йия]?\s*[:—–-]\s*$NUM"""),
+        Regex("""порций\s+$NUM"""),
         Regex("""serves\s*:?\s*$NUM"""),
         Regex("""servings?\s*[:—–-]?\s*$NUM"""),
         Regex("""$NUM\s+servings?"""),
@@ -287,7 +292,7 @@ internal object Servings {
     /** "на N <что-то>": for N of something, which is servings; time, weight and the like are not. */
     private val FOR_COUNT = Regex("""(?<!\p{L})на\s+$NUM\s+(\p{L}+)""")
     private val UNITS = setOf("ч", "г", "гр", "кг", "мл", "л", "см", "мм")
-    private val UNIT_STEMS = listOf("мин", "сек", "час", "град", "дн", "ден", "сут", "недел", "месяц", "раз", "част", "процент")
+    private val UNIT_STEMS = listOf("мин", "сек", "час", "град", "дн", "ден", "сут", "недел", "месяц", "раз", "част", "процент", "литр")
     private val SERVINGS_LINE = Regex("""^(?:serves|servings?|yields?|makes|порций|порции|количество порций)(?!\p{L})""")
 
     fun find(sources: List<String>): Int? {
@@ -301,6 +306,19 @@ internal object Servings {
         }
         return null
     }
+
+    private val LABEL_ONLY = Regex("""^(?:порци[йия]|количество\s+порций|servings?|serves|yields?)$""", RegexOption.IGNORE_CASE)
+    private val COUNT_ONLY = Regex("""^\d{1,3}$""")
+
+    /** "Порции" over "8" in [text]: each such pair of lines as one line states them ("Порции: 8"). */
+    fun pairs(text: String): List<String> {
+        val lines = text.lines().map(String::trim).filter(String::isNotEmpty)
+        return lines.zipWithNext().filter { (label, value) -> isPairLabel(label) && COUNT_ONLY.matches(value) }
+            .map { (label, value) -> "$label: $value" }
+    }
+
+    /** "Порции", "Servings": the label of servings written on two lines. */
+    fun isPairLabel(text: String): Boolean = LABEL_ONLY.matches(text.trim())
 
     /** A line that only states the servings ("Serves 4", "Порций: 4"): read for them, not kept as description. */
     fun isServingsLine(text: String): Boolean = SERVINGS_LINE.containsMatchIn(text.lowercase()) && find(listOf(text)) != null

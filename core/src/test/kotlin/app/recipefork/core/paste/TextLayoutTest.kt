@@ -324,6 +324,14 @@ class TextLayoutTest {
             "Method\n" + "x:\n".repeat(80_000),
             "Method\n" + "**x**\nMix it.\n".repeat(40_000),
             "Instructions\n" + "Step:\n".repeat(40_000),
+            // T-284: eda.ru pairs, servings on two lines, a title's servings.
+            "Ингредиенты\n" + "Соль\n1 г\n".repeat(20_000) + "Приготовление\n1. Смешать.",
+            "Порции\n".repeat(40_000) + "5\n",
+            "Ингредиенты\n" + "Соль\n1 ½ ст. л.\n".repeat(10_000) + "Приготовление\n1. Смешать.",
+            "Ингредиенты\nСоль\n" + "1 ".repeat(20_000) + "г\n1. Mix.",
+            "Ингредиенты\n" + "1 " + "1".repeat(40_000) + " г\n1. Mix.",
+            "Ингредиенты\n" + "~".repeat(40_000) + "1 г\n1. Mix.",
+            "Суп (порций " + "1 ".repeat(20_000) + ")\nИнгредиенты\n- 1 egg\n1. Mix.",
         )
         for (input in inputs) {
             val took = measureTime { TextLayout.read(input) }

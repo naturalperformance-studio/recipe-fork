@@ -1,5 +1,7 @@
 package app.recipefork.core.paste.corpus
 
+import app.recipefork.core.paste.IngredientLine
+import app.recipefork.core.paste.IngredientLineReader
 import app.recipefork.core.paste.IngredientLineReaderTest
 import app.recipefork.core.paste.RecipeFromText
 import app.recipefork.core.recipe.AccountId
@@ -7,6 +9,7 @@ import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitType
+import app.recipefork.core.search.DictionaryMatch
 import java.io.File
 import java.time.Instant
 import java.util.Locale
@@ -17,6 +20,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.measureTime
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 /**
  * T-281: the paste parser against real recipes — the owner's own 44 and texts in the common web and messenger shapes —
@@ -51,11 +55,7 @@ class CorpusTest {
 
     @Test
     fun ingredientRowsGetAQuantityAndUnitOrToTaste() {
-        val missed = measures.flatMap { m ->
-            val rows = m.recipe?.ingredients.orEmpty()
-            rows.zip(CorpusMeasures.readRows(rows)).filterNot { it.second }.map { "${m.text.name}: ${it.first}" }
-        }
-        assertTrue(totals.quantifiedShare >= CorpusMeasures.QUANTIFIED_FLOOR, "${totals.quantifiedShare}\n" + missed.joinToString("\n"))
+        assertTrue(totals.quantifiedShare >= CorpusMeasures.QUANTIFIED_FLOOR, "${totals.quantifiedShare}\n" + unreadRows(measures).joinToString("\n"))
     }
 
     @Test
@@ -65,15 +65,13 @@ class CorpusTest {
 
     @Test
     fun durationsWrittenInStepsBecomeTimers() {
-        val missed = measures.flatMap { m ->
-            m.recipe?.steps.orEmpty().filter { it.timers.size < WrittenDurations.count(it.text) }.map { "${m.text.name}: ${it.text}" }
-        }
-        assertTrue(totals.timerShare >= CorpusMeasures.TIMER_FLOOR, "${totals.timerShare}\n" + missed.joinToString("\n"))
+        assertTrue(totals.timerShare >= CorpusMeasures.TIMER_FLOOR, "${totals.timerShare}\n" + untimedSteps(measures).joinToString("\n"))
     }
 
     @Test
     fun theSummaryIsPrintedAndTheReportWritten() {
         println(summary(measures))
+        println(work(measures))
         val file = File("build/reports/paste-corpus/index.html")
         CorpusReport.write(file, texts, read, shipped)
         val html = file.readText()
@@ -144,6 +142,55 @@ class CorpusTest {
         assertEquals(1, WrittenDurations.count("Жарить по 1 минуте с каждой стороны."))
         assertEquals(1, WrittenDurations.count("На 5-й минуте убавить огонь, варить 20 минут."))
         assertEquals(0, WrittenDurations.count("Часовой пояс, минутная стрелка, начать."))
+        // Fix round 1: "за" says when only with "до" after; more bare forms; numbers in words.
+        assertEquals(1, WrittenDurations.count("Тесто подойдёт за час."))
+        assertEquals(1, WrittenDurations.count("Смесь загустеет за минуту."))
+        assertEquals(0, WrittenDurations.count("За минуту до конца добавить соль."))
+        assertEquals(0, WrittenDurations.count("В первую минуту не трогать."))
+        assertEquals(1, WrittenDurations.count("Варить около часа."))
+        assertEquals(1, WrittenDurations.count("Томить не менее часа."))
+        assertEquals(1, WrittenDurations.count("Мариновать в течение часа."))
+        assertEquals(1, WrittenDurations.count("Cook for another minute."))
+        assertEquals(1, WrittenDurations.count("Bake a further minute."))
+        assertEquals(1, WrittenDurations.count("Варить две минуты."))
+        assertEquals(0, WrittenDurations.count("Take the butter out an hour before baking."))
+        assertEquals(0, WrittenDurations.count("Час пик — не время для готовки."))
+        assertEquals(0, WrittenDurations.count("Ориентироваться на минуты нет смысла, следить с четвёртой минуты."))
+    }
+
+    /**
+     * Opt-in: the texts of an outside directory, named by the system property `paste.corpus.extra` (Gradle:
+     * `-Ppaste.corpus.extra=<dir>`), read and reported as the corpus is, with no floor asserted; skipped when unset.
+     * Every `*.txt` under it counts, its set the first path segment where that is "ru" or "en".
+     */
+    @Test
+    fun anOutsideDirectoryOfTextsIsReadOnRequest() {
+        val dir = System.getProperty("paste.corpus.extra")?.takeIf { it.isNotBlank() }?.let(::File)
+        assumeTrue(dir != null, "paste.corpus.extra is not set")
+        assertTrue(dir!!.isDirectory, "not a directory: $dir")
+        val extra = CorpusText.loadExtra(dir)
+        val extraMeasures = CorpusMeasures.measure(extra, read, shipped)
+        println(summary(extraMeasures))
+        println(work(extraMeasures))
+        val file = File("build/reports/paste-corpus/extra.html")
+        CorpusReport.write(file, extra, read, shipped, heading = "Paste corpus — ${dir.name}")
+        println("Report: ${file.absoluteFile.canonicalPath}")
+    }
+
+    @Test
+    fun anOutsideDirectoryIsReadRecursivelyItsSetFromTheFirstSegment() {
+        val dir = File("build/tmp/paste-corpus-extra-test").apply { deleteRecursively() }
+        File(dir, "ru/a").mkdirs()
+        File(dir, "other").mkdirs()
+        File(dir, "ru/a/one.txt").writeText("Суп")
+        File(dir, "en/two.txt").also { it.parentFile.mkdirs() }.writeText("Soup")
+        File(dir, "other/three.txt").writeText("Pie")
+        File(dir, "other/skip.md").writeText("no")
+        val loaded = CorpusText.loadExtra(dir).map { Triple(it.set, it.name, it.text) }.sortedBy { it.second }
+        assertEquals(
+            listOf(Triple("ru", "a/one.txt", "Суп"), Triple("extra", "other/three.txt", "Pie"), Triple("en", "two.txt", "Soup")),
+            loaded,
+        )
     }
 
     @Test
@@ -153,31 +200,45 @@ class CorpusTest {
             val text = "Т\n\nИнгредиенты\n" + lines.joinToString("") { "$it\n" } + "100 г сахара\n\nПриготовление\n1. Смешать всё."
             return CorpusMeasures.readRows(assertNotNull(read(text), text).ingredients).dropLast(1)
         }
+        /** The same for [lines] read one row each, as a reader that does not join them would read them. */
+        fun rowsOf(vararg lines: String): List<Boolean> {
+            val reader = IngredientLineReader(DictionaryMatch(shipped.ingredients))
+            return CorpusMeasures.readRows((lines.toList() + "100 г сахара").mapIndexed { i, it -> reader.read(IngredientLine(it, null), i) }).dropLast(1)
+        }
+        fun toTaste(qualifier: String?, note: String? = null) =
+            Ingredient(0, 1L, qualifier = qualifier, freeTextName = null, unitType = UnitType.TASTE_UNMEASURED, unit = null, quantity = null, note = note)
         assertEquals(listOf(true), readOf("500 г творога"))
         assertEquals(listOf(true), readOf("500 г творога 9%"), "a percentage says what it is")
         assertEquals(listOf(true), readOf("50 г мацони 1–3%"))
         assertEquals(listOf(true), readOf("Соль — по вкусу"))
         assertEquals(listOf(true), readOf("Зелень — для подачи"))
-        assertEquals(listOf(false), readOf("Чеснок — 1 головка"), "a unit the reader does not know")
-        assertEquals(listOf(false, false), readOf("Говядина на кости", "800 г"), "a name and its quantity on lines of their own")
-        assertEquals(listOf(false, false), readOf("Соль", "по вкусу"))
-        assertEquals(listOf(false, false), readOf("Чеснок", "3 зубчика"))
-        assertEquals(listOf(false), readOf("куриная грудка, замороженная — 350 г"), "a quantity left in the note")
+        assertEquals(listOf(true), readOf("Чеснок — 1 головка"), "a word for a whole thing counts pieces (T-284)")
+        assertEquals(listOf(true, true), readOf("Говядина на кости", "800 г", "Соль", "по вкусу"), "the eda.ru shape is one line each (T-284)")
+        assertEquals(listOf(false, false), rowsOf("Говядина на кости", "800 г"), "a name and its quantity read as rows of their own")
+        assertEquals(listOf(false, false), rowsOf("Соль", "по вкусу"))
+        assertEquals(listOf(false, false), rowsOf("Чеснок", "3 зубчика"))
+        assertEquals(listOf(false, false), rowsOf("Душистый перец", "4 горошины"), "an eda.ru pair read as two")
+        assertEquals(listOf(true), readOf("куриная грудка, замороженная — 350 г"), "a quantity after a comma clause (T-284)")
         assertEquals(listOf(false), readOf("2 x 400g cans chopped tomatoes"), "a quantity left in the qualifier")
-        assertEquals(listOf(false, false), readOf("Душистый перец", "4 горошины"), "an eda.ru pair with a unit the list lacks")
-        assertEquals(listOf(false), readOf("пучок рукколы"), "a quantity in words left in the qualifier of a to-taste row")
-        assertEquals(listOf(false), readOf("juice of half a lime"))
+        assertEquals(listOf(true), readOf("пучок рукколы"), "T-284")
+        assertEquals(listOf(true), readOf("juice of half a lime"), "T-284")
+        assertFalse(CorpusMeasures.quantityRead(toTaste("горсть"), null), "a quantity in words left in the qualifier of a to-taste row")
+        assertFalse(CorpusMeasures.quantityRead(toTaste(null, note = "350 г"), null), "a quantity left in the note")
+        assertTrue(CorpusMeasures.quantityRead(toTaste("9%"), null))
     }
 
     @Test
     fun countingDurationsIsLinearOnAnyText() {
         val long = "1".repeat(50_000) + " " + "1 - ".repeat(20_000) + "ч".repeat(20_000) + " 5 минут"
         val words = "на ".repeat(20_000) + "минуту ".repeat(20_000) + "a ".repeat(20_000) + "minute"
+        val whenWords = "первую ".repeat(20_000) + "за ".repeat(20_000) + "минуту" + " около".repeat(10_000) + " часа" +
+            " две".repeat(10_000) + " минуты" + " a couple of".repeat(5_000) + " minutes" + " 20-й".repeat(5_000) + " минуты"
         val name = "1".repeat(50_000) + " % " + "зубчик".repeat(10_000)
         val row = Ingredient(0, null, qualifier = name, freeTextName = name, unitType = UnitType.TASTE_UNMEASURED, unit = null, quantity = null, note = name)
         val took = measureTime {
             WrittenDurations.count(long)
             WrittenDurations.count(words)
+            WrittenDurations.count(whenWords)
             CorpusMeasures.readRows(listOf(row, row))
         }
         assertTrue(took.inWholeSeconds < 2, "$took")
@@ -197,6 +258,35 @@ class CorpusTest {
         val read: (String) -> Recipe? = { RecipeFromText.read(it, shipped, at, AccountId("owner")) }
         val texts = CorpusText.load()
         val measures by lazy { CorpusMeasures.measure(texts, read, shipped) }
+
+        /** Every row whose quantity was not read, as "<text>: <row>". */
+        fun unreadRows(measures: List<TextMeasure>): List<String> = measures.flatMap { m ->
+            val rows = m.recipe?.ingredients.orEmpty()
+            rows.zip(CorpusMeasures.readRows(rows)).filterNot { it.second }.map { "${m.text.set}/${m.text.name}: ${shown(it.first)}" }
+        }
+
+        /** Every step carrying fewer timers than the durations it names, as "<text>: <step>". */
+        fun untimedSteps(measures: List<TextMeasure>): List<String> = measures.flatMap { m ->
+            m.recipe?.steps.orEmpty().filter { it.timers.size < WrittenDurations.count(it.text) }.map { "${m.text.set}/${m.text.name}: ${it.text}" }
+        }
+
+        /** The work queue: the unread rows, then the untimed steps. */
+        fun work(measures: List<TextMeasure>): String = buildString {
+            val rows = unreadRows(measures)
+            appendLine("Unread rows (${rows.size}):")
+            rows.forEach { appendLine("  $it") }
+            val steps = untimedSteps(measures)
+            appendLine("Untimed steps (${steps.size}):")
+            steps.forEach { appendLine("  $it") }
+        }
+
+        private fun shown(row: Ingredient) = listOfNotNull(
+            row.quantity?.toString() ?: row.enteredQuantity ?: "—",
+            row.unit?.name ?: row.unitType.name,
+            row.dictionaryEntry?.let { id -> shipped.ingredients.firstOrNull { it.id == id }?.let { "#$id ${it.labelRu}" } } ?: "free «${row.freeTextName}»",
+            row.qualifier?.let { "q «$it»" },
+            row.note?.let { "n «$it»" },
+        ).joinToString(" | ")
 
         /** One line per text, then the corpus figures. */
         fun summary(measures: List<TextMeasure>): String = buildString {

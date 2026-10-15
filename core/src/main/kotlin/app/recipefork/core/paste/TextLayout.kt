@@ -35,7 +35,7 @@ internal enum class Section { DESCRIPTION, INGREDIENTS, EQUIPMENT, STEPS, NOTES,
 /** [pinned]: stays where it was put, whatever its shape; [fromHeading]: a colon or bold heading line read as text. */
 private class Entry(
     var section: Section,
-    val text: String,
+    var text: String,
     val numbered: Boolean,
     var group: String?,
     val marked: Boolean = false,
@@ -69,10 +69,13 @@ private class LayoutReader(private val text: String) {
             servingsSources += title
         }
         numberedBelow = numberedBelow(lines)
+        // "Порции" over "8": the servings on two lines; the number alone is no line of the text, the label is read for them.
+        val pairs = Servings.pairs(text)
+        servingsSources += pairs
         lines.forEachIndexed { i, line ->
             when (line) {
                 is PasteLine.Heading -> heading(lines, i)
-                is PasteLine.Item -> item(line, lines.getOrNull(i + 1))
+                is PasteLine.Item -> if (pairs.isEmpty() || !Servings.isPairLabel(line.text)) item(line, lines.getOrNull(i + 1))
             }
         }
         if (!ingredientsHeading) ingredientsByShape()
@@ -80,6 +83,7 @@ private class LayoutReader(private val text: String) {
             stepsByShape(entries.filter { it.section == Section.INGREDIENTS || it.section == Section.OTHER }, afterIngredient = true)
         }
         entries.filter { it.section == Section.OTHER }.forEach { it.section = Section.NOTES }
+        namesOverAmounts()
         sentencesAmongBulletsToNotes()
         entries.filter { it.section == Section.STEPS && PasteLines.closing(it.text) }.forEach { it.section = Section.NOTES }
 
@@ -263,6 +267,34 @@ private class LayoutReader(private val text: String) {
                 !staysInRun(lines, i)
         } ?: return
         lines.drop(from).forEach { it.section = if (stepShaped(it)) Section.STEPS else Section.NOTES }
+    }
+
+    /**
+     * eda.ru's shape: each ingredient's name on a line of its own and its amount on the next ("Говядина на кости" over
+     * "800 г", "Соль" over "по вкусу"). Where two or more unmarked ingredient lines with no quantity stand over a line
+     * that is only an amount, each such pair is one line, "<name> — <amount>".
+     */
+    private fun namesOverAmounts() {
+        fun pairAt(i: Int): Boolean {
+            val (name, amount) = entries[i] to (entries.getOrNull(i + 1) ?: return false)
+            return name.section == Section.INGREDIENTS && amount.section == Section.INGREDIENTS && name.group == amount.group &&
+                !name.marked && !amount.marked && !name.fromTable && !amount.fromTable &&
+                !PasteLines.amountOnly(name.text) && !PasteLines.quantityLed(name.text) && PasteLines.amountOnly(amount.text)
+        }
+        if (entries.indices.count(::pairAt) < 2) return
+        val joined = ArrayList<Entry>(entries.size)
+        var i = 0
+        while (i < entries.size) {
+            val entry = entries[i]
+            if (pairAt(i)) {
+                entry.text = "${entry.text} — ${entries[i + 1].text}"
+                i++
+            }
+            joined += entry
+            i++
+        }
+        entries.clear()
+        entries += joined
     }
 
     /**
