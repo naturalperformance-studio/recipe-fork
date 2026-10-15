@@ -44,7 +44,7 @@ internal object PasteLines {
     private val NAME_DASH = Regex("""\s[—–-]\s""")
     private val TO_TASTE = Regex("""^(?:по вкусу|to taste)""", RegexOption.IGNORE_CASE)
     private val TIME_LINE = Regex(
-        """^(?:(?:общее |активное )?время(?: приготовления| готовки| подготовки| выпечки| запекания| варки| жарки)?\s*[:—–\-\d]|""" +
+        """^(?:(?:общее |активное )?время(?:\s+(?:приготовления|готовки|подготовки|выпечки|запекания|варки|жарки)(?!\p{L})|\s*[:—–\-\d])|""" +
             """(?:prep(?:aration)?|cook(?:ing)?|bake|baking|total|active)\s+time(?!\p{L})|ready in(?!\p{L}))""",
         RegexOption.IGNORE_CASE,
     )

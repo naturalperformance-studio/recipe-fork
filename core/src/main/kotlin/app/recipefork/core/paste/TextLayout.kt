@@ -139,7 +139,10 @@ private class LayoutReader(private val text: String) {
                     level = h.level
                 }
                 section != Section.INGREDIENTS -> Unit // a sub-heading of the steps: the steps go on
-                Servings.find(listOf(h.text)) != null -> servingsSources += h.text
+                Servings.find(listOf(h.text)) != null -> {
+                    servingsSources += h.text
+                    group = null
+                }
                 else -> group = h.text
             }
             Section.DESCRIPTION, Section.NOTES, Section.OTHER -> if (h.markdown) {
@@ -232,7 +235,7 @@ private class LayoutReader(private val text: String) {
             var current: String? = null
             (listOfNotNull(above) + run).forEach {
                 if (it.fromHeading && Servings.find(listOf(it.text)) != null) {
-                    Unit // "На 4 порции:" states the servings: it stays in the description
+                    current = null // "На 4 порции:" states the servings: it stays in the description, and ends a group
                 } else if (it.fromHeading && !PasteLines.ingredientLed(it.text)) {
                     current = it.text
                     groups += it

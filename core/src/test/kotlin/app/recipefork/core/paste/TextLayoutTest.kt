@@ -655,6 +655,30 @@ class TextLayoutTest {
     }
 
     @Test
+    fun `a time line names its kind of time and needs no colon after it`() {
+        val underHeading = read(
+            "Сырники\nИнгредиенты\n- 500 г творога\n- 1 яйцо\nВремя приготовления около 40 минут\nПриготовление\nЖарить по 3 минуты.",
+        )
+        assertEquals(listOf("500 г творога", "1 яйцо"), underHeading.ingredients.map { it.text })
+        assertEquals(listOf("Время приготовления около 40 минут"), underHeading.description)
+        val byShape = read(
+            "Сырники\n500 г творога\n1 яйцо\nВремя запекания в духовке: 40 минут\nСмешать всё и сформовать сырники.\nЖарить по 3 минуты.",
+        )
+        assertEquals(listOf("500 г творога", "1 яйцо"), byShape.ingredients.map { it.text })
+        assertEquals(listOf("Время запекания в духовке: 40 минут"), byShape.description)
+    }
+
+    @Test
+    fun `a servings heading inside the ingredient run ends the group above it`() {
+        val layout = read("Торт\nДля коржа:\n200 г муки\n2 яйца\nКрем на 1 торт:\n200 г сливок\n100 г сахара\nСмешать всё.\nВыпекать 30 минут.")
+        assertEquals(listOf("Для коржа", "Для коржа", null, null), layout.ingredients.map { it.group })
+        val headed = read(
+            "Торт\nИнгредиенты\n**Для коржа**\n- 200 г муки\n**Крем на 1 торт**\n- 200 г сливок\nПриготовление\nСмешать всё.",
+        )
+        assertEquals(listOf("Для коржа", null), headed.ingredients.map { it.group })
+    }
+
+    @Test
     fun `Состав and Инструкция open a section only as the whole heading`() {
         assertEquals(Section.INGREDIENTS, PasteLines.sectionOf("Состав:"))
         assertEquals(Section.INGREDIENTS, PasteLines.sectionOf("Состав"))
