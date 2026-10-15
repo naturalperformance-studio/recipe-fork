@@ -84,10 +84,16 @@ object WordPrefix {
  * never under three.
  */
 object Inflection {
-    /** The forms of one [folded][WordPrefix.fold] [word]; a word under four letters is its only form. */
+    /**
+     * The forms of one [folded][WordPrefix.fold] [word]; a word under four letters is its only form, unless it is a short
+     * form whose stem changes; a word whose stem is another word's is that word ([IRREGULAR]: "яиц" is "яйцо", "луковица"
+     * is "лук").
+     */
     fun forms(word: String): Set<String> {
+        IRREGULAR[word]?.let { return setOf(it) }
         if (word.length < MIN_WORD) return setOf(word)
         val stem = if (word.any { it in 'а'..'я' }) russian(word) else english(word)
+        IRREGULAR[stem]?.let { return setOf(it) }
         val fleeting = fleeting(stem)
         return if (fleeting == null) setOf(stem) else setOf(stem, fleeting)
     }
@@ -111,6 +117,24 @@ object Inflection {
      */
     fun same(typed: String, label: String): Boolean =
         typed == label || !label.startsWith(typed) && forms(typed).let { forms -> forms(label).any { it in forms } }
+
+    /**
+     * The genitive singular of a Russian [label] word in the nominative, as a recipe writes an amount of it ("молоко" →
+     * "молока", "соль" → "соли", "мука" → "муки", "сахар" → "сахара"); null for a word that is not Russian. A plain
+     * rule by the last letter, which the binding of a name uses only to choose between labels that both match it.
+     */
+    fun genitive(label: String): String? {
+        if (label.none { it in 'а'..'я' }) return null
+        val stem = label.dropLast(1)
+        return when (label.last()) {
+            'о' -> stem + "а"
+            'е' -> stem + "я"
+            'а' -> stem + if (stem.lastOrNull() in HUSHING) "и" else "ы"
+            'я', 'ь' -> stem + "и"
+            'й' -> stem + "я"
+            else -> label.takeIf { label.last() in 'б'..'щ' && label.last() !in VOWELS }?.plus("а")
+        }
+    }
 
     private fun russian(word: String): String {
         val ending = RUSSIAN_ENDINGS.firstOrNull { word.endsWith(it) && word.length - it.length >= MIN_STEM }
@@ -145,6 +169,12 @@ object Inflection {
         "ов", "ев", "ам", "ям", "ах", "ях", "ом", "ем", "ию", "ия", "ье", "ья", "ью",
         "а", "я", "о", "е", "ы", "и", "у", "ю", "ь",
     )
+    /**
+     * Words and stems that are another word's form, by that form: the genitive plural "5 яиц" of "яйцо", and "луковица",
+     * one onion, which recipes write for "лук".
+     */
+    private val IRREGULAR = mapOf("яиц" to "яйц", "луковиц" to "лук")
+    private val HUSHING = "гкхжшщч".toSet()
     private val FLEETING = listOf("ец", "ок", "ек", "ен")
     private val VOWELS = "аеиоуыэюя".toSet()
     private val ENGLISH_ES = listOf("ches", "shes", "sses", "xes", "zes")

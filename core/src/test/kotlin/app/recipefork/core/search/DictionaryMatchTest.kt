@@ -27,6 +27,9 @@ class DictionaryMatchTest {
         assertEquals(DictionaryMatch.Bound(ingredient("egg"), emptyList()), ingredients.bind("яйца"))
         assertEquals(DictionaryMatch.Bound(ingredient("Greek yogurt"), emptyList()), ingredients.bind("Greek yogurt"))
         assertEquals(DictionaryMatch.Bound(ingredient("egg"), emptyList()), ingredients.bind("eggs"))
+        // Two labels in another form, "молоко" and "молоки": the one the name is the genitive of (T-277).
+        assertEquals(ingredient("milk"), ingredients.bind("молока")?.entry)
+        assertEquals(ingredient("milt"), ingredients.bind("молоки")?.entry)
     }
 
     @Test
