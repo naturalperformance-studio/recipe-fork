@@ -147,11 +147,19 @@ class IngredientLineReaderTest {
 
     @Test
     fun aLongRunOfDashesIsReadAtOnce() {
-        listOf("-".repeat(20_000), "Соль " + "—".repeat(20_000) + " 5 г", "a" + "-".repeat(20_000) + "b", "соль" + " -".repeat(10_000) + "по вкусу")
+        listOf("-".repeat(20_000), "Соль " + "—".repeat(20_000) + " 5 г", "a" + "-".repeat(20_000) + "b", "a" + " ".repeat(20_000) + "b", "соль" + " -".repeat(10_000) + "по вкусу")
             .forEach { text ->
                 val took = kotlin.time.measureTime { read(text) }
                 assertTrue(took.inWholeMilliseconds < 1_000, "${text.take(10)}…: $took")
             }
+    }
+
+    @Test
+    fun aNoteThatIsOnlyAConjunctionIsDropped() {
+        // Cheese is no part of the macaroni the row is bound to: "and" alone was left as its note.
+        assertNull(read("200 g macaroni and cheese").note)
+        assertNull(read("соль, и").note)
+        assertEquals("и перец", read("соль и перец").note)
     }
 
     @Test
