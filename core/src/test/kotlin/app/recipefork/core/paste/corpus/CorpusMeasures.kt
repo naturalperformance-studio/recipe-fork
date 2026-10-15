@@ -75,11 +75,12 @@ data class CorpusTotals(val measures: List<TextMeasure>) {
 object CorpusMeasures {
     /**
      * The corpus floors (T-281): the share of rows with a quantity read, bound to the dictionary, durations timed. The
-     * quantity floor is the measured 91.4 % rounded down, below the 95 % aimed at: the eda.ru shape (a name and its
-     * quantity on lines of their own), quantities left in a note after a comma ("куриная грудка, замороженная — 350 г")
-     * and units the reader does not know ("мультистакан", "головка") are left to T-284, which raises it.
+     * quantity floor is the measured 87.5 % rounded down, below the 95 % aimed at: the eda.ru shape (a name and its
+     * quantity on lines of their own), quantities left in a note after a comma ("куриная грудка, замороженная — 350 г"),
+     * quantities in words ("пучок", "of half a") and units the reader does not know ("мультистакан", "головка") are left
+     * to T-284, which raises it. The measure errs low: every qualifier on a to-taste row counts as a missed quantity.
      */
-    const val QUANTIFIED_FLOOR = 0.91
+    const val QUANTIFIED_FLOOR = 0.87
     const val BOUND_FLOOR = 0.80
     const val TIMER_FLOOR = 0.90
 
@@ -113,24 +114,38 @@ object CorpusMeasures {
      * For each of [rows], in order, whether its quantity was read ([quantityRead]): the row after it is part of the
      * question, since a name-only row above a quantity-only row is one line read as two.
      */
-    fun readRows(rows: List<Ingredient>): List<Boolean> = rows.mapIndexed { i, row -> quantityRead(row, rows.getOrNull(i + 1)) }
+    fun readRows(rows: List<Ingredient>): List<Boolean> =
+        rows.mapIndexed { i, row -> quantityRead(row, rows.getOrNull(i + 1), rows.getOrNull(i - 1)) }
 
     /**
      * Whether [row]'s quantity was read, [next] being the row after it in its recipe:
      * - never where its free-text name is a quantity ("800 г", "2 штуки", "по вкусу") or only a unit word ("зубчика"), or
      *   where [next] is such a quantity-only row (the name half of "Говядина на кости" / "800 г");
      * - never where its qualifier holds a number other than a percentage ("x 400g cans", not "9%");
-     * - to taste: only where no number is left in its name, qualifier or note ("куриная грудка, замороженная — 350 г");
+     * - never where a bare name to taste and a one-word free-text row with a quantity follow each other — the eda.ru
+     *   pair read as two ("Душистый перец" / "4 горошины"): both halves are unread;
+     * - to taste: only where no number is left in its name, qualifier or note ("куриная грудка, замороженная — 350 г"),
+     *   and its qualifier, if any, is only a fat content — a qualifier on a to-taste row is mostly a quantity in words
+     *   ("of half a", "small bunch", "одного", "горсть"), so the measure counts it unread and errs low;
      * - otherwise: where it holds a unit and a quantity.
      */
-    fun quantityRead(row: Ingredient, next: Ingredient?): Boolean {
+    fun quantityRead(row: Ingredient, next: Ingredient?, previous: Ingredient? = null): Boolean {
         if (quantityOnly(row) || next != null && quantityOnly(next)) return false
+        if (previous != null && pairedTail(previous, row) || next != null && pairedTail(row, next)) return false
         if (row.qualifier?.let(::holdsNumber) == true) return false
         return when (row.unitType) {
-            UnitType.TASTE_UNMEASURED -> listOfNotNull(row.freeTextName, row.qualifier, row.note).none(::holdsNumber)
+            UnitType.TASTE_UNMEASURED ->
+                listOfNotNull(row.freeTextName, row.qualifier, row.note).none(::holdsNumber) &&
+                    row.qualifier?.let { PERCENT.replace(it, "").isBlank() } != false
             else -> row.unit != null && row.quantity != null
         }
     }
+
+    /** [tail] is the quantity half of [name]: a bare name to taste, then a one-word free-text row holding a quantity. */
+    private fun pairedTail(name: Ingredient, tail: Ingredient): Boolean =
+        name.unitType == UnitType.TASTE_UNMEASURED && name.qualifier.isNullOrBlank() &&
+            tail.dictionaryEntry == null && tail.quantity != null &&
+            tail.freeTextName?.trim()?.split(' ')?.size == 1
 
     /** A row whose own words are a quantity or a unit, not a name: a line the reader took apart from its name. */
     private fun quantityOnly(row: Ingredient): Boolean {
@@ -160,7 +175,7 @@ object CorpusMeasures {
 /**
  * A count of the durations a step's text names, kept apart from the parser's own reading: a number (or a range of
  * numbers) followed by a minute or hour word, a minute or an hour with no number ("прогреть минуту", "минимум час",
- * "a minute", "an hour"), or "полчаса" / "half an hour". An hour followed by its minutes ("1 ч 30 мин"), and two
+ * "по минуте", "около минуты", "a minute", "an hour"), or "полчаса" / "half an hour". An hour followed by its minutes ("1 ч 30 мин"), and two
  * durations joined as a range ("45 mins - 1 hr"), count once; one after "каждые" / "every" says how often, and one in a
  * comparison ("на минуту меньше", "an hour later") says how much longer or sooner: neither is counted. Seconds and days
  * are no timer and are not counted.
@@ -168,9 +183,9 @@ object CorpusMeasures {
 object WrittenDurations {
     // Possessive quantifiers, a fixed lookbehind: linear on any text.
     private const val NUMBER = """\d++(?:[.,]\d++)?+(?:\s*+[½¼¾⅓⅔])?+|[½¼¾⅓⅔]"""
-    private const val UNIT = """час(?:а|ов)?+|ч(?!\.?+\s*+/?+\s*+л)\.?+|hours?+|hrs?+\.?+|h|минут[аыу]?+|мин\.?+|minutes?+|mins?+\.?+"""
+    private const val UNIT = """час(?:а|ов)?+|ч(?!\.?+\s*+/?+\s*+л)\.?+|hours?+|hrs?+\.?+|h|минут[аыуе]?+|мин\.?+|minutes?+|mins?+\.?+"""
     private val DURATION = Regex(
-        """(?<![\p{L}\p{N}])(?:(?:$NUMBER)(?:\s*+(?:[-–—]|до|to)\s*+(?:$NUMBER))?+\s*+(?:$UNIT)|полчаса|полтора\s++часа|half\s++an\s++hour|минуту|минутку|час|(?:a|one)\s++minute|(?:an|one)\s++hour)(?!\p{L})""",
+        """(?<![\p{L}\p{N}])(?:(?:$NUMBER)(?:\s*+(?:[-–—]|до|to)\s*+(?:$NUMBER))?+\s*+(?:$UNIT)|полчаса|полтора\s++часа|half\s++an\s++hour|минуту|минутку|(?:по|около)\s++минут[еы]|час|(?:a|one)\s++minute|(?:an|one)\s++hour)(?!\p{L})""",
         RegexOption.IGNORE_CASE,
     )
     private val JOINS = Regex("""^\s*+(?:[-–—]|и|and|до|to)?+\s*+$""", RegexOption.IGNORE_CASE)

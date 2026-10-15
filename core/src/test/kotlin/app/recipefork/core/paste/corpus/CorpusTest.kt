@@ -139,6 +139,10 @@ class CorpusTest {
         assertEquals(0, WrittenDurations.count("Поставить тесто на час раньше."))
         assertEquals(0, WrittenDurations.count("Add the herbs an hour later."))
         assertEquals(0, WrittenDurations.count("Помешивать каждую минуту."))
+        assertEquals(1, WrittenDurations.count("Жарить блины по минуте с каждой стороны."))
+        assertEquals(1, WrittenDurations.count("Жарить около минуты без переворота."))
+        assertEquals(1, WrittenDurations.count("Жарить по 1 минуте с каждой стороны."))
+        assertEquals(1, WrittenDurations.count("На 5-й минуте убавить огонь, варить 20 минут."))
         assertEquals(0, WrittenDurations.count("Часовой пояс, минутная стрелка, начать."))
     }
 
@@ -160,6 +164,9 @@ class CorpusTest {
         assertEquals(listOf(false, false), readOf("Чеснок", "3 зубчика"))
         assertEquals(listOf(false), readOf("куриная грудка, замороженная — 350 г"), "a quantity left in the note")
         assertEquals(listOf(false), readOf("2 x 400g cans chopped tomatoes"), "a quantity left in the qualifier")
+        assertEquals(listOf(false, false), readOf("Душистый перец", "4 горошины"), "an eda.ru pair with a unit the list lacks")
+        assertEquals(listOf(false), readOf("пучок рукколы"), "a quantity in words left in the qualifier of a to-taste row")
+        assertEquals(listOf(false), readOf("juice of half a lime"))
     }
 
     @Test
