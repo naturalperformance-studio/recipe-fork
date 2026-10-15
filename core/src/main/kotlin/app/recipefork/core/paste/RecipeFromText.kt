@@ -15,18 +15,27 @@ import java.time.Instant
  * A pasted recipe text read whole into a new recipe of the owner's, `local`, as the editor's new recipe is: its title,
  * servings, description (the description lines, then the notes), ingredient rows under their groups, steps with their
  * timers, the equipment named, and its language. What does not fit the model's limits is cut to them, so the recipe
- * passes the rules of a recipe file. The text itself is not kept here: the paste screen keeps it.
+ * passes the rules of a recipe file. The text itself is not kept here: the paste screen keeps it. The steps refer to the
+ * rows they name ([StepReferences]); [FirstMention] says where a row named without a quantity has its reference.
  */
 object RecipeFromText {
     /** The recipe [text] holds, created at [at] in [owner]'s book (the pool's when null), or null when it holds none. */
-    fun read(text: String, dictionaries: DictionariesDto, at: Instant, owner: AccountId?): Recipe? {
+    fun read(
+        text: String,
+        dictionaries: DictionariesDto,
+        at: Instant,
+        owner: AccountId?,
+        firstMention: FirstMention = FirstMention.BEFORE,
+    ): Recipe? {
         val layout = TextLayout.read(text) ?: return null
         val ingredientMatch = DictionaryMatch(dictionaries.ingredients)
         val reader = IngredientLineReader(ingredientMatch)
         val lines = layout.ingredients.take(RecipeBounds.MAX_INGREDIENTS)
         val groups = lines.indices.filter { i -> lines[i].group != null && (i == 0 || lines[i].group != lines[i - 1].group) }
             .mapNotNull { i -> lines[i].group?.trim()?.takeIf { it.isNotEmpty() }?.let { IngredientGroup(fit(it, RecipeBounds.MAX_GROUP_NAME), i) } }
-        val steps = layout.steps.take(RecipeBounds.MAX_STEPS).mapIndexed(::step)
+        val ingredients = lines.mapIndexed { i, line -> reader.read(line, i) }
+        val references = StepReferences(ingredients, ingredientMatch, firstMention)
+        val steps = layout.steps.take(RecipeBounds.MAX_STEPS).mapIndexed(::step).map(references::read)
         val mentions = EquipmentMentions(dictionaries.equipment, ingredientMatch)
         val equipment = (layout.equipment.flatMap { mentions.of(it, inStep = false) } + steps.flatMap { mentions.of(it.text, inStep = true) })
             .distinctBy { it.id }.take(RecipeBounds.MAX_EQUIPMENT).map { EquipmentItem.entry(it.id) }
@@ -36,7 +45,7 @@ object RecipeFromText {
             description = fit((layout.description + layout.notes).joinToString("\n").trim(), RecipeBounds.MAX_DESCRIPTION),
             language = layout.language,
             servings = layout.servings?.takeIf { it >= 1 },
-            ingredients = lines.mapIndexed { i, line -> reader.read(line, i) },
+            ingredients = ingredients,
             ingredientGroups = groups,
             steps = steps,
             equipment = equipment,
