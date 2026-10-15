@@ -102,13 +102,16 @@ class PasteWeakSpotsTest {
         // A multicooker's cup is the model's cup, qualified.
         assertEquals(listOf(Rational.of(3), CUP, "buckwheat", "мультистакан", null), shown(row("3 мультистакана гречки")))
         assertEquals(listOf(Rational.ONE, CUP, "water", "мультистакан", null), shown(row("вода — 1 мультистакан")))
+        // No entry: the word stays in the free text, for a qualifier qualifies an entry.
+        assertEquals(listOf(Rational.of(2), CUP, "мультистакан чего-то", null), shown(row("2 мультистакана чего-то")).take(4))
+        assertEquals(listOf(Rational.of(300), GRAM, "can неведомого", null), shown(row("300 g can неведомого")).take(4))
         assertEquals(listOf(Rational.of(2), PIECE, "garlic", "головка", null), shown(row("Чеснок — 2 головки")))
     }
 
     @Test
     fun aContainerWordBetweenTheQuantityAndTheNameIsNoPartOfTheName() {
         val beans = row("400g tin butter beans, rinsed")
-        assertEquals(listOf(Rational.of(400), GRAM, "beans", "tin butter", "rinsed"), shown(beans))
+        assertEquals(listOf(Rational.of(400), GRAM, "beans", "butter, tin", "rinsed"), shown(beans))
         // A two-word entry after the container keeps both words.
         assertEquals(listOf(Rational.ONE, PIECE, "coconut milk", "can"), shown(row("1 can coconut milk")).take(4))
     }
@@ -165,8 +168,7 @@ class PasteWeakSpotsTest {
     fun aLabelBeforeAColonIsAGroupNotPartOfTheName() {
         val glaze = reader.lines(IngredientLine("Глазурь: 100 г сахарной пудры", null)).single()
         assertEquals("100 г сахарной пудры" to "Глазурь", glaze.text to glaze.group)
-        // A label that names an ingredient, or a quantity with no name after it, is no group.
-        assertNull(reader.lines(IngredientLine("Мука: 200 г муки", null)).single().group)
+        // A quantity with no name after it is no group.
         assertNull(reader.lines(IngredientLine("Яйца: 2", null)).single().group)
 
         val recipe = recipe("Торт\n\nИнгредиенты\n- 3 яйца\n- Пропитка: 50 мл воды + 30 г сахара\n\nПриготовление\n1. Смешать.")
@@ -211,5 +213,104 @@ class PasteWeakSpotsTest {
             "Печь на минуту меньше, чем обычно.", "Помешивать каждую минуту.", "За минуту до конца добавить соль.",
             "В первую минуту не трогать.", "Add the herbs an hour later.", "Поставить тесто на час раньше.",
         ).forEach { assertEquals(emptyList(), minutes(it), it) }
+    }
+
+    // Fix round 1: each rule to its shape, on fresh lines.
+
+    @Test
+    fun aPlusBetweenTwoAmountsOfOneNameIsThatName() {
+        assertEquals(listOf(Rational.ONE, CUP, "flour", null, "+ 2 tbsp"), shown(row("1 cup + 2 tbsp flour")))
+        assertEquals(listOf(Rational.of(3), TABLESPOON, "sugar", null, "+ 1 ч. л."), shown(row("3 ст. л. + 1 ч. л. сахара")))
+        assertEquals(listOf("3 ст. л. + 1 ч. л. сахара"), reader.lines(IngredientLine("3 ст. л. + 1 ч. л. сахара", null)).map { it.text })
+    }
+
+    @Test
+    fun anAmountAloneIsReadAsTheReaderReadsAQuantity() {
+        val text = "Крем\n\nИнгредиенты\nСливки\n1 ½ стакана\nСахар\nщепотка\nКрахмал\n2 1/2 ст. л.\nВанилин\n≈3 г\n\nПриготовление\nШаг 1\nСмешать всё."
+        assertEquals(
+            listOf("Сливки — 1 ½ стакана", "Сахар — щепотка", "Крахмал — 2 1/2 ст. л.", "Ванилин — ≈3 г"),
+            assertNotNull(TextLayout.read(text)).ingredients.map { it.text },
+        )
+        listOf("1 ½ стакана", "щепотка", "по вкусу", "2 1/2 ст. л.", "~5 г", "3 зубчика", "полстакана")
+            .forEach { assertTrue(IngredientLineReader.amountOnly(it), it) }
+        listOf("2 помидора", "Сливки", "100 г сыра", "").forEach { assertTrue(!IngredientLineReader.amountOnly(it), it) }
+    }
+
+    @Test
+    fun numberWordsInTheGenitiveAndSeveralWordsBeforeTheAmountAreRead() {
+        assertEquals(listOf(half(), PIECE, "orange", null, "сок"), shown(row("сок половины апельсина")))
+        assertEquals(listOf(half(), PIECE, "avocado", null, "мякоть"), shown(row("мякоть половины авокадо")))
+        assertEquals(listOf(half(), PIECE, "lemon", null, "1/4, сок"), shown(row("сок четверти лимона")))
+        assertEquals(listOf(Rational.ONE, PIECE, "orange", null, "zest and juice"), shown(row("zest and juice of 1 orange")))
+        assertEquals(listOf(Rational.of(2), PIECE, "lime", null, "juice and zest"), shown(row("juice and zest of 2 limes")))
+        assertEquals(listOf(Rational.ONE, PIECE, "lemon", null, "finely grated zest"), shown(row("finely grated zest of 1 lemon")))
+        assertEquals(listOf(Rational.ONE, PIECE, "orange", null, "сок и цедра"), shown(row("сок и цедра 1 апельсина")))
+    }
+
+    @Test
+    fun theLongestNameAfterAContainerWordIsBound() {
+        assertEquals(listOf(Rational.ONE, PIECE, "beans", "butter, can"), shown(row("1 can butter beans")).take(4))
+        assertEquals(listOf(Rational.of(2), PIECE, "beans", "butter, tin"), shown(row("2 tins butter beans")).take(4))
+    }
+
+    @Test
+    fun aLabelBeforeAnAmountIsAGroupWhateverItSays() {
+        fun labelled(text: String) = reader.lines(IngredientLine(text, null)).single().let { it.text to it.group }
+        assertEquals("2 tbsp olive oil" to "For the sauce", labelled("For the sauce: 2 tbsp olive oil"))
+        assertEquals("50 g icing sugar" to "For the topping", labelled("For the topping: 50 g icing sugar"))
+        assertEquals("300 г муки" to "Тесто", labelled("Тесто: 300 г муки"))
+        assertEquals("200 г муки" to "Мука", labelled("Мука: 200 г муки"))
+        assertEquals("Соль: по вкусу" to null, labelled("Соль: по вкусу"))
+    }
+
+    @Test
+    fun moreWordsForWholeThingsBeforeOrAfterTheName() {
+        assertEquals(listOf(Rational.ONE, PIECE, "butter", "пачка"), shown(row("1 пачка сливочного масла")).take(4))
+        assertEquals(listOf(Rational.ONE, PIECE, "butter", "пачка"), shown(row("Масло сливочное — 1 пачка")).take(4))
+        assertEquals(listOf(Rational.of(2), PIECE, "quark", "пачка"), shown(row("2 пачки творога")).take(4))
+        assertEquals(listOf(Rational.of(3), PIECE, "celery", "стебель"), shown(row("Сельдерей — 3 стебля")).take(4))
+        assertEquals(listOf(Rational.ONE, PIECE, "quark", "упаковка"), shown(row("1 упаковка творога")).take(4))
+        assertEquals(listOf(Rational.of(2), PIECE, "ломтик"), shown(row("2 ломтика ветчины")).let { listOf(it[0], it[1], it[3]) })
+    }
+
+    @Test
+    fun aWordForAWholeThingThatNamesEquipmentAndNoIngredientIsEquipment() {
+        val recipe = recipe("Соленья\n\nИнгредиенты\n- 1 кг огурцов\n- банка с крышкой\n- a jar with a lid\n\nПриготовление\n1. Уложить огурцы.")
+        assertEquals(listOf("cucumber"), recipe.ingredients.map { label(it.dictionaryEntry) })
+        assertTrue(recipe.equipment.map { item -> shipped.equipment.single { it.id == item.dictionaryEntry }.labelEn }.contains("Jar"))
+        // Equipment in a parenthesis of food is no equipment line.
+        val rows = recipe("Т\n\nИнгредиенты\n- 4 пирожка (лучше из аэрогриля)\n- соль\n\nПриготовление\n1. Подать.").ingredients
+        assertEquals(2, rows.size)
+    }
+
+    @Test
+    fun aLongListIsReadAtOnce() {
+        val long = (1..20_000).joinToString("\n") { "- $it г соли + $it г сахара" }
+        val took = kotlin.time.measureTime { recipe("Т\n\nИнгредиенты\n$long\n\nПриготовление\n1. Смешать.") }
+        assertTrue(took.inWholeMilliseconds < 2_000, "$took")
+        listOf("1 г соли" + " + 1 г соли".repeat(5_000), "Крем: " + "1 г + ".repeat(5_000) + "соли", "For " + "the ".repeat(10_000) + ": 1 g salt")
+            .forEach { text ->
+                val time = kotlin.time.measureTime { reader.lines(IngredientLine(text, null)) }
+                assertTrue(time.inWholeMilliseconds < 2_000, "${text.take(12)}…: $time")
+            }
+    }
+
+    @Test
+    fun moreBareAndWordedDurationsAreTimers() {
+        fun minutes(text: String) = StepTimers.read(text).map { it.duration.inWholeMinutes }
+        assertEquals(listOf(60L), minutes("Тушить около часа."))
+        assertEquals(listOf(60L), minutes("Охладить не менее часа."))
+        assertEquals(listOf(60L), minutes("Мариновать в течение часа."))
+        assertEquals(listOf(60L), minutes("Тесто подойдёт за час."))
+        assertEquals(listOf(1L), minutes("Cook for another minute."))
+        assertEquals(listOf(1L), minutes("Stir a further minute."))
+        assertEquals(listOf(2L), minutes("Варить две минуты."))
+        assertEquals(listOf(2L), minutes("Прогреть пару минут."))
+        assertEquals(listOf(180L), minutes("Bake for three hours."))
+        listOf(
+            "Take the butter out an hour before baking.", "Час пик — не время для готовки.", "За минуту до конца добавить соль.",
+            "Ориентироваться на минуты нет смысла.", "Следить с пятой минуты.",
+        )
+            .forEach { assertEquals(emptyList(), minutes(it), it) }
     }
 }

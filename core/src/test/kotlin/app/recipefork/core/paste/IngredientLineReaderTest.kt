@@ -158,6 +158,9 @@ class IngredientLineReaderTest {
                     "Ааааа. Б".repeat(5_000), "a→".repeat(10_000), "соль, " + "1 ".repeat(10_000) + "x", "соль (" + "1 г ".repeat(5_000) + ")",
                     "1 " + "small ".repeat(10_000) + "bunch", "четверть " + "от ".repeat(10_000) + "1", "400g " + "can ".repeat(10_000) + "beans",
                     "мука" + " — 1".repeat(10_000),
+                    // Fix round 1: several words before an amount, a plus between two amounts, a long word.
+                    "zest " + "and juice ".repeat(5_000) + "of 1 lemon", "сок " + "а".repeat(20_000) + " 1 лимона",
+                    "сок, ".repeat(10_000) + "1 лимона", "1 cup" + " + 2 tbsp".repeat(5_000) + " flour", "1 can " + "butter ".repeat(5_000) + "beans",
                 ),
             )
             .forEach { text ->

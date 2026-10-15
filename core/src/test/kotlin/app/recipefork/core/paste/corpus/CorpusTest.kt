@@ -142,6 +142,20 @@ class CorpusTest {
         assertEquals(1, WrittenDurations.count("Жарить по 1 минуте с каждой стороны."))
         assertEquals(1, WrittenDurations.count("На 5-й минуте убавить огонь, варить 20 минут."))
         assertEquals(0, WrittenDurations.count("Часовой пояс, минутная стрелка, начать."))
+        // Fix round 1: "за" says when only with "до" after; more bare forms; numbers in words.
+        assertEquals(1, WrittenDurations.count("Тесто подойдёт за час."))
+        assertEquals(1, WrittenDurations.count("Смесь загустеет за минуту."))
+        assertEquals(0, WrittenDurations.count("За минуту до конца добавить соль."))
+        assertEquals(0, WrittenDurations.count("В первую минуту не трогать."))
+        assertEquals(1, WrittenDurations.count("Варить около часа."))
+        assertEquals(1, WrittenDurations.count("Томить не менее часа."))
+        assertEquals(1, WrittenDurations.count("Мариновать в течение часа."))
+        assertEquals(1, WrittenDurations.count("Cook for another minute."))
+        assertEquals(1, WrittenDurations.count("Bake a further minute."))
+        assertEquals(1, WrittenDurations.count("Варить две минуты."))
+        assertEquals(0, WrittenDurations.count("Take the butter out an hour before baking."))
+        assertEquals(0, WrittenDurations.count("Час пик — не время для готовки."))
+        assertEquals(0, WrittenDurations.count("Ориентироваться на минуты нет смысла, следить с четвёртой минуты."))
     }
 
     /**
@@ -217,7 +231,8 @@ class CorpusTest {
     fun countingDurationsIsLinearOnAnyText() {
         val long = "1".repeat(50_000) + " " + "1 - ".repeat(20_000) + "ч".repeat(20_000) + " 5 минут"
         val words = "на ".repeat(20_000) + "минуту ".repeat(20_000) + "a ".repeat(20_000) + "minute"
-        val whenWords = "первую ".repeat(20_000) + "за ".repeat(20_000) + "минуту"
+        val whenWords = "первую ".repeat(20_000) + "за ".repeat(20_000) + "минуту" + " около".repeat(10_000) + " часа" +
+            " две".repeat(10_000) + " минуты" + " a couple of".repeat(5_000) + " minutes" + " 20-й".repeat(5_000) + " минуты"
         val name = "1".repeat(50_000) + " % " + "зубчик".repeat(10_000)
         val row = Ingredient(0, null, qualifier = name, freeTextName = name, unitType = UnitType.TASTE_UNMEASURED, unit = null, quantity = null, note = name)
         val took = measureTime {

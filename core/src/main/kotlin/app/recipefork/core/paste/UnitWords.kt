@@ -52,6 +52,10 @@ internal object UnitWords {
         "горошина" to """горошин[аыу]?""",
         "долька" to """дольк[аиу]|долек""",
         "кочан" to """кочан(?:а|ов|ы)?""",
+        "пачка" to """пачк[аиу]|пачек""",
+        "упаковка" to """упаковк[аиу]|упаковок""",
+        "ломтик" to """ломтик(?:а|ов|и)?""",
+        "стебель" to """стебель|стебл(?:я|и|ей)""",
         "clove" to """cloves?""",
         "bunch" to """bunch(?:es)?""",
         "handful" to """handfuls?""",
@@ -62,6 +66,10 @@ internal object UnitWords {
         "sprig" to """sprigs?""",
         "stalk" to """stalks?""",
         "head" to """heads?""",
+        "slice" to """slices?""",
+        "pack" to """packs?""",
+        "package" to """packages?""",
+        "stick" to """sticks?""",
     ).map { (base, pattern) -> UnitWord.Count(base) to pattern }
 
     private val words = units + counts

@@ -110,7 +110,10 @@ class StepTimersTest {
             "1 1/".repeat(10_000), "1 ".repeat(10_000) + "½", "1 ч" + " ".repeat(20_000) + "л", " ".repeat(20_000) + "каждые 5 минут",
             "5 минут (".repeat(5_000), "an hour and ".repeat(5_000), "1h ".repeat(10_000) + "30m",
             "минуту ".repeat(10_000), "по ".repeat(10_000) + "минуте", "час ".repeat(10_000), "a ".repeat(10_000) + "minute",
-            "первую ".repeat(10_000) + "минуту", "минуту" + " ".repeat(20_000) + "меньше", "1 минуте ".repeat(5_000))
+            "первую ".repeat(10_000) + "минуту", "минуту" + " ".repeat(20_000) + "меньше", "1 минуте ".repeat(5_000),
+            "около ".repeat(10_000) + "часа", "не ".repeat(10_000) + "менее часа", "в ".repeat(10_000) + "течение часа",
+            "две ".repeat(10_000) + "минуты", "a couple of ".repeat(5_000) + "minutes", "another further ".repeat(5_000) + "minute",
+            "20-й".repeat(5_000) + " минуты", "за ".repeat(10_000) + "минуту до")
             .forEach { text ->
                 val took = measureTime { StepTimers.read(text) }
                 assertTrue(took.inWholeMilliseconds < 1_000, "${text.take(10)}…: $took")

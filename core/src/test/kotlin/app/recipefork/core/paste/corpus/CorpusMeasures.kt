@@ -90,7 +90,7 @@ data class CorpusTotals(val measures: List<TextMeasure>) {
 object CorpusMeasures {
     /**
      * The corpus floors: the share of rows with a quantity read, bound to the dictionary, durations timed — each what
-     * the corpus measured after T-284 (99.2 %, 95.9 %, 99.6 %), rounded down to a whole percent. The measure errs low:
+     * the corpus measured after T-284 (99.3 %, 95.9 %, 99.6 %), rounded down to a whole percent. The measure errs low:
      * every qualifier on a to-taste row counts as a missed quantity ("Вода холодная", "whole-milk yogurt").
      */
     const val QUANTIFIED_FLOOR = 0.99
@@ -187,27 +187,41 @@ object CorpusMeasures {
 
 /**
  * A count of the durations a step's text names, kept apart from the parser's own reading: a number (or a range of
- * numbers) followed by a minute or hour word, a minute or an hour with no number ("прогреть минуту", "минимум час",
- * "по минуте", "около минуты", "a minute", "an hour"), or "полчаса" / "half an hour". An hour followed by its minutes ("1 ч 30 мин"), and two
- * durations joined as a range ("45 mins - 1 hr"), count once; one after "каждые" / "every" says how often, one in a
- * comparison ("на минуту меньше", "an hour later") says how much longer or sooner, and a minute or an hour with no
- * number after an ordinal or "за" ("в первую минуту", "за минуту до конца") says when: none of them is counted. Seconds and days
- * are no timer and are not counted.
+ * numbers, or a number in words: "две минуты", "two hours") followed by a minute or hour word, a minute or an hour with
+ * no number ("прогреть минуту", "около часа", "по минуте", "another minute", "an hour"), or "полчаса" / "half an hour".
+ * An hour followed by its minutes ("1 ч 30 мин"), and two durations joined as a range ("45 mins - 1 hr"), count once;
+ * one after "каждые" / "every" says how often, one in a comparison ("на минуту меньше", "an hour later") says how much
+ * longer or sooner, and a minute or an hour with no number after an ordinal ("в первую минуту"), between "за" and "до"
+ * ("за минуту до конца", but "подойдёт за час") or before "before" / "пик" says when or another thing: none of them is
+ * counted. Seconds and days are no timer and are not counted.
  */
 object WrittenDurations {
     // Possessive quantifiers, a fixed lookbehind: linear on any text.
     private const val NUMBER = """\d++(?:[.,]\d++)?+(?:\s*+[½¼¾⅓⅔])?+|[½¼¾⅓⅔]"""
     private const val UNIT = """час(?:а|ов)?+|ч(?!\.?+\s*+/?+\s*+л)\.?+|hours?+|hrs?+\.?+|h|минут[аыуе]?+|мин\.?+|minutes?+|mins?+\.?+"""
     private val DURATION = Regex(
-        """(?<![\p{L}\p{N}])(?:(?:$NUMBER)(?:\s*+(?:[-–—]|до|to)\s*+(?:$NUMBER))?+\s*+(?:$UNIT)|полчаса|полтора\s++часа|half\s++an\s++hour|минуту|минутку|(?:по|около)\s++минут[еы]|час|(?:a|one)\s++minute|(?:an|one)\s++hour)(?!\p{L})""",
+        """(?<![\p{L}\p{N}])(?:(?:$NUMBER)(?:\s*+(?:[-–—]|до|to)\s*+(?:$NUMBER))?+\s*+(?:$UNIT)|полчаса|полтора\s++часа|half\s++an\s++hour""" +
+            """|(?:$WORDS)\s++(?:минут[аыу]?+|час(?:а|ов)?+|minutes?+|hours?+)""" +
+            """|(?<bare>минут(?:ку|очку|а|у)|по\s++минуте|$HOW_LONG\s++(?:минуты|минутки|часа)|час|(?:an?|one|another)(?:\s++(?:further|extra|additional|more))?+\s++(?:minute|hour)))(?!\p{L})""",
         RegexOption.IGNORE_CASE,
     )
+    private const val HOW_LONG = """(?:около|в\s++течение|до|не\s++(?:менее|более|больше|меньше|дольше)|минимум|максимум|больше|меньше|ещё|еще)"""
+    private const val WORDS = """одну|одна|один|две|два|пару|три|четыре|пять|шесть|семь|восемь|девять|десять|пол|two|three|four|five""" +
+        """|six|seven|eight|nine|ten|a\s++couple\s++of|couple\s++of"""
     private val JOINS = Regex("""^\s*+(?:[-–—]|и|and|до|to)?+\s*+$""", RegexOption.IGNORE_CASE)
     private val EVERY = Regex("""(?:каждые|каждую|каждый|every)\s*+$""", RegexOption.IGNORE_CASE)
     private val BEFORE_COMPARISON = Regex("""(?<!\p{L})на\s*+$""", RegexOption.IGNORE_CASE)
     private val COMPARATIVE = Regex("""^\s*+(?:меньше|больше|раньше|позже|дольше|короче)(?!\p{L})""", RegexOption.IGNORE_CASE)
     private val COMPARATIVE_EN = Regex("""^\s*+(?:earlier|later|less)(?!\p{L})""", RegexOption.IGNORE_CASE)
-    private val WHEN = Regex("""(?<!\p{L})(?:первую|вторую|третью|последнюю|за|first|last)\s*+$""", RegexOption.IGNORE_CASE)
+    private val ORDINAL = Regex(
+        """(?<!\p{L})(?:первую|первой|первый|вторую|второй|третью|третьей|четв[её]ртую|четв[её]ртой|пятую|пятой|последнюю|последней|последний""" +
+            """|first|second|third|last|final)\s*+$""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val FIGURE = Regex("""\d[^\s\d]{0,6}+\s*+$""")
+    private val ZA = Regex("""(?<!\p{L})за\s*+$""", RegexOption.IGNORE_CASE)
+    private val DO = Regex("""^\s*+до(?!\p{L})""", RegexOption.IGNORE_CASE)
+    private val OTHER_THING = Regex("""^\s*+(?:before|пик)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
     fun count(text: String): Int {
         var count = 0
@@ -218,8 +232,8 @@ object WrittenDurations {
             val after = text.substring(found.range.last + 1, minOf(text.length, found.range.last + 13))
             val every = EVERY.containsMatchIn(before)
             val comparison = BEFORE_COMPARISON.containsMatchIn(before) && COMPARATIVE.containsMatchIn(after) || COMPARATIVE_EN.containsMatchIn(after)
-            val bare = found.value.first().let { !it.isDigit() && it !in "½¼¾⅓⅔" }
-            val at = bare && WHEN.containsMatchIn(before)
+            val bare = found.groups["bare"] != null
+            val at = bare && (ORDINAL.containsMatchIn(before) || FIGURE.containsMatchIn(before) || ZA.containsMatchIn(before) && DO.containsMatchIn(after) || OTHER_THING.containsMatchIn(after))
             if (!joined && !every && !comparison && !at) count++
             previousEnd = found.range.last + 1
         }

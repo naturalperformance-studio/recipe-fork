@@ -50,12 +50,6 @@ internal object PasteLines {
     )
     private val CLOSING = Regex("""^(?:приятного аппетита|bon app[eé]tit)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
-    /** "800 г", "1 столовая ложка", "4 горошины", "по вкусу": an amount and no name — a number and a unit word at most. */
-    private val AMOUNT_ONLY = Regex(
-        """^[~≈]?+\s*+(?:\d++(?:[.,/]\d++)?+(?:\s*+[–—-]\s*+\d++(?:[.,]\d++)?+)?+|[½¼¾⅓⅔⅛])\s*+(?:${UnitWords.LINE_PATTERN})?+\s*+$""" +
-            """|^(?:по\s++вкусу|to\s++taste|по\s++желанию)$""",
-        RegexOption.IGNORE_CASE,
-    )
 
     /** Symbols that open a line as text, not as a list marker. */
     private val NOT_MARKERS = setOf('°'.code, '№'.code, '©'.code, '®'.code, '™'.code, '℃'.code, '℉'.code)
@@ -232,7 +226,7 @@ internal object PasteLines {
     fun quantityLed(text: String): Boolean = QUANTITY.containsMatchIn(text.lowercase())
 
     /** "800 г", "3 штуки", "4 горошины", "по вкусу": an amount alone, the half of an ingredient written on two lines. */
-    fun amountOnly(text: String): Boolean = AMOUNT_ONLY.matches(text.trim())
+    fun amountOnly(text: String): Boolean = IngredientLineReader.amountOnly(text)
 
     /** "Творог — 500 г", "Соль — щепотка", "Milk – 500 ml": a short name, a dash, then a quantity. */
     fun nameFirst(text: String): Boolean {
