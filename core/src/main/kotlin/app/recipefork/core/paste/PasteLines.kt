@@ -48,6 +48,8 @@ internal object PasteLines {
             """(?:prep(?:aration)?|cook(?:ing)?|bake|baking|total|active)\s+time(?!\p{L})|ready in(?!\p{L}))""",
         RegexOption.IGNORE_CASE,
     )
+    private val HASHES = Regex("""^#{1,6}\s++(.+)$""")
+    private const val PART_MAX = 60
     private val CLOSING = Regex("""^(?:приятного аппетита|bon app[eé]tit)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
 
@@ -241,6 +243,19 @@ internal object PasteLines {
 
     /** "Время приготовления: 40 минут", "Prep Time 15 minutes": how long it takes, not a part of the recipe. */
     fun timeLine(text: String): Boolean = text.length <= TIME_LINE_MAX && TIME_LINE.containsMatchIn(text) && text.any(Char::isDigit)
+
+    /**
+     * The part of a list a line names when it reads as a heading of the line [under] it — "## Соус", "DILL DIPPING
+     * SAUCE", "FOR THE GLAZE:": the words after Markdown hashes, or a short line of capitals with no digit over a line
+     * that is not in capitals (in a recipe written in capitals, "SALT" is an ingredient); null for any other line.
+     */
+    fun partHeading(text: String, under: String): String? {
+        val hashed = HASHES.matchEntire(text)
+        val name = (hashed?.groupValues?.get(1) ?: text).trimEnd(':', '#', ' ').trim()
+        val letters = name.filter(Char::isLetter)
+        val capitals = letters.length >= 3 && letters.all(Char::isUpperCase) && name.none(Char::isDigit) && under.any(Char::isLowerCase)
+        return name.takeIf { (hashed != null || capitals) && letters.isNotEmpty() && it.length <= PART_MAX }
+    }
 
     /** "Приятного аппетита!", "Bon appétit": a closing wish, not a step. */
     fun closing(text: String): Boolean = CLOSING.containsMatchIn(text)
