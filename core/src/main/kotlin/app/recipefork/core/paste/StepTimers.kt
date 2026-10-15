@@ -77,6 +77,14 @@ internal object StepTimers {
      * A minute or an hour with no number before one of these is how much longer or sooner, or another thing: "на минуту
      * меньше", "an hour before baking", "час пик".
      */
+    /** Before these, "an hour before …" is still how long: "Chill for an hour before rolling", "let cool a minute before". */
+    private val WAITING = setOf("for", "least", "cool", "rest", "stand", "sit", "chill", "marinate", "set")
+
+    private val TENS = setOf(
+        "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+        "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто",
+    )
+
     private val COMPARISONS = setOf(
         "меньше", "больше", "раньше", "позже", "дольше", "короче", "earlier", "later", "less", "more", "longer", "sooner",
         "before", "пик",
@@ -102,6 +110,8 @@ internal object StepTimers {
                 gap != null && gap.trimStart().startsWith('(') && ')' !in gap && isRange(found) -> false
                 wordBefore(text, found.range.first) in EVERY -> false
                 isBare(found) && notHowLong(text, found) -> false
+                // "twenty-five minutes", "двадцать пять минут": the last word of a compound number is not the number.
+                found.groups["word"] != null && partOfANumber(text, found.range.first) -> false
                 value == null -> false
                 else -> true.also { minutes += value }
             }
@@ -119,8 +129,13 @@ internal object StepTimers {
     private fun notHowLong(text: String, found: MatchResult): Boolean {
         val before = wordBefore(text, found.range.first)
         val after = wordAfter(text, found.range.last + 1)
-        return before in ORDINALS || after in COMPARISONS || before == "за" && after == "до" || figureBefore(text, found.range.first)
+        val comparison = after in COMPARISONS && !(after == "before" && before in WAITING)
+        return before in ORDINALS || comparison || before == "за" && after == "до" || figureBefore(text, found.range.first)
     }
+
+    /** A number word right after a hyphen or a tens word: the end of a number in words, not a number of its own. */
+    private fun partOfANumber(text: String, at: Int): Boolean =
+        text.getOrNull(at - 1) == '-' || wordBefore(text, at) in TENS
 
     /** The run of non-spaces right before [at], spaces between, holds a digit: "20-й", "5th". */
     private fun figureBefore(text: String, at: Int): Boolean {

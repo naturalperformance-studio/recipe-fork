@@ -1,6 +1,7 @@
 package app.recipefork.core.paste
 
 import app.recipefork.core.api.IngredientEntryDto
+import app.recipefork.core.paste.corpus.WrittenDurations
 import app.recipefork.core.recipe.AccountId
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
@@ -312,5 +313,15 @@ class PasteWeakSpotsTest {
             "Ориентироваться на минуты нет смысла.", "Следить с пятой минуты.",
         )
             .forEach { assertEquals(emptyList(), minutes(it), it) }
+        // Waiting an hour before the next thing is how long.
+        assertEquals(listOf(60L), minutes("Chill for an hour before rolling out."))
+        assertEquals(listOf(60L), minutes("Marinate at least an hour before cooking."))
+        assertEquals(listOf(1L), minutes("Let cool a minute before serving."))
+        // The end of a compound number in words is not a number of its own.
+        listOf("Bake for twenty-five minutes.", "Simmer for thirty-five minutes.", "Варить двадцать пять минут.", "Тушить тридцать две минуты.")
+            .forEach { assertTrue(minutes(it).none { m -> m < 10 }, it) }
+        assertEquals(0, WrittenDurations.count("Bake for twenty-five minutes."))
+        assertEquals(0, WrittenDurations.count("Варить двадцать пять минут."))
+        assertEquals(1, WrittenDurations.count("Chill for an hour before rolling out."))
     }
 }

@@ -201,7 +201,7 @@ object WrittenDurations {
     private const val UNIT = """час(?:а|ов)?+|ч(?!\.?+\s*+/?+\s*+л)\.?+|hours?+|hrs?+\.?+|h|минут[аыуе]?+|мин\.?+|minutes?+|mins?+\.?+"""
     private val DURATION = Regex(
         """(?<![\p{L}\p{N}])(?:(?:$NUMBER)(?:\s*+(?:[-–—]|до|to)\s*+(?:$NUMBER))?+\s*+(?:$UNIT)|полчаса|полтора\s++часа|half\s++an\s++hour""" +
-            """|(?:$WORDS)\s++(?:минут[аыу]?+|час(?:а|ов)?+|minutes?+|hours?+)""" +
+            """|(?<words>$WORDS)\s++(?:минут[аыу]?+|час(?:а|ов)?+|minutes?+|hours?+)""" +
             """|(?<bare>минут(?:ку|очку|а|у)|по\s++минуте|$HOW_LONG\s++(?:минуты|минутки|часа)|час|(?:an?|one|another)(?:\s++(?:further|extra|additional|more))?+\s++(?:minute|hour)))(?!\p{L})""",
         RegexOption.IGNORE_CASE,
     )
@@ -222,6 +222,11 @@ object WrittenDurations {
     private val ZA = Regex("""(?<!\p{L})за\s*+$""", RegexOption.IGNORE_CASE)
     private val DO = Regex("""^\s*+до(?!\p{L})""", RegexOption.IGNORE_CASE)
     private val OTHER_THING = Regex("""^\s*+(?:before|пик)(?!\p{L})""", RegexOption.IGNORE_CASE)
+    private val WAITING = Regex("""(?<!\p{L})(?:for|least|cool|rest|stand|sit|chill|marinate|set)\s*+$""", RegexOption.IGNORE_CASE)
+    private val TENS = Regex(
+        """(?:-|(?<!\p{L})(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|двадцать|тридцать|сорок|пятьдесят|шестьдесят|семьдесят|восемьдесят|девяносто)\s++)$""",
+        RegexOption.IGNORE_CASE,
+    )
 
     fun count(text: String): Int {
         var count = 0
@@ -233,8 +238,10 @@ object WrittenDurations {
             val every = EVERY.containsMatchIn(before)
             val comparison = BEFORE_COMPARISON.containsMatchIn(before) && COMPARATIVE.containsMatchIn(after) || COMPARATIVE_EN.containsMatchIn(after)
             val bare = found.groups["bare"] != null
-            val at = bare && (ORDINAL.containsMatchIn(before) || FIGURE.containsMatchIn(before) || ZA.containsMatchIn(before) && DO.containsMatchIn(after) || OTHER_THING.containsMatchIn(after))
-            if (!joined && !every && !comparison && !at) count++
+            val otherThing = OTHER_THING.containsMatchIn(after) && !WAITING.containsMatchIn(before)
+            val at = bare && (ORDINAL.containsMatchIn(before) || FIGURE.containsMatchIn(before) || ZA.containsMatchIn(before) && DO.containsMatchIn(after) || otherThing)
+            val compound = found.groups["words"] != null && TENS.containsMatchIn(before)
+            if (!joined && !every && !comparison && !at && !compound) count++
             previousEnd = found.range.last + 1
         }
         return count
