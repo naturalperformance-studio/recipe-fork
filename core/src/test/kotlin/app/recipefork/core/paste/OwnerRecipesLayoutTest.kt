@@ -129,4 +129,50 @@ class OwnerRecipesLayoutTest {
         assertTrue("На кружку сухой гречки, это примерно 200 г:" in layout.description)
         assertEquals(5, layout.steps.size)
     }
+
+    @Test
+    fun `a heading level with the method and numbered lines under it does not close the steps`() {
+        for (name in listOf("syrniki-peach-freezer.md", "syrniki-apple-freezer.md")) {
+            val layout = read(name)
+            // "## Утром: аэрогриль": the bake from the freezer stays in the method.
+            assertTrue("180 °C, 25 минут. Не размораживать." in layout.steps, name)
+            assertTrue("Разогреть аэрогриль 3 минуты — на холодном старте заготовка успевает потечь." in layout.steps, name)
+            assertTrue("Отдых 5 минут. Фруктовая начинка держит температуру и обжигает." in layout.steps, name)
+            assertTrue(layout.notes.none { it.startsWith("Разогреть аэрогриль") }, name)
+            // "## Утром: на сковороде (…)" has no numbered line: it closes the method and is kept as notes.
+            assertTrue("Сковорода на слабом огне, 10 г масла, прогрев 2 минуты." in layout.notes, name)
+            assertTrue(layout.steps.none { it.startsWith("Сковорода на слабом огне") }, name)
+            assertEquals("Заготовки хранятся в морозилке до месяца.", layout.notes.last(), name)
+        }
+        assertEquals(25, read("syrniki-peach-freezer.md").steps.size)
+    }
+
+    @Test
+    fun `variant sections after the notes heading stay notes, numbered lines and all`() {
+        val pelmeni = read("pelmeni-wok.md")
+        assertEquals(6, pelmeni.steps.size)
+        assertTrue("Когда вода выкипит, жарить ещё 2–3 минуты, встряхивая." in pelmeni.notes)
+        assertTrue("Опустить в кипяток и помешать." in pelmeni.notes)
+
+        val chicken = read("chicken-sweet-sour.md")
+        assertEquals(14, chicken.steps.size)
+        assertTrue(chicken.steps.last().startsWith("Соединить. Вернуть курицу в сковороду"))
+        assertTrue("Варить под крышкой на минимальном огне 15 минут. Не открывать и не мешать." in chicken.notes)
+        assertEquals(2, chicken.servings)
+    }
+
+    @Test
+    fun `a colon line between ingredient lines opens a group`() {
+        val layout = read("syrniki-tiramisu.md")
+        val base = "Сырники-основа (базовое тесто, 8–10 сырников)"
+        assertEquals(listOf(null to 4, base to 7), layout.ingredients.groupBy { it.group }.map { (group, lines) -> group to lines.size })
+        assertEquals(IngredientLine("400 г творога 5% (сухого, не пастообразного)", base), layout.ingredients[4])
+        assertTrue(layout.description.none { it.startsWith("Сырники-основа") })
+    }
+
+    @Test
+    fun `the shopping list is no recipe`() {
+        val text = checkNotNull(javaClass.getResource("/paste/layout/burgers-shopping-list.md")).readText()
+        assertNull(TextLayout.read(text))
+    }
 }
