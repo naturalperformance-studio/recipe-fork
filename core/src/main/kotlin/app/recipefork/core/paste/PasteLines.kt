@@ -17,14 +17,13 @@ internal object PasteLines {
 
     private val MD_HEADING = Regex("""^(#{1,6})\s+(.*?)\s*#*$""")
     private val MARKER = Regex("""^(?:([-*+•–—])|\d{1,2}[.)]|(?:step|шаг)\s*\d{1,2}[.:)]?)\s+(?:\[[ xX]]\s+)?""", RegexOption.IGNORE_CASE)
-    private val RULE = Regex("""^([-*_=])(\s*\1){2,}$""")
-    private val BOLD_ONLY = Regex("""^(\*\*|__)(?:(?!\*\*|__).)+\1:?$""")
-    private val WIKI_LINK = Regex("""\[\[([^\]|]+)(?:\|([^\]]+))?]]""")
-    private val LINK = Regex("""\[([^\]]+)]\([^)]*\)""")
+    private val LABEL_ONLY = Regex("""^(?:(?:step|шаг)\s*\d{1,3}\s*[.:)]?|\d{1,2}[.)])$""", RegexOption.IGNORE_CASE)
+    private val WIKI_LINK = Regex("""\[\[([^\[\]|]+)(?:\|([^\[\]]+))?]]""")
+    private val LINK = Regex("""\[([^\[\]]+)]\([^()]*\)""")
     private val STAR = Regex("""(?<![\p{L}\d*])\*(\S(?:[^*]*\S)?)\*(?![\p{L}\d*])""")
     private val UNDERSCORE = Regex("""(?<![\p{L}\d_])_(\S(?:[^_]*\S)?)_(?![\p{L}\d_])""")
     private val SPACES = Regex("""\s+""")
-    private val PARENTHESES = Regex("""\([^)]*\)""")
+    private val PARENTHESES = Regex("""\([^()]*\)""")
     private val QUANTITY = Regex(
         """^[~≈]?\s*(?:\d|[½¼¾⅓⅔⅛⅜⅝⅞]|(?:one|two|three|four|five|six|half|pinch|dash|handful|щепотк\p{L}*|пучок|пол|""" +
             """половин\p{L}*|один|одна|одно|два|две|три|четыре|пять|несколько)(?!\p{L}))""",
@@ -67,25 +66,48 @@ internal object PasteLines {
     }
 
     fun classify(raw: String): PasteLine? {
-        val line = raw.trim()
-        if (line.isEmpty() || line.startsWith('|') || line.startsWith("```") || RULE.matches(line)) return null
+        var line = raw.trim().removePrefix("\uFEFF").trim()
+        while (line.startsWith('>')) line = line.removePrefix(">").trim()
+        if (line.isEmpty() || line.startsWith('|') || line.startsWith("```") || isRule(line)) return null
         MD_HEADING.matchEntire(line)?.let { m ->
             val text = clean(m.groupValues[2]).trimEnd(':').trim()
             return if (text.isEmpty()) null else PasteLine.Heading(text, m.groupValues[1].length, markdown = true)
         }
-        MARKER.find(line)?.let { m ->
-            val text = clean(line.substring(m.range.last + 1))
-            return if (text.isEmpty()) null else PasteLine.Item(text, numbered = m.groups[1] == null, marked = true)
+        // Markers are read after emphasis is gone, so "- **Шаг 1.** Промыть" loses both the bullet and the label.
+        var text = clean(line)
+        var marked = false
+        var numbered = false
+        repeat(2) {
+            MARKER.find(text)?.let { m ->
+                marked = true
+                numbered = numbered || m.groups[1] == null
+                text = text.substring(m.range.last + 1).trim()
+            }
         }
-        val text = clean(line)
-        if (text.isEmpty()) return null
+        if (text.isEmpty() || LABEL_ONLY.matches(text)) return null
+        if (marked) return PasteLine.Item(text, numbered, marked = true)
         val name = text.trimEnd(':').trim()
         return when {
-            BOLD_ONLY.matches(line) && !endsSentence(name) -> PasteLine.Heading(name, MINOR, markdown = false)
+            isBoldOnly(line) && !endsSentence(name) -> PasteLine.Heading(name, MINOR, markdown = false)
             text.endsWith(':') && text.length <= COLON_HEADING_MAX -> PasteLine.Heading(name, MINOR, markdown = false)
             sectionOf(name, bare = true) != null -> PasteLine.Heading(name, MINOR, markdown = false)
             else -> PasteLine.Item(text, numbered = false, marked = false)
         }
+    }
+
+    /** A thematic break: three or more of one of - * _ = and nothing else but spaces. */
+    private fun isRule(line: String): Boolean {
+        val marks = line.filterNot { it.isWhitespace() }
+        return marks.length >= 3 && marks[0] in "-*_=" && marks.all { it == marks[0] }
+    }
+
+    /** "**Тесто**", "__Тесто:__", "**Тесто**:" — wholly bold. */
+    private fun isBoldOnly(line: String): Boolean {
+        val body = line.removeSuffix(":")
+        val mark = body.take(2).takeIf { it == "**" || it == "__" } ?: return false
+        if (body.length <= 4 || !body.endsWith(mark)) return false
+        val inner = body.substring(2, body.length - 2)
+        return "**" !in inner && "__" !in inner
     }
 
     /**
@@ -147,7 +169,7 @@ internal object Servings {
     private val EXPLICIT = listOf(
         Regex("""$NUM\s+порци"""),
         Regex("""порци[йия]?\s*[:—–-]\s*$NUM"""),
-        Regex("""serves\s+$NUM"""),
+        Regex("""serves\s*:?\s*$NUM"""),
         Regex("""servings?\s*[:—–-]?\s*$NUM"""),
         Regex("""$NUM\s+servings?"""),
         Regex("""feeds\s+$NUM"""),

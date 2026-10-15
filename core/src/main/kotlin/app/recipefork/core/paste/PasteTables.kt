@@ -9,14 +9,13 @@ internal object PasteTables {
     private const val NUMBER = """[~≈]?\s*(?:\d+(?:[.,]\d+)?(?:/\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])"""
     private val BARE_NUMBER = Regex("""^$NUMBER%?$""")
     private val QUANTITY = Regex("""^$NUMBER(?:\s*[–—-]\s*\d+(?:[.,]\d+)?)?(?:\s*\p{L}{1,6}\.?){0,2}$""")
-    private val SEPARATOR = Regex("""^\|?(?:\s*:?-{2,}:?\s*\|?)+$""")
     private val NO_QUANTITY = setOf("", "—", "–", "-")
     private val QUANTITY_WORDS = setOf("щепотка", "щепотки", "по вкусу", "pinch", "a pinch", "to taste")
 
     /** The ingredient lines of a table given as its raw rows; empty when it is not an ingredient table. */
     fun ingredientLines(rows: List<String>): List<PasteLine.Item> {
-        val separator = rows.indexOfFirst { SEPARATOR.matches(it.trim()) }
-        val body = rows.drop(separator + 1).filterNot { SEPARATOR.matches(it.trim()) }.map(::cells)
+        val separator = rows.indexOfFirst(::isSeparator)
+        val body = rows.drop(separator + 1).filterNot(::isSeparator).map(::cells)
         if (body.isEmpty()) return emptyList()
         val width = body.minOf { it.size }
         if (width < 2) return emptyList()
@@ -30,6 +29,9 @@ internal object PasteTables {
             PasteLine.Item(text, numbered = false, marked = true, fromTable = true)
         }
     }
+
+    /** "|---|:--:|": only bars, dashes, colons and spaces. */
+    private fun isSeparator(row: String) = '-' in row && row.all { it == '|' || it == '-' || it == ':' || it.isWhitespace() }
 
     private fun cells(row: String): List<String> =
         row.trim().removePrefix("|").removeSuffix("|").split('|').map(PasteLines::clean)
