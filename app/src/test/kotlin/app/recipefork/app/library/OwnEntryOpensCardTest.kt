@@ -235,6 +235,7 @@ class OwnEntryOpensCardTest {
         assertEquals(listOf(label), compose.textsOf(LibraryTags.NEW))
         compose.onNodeWithTag(LibraryTags.OWN_EMPTY).assertDoesNotExist()
         compose.onNodeWithTag(LibraryTags.NEW).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         val opened = RecipeId(requireNotNull(session.editing.value))
         val rows = runBlocking { book.database.recipes().newest(10).first() }

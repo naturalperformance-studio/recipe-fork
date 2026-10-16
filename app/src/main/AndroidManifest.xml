@@ -278,6 +278,15 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/vnd.recipefork.collection+zip" />
             </intent-filter>
+            <!-- A recipe's text shared from a browser or a messenger (T-280) is handed on to MainActivity, which opens the
+                 paste screen with it. Taken here, beside the files, and not by a filter of MainActivity's: a filter by a
+                 type alone takes a file shared with its address as well, and a file shared as text would offer the
+                 application twice. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
             <!-- Shared to the application by the product's own type: imported as if opened. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

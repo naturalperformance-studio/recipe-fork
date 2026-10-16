@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- "New recipe" in My recipes offers these two ways to start (T-280). -->
+    <string name="paste_choice_write">Write from scratch</string>
+    <string name="paste_choice_paste">Paste text</string>
+    <!-- The paste screen: one field for a recipe's text, read into a new recipe. -->
+    <string name="paste_title">Paste text</string>
+    <string name="paste_back">Back</string>
+    <string name="paste_back_action">Back to the book</string>
+    <string name="paste_field">Recipe text</string>
+    <string name="paste_read">Read</string>
+    <string name="paste_read_action">Read the text into a new recipe</string>
+    <string name="paste_reading">Reading the text</string>
+    <string name="paste_no_recipe">No recipe found in this text — it needs ingredients and steps.</string>
+    <string name="paste_failed">Couldn\'t save the recipe. Try again.</string>
+</resources>

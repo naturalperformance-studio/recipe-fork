@@ -159,7 +159,9 @@ class OpenRecipeFileTest {
         assertNull(RecipeFileIntents.fileOf(Intent(Intent.ACTION_SEND).setData(fileOf(ByteArray(1)))))
         val stream = fileOf(ByteArray(1))
         val shared = Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, stream)
-        assertNull(RecipeFileIntents.fileOf(Intent(shared).setType("image/jpeg")))
+        // A stream named as a recipe file is one whatever type it is declared (T-280: Telegram declares text/plain).
+        assertEquals(stream, RecipeFileIntents.fileOf(Intent(shared).setType("image/jpeg")))
+        assertNull(RecipeFileIntents.fileOf(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, Uri.parse("content://x/notes.txt"))))
         assertEquals(stream, RecipeFileIntents.fileOf(Intent(shared).setType(RecipeFile.MIME_TYPE)))
         assertNull(RecipeFileIntents.fileOf(null))
     }

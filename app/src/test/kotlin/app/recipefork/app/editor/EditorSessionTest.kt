@@ -51,6 +51,7 @@ class EditorSessionTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.WRITE)).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(EditorTags.FORM)).fetchSemanticsNodes().size == 1 }
         compose.onNodeWithTag(EditorTags.TITLE).performTextInput("Borscht")
         compose.declareLanguage(RecipeLanguage.RU)

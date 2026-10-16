@@ -30,6 +30,7 @@ import app.recipefork.app.file.RecipeFileIntents
 import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.library.importFile
 import app.recipefork.app.library.LibrarySession
+import app.recipefork.app.paste.PasteIntents
 import app.recipefork.app.timer.TimerIntents
 import app.recipefork.app.timer.TimerService
 import app.recipefork.app.ui.AppNavHost
@@ -101,7 +102,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * A recipe file opened from another application is imported in serverless mode (FLOW-064) and in standard mode
-     * is not, and so is a collection file (v0.36); a saved book is restored in serverless mode (FLOW-073) and in standard mode is not; a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
+     * is not, and so is a collection file (v0.36); a saved book is restored in serverless mode (FLOW-073) and in standard mode is not; a text shared to it opens the paste screen with it (T-280); a timer's notification leads to its recipe's card, at its step (FLOW-013 (4)), and stops its ringing.
      */
     private fun follow(intent: Intent?) {
         if (!follows(intent)) return
@@ -117,6 +118,16 @@ class MainActivity : ComponentActivity() {
         }
         RecipeFileIntents.fileOf(intent)?.let { uri ->
             openRecipeFile(applicationContext, container.mode, RecipeImport(container.recipes, filesDir, equipment = container.dictionaries), librarySession, uri)
+            return
+        }
+        // A recipe's text shared to the application opens the paste screen with it, in either mode (T-280).
+        PasteIntents.textOf(intent)?.let { text ->
+            librarySession.openPaste(text)
+            return
+        }
+        // A file of another kind shared to it is no recipe file: the person is told so rather than nothing happening.
+        if (intent?.action == RecipeFileIntents.ACTION_NOT_OURS) {
+            librarySession.tell(FileMessage(FileMessage.Kind.NOT_A_RECIPE_FILE))
             return
         }
         val timer = TimerIntents.timerOf(intent) ?: return

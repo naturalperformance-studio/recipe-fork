@@ -102,6 +102,7 @@ class NothingWrittenTest {
     /** Takes the offer and returns the recipe the editor opened on. */
     private fun takeTheOffer(): String {
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return requireNotNull(session.editing.value)
     }
