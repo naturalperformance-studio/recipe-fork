@@ -191,7 +191,9 @@ class PartReferencesEditorTest {
         assertTrue(exists(EditorTags.stepOfferPart(0, 0)))
         assertTrue(!exists(EditorTags.stepOfferPart(0, 1)))
         assertTrue(!exists(EditorTags.stepOfferPart(0, 2)))
-        assertEquals(listOf(string(R.string.editor_step_offered_part, "Чеснок")), compose.textsOf(EditorTags.stepOfferPart(0, 0)))
+        // T-272: the part is a button at the row's end, "Часть…", named for its ingredient.
+        assertEquals(listOf(string(R.string.editor_step_offered_part)), compose.textsOf(EditorTags.stepOfferPart(0, 0)))
+        assertEquals(listOf(string(R.string.editor_step_offered_part_name, "Чеснок")), node(EditorTags.stepOfferPart(0, 0)).config[SemanticsProperties.ContentDescription])
         askPart(0, 0)
         compose.onNodeWithTag(EditorTags.PART_INSERT).assertIsNotEnabled()
         assertEquals("Из 4 шт по списку.", problem())

@@ -1,7 +1,7 @@
 ---
 slug: MEDIA
 status: closed
-updated: 2026-10-03
+updated: 2026-10-15
 ids: [MEDIA-001, MEDIA-002, MEDIA-014, MEDIA-003, MEDIA-004, MEDIA-005, MEDIA-006,
   MEDIA-007, MEDIA-008, MEDIA-009, MEDIA-015, MEDIA-010, MEDIA-011, MEDIA-012,
   MEDIA-013]
@@ -213,11 +213,15 @@ v0.3–v0.14, accepted by the user, 2026-10-03.
 ### MEDIA-007 — Duration is checked before anything else
 
 If a video is longer than 15 seconds, then the system shall refuse it before
-converting it and shall state the limit.
+converting it and shall state the limit. A duration of up to 15.5 seconds as the
+file records it counts as 15 seconds, because a camera or an encoder states a
+fifteen-second clip a few frames long.
 
 **Acceptance criteria**
 - Given a video of 40 seconds, when it is added, then it is refused immediately
   and no conversion runs.
+- Given a clip whose file states 15.4 seconds, when it is added, then it is
+  accepted; given 15.6 seconds, then it is refused.
 - Given that refusal, when it is shown, then it names the 15 second limit.
 - Given a video whose duration cannot be read, when it is added, then it is
   refused and MEDIA-008 governs the message.
@@ -226,6 +230,8 @@ converting it and shall state the limit.
 **Source:** user decision, 2026-09-20: duration is the one property that cannot
 be fixed by conversion without deciding for the author which part to keep, so it
 is the only thing checked at the door; size and sound the product settles itself.
+**Changed 2026-10-15 (sync v0.31–v0.38):** the half second of tolerance, as built
+in v0.38 (T-274) for the camera, file import and animations — adopted at that sync.
 
 ### MEDIA-008 — A conversion that fails attaches nothing
 

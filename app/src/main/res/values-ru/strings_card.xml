@@ -89,6 +89,7 @@
     <!-- Said once the marks are cleared, from either tab's menu; Undo puts back exactly the marks cleared. -->
     <string name="card_marks_cleared">Отметки сняты</string>
     <string name="card_undo">Вернуть</string>
+    <string name="card_timer_cancelled">Таймер отменён</string>
     <string name="card_shopping_update">Обновить в списке покупок</string>
     <string name="card_shopping_added">Добавлено в список покупок</string>
     <string name="card_shopping_updated">Список покупок обновлён</string>
@@ -113,4 +114,9 @@
     <!-- Что делает касание такого предмета на «Просмотре»: открывает «Мою кухню» на нём. -->
     <string name="card_equipment_open_kitchen_action">Открыть «Мою кухню»</string>
     <string name="card_equipment_set_up_kitchen">Настроить «Мою кухню»</string>
+    <!-- В ⋮ карточки, если рецепт хранит текст, из которого он сделан (v0.39): открывает этот текст как он был вставлен
+         в одноимённом листе; его единственное действие копирует весь текст, и карточка об этом говорит. -->
+    <string name="card_source_text">Исходный текст</string>
+    <string name="card_source_text_copy">Копировать</string>
+    <string name="card_source_text_copied">Текст скопирован</string>
 </resources>

@@ -1,6 +1,6 @@
 # Comparison factors and the two-level dictionary
 
-**Status:** accepted
+**Status:** accepted; narrowed by [one unit system, converted on display](20261015-one-unit-system-converted-on-display.md) (2026-10-15) — a factor may now produce a displayed quantity marked "≈"
 
 **Context:** a filter on an ingredient orders recipes by how much of it a serving
 contains (CAT-002), and the same ingredient is stated in units that do not

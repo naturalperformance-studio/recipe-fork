@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-014, DOM-016, DOM-017,
   DOM-019, DOM-018, DOM-020]
 ---
@@ -76,33 +76,52 @@ and refusing it would push the author into the free text of FLOW-022 for no gain
 this last point is derived, not stated by the product owner. See
 [ADR — comparison factors](../decisions/20260920-comparison-factors.md).
 
-### DOM-011 — A comparison factor orders and nothing else
+### DOM-011 — A comparison factor orders, and converts only as "≈"
 
-The system shall use an entry's comparison factors only to put quantities in
-order, and shall never display a factor, never derive a displayed quantity from
-one, and never apply one when a recipe is scaled.
+The system shall use an entry's comparison factors to put quantities in order, and
+to derive a displayed quantity only where a quantity must cross from mass into a
+household unit or between unit types — converting a mass into cups or spoons for a
+US reader (L10N-008), and merging one entry's lines written in different unit types
+in a shopping list (FLOW-074) — marking every quantity so derived as approximate
+("≈"). A factor shall never change a stored quantity, never take part in scaling,
+and never be shown as a number of its own.
 
 **Acceptance criteria**
-- Given an ingredient of 3 tablespoons, when the recipe is displayed at any scale,
-  then it is displayed in tablespoons and no mass appears anywhere (DOM-003).
+- Given an ingredient of 3 tablespoons, when the recipe is displayed at any scale
+  and in either unit system, then it is displayed in tablespoons and no mass
+  appears (DOM-003).
 - Given an ingredient of 2 pieces whose entry carries a factor, when the reader
   scales the recipe, then the quantity is scaled by the rules of `scaling-rules`
   and the factor takes no part in it.
-- Given the product owner corrects a factor, when a published recipe is opened
-  afterwards, then every displayed quantity is exactly what it was, and only the
-  order in which filtered results appear changes.
-- Given any screen of the application, when it is inspected, then no comparison
-  factor is shown to any user, including the moderator.
+- Given 260 g of flour whose entry carries a factor for the cup, when a US reader
+  opens the card, then it reads "≈ 2 cups"; given the same line for a metric
+  reader, then it reads 260 g with no mark.
+- Given a quantity derived through a factor, when it is shown anywhere — the card,
+  the shopping list, a printed page — then it carries the "≈" mark, and the
+  screen reader reads it as approximate (A11Y-008).
+- Given the product owner corrects a factor, when a recipe is opened afterwards,
+  then every quantity not marked "≈" is exactly what it was; only "≈" amounts and
+  the order of filtered results change, and the recipe's stored quantities are
+  untouched.
+- Given an entry with no factor for the needed unit, or a free-text ingredient,
+  when a conversion through a factor would be needed, then the quantity is shown
+  as written.
 
 **Verification:** display and scale a recipe holding household, piece and exact
-ingredients, then change a factor upstream and repeat.
-**Source:** user decision, 2026-09-20. The factor's value comes from three
+ingredients in both unit systems; build a shopping list from two recipes naming
+one entry in grams and in cups; then change a factor upstream and repeat.
+**Source:** user decision, 2026-09-20. The factor's value came from three
 properties: it is invisible, it never touches what the cook reads, and it lives on
 the dictionary entry rather than in the recipe — so a wrong factor is correctable
-for ever, while anything stored in a published recipe is not (CON-003). DOM-003
-stands because it forbids expressing a household quantity as mass, and an ordering
-key expresses nothing to anybody. See
+for ever, while anything stored in a published recipe is not (CON-003). See
 [ADR — comparison factors](../decisions/20260920-comparison-factors.md).
+**Changed 2026-10-15 (sync v0.31–v0.38):** the second property is narrowed. By the
+owner's decisions at the planning of v0.32 (a shopping list merges one entry across
+units, approximately) and of v0.35 (the full kitchen conversion through the
+dictionary, marked approximate), a factor may now produce what a reader sees, as
+long as it says so with "≈". The first and third properties stand: no factor is
+shown as such, and correcting one never touches a stored recipe. See
+[ADR — one unit system, converted on display](../decisions/20261015-one-unit-system-converted-on-display.md).
 
 ### DOM-012 — Submission maximum
 
@@ -206,22 +225,29 @@ keeping the factor on the entry, where it is correctable for ever, rather than i
 the recipe, where it would not be; and the share of ingredients entered as free
 text (OBS-001) is the signal that says the dictionary is falling behind.
 
-### DOM-016 — The units are a closed list of twelve
+### DOM-016 — The units are a closed list of fifteen
 
 The system shall hold as an ingredient's unit only one of the units below, and
-shall give each the unit type the table assigns it.
+shall give each the unit type and the unit system the table assigns it.
 
-| Unit type | Russian | English |
-|---|---|---|
-| `exact` | г · кг · т · мл · л · м³ | g · kg · t · ml · l · m³ |
-| `piece` | шт | pc |
-| `household` | ч. л. · ст. л. · стакан | tsp · tbsp · cup |
-| `taste_measured` | щепотка | pinch |
-| `taste_unmeasured` | по вкусу | to taste |
+| Unit type | System | Russian | English |
+|---|---|---|---|
+| `exact` | metric | г · кг · т · мл · л · м³ | g · kg · t · ml · l · m³ |
+| `exact` | US | the team's names | oz · lb · fl oz |
+| `piece` | both | шт | pc |
+| `household` | both | ч. л. · ст. л. · стакан | tsp · tbsp · cup |
+| `taste_measured` | both | щепотка | pinch |
+| `taste_unmeasured` | both | по вкусу | to taste |
+
+An ounce is 28.349523125 g, a pound 16 oz, a US fluid ounce 29.5735295625 ml,
+exactly. Whether a unit belongs to one system or both decides what the editor
+offers and what is converted on display (L10N-008).
 
 **Acceptance criteria**
-- Given the unit field of the editor, when it is opened, then it offers these
-  twelve units, named in the interface language, and no other.
+- Given the unit field of the editor, when it is opened, then it offers the units
+  of the reader's unit system and those of both, named in the interface language,
+  and no other; a row already holding a unit of the other system keeps it, shown
+  in its place (L10N-008).
 - Given the author picks `стакан`, when the ingredient is stored, then its unit
   type is `household`; given `щепотка`, `taste_measured`; given `шт`, `piece`.
 - Given a submission carrying a unit outside the table, when it is validated, then
@@ -238,6 +264,10 @@ is counted in pieces, and what a piece is comes from the entry. Whether to add
 them is OQ-037.
 **Cost, stated:** an author writes a bunch of dill as `укроп · 1 · шт`, and a
 reader reads "1 шт" of dill.
+**Changed 2026-10-15 (sync v0.31–v0.38):** ounces, pounds and fluid ounces added,
+and every unit given a system, as built in v0.35 by the owner's decision at its
+planning. The household units belong to both systems — owner's choice at that sync.
+See [ADR — one unit system, converted on display](../decisions/20261015-one-unit-system-converted-on-display.md).
 
 ### DOM-017 — An authored quantity is a value of its unit type's grid
 
@@ -253,6 +283,7 @@ The values held are, by unit type:
 | `piece`, indivisible | a whole number of one or more |
 | `piece`, divisible | ½, a whole number, or a whole number followed by ½ |
 | `household`, `taste_measured` | ¼, ⅓, ½, ⅔, ¾, a whole number, or a whole number followed by one of those fractions |
+| `exact`, in US units | ounces and pounds: a multiple of ¼ oz below 4 oz, of ½ oz from 4 oz to 2 lb, of ¼ lb from 2 lb; fluid ounces: a multiple of ½ fl oz |
 
 **Acceptance criteria**
 - Given the quantity field, when the author enters `500 г`, `1,5 кг`, `⅓ ч. л.`,

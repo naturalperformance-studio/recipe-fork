@@ -130,7 +130,7 @@ class EmptyStatesTest {
     fun anEmptyOwnViewShowsThePictureTheHeadlineASentenceAndTheNewRecipeAction() {
         show(LibraryView.OWN, Mode.Standard)
         assertEmptyState(
-            LibraryTags.OWN_EMPTY, "Nothing written here yet", "Recipes you write in this book are kept here.",
+            LibraryTags.OWN_EMPTY, "No recipes of yours yet", "Recipes you write in this book are kept here.",
             LibraryTags.WRITE, "New recipe",
         )
         // The view's floating action stands back while the empty state carries it.
@@ -148,7 +148,7 @@ class EmptyStatesTest {
         assertNothingNamesTheServer()
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         assertEmptyState(
-            LibraryTags.OWN_EMPTY, "Nothing written here yet", "Recipes you write in this book are kept here.",
+            LibraryTags.OWN_EMPTY, "No recipes of yours yet", "Recipes you write in this book are kept here.",
             LibraryTags.WRITE, "New recipe",
         )
         assertNothingNamesTheServer()
@@ -172,7 +172,7 @@ class EmptyStatesTest {
         )
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         assertEmptyState(
-            LibraryTags.OWN_EMPTY, "Здесь пока ничего не написано", "Здесь хранятся рецепты, которые вы пишете в этой книге.",
+            LibraryTags.OWN_EMPTY, "Своих рецептов пока нет", "Здесь хранятся рецепты, которые вы пишете в этой книге.",
             LibraryTags.WRITE, "Новый рецепт",
         )
     }

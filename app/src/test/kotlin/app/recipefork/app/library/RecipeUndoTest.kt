@@ -424,6 +424,8 @@ class RecipeUndoTest {
         val shown = takeOut(pie)
 
         compose.onNodeWithTag(LibraryTags.NEW).performSemanticsAction(SemanticsActions.OnClick)
+
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performSemanticsAction(SemanticsActions.OnClick)
         // The new recipe is written, then opened, on the main thread: its looper is let run meanwhile.
         compose.waitUntil(PATIENCE_MS) {
             ShadowLooper.idleMainLooper()

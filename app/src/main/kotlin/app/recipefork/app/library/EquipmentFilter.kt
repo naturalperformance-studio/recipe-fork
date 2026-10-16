@@ -2,20 +2,19 @@ package app.recipefork.app.library
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import app.recipefork.app.dictionary.EquipmentEntryEntity
 import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.kitchen.KitchenEnvironment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 
 /**
@@ -42,19 +41,27 @@ internal fun rememberBookKitchen(environment: KitchenEnvironment): Kitchen? {
     }
 }
 
+// A read of the device's database, on the threads kept for waiting on it: work that keeps every computing thread busy
+// never holds back the kitchen, and with it a view whose filter "Enough equipment" waits for it.
 private suspend fun readEquipment(environment: KitchenEnvironment): List<EquipmentEntryEntity> = try {
-    withContext(Dispatchers.Default) { environment.equipment.equipment() }
+    withContext(Dispatchers.IO) { environment.equipment.equipment() }
 } catch (e: CancellationException) {
     throw e
 } catch (e: Exception) {
     emptyList()
 }
 
-/** [kitchen] as a flow of its values, which a view's listing follows. */
+/**
+ * [kitchen] as a flow of its values, which a view's listing follows: each kitchen composed is handed on once the
+ * composition holding it is applied. A state flow keeps the latest for a listing that starts or looks again later;
+ * a snapshot flow over the composed value could miss the kitchen becoming known, and leave a view filtered by "Enough
+ * equipment" waiting for it for good (T-274: EquipmentFilterTest's stale lists).
+ */
 @Composable
 internal fun rememberKitchenFlow(kitchen: Kitchen?): Flow<Kitchen?> {
-    val current: State<Kitchen?> = rememberUpdatedState(kitchen)
-    return remember { snapshotFlow { current.value } }
+    val flow = remember { MutableStateFlow(kitchen) }
+    SideEffect { flow.value = kitchen }
+    return flow
 }
 
 /**

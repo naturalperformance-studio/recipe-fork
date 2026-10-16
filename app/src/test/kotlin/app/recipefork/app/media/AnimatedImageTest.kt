@@ -179,20 +179,24 @@ class AnimatedImageTest {
         assertNull(AnimatedImage.parse(TestWebp(listOf(100, 100), canvas = 8, frame = 9).bytes()))
     }
 
-    // However many frames a file holds, they are read only until they pass the longest a clip may last.
+    // However many frames a file holds, they are read only until they pass the longest a clip may last, its tolerance
+    // included — so that what is read of one too long is too long still (T-274 review), and refused.
     @Test
-    fun aFrameCountBombIsReadOnlyUntilItPassesFifteenSeconds() {
+    fun aFrameCountBombIsReadOnlyUntilItPassesTheLongestAClipMayLast() {
+        assertEquals(15_500.milliseconds, AnimatedImage.READ_UNTIL)
         val shortest = TestGif(List(100_000) { Frame(2) }).bytes() // 20 ms each: 2000 s in all
         val gif = AnimatedImage.parse(shortest)!!
-        assertEquals(751, gif.frames.size)
-        assertEquals(15_020.milliseconds, gif.duration)
+        assertEquals(776, gif.frames.size)
+        assertEquals(15_520.milliseconds, gif.duration)
 
         val unstated = AnimatedImage.parse(TestGif(List(100_000) { Frame(0) }).bytes())!! // read as 100 ms each
-        assertEquals(151, unstated.frames.size)
+        assertEquals(156, unstated.frames.size)
+        assertEquals(15_600.milliseconds, unstated.duration)
 
         val webp = AnimatedImage.parse(TestWebp(List(100_000) { 11 }).bytes())!!
-        assertEquals(1364, webp.frames.size)
-        assertTrue(webp.duration > 15.seconds)
+        assertEquals(1410, webp.frames.size)
+        assertEquals(15_510.milliseconds, webp.duration)
+        listOf(gif, unstated, webp).forEach { assertFalse("${it.duration}", app.recipefork.core.recipe.VideoLimits.accepts(it.duration)) }
     }
 
     // A JPEG or a PNG is told still from its signature: nothing more of it is read.
@@ -236,6 +240,20 @@ class AnimatedImageTest {
         assertEquals(1700.milliseconds, (animated as ImageKind.Animated).animation.duration)
     }
 
+    // A GIF or a WebP whose source states a size over the cap is told too large from its signature: nothing past it is
+    // read, so a file of 33 MB is never held in memory to be refused (T-274: under a full suite's memory, it was).
+    @Test
+    fun aGifOrWebpStatingASizeOverTheCapIsToldTooLargeFromItsSignature() {
+        listOf("animated.gif", "animated.webp").forEach { name ->
+            val bytes = fixture(name)
+            val input = Counting(bytes)
+            assertEquals(name, ImageKind.TooLarge, AnimatedImage.examine(input, maxBytes = bytes.size - 1, states = bytes.size.toLong()))
+            assertTrue("$name: ${input.read} bytes read", input.read <= 12)
+            assertTrue(name, AnimatedImage.examine(Counting(bytes), maxBytes = bytes.size, states = bytes.size.toLong()) is ImageKind.Animated)
+        }
+        assertEquals(ImageKind.Still, AnimatedImage.examine(Counting(fixture("still.png")), maxBytes = 1, states = 1_000_000))
+    }
+
     @Test
     fun anAnimationReadFromAStreamIsTheOneItsBytesHold() {
         val gif = AnimatedImage.read(Counting(fixture("animated.gif")))!!
@@ -253,117 +271,4 @@ class AnimatedImageTest {
 
     private fun indexOf(bytes: ByteArray, part: ByteArray): Int =
         (0..bytes.size - part.size).first { at -> part.indices.all { bytes[at + it] == part[it] } }
-
-    /** A GIF frame: its delay in hundredths (null for no graphic control block), disposal, place and transparency. */
-    private class Frame(
-        val hundredths: Int?,
-        val disposal: Int = 1,
-        val left: Int = 0,
-        val top: Int = 0,
-        val width: Int = 8,
-        val height: Int = 8,
-        val transparent: Boolean = false,
-    )
-
-    /** A GIF of [frames] on an 8 x 8 canvas; their image data is a placeholder the reader never decodes. */
-    private class TestGif(private val frames: List<Frame>, private val width: Int = 8, private val height: Int = 8) {
-        fun bytes(loops: Boolean = false): ByteArray {
-            val out = ByteArrayOutputStream()
-            out.write("GIF89a".toByteArray())
-            out.u16(width)
-            out.u16(height)
-            out.write(0x80) // a global colour table of two colours
-            out.write(0)
-            out.write(0)
-            out.write(byteArrayOf(0, 0, 0, -1, -1, -1))
-            if (loops) {
-                out.write(byteArrayOf(0x21, 0xFF.toByte(), 11))
-                out.write("NETSCAPE2.0".toByteArray())
-                out.write(byteArrayOf(3, 1, 0, 0, 0))
-            }
-            for (frame in frames) {
-                frame.hundredths?.let { delay ->
-                    out.write(byteArrayOf(0x21, 0xF9.toByte(), 4))
-                    out.write((frame.disposal shl 2) or (if (frame.transparent) 1 else 0))
-                    out.u16(delay)
-                    out.write(1)
-                    out.write(0)
-                }
-                out.write(0x2C)
-                out.u16(frame.left)
-                out.u16(frame.top)
-                out.u16(frame.width)
-                out.u16(frame.height)
-                out.write(0)
-                out.write(2) // the code size, then one sub-block of data and the terminator
-                out.write(byteArrayOf(3, 0x44, 0x01, 0x05, 0))
-            }
-            out.write(0x3B)
-            return out.toByteArray()
-        }
-    }
-
-    /** A WebP of frames lasting [durations] ms with [flags] (blending and disposal), animated if [animated]. */
-    private class TestWebp(
-        private val durations: List<Int>,
-        private val animated: Boolean = true,
-        private val flags: List<Int>? = null,
-        private val canvas: Int = 8,
-        private val frame: Int = 8,
-    ) {
-        fun bytes(): ByteArray {
-            val body = ByteArrayOutputStream()
-            body.chunk(
-                "VP8X",
-                ByteArrayOutputStream().apply {
-                    write(if (animated) 0x02 else 0)
-                    write(ByteArray(3))
-                    u24(canvas - 1)
-                    u24(canvas - 1)
-                }.toByteArray(),
-            )
-            body.chunk("ANIM", ByteArray(6))
-            durations.forEachIndexed { i, duration ->
-                val anmf = ByteArrayOutputStream()
-                anmf.u24(0)
-                anmf.u24(0)
-                anmf.u24(frame - 1)
-                anmf.u24(frame - 1)
-                anmf.u24(duration)
-                anmf.write(flags?.get(i) ?: 0)
-                anmf.chunk("VP8L", byteArrayOf(0x2F, 7, 0xC0.toByte(), 1, 0))
-                body.chunk("ANMF", anmf.toByteArray())
-            }
-            val out = ByteArrayOutputStream()
-            out.write("RIFF".toByteArray())
-            out.u32(4 + body.size())
-            out.write("WEBP".toByteArray())
-            body.writeTo(out)
-            return out.toByteArray()
-        }
-    }
-
-    private companion object {
-        fun ByteArrayOutputStream.u16(value: Int) {
-            write(value and 0xff)
-            write((value shr 8) and 0xff)
-        }
-
-        fun ByteArrayOutputStream.u24(value: Int) {
-            u16(value)
-            write((value shr 16) and 0xff)
-        }
-
-        fun ByteArrayOutputStream.u32(value: Int) {
-            u24(value)
-            write((value shr 24) and 0xff)
-        }
-
-        fun ByteArrayOutputStream.chunk(type: String, contents: ByteArray) {
-            write(type.toByteArray())
-            u32(contents.size)
-            write(contents)
-            if (contents.size % 2 == 1) write(0)
-        }
-    }
 }

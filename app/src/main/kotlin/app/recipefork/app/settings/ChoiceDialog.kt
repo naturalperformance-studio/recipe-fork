@@ -2,9 +2,10 @@ package app.recipefork.app.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
@@ -20,6 +21,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.data.LanguageChoice
+import app.recipefork.app.ui.WordFitText
 
 /** The tags of one [ChoiceDialog]: the dialog, its Cancel, and each of its choices. */
 internal class ChoiceTags<T>(val dialog: String, val cancel: String, val choice: (T) -> String)
@@ -42,7 +44,7 @@ internal fun <T> ChoiceDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(tags.dialog),
-        title = { Text(title) },
+        title = { WordFitText(title) },
         text = {
             Column(Modifier.selectableGroup()) {
                 choices.forEach { choice ->
@@ -55,7 +57,8 @@ internal fun <T> ChoiceDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(selected = choice == chosen, onClick = null)
-                        Text(label(choice), modifier = Modifier.padding(start = 16.dp))
+                        Spacer(Modifier.width(16.dp))
+                        WordFitText(label(choice))
                     }
                 }
             }

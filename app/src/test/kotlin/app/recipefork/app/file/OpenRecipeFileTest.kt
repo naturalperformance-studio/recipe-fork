@@ -101,8 +101,8 @@ class OpenRecipeFileTest {
         assertEquals("This file is not a recipe file, so nothing was added", told())
         open(Mode.Serverless, fileOf(TestRecipeFiles.zip(RecipeFile.DOCUMENT to "{".toByteArray()), "broken.recipefork"))
         assertEquals("This recipe file is damaged, so nothing was added", told())
-        val later = RecipeFile.encode(TestRecipeFiles.soup("other")).replace("\"format_version\": ${RecipeFile.LAST_FORMAT_WITHOUT_US_UNITS}", "\"format_version\": 8")
-        assertTrue(later.contains("\"format_version\": 8"))
+        val later = RecipeFile.encode(TestRecipeFiles.soup("other")).replace("\"format_version\": ${RecipeFile.LAST_FORMAT_WITHOUT_US_UNITS}", "\"format_version\": 9")
+        assertTrue(later.contains("\"format_version\": 9"))
         open(Mode.Serverless, fileOf(TestRecipeFiles.zip(RecipeFile.DOCUMENT to later.toByteArray()), "later.recipefork"))
         assertEquals(
             "This recipe file was made by a newer version of the app. Update the app to open it; nothing was added",
@@ -159,7 +159,9 @@ class OpenRecipeFileTest {
         assertNull(RecipeFileIntents.fileOf(Intent(Intent.ACTION_SEND).setData(fileOf(ByteArray(1)))))
         val stream = fileOf(ByteArray(1))
         val shared = Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, stream)
-        assertNull(RecipeFileIntents.fileOf(Intent(shared).setType("image/jpeg")))
+        // A stream named as a recipe file is one whatever type it is declared (T-280: Telegram declares text/plain).
+        assertEquals(stream, RecipeFileIntents.fileOf(Intent(shared).setType("image/jpeg")))
+        assertNull(RecipeFileIntents.fileOf(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, Uri.parse("content://x/notes.txt"))))
         assertEquals(stream, RecipeFileIntents.fileOf(Intent(shared).setType(RecipeFile.MIME_TYPE)))
         assertNull(RecipeFileIntents.fileOf(null))
     }

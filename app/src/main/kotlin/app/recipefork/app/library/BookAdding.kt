@@ -106,6 +106,7 @@ internal fun rememberBookAdding(
 
     gathering?.let { recipeIds ->
         ChooseCollectionSheet(
+            recipeIds.size,
             collections,
             onChoose = { id, name ->
                 gathering = null

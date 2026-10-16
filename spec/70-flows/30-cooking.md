@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [FLOW-013, FLOW-014, FLOW-015, FLOW-016, FLOW-017, FLOW-018, FLOW-019,
   FLOW-020, FLOW-021]
 ---
@@ -88,6 +88,14 @@ is in the foreground, in the background, or closed.
 - Given a step's timer, when it runs and ends, then it is the application's own
   timer, counted down on its step; it is not handed to the device's clock
   application.
+- Given a running timer, wherever it is shown with its controls — on its step or
+  among the running timers gathered on the card — when the reader looks for how to
+  cancel it, then cancelling is a control of its own, apart from the control that
+  shows the time, so that a hand reaching for the timer cannot cancel it by
+  accident; and a cancel can be undone while its notice shows, which puts the
+  timer back as it was.
+- Given several timers of one card that have ended, when they are shown together,
+  then one control silences them all, and each can still be stopped on its own.
 
 **Verification:** start a timer, close the application from the task switcher,
 lock the device and wait for the end; repeat with notifications refused; start a
@@ -129,6 +137,12 @@ demo: the first build announced an ended timer with one short sound, easy to tak
 for a messenger message in a kitchen. Handing timers to the device's clock
 application was considered and rejected. See
 [ADR — a timer is the application's own and rings like an alarm](../decisions/20261002-a-timer-rings-like-an-alarm.md).
+**Changed 2026-10-15:** criterion 17 added by user decision of that date
+(`docs/brand/identity/decisions.md`, fixes to the redesign): cancelling a running
+timer is a separate, quiet control, and the undo that follows it stays. Its look
+and placement are the team's. Criterion 18 added at the sync of v0.31–v0.38: one
+stop for every finished timer, built in v0.31 from the owner's notes on v0.30
+(«Всё супер», 2026-10-12).
 **Note:** this states what the reader observes. Whether it is implemented by a
 system alarm or otherwise is an engineering choice, provided a closed
 application still announces the timer.
@@ -196,8 +210,10 @@ author's own list.
 
 The system shall allow the timers of several steps to run at the same time, and
 shall identify each one wherever it is shown or announced by the name its author
-gave it, or, where the author gave none, by the first 60 characters of its own
-step's text.
+gave it, or, where the author gave none, by the beginning of its own step's text —
+the first 60 characters in its announcement and on a printed page, where it stands
+away from its step, and a shorter beginning of about 24 characters, cut at a word,
+on the screen beside the step it belongs to.
 
 **Acceptance criteria**
 - Given two steps that carry timers, when the reader starts both, then both run
@@ -229,8 +245,9 @@ step's text.
 - Given a step holding media and no text (DOM-006), when it carries a timer, then
   there is no text to derive a name from, and the author names the timer.
 - Given several running timers, when the reader opens the recipe, then each
-  shows its own remaining time on its own step, under the same name the
-  announcement would use.
+  shows its own remaining time on its own step; a timer with no name of its own is
+  shown there by the first words of its step, cut at a word with an ellipsis, and
+  its announcement still carries the first 60 characters.
 - Given several running timers, when the reader leaves the application and
   returns, then all of them still run by the clock (FLOW-012).
 - Given two timers of different steps that end up with the same name, whether
@@ -258,6 +275,10 @@ with, and a timer on a step with no text is named by its author — req-forge pr
 Amended 2026-10-04 (sync v0.15–v0.24): a step may carry several timers (DOM-024),
 so unnamed timers of one step are told apart; same names across steps still are
 not — req-forge proposal from that sync, accepted by the user, 2026-10-04.
+**Changed 2026-10-15 (sync v0.31–v0.38):** on screen, beside its own step, an
+unnamed timer is shown by a shorter beginning of the step — built in v0.38 from
+the audit's finding that the timer repeated the whole step under it; adopted at
+that sync. The announcement and the printed page keep 60 characters.
 **Note:** 60 characters is the product owner's number, set so that the line
 survives a notification without the operating system deciding where to cut it. It
 bounds a name the author types as well (DOM-012). That the first 60 characters

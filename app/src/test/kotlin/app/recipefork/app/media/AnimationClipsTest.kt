@@ -68,6 +68,31 @@ class AnimationClipsTest {
         assertEquals(2, images.reads)
     }
 
+    // MEDIA-007 (T-274 review): an animation over fifteen seconds is refused as too long whatever its frames — short
+    // ones a GIF or a WebP runs for thirty seconds, or a bomb of 100,000 — never cut to fifteen and attached.
+    @Test
+    fun aLongAnimationOfShortFramesIsRefusedAsTooLong() = runBlocking {
+        listOf(
+            "a 30 s GIF of 100 ms frames" to TestGif(List(300) { Frame(10) }).bytes(),
+            "a 30 s WebP of 100 ms frames" to TestWebp(List(300) { 100 }).bytes(),
+            "a GIF of 100,000 frames stating no delay" to TestGif(List(100_000) { Frame(0) }).bytes(),
+            "a GIF of 16 s in 20 ms frames" to TestGif(List(800) { Frame(2) }).bytes(),
+        ).forEach { (what, bytes) ->
+            val images = Images(AnimatedImage.read(bytes.inputStream()))
+            var encodings = 0
+            val clips = AnimationClips(images) { _, _ -> encodings++ }
+            assertEquals(what, ClipOutcome.Refused(ClipRefusal.TOO_LONG), ClipStore(context.filesDir, clips, clips).add(book, source))
+            assertEquals(what, 0, encodings)
+        }
+        // One of fifteen seconds in short frames is still a clip.
+        val fifteen = Images(AnimatedImage.read(TestGif(List(150) { Frame(10) }).bytes().inputStream()))
+        val clips = AnimationClips(fifteen) { _, target -> target.writeBytes(ByteArray(100)) }
+        val store = ClipStore(context.filesDir, clips, clips)
+        val stored = store.add(book, source)
+        assertTrue("$stored", stored is ClipOutcome.Stored)
+        store.delete(book, (stored as ClipOutcome.Stored).mediaId)
+    }
+
     @Test
     fun anEncoderOutOfMemoryIsAnUnreadableAnimation() = runBlocking {
         listOf(OutOfMemoryError("hostile"), IllegalStateException("codec")).forEach { failure ->

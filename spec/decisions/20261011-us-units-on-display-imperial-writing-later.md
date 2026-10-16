@@ -1,6 +1,6 @@
 # US units on display; writing in imperial units later
 
-**Status:** accepted, supersedes the "no conversion" rule of L10N-008 (2026-09-21)
+**Status:** superseded by [one unit system, converted on display](20261015-one-unit-system-converted-on-display.md) (2026-10-15); it had superseded the "no conversion" rule of L10N-008 (2026-09-21)
 
 **Context:** Since 2026-09-21 the product was metric and offered no conversion
 (L10N-008). On 2026-10-10 the product owner adopted the analyst's hypothesis H-003:

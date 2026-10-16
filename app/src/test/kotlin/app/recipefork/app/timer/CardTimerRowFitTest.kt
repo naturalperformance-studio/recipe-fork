@@ -52,7 +52,7 @@ class CardTimerRowFitTest : CardTimersKit() {
         listOf(TimerTags.status(0), TimerTags.stop(0), TimerTags.cancel(0)).forEach { tag ->
             compose.textLayoutsWithin(tag).forEach { assertEquals(tag, 1, it.lineCount) }
         }
-        val name = compose.textLayoutsWithin(TimerTags.start(0)).first { it.layoutInput.text.text == "Bring the water to the boil" }
+        val name = compose.textLayoutsWithin(TimerTags.start(0)).first { it.layoutInput.text.text == "Bring the water to the…" }
         assertTrue("the name has room for a word a line", name.lineCount <= 4)
     }
 }

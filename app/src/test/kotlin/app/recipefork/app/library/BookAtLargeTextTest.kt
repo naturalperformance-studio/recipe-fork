@@ -220,53 +220,84 @@ class BookAtLargeTextTest {
     }
 
     @Test
-    fun theTabsNeverBreakInsideAWord() = assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+    fun theTabsNeverBreakInsideAWord() = assertTabs(listOf("Marked", "My recipes"), listOf("Imported", "My recipes"))
 
     @Test
     @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
     fun theTabsNeverBreakInsideAWordAtTwiceTheFontScale() =
-        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+        assertTabs(listOf("Marked", "My recipes"), listOf("Imported", "My recipes"))
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp")
     fun inRussianTheTabsNeverBreakInsideAWord() =
-        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Из файлов", "Мои рецепты"))
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianTheTabsNeverBreakInsideAWordAtTwiceTheFontScale() =
-        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Из файлов", "Мои рецепты"))
 
     @Test
     @Config(qualifiers = "w360dp-h640dp")
     fun onAWiderPhoneTheTabsAreDrawnAtOneSize() =
-        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+        assertTabs(listOf("Marked", "My recipes"), listOf("Imported", "My recipes"))
 
     @Test
     @Config(qualifiers = "w360dp-h640dp", fontScale = 2f)
     fun onAWiderPhoneTheTabsAreDrawnAtOneSizeAtTwiceTheFontScale() =
-        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+        assertTabs(listOf("Marked", "My recipes"), listOf("Imported", "My recipes"))
 
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp")
     fun inRussianOnAWiderPhoneTheTabsAreDrawnAtOneSize() =
-        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Из файлов", "Мои рецепты"))
 
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 2f)
     fun inRussianOnAWiderPhoneTheTabsAreDrawnAtOneSizeAtTwiceTheFontScale() =
-        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Из файлов", "Мои рецепты"))
 
     // T-217: on a very narrow window the words are still never drawn smaller than at a font scale of 1, nor broken.
     @Test
     @Config(qualifiers = "ru-w240dp-h640dp", fontScale = 2f)
     fun inRussianOnAVeryNarrowWindowTheTabsStayReadable() =
-        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Импортированные", "Мои рецепты"))
+        assertTabs(listOf("Отмеченные", "Мои рецепты"), listOf("Из файлов", "Мои рецепты"))
 
     @Test
     @Config(qualifiers = "w240dp-h640dp", fontScale = 2f)
     fun onAVeryNarrowWindowTheTabsStayReadable() =
-        assertTabs(listOf("Marked", "Written here"), listOf("Imported", "Written here"))
+        assertTabs(listOf("Marked", "My recipes"), listOf("Imported", "My recipes"))
+
+    /**
+     * v0.38: the tabs of both builds stand whole at twice the font scale on a 320 dp phone — no tab's words cut short
+     * with an ellipsis, the imported view's among them.
+     */
+    private fun assertNoTabCut() {
+        show(LibraryView.OWN)
+        await(LibraryTags.SWITCH)
+        listOf(Mode.Standard, Mode.Serverless).forEach { shownMode ->
+            compose.runOnIdle { mode = shownMode }
+            compose.waitForIdle()
+            listOf(LibraryView.MARKED, LibraryView.OWN).forEach { view ->
+                val layout = layoutOf(tabLabel(view))
+                val text = layout.layoutInput.text.text
+                assertFalse("$shownMode, “$text” is cut short", (0 until layout.lineCount).any { layout.isLineEllipsized(it) })
+                // Every line, laid out, fits the words' room.
+                for (line in 0 until layout.lineCount) {
+                    val width = layout.getLineRight(line) - layout.getLineLeft(line)
+                    assertTrue("$shownMode, line $line of “$text” is $width wide", width <= layout.layoutInput.constraints.maxWidth + 0.5f)
+                }
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
+    fun noTabIsCutShortAtTwiceTheFontScale() = assertNoTabCut()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun inRussianNoTabIsCutShortAtTwiceTheFontScale() = assertNoTabCut()
 
     // In the build without the server the screen reader is told the view shows the imported recipes, and its empty
     // state names them; the standard build keeps "marked".

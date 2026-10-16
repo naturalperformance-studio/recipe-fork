@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paste_choice_write">Написать с нуля</string>
+    <string name="paste_choice_paste">Вставить текст</string>
+    <string name="paste_title">Вставить текст</string>
+    <string name="paste_back">Назад</string>
+    <string name="paste_back_action">Вернуться к книге</string>
+    <string name="paste_field">Текст рецепта</string>
+    <string name="paste_read">Разобрать</string>
+    <string name="paste_read_action">Разобрать текст в новый рецепт</string>
+    <string name="paste_reading">Текст разбирается</string>
+    <string name="paste_no_recipe">В тексте не найден рецепт — нужны ингредиенты и шаги.</string>
+    <string name="paste_failed">Не удалось сохранить рецепт. Попробуйте ещё раз.</string>
+</resources>

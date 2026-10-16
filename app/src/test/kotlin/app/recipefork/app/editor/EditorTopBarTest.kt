@@ -13,7 +13,9 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
@@ -31,6 +33,7 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
 import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
+import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import kotlinx.coroutines.CompletableDeferred
@@ -53,8 +56,9 @@ import java.io.IOException
 import java.time.Instant
 
 /**
- * The editor's top app bar — back and the recipe's title at its start, the checklist and "Done" at its end — and "Done",
- * which closes the editor once what is written is in the book, and keeps it open, saying so, where the book refused it.
+ * The editor's top app bar — back and, once the title field has scrolled away, the recipe's title at its start, the
+ * checklist and "Done" at its end — and "Done", which closes the editor once what is written is in the book, and keeps
+ * it open, saying so, where the book refused it.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -104,9 +108,9 @@ class EditorTopBarTest {
         }
     }
 
-    private fun open(state: RecipeState = RecipeState.LOCAL, title: String = "Pancakes"): Recipe {
+    private fun open(state: RecipeState = RecipeState.LOCAL, title: String = "Pancakes", steps: List<Step> = emptyList()): Recipe {
         val recipe = Recipe.create(now, null)
-            .copy(title = title, ingredients = listOf(flour, milk), sent = if (state == RecipeState.LOCAL) SentStatus.NEVER else SentStatus.SENT)
+            .copy(title = title, ingredients = listOf(flour, milk), steps = steps, sent = if (state == RecipeState.LOCAL) SentStatus.NEVER else SentStatus.SENT)
             .inState(state)
         runBlocking { recipes.save(recipe) }
         val environment = EditorEnvironment(ActiveBook(BookName.Pool, book.database), device.catalog(context)) { now }
@@ -132,6 +136,18 @@ class EditorTopBarTest {
 
     private fun inBar(tag: String): Boolean =
         compose.onAllNodes(hasTestTag(tag) and hasAnyAncestor(hasTestTag(EditorTags.BAR))).fetchSemanticsNodes().size == 1
+
+    /** Scrolls the form to its end, the title field out of view, and waits until the bar shows a title. */
+    private fun scrollTheTitleAway() {
+        compose.onNodeWithTag(EditorTags.FORM).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
+        compose.waitUntil(PATIENCE_MS) { exists(EditorTags.BAR_TITLE) }
+    }
+
+    /** Brings the title field back into view, and waits until the bar no longer shows the title. */
+    private fun scrollTheTitleBack() {
+        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo()
+        compose.waitUntil(PATIENCE_MS) { !exists(EditorTags.BAR_TITLE) }
+    }
 
     // The editor has an M3 top app bar, as the book and the card do: back at its start, then the checklist and "Done"
     // at its end, each 48 dp and announced as what it does; back still leaves for the recipe.
@@ -165,19 +181,27 @@ class EditorTopBarTest {
         compose.waitUntil(PATIENCE_MS) { closed == 1 }
     }
 
-    // The bar shows the recipe's title, on one line, cut short with an ellipsis where it is too long, between back and
-    // the actions; it follows the title as it is typed.
+    // T-271: the bar does not repeat the title the field below shows: it holds none while the title field is in view,
+    // and the recipe's title once that field has scrolled away — on one line, cut short with an ellipsis where it is too
+    // long, between back and the actions; it follows the title as it is typed.
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "w360dp-h640dp")
-    fun theBarShowsTheTitle() {
+    fun theBarShowsTheTitleOnlyOnceTheFieldHasScrolledAway() {
         open()
+        compose.onNodeWithTag(EditorTags.TITLE).assertIsDisplayed()
+        assertFalse("the bar repeats the title the field shows", exists(EditorTags.BAR_TITLE))
+        scrollTheTitleAway()
         assertEquals(listOf("Pancakes"), compose.textsOf(EditorTags.BAR_TITLE))
         assertTrue(inBar(EditorTags.BAR_TITLE))
         assertTrue(bounds(EditorTags.BACK).right <= bounds(EditorTags.BAR_TITLE).left + 0.5f)
         assertTrue(bounds(EditorTags.BAR_TITLE).right <= bounds(EditorTags.FORK_NOTE).left + 0.5f)
         val long = "Pancakes with jam, sour cream, honey and the berries of the season, as grandmother made them"
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTextReplacement(long)
+        scrollTheTitleBack()
+        compose.onNodeWithTag(EditorTags.TITLE).performTextReplacement(long)
+        compose.waitForIdle()
+        assertFalse(exists(EditorTags.BAR_TITLE))
+        scrollTheTitleAway()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(EditorTags.BAR_TITLE) == listOf(long) }
         val title = compose.onNodeWithTag(EditorTags.BAR_TITLE).fetchSemanticsNode()
         val layout = mutableListOf<TextLayoutResult>().also { title.config[SemanticsActions.GetTextLayoutResult].action!!(it) }.single()
@@ -186,7 +210,7 @@ class EditorTopBarTest {
         assertTrue(bounds(EditorTags.BAR_TITLE).right <= bounds(EditorTags.FORK_NOTE).left + 0.5f)
     }
 
-    // A recipe with no title yet is "New recipe" in the bar.
+    // A recipe with no title yet is "New recipe" in the bar, once the field has scrolled away.
     @Test
     fun aRecipeWithNoTitleIsANewRecipe() = newRecipe("New recipe")
 
@@ -196,10 +220,16 @@ class EditorTopBarTest {
 
     private fun newRecipe(label: String) {
         open(title = "")
+        assertFalse(exists(EditorTags.BAR_TITLE))
+        scrollTheTitleAway()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(EditorTags.BAR_TITLE) == listOf(label) }
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTextReplacement("Borscht")
+        scrollTheTitleBack()
+        compose.onNodeWithTag(EditorTags.TITLE).performTextReplacement("Borscht")
+        scrollTheTitleAway()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(EditorTags.BAR_TITLE) == listOf("Borscht") }
+        scrollTheTitleBack()
         compose.onNodeWithTag(EditorTags.TITLE).performTextReplacement("  ")
+        scrollTheTitleAway()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(EditorTags.BAR_TITLE) == listOf(label) }
     }
 
@@ -211,8 +241,13 @@ class EditorTopBarTest {
     fun theBarFitsAt320DpAndTwiceTheFontInRussian() {
         assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
         open(title = "Блины со сметаной, мёдом и ягодами по-бабушкиному")
+        assertFalse("the bar repeats the title the field shows", exists(EditorTags.BAR_TITLE))
+        barFits(listOf(EditorTags.BACK, EditorTags.FORK_NOTE, ChecklistTags.CONTROL, EditorTags.DONE))
+        scrollTheTitleAway()
         barFits()
-        compose.onNodeWithTag(EditorTags.TITLE).performScrollTo().performTextReplacement("")
+        scrollTheTitleBack()
+        compose.onNodeWithTag(EditorTags.TITLE).performTextReplacement("")
+        scrollTheTitleAway()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(EditorTags.BAR_TITLE) == listOf("Новый рецепт") }
         barFits()
     }
@@ -223,9 +258,12 @@ class EditorTopBarTest {
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2.0f)
     fun aFrozenRecipesBarFitsAt320DpAndTwiceTheFontInRussian() {
         assertEquals(2.0f, context.resources.configuration.fontScale, 0.001f)
-        open(RecipeState.PUBLISHED, title = "Блины со сметаной, мёдом и ягодами по-бабушкиному")
+        // Steps enough that the form scrolls the title out of view.
+        open(RecipeState.PUBLISHED, title = "Блины со сметаной, мёдом и ягодами по-бабушкиному", steps = (0 until 6).map { Step(it, "Жарить блин с двух сторон.") })
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FROZEN), PATIENCE_MS)
         assertFalse(inBar(EditorTags.DONE))
+        assertFalse("the bar repeats the title the form shows", exists(EditorTags.BAR_TITLE))
+        scrollTheTitleAway()
         assertEquals(listOf("Блины со сметаной, мёдом и ягодами по-бабушкиному"), compose.textsOf(EditorTags.BAR_TITLE))
         barFits(listOf(EditorTags.BACK, EditorTags.BAR_TITLE, EditorTags.FORK_NOTE, ChecklistTags.CONTROL))
     }

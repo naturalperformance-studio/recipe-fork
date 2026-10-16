@@ -13,7 +13,7 @@
     <string name="editor_back_action">Show the recipe</string>
     <string name="editor_title">Title</string>
     <!-- A recipe outside local, private and rejected is open, not editable (FLOW-002). -->
-    <string name="editor_frozen">This recipe cannot be changed in its current state.</string>
+    <string name="editor_frozen">This recipe can no longer be changed. To change it, tap Fork on its card and edit your own version.</string>
     <!-- The declared language, beside the title (FLOW-024, L10N-004). -->
     <string name="editor_language">Language</string>
     <string name="editor_language_ru">Russian</string>
@@ -112,6 +112,8 @@
     <string name="editor_step_edit">Edit step</string>
     <!-- What an empty step reads as on its row, muted; and the title of the sheet of a step just added. -->
     <string name="editor_step_new">New step</string>
+    <!-- What an empty step's field says goes there. -->
+    <string name="editor_step_placeholder">What to do in this step</string>
     <string name="editor_step_add">Add step</string>
     <string name="editor_step_add_action">Add a step at the end</string>
     <!-- The last of a step's actions in its sheet, named as the ingredient's and the group's are. -->
@@ -128,7 +130,8 @@
     <string name="editor_step_insert_ingredient_none">No ingredients in this recipe yet</string>
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
     <!-- A part of an ingredient in a step: offered beside the whole, entered in the ingredient's own unit. -->
-    <string name="editor_step_offered_part">%1$s — part…</string>
+    <string name="editor_step_offered_part">Part…</string>
+    <string name="editor_step_offered_part_name">A part of %1$s…</string>
     <string name="editor_part_title">Part of %1$s</string>
     <string name="editor_part_field">How much, %1$s</string>
     <string name="editor_part_of_whole">Out of %1$s in the list.</string>
@@ -142,7 +145,6 @@
     <!-- The description, under the title and the tags: one optional field (FLOW-024). -->
     <string name="editor_description">Description</string>
     <string name="editor_description_optional">Description (optional)</string>
-    <string name="editor_description_none">No description</string>
     <!-- What a fork takes and what stays with the author (FLOW-030, FORK-001, FORK-002, FORK-007): opened from the info
          action in the editor's top bar, which the screen reader names by editor_fork_note. It says what a fork does,
          never that it can be prevented. -->
@@ -180,6 +182,12 @@
     <string name="editor_mark_ingredients_missing">A recipe needs at least one ingredient.</string>
     <string name="editor_mark_steps_missing">A recipe needs at least one step.</string>
     <string name="editor_mark_characters_over">Over the limit of %1$s characters: %2$s now. Kept in full.</string>
+    <!-- A text field's mark over its limit, in its supporting text; the counter beside it gives the numbers. -->
+    <string name="editor_mark_field_over">Over the limit. Kept in full.</string>
+    <!-- The counter beside a field's mark: what the field holds / its limit. -->
+    <string name="editor_mark_counter">%1$s / %2$s</string>
+    <!-- The counter as the screen reader reads it. -->
+    <string name="editor_mark_counted">Characters: %1$s of %2$s</string>
     <string name="editor_mark_ingredients_over">More than %1$s ingredients: %2$s now.</string>
     <string name="editor_mark_steps_over">More than %1$s steps: %2$s now.</string>
     <!-- The checklist: fixed advice on writing a recipe, opened from the editor's top and only read (GUIDE-003, GUIDE-004). -->

@@ -5,7 +5,7 @@
     <string name="library_view_own">Мои рецепты</string>
     <string name="library_view_marked_action">Показать рецепты, отмеченные в этой книге</string>
     <string name="library_view_own_action">Показать рецепты, написанные в этой книге</string>
-    <string name="library_view_marked_serverless">Импортированные</string>
+    <string name="library_view_marked_serverless">Из файлов</string>
     <string name="library_view_marked_action_serverless">Показать рецепты, импортированные из файлов</string>
     <string name="library_opening">Рецепты открываются</string>
     <string name="library_state_draft">Черновик</string>
@@ -21,7 +21,7 @@
     <string name="library_sent_never">Не отправлен: хранится только на этом устройстве и пропадёт вместе с ним</string>
     <string name="library_sent_sent">Отправлен</string>
     <string name="library_sent_with_changes">Отправлен, есть неотправленные изменения</string>
-    <string name="library_own_empty">Здесь пока ничего не написано</string>
+    <string name="library_own_empty">Своих рецептов пока нет</string>
     <string name="library_own_empty_sentence">Здесь хранятся рецепты, которые вы пишете в этой книге.</string>
     <string name="library_own_new">Новый рецепт</string>
     <string name="library_entry_open_action">Открыть рецепт</string>
@@ -146,5 +146,4 @@
     <string name="library_none_added_to_collection">В «%1$s» ничего не добавлено</string>
     <string name="library_shopping_unread">Не удалось прочитать рецепт, ничего не добавлено</string>
     <string name="library_selection_document">Рецепты</string>
-    <string name="library_print_preparing">Готовим документ</string>
 </resources>

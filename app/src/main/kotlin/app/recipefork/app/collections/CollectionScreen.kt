@@ -2,6 +2,7 @@ package app.recipefork.app.collections
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +22,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -91,6 +93,7 @@ import app.recipefork.app.library.rememberCoverThumbnails
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.print.PrintWay
 import app.recipefork.app.print.RecipesDocument
+import app.recipefork.app.print.PrintProgress
 import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.CollectionId
@@ -98,6 +101,7 @@ import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.RecipeCollection
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.app.shopping.rememberAddAllToShopping
+import app.recipefork.app.ui.LineFitText
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -119,6 +123,9 @@ import kotlinx.coroutines.launch
  * card would open with — handed to the system's printing or written as a PDF and shared, as a card's are.
  *
  * Once the book holds the collection no more — deleted here, or its book replaced — the screen closes.
+ *
+ * At large text (v0.38) the bar's name keeps to one line, ending with an ellipsis where it is too long even drawn
+ * smaller ([LineFitText]), and a notice's action stands on a line of its own ([LibrarySnackbarHost], the book's).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,7 +160,8 @@ fun CollectionScreen(
     // the list above the collection.
     val addAllToShopping = rememberAddAllToShopping(recipes, card, session::heldScale, snackbars, session::openShoppingAboveCollection)
     val addAll = { addAllToShopping { collections.recipes(id).first().map { RecipeId(it.recipeId) } } }
-    val print = rememberPrintCollection(id, session, collections, recipes, card, snackbars)
+    var preparing by remember { mutableStateOf(false) }
+    val print = rememberPrintCollection(id, session, collections, recipes, card, snackbars, onBusy = { preparing = it })
     var renaming by rememberSaveable { mutableStateOf(false) }
     if (renaming && collection != null) {
         RenameDialog(
@@ -184,10 +192,15 @@ fun CollectionScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        collection?.name.orEmpty(),
-                        Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(CollectionScreenTags.TITLE),
-                    )
+                    // On one line, never under the bar's actions nor spilling below it at a large font scale (v0.38).
+                    BoxWithConstraints(Modifier.padding(end = TITLE_CLEARANCE)) {
+                        LineFitText(
+                            collection?.name.orEmpty(),
+                            LocalTextStyle.current,
+                            constraints.maxWidth,
+                            Modifier.semantics { heading() }.testTag(CollectionScreenTags.TITLE),
+                        )
+                    }
                 },
                 navigationIcon = { BackAction(session::closeCollection) },
                 actions = {
@@ -202,10 +215,12 @@ fun CollectionScreen(
                         )
                     }
                 },
+                modifier = Modifier.testTag(CollectionScreenTags.BAR),
             )
         },
     ) { padding ->
         CollectionShareProgress(share, Modifier.padding(top = padding.calculateTopPadding()))
+        if (preparing) PrintProgress(Modifier.padding(top = padding.calculateTopPadding()))
         val shown = rows
         if (collection == null || shown == null) {
             ListLoading(Modifier.padding(padding))
@@ -221,7 +236,7 @@ fun CollectionScreen(
                 EmptyState(
                     picture = R.drawable.ic_empty_book,
                     headline = stringResource(if (own) R.string.collection_empty else R.string.collection_imported_empty),
-                    sentence = if (own) stringResource(R.string.collection_empty_sentence) else null,
+                    sentence = if (own) stringResource(R.string.collection_empty_sentence, stringResource(R.string.collection_sheet_menu)) else null,
                     action = null,
                     tag = CollectionScreenTags.EMPTY,
                 )
@@ -341,7 +356,7 @@ private fun CollectionEntry(
  * Prints, or writes as a PDF and shares, the collection [id] under the name it is given (v0.37, T-262): its recipes as
  * they stand in it when the item is taken, each at the count its card would open with, read as [RecipesDocument.read]
  * reads them. A failure — none of them read back, no PDF written — is said in [snackbars]; a tap while one is being
- * made starts nothing ([rememberPrintOut]).
+ * made starts nothing ([rememberPrintOut]); [onBusy] hears whether one is being made.
  */
 @Composable
 private fun rememberPrintCollection(
@@ -351,8 +366,9 @@ private fun rememberPrintCollection(
     recipes: RecipeRepository,
     card: CardEnvironment,
     snackbars: SnackbarHostState,
+    onBusy: (Boolean) -> Unit,
 ): (String, PrintWay) -> Unit {
-    val printOut = rememberPrintOut(snackbars)
+    val printOut = rememberPrintOut(snackbars, onBusy)
     val context = LocalContext.current
     return { name, way ->
         val resources = context.resources
@@ -416,9 +432,10 @@ private fun BackAction(onBack: () -> Unit) {
 }
 
 /**
- * The collection's ⋮: Share, where [onShare] is given (files are a [Mode.Serverless] feature), then "Add all to shopping
- * list" while it has recipes ([onAddAll]), then Print and Share as PDF while it has recipes ([onPrint]), then Rename for
- * an own collection, then Delete collection, in the theme's error colour. An imported collection offers no Rename.
+ * The collection's ⋮, in the order every ⋮ keeps (v0.38, T-269): "Add all to shopping list" while it has recipes
+ * ([onAddAll]), then Print and Share as PDF while it has recipes ([onPrint]), then Export, where [onShare] is given (files
+ * are a [Mode.Serverless] feature), then Rename for an own collection, then Delete collection, in the theme's error
+ * colour. An imported collection offers no Rename.
  */
 @Composable
 private fun CollectionMenu(
@@ -439,17 +456,6 @@ private fun CollectionMenu(
             action = stringResource(R.string.collection_menu_action),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            // First, on own and imported collections alike: Share (serverless mode only), then "Add all to shopping list".
-            if (onShare != null) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.collection_share)) },
-                    onClick = {
-                        expanded = false
-                        onShare()
-                    },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionShareTags.SHARE),
-                )
-            }
             if (onAddAll != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.collection_add_all_to_shopping)) },
@@ -477,6 +483,17 @@ private fun CollectionMenu(
                         onPrint(PrintWay.SHARE)
                     },
                     modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionScreenTags.SHARE_PDF),
+                )
+            }
+            // The collection as a file (serverless mode only), named as a recipe's file action is.
+            if (onShare != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.file_export)) },
+                    onClick = {
+                        expanded = false
+                        onShare()
+                    },
+                    modifier = Modifier.heightIn(min = 48.dp).testTag(CollectionShareTags.SHARE),
                 )
             }
             if (editable) {
@@ -546,6 +563,7 @@ private fun RenameDialog(current: String, onRename: (String) -> Unit, onDismiss:
 
 object CollectionScreenTags {
     const val SCREEN = "collection"
+    const val BAR = "collection-bar"
     const val TITLE = "collection-title"
     const val BACK = "collection-back"
     const val MENU = "collection-menu"

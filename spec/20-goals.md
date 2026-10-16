@@ -1,7 +1,7 @@
 ---
 slug: GOAL
 status: closed
-updated: 2026-09-28
+updated: 2026-10-15
 ids: [GOAL-001, GOAL-002, GOAL-003, NGOAL-001, NGOAL-002, NGOAL-003, NGOAL-004,
   NGOAL-005, NGOAL-006, NGOAL-007]
 ---
@@ -29,7 +29,13 @@ A recipe changes by being forked into an independent recipe that names its
 direct parent, never by being edited in place after it has become visible to
 anyone other than its owner.
 
-**Source:** draft sections 1, 4; user decision, 2026-09-20.
+The story this serves: someone else's recipe — from a blog, received as a file —
+becomes the person's own version, and sometimes a friend's version follows from
+that. It is not a family tree: what a person sees is one step back, the direct
+parent (FORK-004).
+
+**Source:** draft sections 1, 4; user decision, 2026-09-20. The story: user
+decision, 2026-10-15 (`docs/brand/identity/decisions.md`).
 
 ### GOAL-003 — Tiebreak rule: cooking wins over lineage
 

@@ -2,6 +2,7 @@ package app.recipefork.app.editor
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -61,12 +63,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
+import app.recipefork.core.recipe.Bound
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientReference
 import app.recipefork.core.recipe.IngredientShare
 import app.recipefork.core.recipe.IngredientShares
 import app.recipefork.core.recipe.ReferenceQuantity
 import app.recipefork.core.recipe.ReferenceSpacing
+import app.recipefork.core.recipe.RecipeBounds
+import app.recipefork.core.recipe.RecipePart
 import app.recipefork.core.recipe.ReferenceText
 import app.recipefork.core.recipe.ShareReading
 import app.recipefork.core.recipe.Step
@@ -463,8 +468,11 @@ internal fun StepTextField(
         else TransformedText(text, OffsetMapping.Identity)
     }
     // An outlined field as dense as its touch target allows (A11Y-003), so that a one-line step takes little height: no
-    // floating label above its text, but the step's number before it — read by the screen reader as the step's name.
+    // floating label above its text, but the step's number before it — read by the screen reader as the step's name —
+    // and, while it is empty, a placeholder saying what goes there.
     val name = stringResource(R.string.editor_step, position + 1)
+    // What the text still needs (FLOW-028), as the field's supporting text, in error.
+    val mark = fieldMark(editor, RecipePart.StepText(position))
     BasicTextField(
         value = shown,
         onValueChange = { new ->
@@ -481,14 +489,14 @@ internal fun StepTextField(
         },
         visualTransformation = transformation,
         textStyle = LocalTextStyle.current.merge(TextStyle(color = MaterialTheme.colorScheme.onSurface)),
-        cursorBrush = SolidColor(colors.cursorColor),
+        cursorBrush = SolidColor(if (mark != null) colors.errorCursorColor else colors.cursorColor),
         interactionSource = interaction,
         // Sentences start with a capital letter; over several lines, the keyboard keeps its new-line key.
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         // No undo: an earlier value of the field would bring a removed reference back as typed text.
         modifier = modifier
             .heightIn(min = 48.dp)
-            .semantics(mergeDescendants = true) {}
+            .semantics(mergeDescendants = true, properties = fieldMarkSemantics(RecipePart.StepText(position), mark))
             .focusRequester(state.focus)
             .onPreviewKeyEvent { it.isUndo() },
         decorationBox = { inner ->
@@ -499,6 +507,13 @@ internal fun StepTextField(
                 singleLine = false,
                 visualTransformation = transformation,
                 interactionSource = interaction,
+                isError = mark != null,
+                placeholder = {
+                    Text(
+                        stringResource(R.string.editor_step_placeholder),
+                        modifier = Modifier.testTag(EditorTags.stepPlaceholder(position)),
+                    )
+                },
                 prefix = {
                     Text(
                         stringResource(R.string.editor_step_number, position + 1),
@@ -506,17 +521,22 @@ internal fun StepTextField(
                         modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(name) },
                     )
                 },
-                supportingText = if (oversized.isEmpty()) null else {
+                supportingText = if (oversized.isEmpty() && mark == null) null else {
                     {
-                        Text(
-                            oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
-                            modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
-                        )
+                        Column {
+                            mark?.let { FieldMark(RecipePart.StepText(position), it, (it as? Bound.OverLimit)?.count ?: 0, RecipeBounds.MAX_STEP_TEXT, EditorTags.stepMark(position)) }
+                            if (oversized.isNotEmpty()) {
+                                Text(
+                                    oversized.values.map { (part, whole) -> stringResource(R.string.editor_step_part_more_than_whole, part, whole) }.joinToString("\n"),
+                                    modifier = Modifier.testTag(EditorTags.stepPartWarning(position)),
+                                )
+                            }
+                        }
                     }
                 },
                 colors = colors,
                 contentPadding = DENSE_FIELD_PADDING,
-                container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = false, interactionSource = interaction, colors = colors) },
+                container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = mark != null, interactionSource = interaction, colors = colors) },
             )
         },
     )
@@ -533,8 +553,9 @@ private val DENSE_FIELD_PADDING = PaddingValues(start = 12.dp, end = 16.dp, top 
  * offer leaves the text as typed. Either way the author types on: choosing, or dismissing the offer [TRIGGER] opened,
  * gives the step's field its focus and the keyboard back, the cursor after the reference and any space typed after it.
  *
- * Each row holding a quantity is offered a second time, as a part of it ([IngredientShares.offered]): choosing that
- * asks for the part in the row's own unit ([PartDialog]), and the reference then reads that part instead of the whole.
+ * Each row is offered once. One holding a quantity offers a part of it too ([IngredientShares.offered]), by a button
+ * at the row's end: choosing that asks for the part in the row's own unit ([PartDialog]), and the reference then reads
+ * that part instead of the whole.
  * A `piece` row is offered a part once its divisibility is given — by the author, or by the dictionary entry it names —
  * as that sets which parts it holds.
  */
@@ -579,6 +600,8 @@ internal fun InsertIngredient(
             ingredients.forEachIndexed { row, listed ->
                 val ingredient = withEntryDivisibility(listed, dictionary)
                 val name = ingredient.nameIn(dictionary, language).takeIf { it.isNotBlank() } ?: unnamed
+                // Each row once: the row itself inserts the whole; a part of it, where it offers one, is the button at
+                // the row's end.
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.editor_step_offered_ingredient, name, ReferenceText.authored(ingredient, language))) },
                     onClick = {
@@ -586,19 +609,25 @@ internal fun InsertIngredient(
                         state.refocus = true
                         state.close()
                     },
+                    trailingIcon = if (IngredientShares.offered(ingredient)) {
+                        {
+                            val partName = stringResource(R.string.editor_step_offered_part_name, name)
+                            TextButton(
+                                onClick = {
+                                    // The menu goes; where the `@` stands is kept for the part's insertion.
+                                    asking = AskedPart(row, name, state.trigger)
+                                    state.offering = false
+                                },
+                                modifier = Modifier
+                                    .semantics { contentDescription = partName }
+                                    .testTag(EditorTags.stepOfferPart(position, row)),
+                            ) { Text(stringResource(R.string.editor_step_offered_part)) }
+                        }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.testTag(EditorTags.stepOffer(position, row)),
                 )
-                if (IngredientShares.offered(ingredient)) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.editor_step_offered_part, name)) },
-                        onClick = {
-                            // The menu goes; where the `@` stands is kept for the part's insertion.
-                            asking = AskedPart(row, name, state.trigger)
-                            state.offering = false
-                        },
-                        modifier = Modifier.testTag(EditorTags.stepOfferPart(position, row)),
-                    )
-                }
             }
         }
     }

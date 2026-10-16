@@ -105,6 +105,9 @@ class WordPrefixTest {
     @Test
     fun theSameWordInAnotherForm() {
         assertTrue(Inflection.same("яйца", "яйцо"))
+        // A short form whose stem changes (T-277): "5 яиц" is eggs.
+        assertTrue(Inflection.same("яиц", "яйцо"))
+        assertTrue(Inflection.same("луковицы", "лук"))
         assertTrue(Inflection.same("eggs", "egg"))
         assertTrue(Inflection.same("onions", "onion"))
         assertTrue(Inflection.same("огурцы", "огурец"))

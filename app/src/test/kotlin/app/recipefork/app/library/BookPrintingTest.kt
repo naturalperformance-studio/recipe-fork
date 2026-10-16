@@ -5,7 +5,6 @@ import android.print.PrintDocumentAdapter
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -52,6 +51,7 @@ import app.recipefork.app.print.PlatformPrinting
 import app.recipefork.app.print.PrintBlock
 import app.recipefork.app.print.PrintDocument
 import app.recipefork.app.print.Printing
+import app.recipefork.app.print.assertPrintProgress
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.shopping.ShoppingEnvironment
 import app.recipefork.app.timer.CardTimers
@@ -370,10 +370,8 @@ class BookPrintingTest {
 
         takeFromSelection(LibraryTags.SELECTION_PRINT)
         await(LibraryTags.PRINT_PROGRESS)
-        assertEquals(
-            listOf("Preparing the document"),
-            compose.onNodeWithTag(LibraryTags.PRINT_PROGRESS).fetchSemanticsNode().config[SemanticsProperties.ContentDescription],
-        )
+        // Its words shown under the tabs, not only to the screen reader (v0.38, T-269).
+        compose.assertPrintProgress("Preparing the document", LibraryTags.SWITCH)
         assertEquals(2, session.selection.value?.count)
         takeFromSelection(LibraryTags.SELECTION_PRINT)
         takeFromSelection(LibraryTags.SELECTION_SHARE_PDF)
@@ -546,10 +544,7 @@ class BookPrintingTest {
         gate = waiting
         compose.onNodeWithTag(LibraryTags.SELECTION_SHARE_PDF).performClick()
         await(LibraryTags.PRINT_PROGRESS)
-        assertEquals(
-            listOf("Готовим документ"),
-            compose.onNodeWithTag(LibraryTags.PRINT_PROGRESS).fetchSemanticsNode().config[SemanticsProperties.ContentDescription],
-        )
+        compose.assertPrintProgress("Готовим документ", LibraryTags.SWITCH)
         gate = null
         waiting.complete(Unit)
         compose.waitUntil(PATIENCE_MS) { shared.size == 1 }

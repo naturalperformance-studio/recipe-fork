@@ -16,4 +16,5 @@
     <string name="print_menu_share">Поделиться PDF</string>
     <string name="print_share_failed">Не удалось создать PDF</string>
     <string name="print_failed">Не удалось начать печать</string>
+    <string name="print_preparing">Готовим документ</string>
 </resources>

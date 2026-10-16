@@ -75,6 +75,7 @@ import app.recipefork.app.media.ClipStore
 import app.recipefork.app.media.decodeForDisplay
 import app.recipefork.app.media.stepMedia
 import app.recipefork.app.timer.durationText
+import app.recipefork.app.timer.shownName
 import app.recipefork.core.recipe.Media
 import app.recipefork.core.recipe.MediaKind
 import kotlinx.coroutines.CoroutineScope
@@ -306,14 +307,15 @@ private fun StepRow(
 }
 
 /**
- * A step as the frozen recipe shows it: as an editable step's row reads, with no drag column, and nothing that opens.
+ * A step as the frozen recipe shows it: as an editable step's row reads, with no drag column, nothing that opens, and
+ * no box around it — plain text at the form's own margin, as nothing on it is to be tapped.
  */
 @Composable
 private fun ReadOnlyStep(position: Int, step: Step, media: Media?, ingredients: List<Ingredient>, language: InterfaceLanguage, photos: StepPhotos) {
-    OutlinedCard(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
+    Box(Modifier.fillMaxWidth().testTag(EditorTags.step(position))) {
         StepLine(
             position, step, media, ingredients, language, editor = null, photos, waiting = false,
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(horizontal = 16.dp, vertical = 12.dp).testTag(StepSheetTags.line(position)),
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(vertical = 4.dp).testTag(StepSheetTags.line(position)),
         )
     }
 }
@@ -374,11 +376,14 @@ private fun StepLine(
     }
 }
 
-/** The timer at [index] of [step] as the card's View writes it, a clock before it: its name and its duration. */
+/**
+ * The timer at [index] of [step] as the card's View writes it, a clock before it: its name — a derived one short, as
+ * the card shows it ([shownName]) — and its duration.
+ */
 @Composable
 private fun StepTimerLine(position: Int, step: Step, index: Int, reading: app.recipefork.core.recipe.ReferenceQuantity) {
     val timer = step.timers.getOrNull(index) ?: return
-    val name = TimerName.of(step, index, reading).orEmpty()
+    val name = shownName(step, index, held = null, current = TimerName.of(step, index, reading).orEmpty())
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(painterResource(R.drawable.ic_step_timer), contentDescription = null, tint = muted, modifier = Modifier.size(18.dp))

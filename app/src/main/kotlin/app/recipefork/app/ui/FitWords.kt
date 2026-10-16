@@ -1,14 +1,25 @@
 package app.recipefork.app.ui
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -50,14 +61,80 @@ private fun leastSize(size: TextUnit, density: Density): TextUnit = with(density
 /**
  * [text] in [style] within [width] pixels, each word made smaller as far as it needs to fit whole on a line ([fitWords]),
  * so that the text wraps only between words; never smaller than the style's size at a font scale of 1. A word wider than
- * its room even then is not broken: the text keeps to one line and ends with an ellipsis.
+ * its room even then is not broken: the text keeps to one line and ends with an ellipsis. [onTextLayout] hears each
+ * layout of it, as [Text]'s does.
  */
 @Composable
-internal fun WordFitText(text: String, style: TextStyle, width: Int, modifier: Modifier = Modifier) {
+internal fun WordFitText(
+    text: String,
+    style: TextStyle,
+    width: Int,
+    modifier: Modifier = Modifier,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val fitted = remember(text, style, width, measurer, density) { fitWords(text, style, width, measurer, density) }
-    FittedText(text, fitted, modifier)
+    FittedText(text, fitted, modifier, onTextLayout)
+}
+
+/**
+ * [text] as [WordFitText] above draws it, in the width the place it stands in gives it — a list item's line, a dialog's
+ * row — and in [style], by default the one that place gives its text; [modifier] is the text's own. Asked how tall or
+ * wide it is before it is measured — as a list item asks of its supporting text — it answers as its text, so laid out.
+ * [onTextLayout] hears each layout of the text.
+ */
+@Composable
+internal fun WordFitText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val policy = remember(text, style, measurer, density) { FittedTextPolicy(text, style, measurer, density) }
+    Layout(
+        content = { BoxWithConstraints { WordFitText(text, style, constraints.maxWidth, modifier, onTextLayout) } },
+        measurePolicy = policy,
+    )
+}
+
+/**
+ * Lays out its one child — the [text] fitted to its width — as it measures itself, and answers the questions of its size
+ * before measuring from the text, fitted ([fitWords]) to the width asked about, as [FittedText] lays it out.
+ */
+private class FittedTextPolicy(
+    private val text: String,
+    private val style: TextStyle,
+    private val measurer: TextMeasurer,
+    private val density: Density,
+) : MeasurePolicy {
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val placeable = measurables.single().measure(constraints)
+        return layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+    }
+
+    private fun height(width: Int): Int {
+        val fitted = fitWords(text, style, width, measurer, density)
+        return measurer.measure(
+            text,
+            fitted.style,
+            softWrap = !fitted.overflows,
+            maxLines = if (fitted.overflows) 1 else Int.MAX_VALUE,
+            constraints = Constraints(maxWidth = width),
+        ).size.height
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = height(width)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = height(width)
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+        widestWord(listOf(text), style, measurer)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+        measurer.measure(text, style, softWrap = false, maxLines = 1).size.width
 }
 
 /**
@@ -65,13 +142,33 @@ internal fun WordFitText(text: String, style: TextStyle, width: Int, modifier: M
  * line ending with an ellipsis.
  */
 @Composable
-internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = Modifier) {
+internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = Modifier, onTextLayout: (TextLayoutResult) -> Unit = {}) {
     if (fitted.overflows) {
-        Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
+        Text(
+            text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier,
+            onTextLayout = onTextLayout,
+        )
     } else {
-        Text(text, style = fitted.style, modifier = modifier)
+        Text(text, style = fitted.style, modifier = modifier, onTextLayout = onTextLayout)
     }
 }
+
+/**
+ * [text] in [style] on one line within [width] pixels — a top bar's title (v0.38) — the whole of it made smaller as far
+ * as it needs to fit ([fitWords], the text taken as one word); never smaller than the style's size at a font scale of 1.
+ * Longer than its room even then, it ends with an ellipsis: at a large font scale it neither wraps nor spills out of
+ * the bar.
+ */
+@Composable
+internal fun LineFitText(text: String, style: TextStyle, width: Int, modifier: Modifier = Modifier) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val fitted = remember(text, style, width, measurer, density) { fitWords(text.replace(' ', NO_BREAK), style, width, measurer, density) }
+    Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
+}
+
+/** The space that keeps the words beside it together, so that [fitWords] measures a whole line as one word. */
+private const val NO_BREAK = '\u00A0'
 
 /**
  * The one [style] for all of [texts], each given [width] pixels: made smaller, as [fitWords] does, just as far as the

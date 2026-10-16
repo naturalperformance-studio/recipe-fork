@@ -31,11 +31,14 @@ import app.recipefork.app.print.PlatformPrinting
 import app.recipefork.app.print.PrintBlock
 import app.recipefork.app.print.PrintDocument
 import app.recipefork.app.print.Printing
+import app.recipefork.app.print.assertPrintProgress
+import app.recipefork.app.print.printProgressShown
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.QuantityUnit.GRAM
 import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.shopping.ShoppingAmount
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -47,6 +50,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.IOException
 
@@ -212,4 +216,45 @@ class ShoppingPrintTest {
         assertEquals("Shopping list.pdf", name)
         assertArrayEquals(bytes, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
     }
+
+    // v0.38, T-269 (scenario 5): while the PDF of the list is made, the list shows the book's progress under its bar, its
+    // words drawn; a second tap — on either item — starts nothing; once it is handed over the progress goes.
+    private fun assertProgressWhileMade(words: String) {
+        val gate = CompletableDeferred<Unit>()
+        val printed = mutableListOf<PrintDocument>()
+        val shared = mutableListOf<PrintDocument>()
+        val gated = object : Printing {
+            override fun print(context: Context, document: PrintDocument) {
+                printed += document
+            }
+
+            override suspend fun share(context: Context, document: PrintDocument): Boolean {
+                gate.await()
+                shared += document
+                return true
+            }
+        }
+        runBlocking { recipes.save(soup) }
+        show(ShoppingList(listOf(listed(soup))), printing = gated)
+        assertFalse(compose.printProgressShown())
+        take(ShoppingTags.SHARE_PDF)
+        compose.waitUntil(PATIENCE_MS) { compose.printProgressShown() }
+        compose.assertPrintProgress(words, ShoppingTags.BAR)
+        take(ShoppingTags.PRINT)
+        take(ShoppingTags.SHARE_PDF)
+        compose.waitForIdle()
+        assertTrue(printed.isEmpty() && shared.isEmpty())
+        assertTrue(compose.printProgressShown())
+
+        gate.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { shared.size == 1 && !compose.printProgressShown() }
+        assertTrue(printed.isEmpty())
+    }
+
+    @Test
+    fun whileThePdfIsMadeTheListShowsItsProgress() = assertProgressWhileMade("Preparing the document")
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun inRussianWhileThePdfIsMadeTheListShowsItsProgress() = assertProgressWhileMade("Готовим документ")
 }

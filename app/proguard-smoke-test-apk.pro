@@ -2,3 +2,6 @@
 # annotations, which only a compiler reads and which nothing on the test APK's classpath brings along any more (CameraX
 # did, to the application).
 -dontwarn com.google.errorprone.annotations.**
+
+# The device tests' filter, which the test runner makes by its name (app/build.gradle.kts).
+-keep class app.recipefork.app.EmulatorOnlyFilter { <init>(); }

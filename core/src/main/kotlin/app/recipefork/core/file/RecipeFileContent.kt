@@ -39,6 +39,8 @@ data class RecipeFileContent(
      * whose labels were not known is absent.
      */
     val equipmentLabels: Map<Long, EntryLabels> = emptyMap(),
+    /** The text the recipe was made from, exactly as it was pasted ([Recipe.sourceText]); null for none. */
+    val sourceText: String? = null,
 ) {
     companion object {
         /**
@@ -79,6 +81,7 @@ data class RecipeFileContent(
                     .mapNotNull { id -> equipmentLabels(id)?.let { id to it } }.toMap(),
                 author = recipe.statedAuthor ?: ownerNickname,
                 parent = parent,
+                sourceText = recipe.sourceText,
             )
         }
     }

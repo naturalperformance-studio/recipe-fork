@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-04
+updated: 2026-10-15
 ids: [FLOW-053, FLOW-054, FLOW-055]
 ---
 
@@ -41,6 +41,10 @@ shown; and shall make the deletion final only when the notice goes.
   the timer ends and announces nothing further, and an undo does not restart it.
 - Given an imported recipe, when its card is opened, then removing it is offered
   there as on its entry.
+- Given several recipes chosen in the book (FLOW-078), when they are deleted, then
+  this requirement applies to them as one deletion: one notice, one undo that puts
+  every one back with its collections (DOM-028), final for all when the notice
+  goes.
 - Given no network connection, when deletion of a sent recipe is asked for, then
   FLOW-003 refuses it before anything leaves the view; a recipe in `local` is
   deleted with or without a connection.
@@ -69,6 +73,8 @@ immediate and can be undone while its notice shows, final only when the notice
 goes (user decision at the planning of v0.23). The statement before deletion is
 gone with the confirmation; that a sent recipe reaches the server's deletion only
 when final is a req-forge proposal accepted by the user at the sync of 2026-10-04.
+**Changed 2026-10-15 (sync v0.31–v0.38):** several recipes are deleted as one
+(v0.37, FLOW-078).
 
 
 ### FLOW-054 — The private link is shown, copied, revoked and reissued in one place

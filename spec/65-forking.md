@@ -1,9 +1,9 @@
 ---
 slug: FORK
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [FORK-001, FORK-002, FORK-003, FORK-004, FORK-005, FORK-006, FORK-007,
-  FORK-008, FORK-009]
+  FORK-008, FORK-009, FORK-010]
 ---
 
 # Forking
@@ -102,7 +102,7 @@ offer navigation to the parent, where the parent's own media is shown.
   parent is shown as unavailable and cannot be opened (ST-007).
 - Given serverless mode, when a fork of an imported recipe is opened, then its
   parent opens while it is held in the recipe book and is otherwise shown by name
-  as unavailable (FLOW-065).
+  as unavailable (FLOW-065, FORK-010).
 
 **Verification:** manual check on a fork of a published recipe with media.
 **Source:** user decision, 2026-09-20: the author of a fork can see how the dish
@@ -125,7 +125,48 @@ tree.
 
 **Verification:** build a chain three deep and walk it in both directions.
 **Source:** draft section 4.3; GOAL-003; DOM-004. The condition on the parent is
-FORK-005.
+FORK-005; how the parent is named is FORK-010.
+
+### FORK-010 — The parent is named in one line; its author is on its own card
+
+Wherever a card shows its recipe's parent — by FORK-004, to the owner of both by
+FORK-005, or in serverless mode by FLOW-065 — the system shall show it as one line,
+the Origin, naming the parent by its title ("after the recipe «…»", in Russian
+«по рецепту «…»») and leading to the parent when it can be opened; shall name the
+parent in the same words on the recipe's entry in the recipe book; and shall show
+the parent's author on the parent's own card rather than on the fork's. When, in
+serverless mode, the parent is not held in the recipe book, the fork's card keeps
+the author the file states beside the title, marked as stated in the file and not
+verified, because there is nowhere else to see it.
+
+**Acceptance criteria**
+- Given a fork whose parent is held in the recipe book, when its card is opened,
+  then the parent is named in exactly one line, by its title, and one tap on the
+  line opens the parent.
+- Given that fork, when its card is shown, then the parent's author is not named
+  on it; given the parent opened from the line, then its author is on its card —
+  for a recipe imported from a file, marked as stated in the file and not
+  verified (FLOW-064).
+- Given serverless mode and a fork whose parent is not in the recipe book, when its
+  card is opened, then the line names the parent by its title, shows it as
+  unavailable, and names the author the file states, marked as stated in the file
+  and not verified; given a file that names no author, then no author is shown.
+- Given a fork in the recipe book whose parent is shown, when its entry is listed,
+  then the entry names the parent by its title in the words the card uses.
+- Given a recipe whose parent is not shown (FORK-005), when its card or its entry
+  is shown, then there is no such line (FLOW-019).
+- Given any card, when the line is read, then it names one recipe — the direct
+  parent — and nothing beyond it (FORK-004).
+
+How the line looks — its type, colour, the marks along it — is the team's and the
+owner's design (`docs/brand/`).
+
+**Verification:** in serverless mode, import a recipe whose file states an author,
+fork it, and inspect the fork's card and entry; open the parent from the line and
+inspect its card; remove the imported recipe from the book and reopen the fork.
+**Source:** user decision, 2026-10-15 (`docs/brand/identity/decisions.md`, fixes to
+the redesign; interface recommendation 3). See
+[ADR — the Origin is one line](decisions/20261015-the-origin-is-one-line.md).
 
 ### FORK-005 — A parent that was never published is not mentioned at all
 

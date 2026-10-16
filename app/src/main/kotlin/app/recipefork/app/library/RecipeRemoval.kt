@@ -75,21 +75,23 @@ class PendingRemoval internal constructor(private val taken: List<TakenRecipe>, 
      * collections, a found one's mark. Their done marks and their timers, ended as they left, stay ended. Should the book
      * not take one back — it holds that recipe again, or a media item of it, or cannot be written — that one's leaving is
      * final instead, as [finish] makes it, the others come back all the same, and [onFailed] is told once, [notBack]
-     * counting them.
+     * counting them. [onBack] is told the identities of those put back, in the order they were taken, when any were.
      */
-    fun undo(onFailed: () -> Unit = {}) {
+    fun undo(onFailed: () -> Unit = {}, onBack: (List<String>) -> Unit = {}) {
         if (!settled.compareAndSet(false, true)) return
         timers.scope.launch {
             timers.turns.withLock {
-                var failed = 0
+                val back = mutableListOf<String>()
                 taken.forEach { recipe ->
-                    if (!recipe.putBack()) {
+                    if (recipe.putBack()) {
+                        back += recipe.id.value
+                    } else {
                         recipe.release()
-                        failed++
                     }
                 }
-                notBack = failed
-                if (failed > 0) onFailed()
+                notBack = taken.size - back.size
+                if (back.isNotEmpty()) onBack(back)
+                if (notBack > 0) onFailed()
             }
         }
     }

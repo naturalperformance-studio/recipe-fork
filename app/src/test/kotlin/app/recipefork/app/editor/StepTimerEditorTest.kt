@@ -106,6 +106,7 @@ class StepTimerEditorTest {
         show()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return RecipeId(requireNotNull(session.editing.value))
     }
@@ -549,7 +550,7 @@ class StepTimerEditorTest {
             listOf(
                 "Шаг 2",
                 "Запекать курицу при 190 градусах, пока кожа не станет золотистой и хрустящей",
-                "Запекать курицу при 190 градусах, пока кожа не станет… · 1 ч 5 мин",
+                "Запекать курицу при 190… · 1 ч 5 мин",
             ),
             compose.textsOf(StepSheetTags.line(1)),
         )

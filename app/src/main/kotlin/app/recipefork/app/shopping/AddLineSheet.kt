@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -116,8 +117,9 @@ internal fun AddLineSheet(
         onDismissRequest = onClose,
         sheetState = state,
         modifier = Modifier.testTag(ShoppingTags.ADD_SHEET),
-        // No handle, as the editor's sheets have none: the sheet opens whole, and a swipe down or Back closes it.
-        dragHandle = null,
+        // Material's handle, as the editor's sheets have (v0.38): as wide as it is tall, so that its own actions (expand,
+        // dismiss) have a full touch target. The sheet opens whole; the handle, a swipe down or Back closes it.
+        dragHandle = { BottomSheetDefaults.DragHandle(width = 48.dp) },
     ) {
         val focus = remember { FocusRequester() }
         LaunchedEffect(focus) { focus.requestFocus() }
@@ -125,7 +127,7 @@ internal fun AddLineSheet(
             Text(
                 stringResource(R.string.shopping_own_add),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp).semantics { heading() },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).semantics { heading() }.testTag(ShoppingTags.ADD_TITLE),
             )
             OutlinedTextField(
                 value = typed,

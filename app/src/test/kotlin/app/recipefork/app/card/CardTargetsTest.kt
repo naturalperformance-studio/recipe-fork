@@ -22,6 +22,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
 import app.recipefork.app.timer.TimerTags
+import app.recipefork.app.ui.LARGE_TEXT_SCALE
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
@@ -155,9 +156,15 @@ class CardTargetsTest {
                         layout.size.width <= bounds.width + 0.5f)
             }
         }
-        // Fork, floating at the bottom end: a card target, its word whole, all of it on screen.
+        // Fork, floating at the bottom end: a card target, its word whole, all of it on screen; at large text its icon
+        // alone (v0.38), its word still read to the screen reader.
         compose.assertCardTarget(CardTags.FORK)
-        compose.assertWhole(CardTags.FORK)
+        if (fontScale < LARGE_TEXT_SCALE) {
+            compose.assertWhole(CardTags.FORK)
+        } else {
+            val fork = compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode().boundsInRoot
+            assertTrue("fork is its icon alone at $fontScale: $fork", kotlin.math.abs(fork.width - fork.height) < 1f)
+        }
         assertTrue("fork is named", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(CardTags.FORK).fetchSemanticsNode()).isNotBlank())
 
         // Cooking: back, the two tabs, fewer, more, the ingredient line, the timer.

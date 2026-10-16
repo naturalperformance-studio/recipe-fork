@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onFocusedBoundsChanged
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -201,8 +202,9 @@ internal fun StepSheet(
         onDismissRequest = dismiss,
         sheetState = state,
         modifier = Modifier.testTag(StepSheetTags.SHEET),
-        // No handle: the sheet opens whole, and Done, a swipe down or Back closes it.
-        dragHandle = null,
+        // Material's handle, as the cover's source sheet has (media/SourceSheet.kt): as wide as it is tall, so that its
+        // own actions (expand, dismiss) have a full touch target. The sheet opens whole; Done, a swipe down or Back closes it.
+        dragHandle = { BottomSheetDefaults.DragHandle(width = 48.dp) },
     ) {
         val focusManager = LocalFocusManager.current
         SideEffect { manager = focusManager }
@@ -286,8 +288,6 @@ private fun StepFields(
             )
             .testTag(EditorTags.stepText(position)),
     )
-    // What the text needs, right under it.
-    BoundMark(editor, RecipePart.StepText(position), EditorTags.stepMark(position), gap = SHEET_GAP)
     // The text's own control: inserting a reference.
     InsertIngredient(position, ingredients, dictionary, language, editor, held.field)
     // Its timers, then its photograph or clip: each a part of its own, named once it holds something.

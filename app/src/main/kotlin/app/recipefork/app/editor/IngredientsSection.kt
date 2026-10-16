@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -366,11 +368,12 @@ private fun Ingredient.holdsNothing(): Boolean =
 /** A row as a frozen recipe shows it: its line as the card writes it, and nothing to change it with. */
 @Composable
 private fun ReadOnlyIngredient(position: Int, row: Ingredient, language: InterfaceLanguage, dictionary: List<IngredientEntryEntity>?) {
-    OutlinedCard(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
+    // Plain text, at the form's own margin: nothing on a recipe that cannot be changed is drawn as a box to tap.
+    Box(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.testTag(EditorTags.ingredient(position))) {
         Text(
             ingredientLineText(row, dictionary, language),
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).testTag(IngredientSheetTags.line(position)),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag(IngredientSheetTags.line(position)),
         )
     }
 }
@@ -626,8 +629,9 @@ internal fun otherEntryNamed(text: String, row: Ingredient, dictionary: List<Ing
     dictionary?.let { IngredientOffer.of(text, it, language).exact }?.takeIf { it.id != row.dictionaryEntry }
 
 /**
- * One choice of a dictionary field's offer — an ingredient's or an item of equipment's: a line at least 48 dp tall whose click says what it does (A11Y-003,
- * A11Y-005) — with the [synonym] the entry was found by, if any, beside it in a muted style: «картофель · картошка».
+ * One choice of a dictionary field's offer — an ingredient's or an item of equipment's: a Material list item, its whole
+ * width the target, whose click says what it does (A11Y-003, A11Y-005) — with the [synonym] the entry was found by, if
+ * any, beside it in a muted style: «картофель · картошка». It takes the colour of what it stands on — a sheet, the form.
  */
 @Composable
 internal fun OfferedChoice(
@@ -638,24 +642,24 @@ internal fun OfferedChoice(
     synonym: String? = null,
     synonymTag: String = "",
 ) {
-    Row(
-        modifier
+    ListItem(
+        headlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text, modifier = Modifier.weight(1f, fill = synonym == null))
+                if (synonym != null) {
+                    Text(
+                        " · $synonym",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false).testTag(synonymTag),
+                    )
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clickable(onClickLabel = action, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f, fill = synonym == null))
-        if (synonym != null) {
-            Text(
-                " · $synonym",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false).testTag(synonymTag),
-            )
-        }
-    }
+            .clickable(onClickLabel = action, role = Role.Button, onClick = onClick),
+    )
 }

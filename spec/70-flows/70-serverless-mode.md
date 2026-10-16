@@ -1,7 +1,7 @@
 ---
 slug: FLOW
 status: closed
-updated: 2026-10-11
+updated: 2026-10-15
 ids: [FLOW-061, FLOW-062, FLOW-063, FLOW-064, FLOW-065, FLOW-073]
 ---
 
@@ -92,9 +92,10 @@ the user, 2026-10-03.
 
 ### FLOW-063 — A recipe is exported to a file
 
-Where serverless mode is on, when a person chooses to export a recipe from the
-recipe book, the system shall write a file holding that recipe's identity, title,
-description, declared language, tags, serving count, equipment, ingredients with
+Where serverless mode is on, when a person chooses to export a recipe — from its
+entry in the recipe book or from its card's menu — the system shall write a file
+holding that recipe's identity, title, description, declared language, tags,
+serving count, equipment, ingredients with
 their groups and notes, steps with their authors' notes, timers and
 every media item the device
 holds for it, the nickname of its author, and the identity of its direct parent
@@ -102,6 +103,8 @@ with that parent's title and author's nickname where the device holds them, and
 shall hand the file to the operating system to be saved or shared.
 
 **Acceptance criteria**
+- Given any recipe in the book, when the person looks for export, then it is
+  offered both on its entry and in its card's menu, and both produce the same file.
 - Given an own recipe in any state, when it is exported, then a file is produced
   and the recipe is unchanged: an editable recipe stays editable, because export
   freezes nothing.
@@ -124,7 +127,8 @@ device and compare.
 recipe in the book can be exported, and export does not freeze it. Amended
 2026-10-03 (sync v0.3–v0.14): the file carries the description and the declared
 language as well — req-forge proposal from the sync of v0.3–v0.14, accepted by the
-user, 2026-10-03. After the
+user, 2026-10-03. Amended 2026-10-15: export is offered in the card's menu as well
+as on the entry — user decision of that date (interface recommendation 7). After the
 server is gone the product publishes nothing, and what a person posts elsewhere is
 the responsibility of the place where they post it. See
 [ADR — serverless mode and recipe files](../decisions/20260928-serverless-mode-and-recipe-files.md).
@@ -154,9 +158,12 @@ marked every time it is shown as stated in the file and not verified.
 - Given a file holding a draft — ingredient rows incomplete or off the grid, parts
   of the minimum missing — when it is imported, then it is added as it is, those
   rows kept as written; only a file whose structure cannot be read is refused.
-- Given a file holding a clip longer than 15 seconds, when it is imported, then the
+- Given a file holding a clip longer than 15 seconds — beyond the half second
+  MEDIA-007 allows for how a duration is recorded — when it is imported, then the
   whole file is refused with a message naming the 15-second limit, and nothing is
   added.
+- Given a collection file (FLOW-077), when it is opened, then each recipe it holds
+  is imported by the rules above and the collection by FLOW-077.
 - Given a file holding a photo larger than 1 MB (1,000,000 bytes), the limit the
   device's own processing keeps (MEDIA-002), when it is imported, then it is
   refused, the person is told why, and nothing is added.
@@ -196,7 +203,9 @@ When a person forks a recipe imported from a file, the system shall create the
 fork on the device naming the imported recipe as its parent, shall let the person
 open that parent while it is held in the recipe book, and shall show it by its
 title as unavailable when it is not; and shall show the parent an imported recipe's
-file names in the same way, with its author's nickname marked as not verified.
+file names in the same way. The parent is named in one line by its title; its
+stated author is shown on its own card, and on the fork's card only while the
+parent is not in the book (FORK-010).
 
 **Acceptance criteria**
 - Given an imported recipe, when it is forked, then the fork is created in the
@@ -205,18 +214,20 @@ file names in the same way, with its author's nickname marked as not verified.
 - Given that fork, when it is created, then it carries none of the imported
   recipe's media and none of its description, as any fork by someone other than
   the author does (FORK-002).
-- Given that fork, when its card names its parent, then it names it by title and
-  by the author's nickname the imported file states, the nickname marked as stated
-  in the file and not verified.
 - Given that fork, when the imported recipe is still in the recipe book, then the
-  parent can be opened from the fork's card.
+  fork's card names it in one line by its title, without its author, and the
+  parent opens from that line; the author's nickname the file states is on the
+  imported recipe's own card, marked as stated in the file and not verified
+  (FLOW-064).
 - Given that fork, when the imported recipe has been removed from the book, then
-  the parent is still named by its title and stated nickname and is shown as
-  unavailable.
+  the parent is still named by its title, is shown as unavailable, and the fork's
+  card names the stated nickname beside it, marked as stated in the file and not
+  verified.
 - Given an imported recipe whose file names a parent, when its card is opened,
-  then that parent is named by the title and author's nickname the file states,
-  the nickname marked as not verified, and it opens when a recipe with the same
-  identity is in the book and is shown as unavailable when none is.
+  then that parent is named by the title the file states; it opens when a recipe
+  with the same identity is in the book, whose own card then shows its author; and
+  when none is, it is shown as unavailable with the author's nickname the file
+  states, marked as not verified.
 - Given that fork, when it is exported (FLOW-063), then its file names the
   imported recipe as its parent.
 
@@ -230,28 +241,49 @@ published, so a parent is shown as the file names it, which keeps one step of
 lineage alive between people (GOAL-003). Amended 2026-10-03 (sync v0.3–v0.14):
 the fork names its parent by the stated nickname as well as by title —
 req-forge proposal from the sync of v0.3–v0.14, accepted by the user, 2026-10-03.
+**Changed 2026-10-15:** the fork's card names the parent in one line by its title;
+the stated author moved to the parent's own card and stays on the fork's only while
+the parent is not in the book — user decision of that date, FORK-010, see
+[ADR — the Origin is one line](../decisions/20261015-the-origin-is-one-line.md).
 
 ### FLOW-073 — The whole recipe book is saved and restored
 
 Where serverless mode is on, the system shall let a person save their whole
-recipe book — every recipe with its media, own and found — to one file of their
-choosing, and restore a book from such a file, so that a lost or reset phone does
-not lose it. This shall exist before the first public release.
+recipe book — every recipe with its media, own and found, its collections
+(FLOW-076) and My kitchen — to one file of their choosing, and restore a book from
+such a file, so that a lost or reset phone does not lose it. Restoring into a book
+that holds recipes shall ask whether to add the file's recipes to it or to replace
+it. This shall exist before the first public release.
 
 **Acceptance criteria**
 - Given a book of recipes with photos and clips, when it is saved and restored on
   another device, then every recipe is there, readable and cookable as before, own
-  recipes still editable and found ones still found.
+  recipes still editable and found ones still found, with its collections and My
+  kitchen.
+- Given a book that holds recipes, when a file is restored into it, then the person
+  is asked to add or to replace, and replacing asks once more before anything goes.
+- Given "add", when the restore is done, then every recipe the book lacked is added
+  and every recipe it already held is unchanged; the collections it lacked are
+  added, and one it holds gains the file's recipes it lacks.
+- Given "replace", when the restore is done, then the book holds exactly what the
+  file holds.
+- Given an empty book, when a file is restored, then it is restored with no
+  question.
 - Given a saved book, when it is restored, then nothing is sent anywhere: like
   FLOW-063, the file goes only where the person puts it.
+- Given done marks, a shopping list and the settings, when a book is saved, then
+  they do not travel with it.
 - Given a file that cannot be read, when it is restored, then nothing changes in
   the book and the person is told why.
+- Given a book file opened from another application, when the person opens it,
+  then it leads to the same restore.
 
-What a restore does to a book that already holds recipes is open (OQ-041). The
-file's format and the controls are the team's; done marks, My kitchen and settings
-may or may not travel with it, the team decides.
+The file's format and where the controls sit are the team's.
 
-**Source:** user decision, 2026-10-10: the analyst's hypothesis H-001 ("a whole-book
-backup is a must-have before release", `analytics/hypotheses.md`) adopted; it also
-answers fork F-1 of v0.25. Written at the sync of 2026-10-11 as intent; its rules
-are settled when an increment is planned for it.
+**Source:** user decision, 2026-10-10: the analyst's hypothesis H-001 ("a
+whole-book backup is a must-have before release", `analytics/hypotheses.md`)
+adopted; it also answers fork F-1 of v0.25. Written at the sync of 2026-10-11 as
+intent. **Changed 2026-10-15 (sync v0.31–v0.38):** add or replace is the owner's
+answer to OQ-041 at the planning of v0.34 (2026-10-12); what travels and the rest
+of the criteria are the lead's rules built in v0.34 («Сборка ок, мержи»,
+2026-10-12), and collections travel since v0.36.

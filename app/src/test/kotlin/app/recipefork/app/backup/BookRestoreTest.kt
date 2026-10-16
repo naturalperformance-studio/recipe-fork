@@ -176,6 +176,20 @@ class BookRestoreTest {
         recipe.id
     }
 
+    // v0.39, T-279: a saved book carries the text each recipe was made from, exactly, and its restore brings it back.
+    @Test
+    fun aSavedBookCarriesTheTextARecipeWasMadeFrom() = runBlocking {
+        val pasted = "Блины\n\n  Мука — 200 г\r\nМолоко 500 мл\t(тёплое)\n" + "ж".repeat(19_000)
+        val recipe = Recipe.create(now, null).copy(title = "Блины", steps = listOf(Step(0, "Жарить."))).withSourceText(pasted)
+        sourceRecipes.save(recipe)
+        val plain = Recipe.create(now, null).copy(title = "Plain")
+        sourceRecipes.save(plain)
+        assertEquals(Restored(added = 2, alreadyHeld = 0), restore(RestoreMode.ADD))
+        assertEquals(pasted, bookRecipes.get(recipe.id)!!.sourceText)
+        assertEquals(recipe, bookRecipes.get(recipe.id))
+        assertNull(bookRecipes.get(plain.id)!!.sourceText)
+    }
+
     @Test
     fun addIntoAnEmptyBookCopiesEveryRecipeExactly() = runBlocking {
         val saved = fill()

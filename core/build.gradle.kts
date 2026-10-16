@@ -39,6 +39,11 @@ tasks.test {
     inputs.dir(root.dir("dictionary")).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("dictionarySources")
     inputs.file(root.file("app/src/main/assets/dictionaries.json")).withPathSensitivity(PathSensitivity.RELATIVE)
         .withPropertyName("dictionaryAsset")
+    // -Ppaste.corpus.extra=<dir>: the corpus test also reads the texts of that outside directory (CorpusTest).
+    providers.gradleProperty("paste.corpus.extra").orNull?.let { dir ->
+        systemProperty("paste.corpus.extra", file(dir).absolutePath)
+        inputs.dir(file(dir)).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("pasteCorpusExtra")
+    }
 }
 
 // Validates the sources under dictionary/ and writes app/src/main/assets/dictionaries.json (dictionary/README.md).

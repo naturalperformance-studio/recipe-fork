@@ -604,7 +604,7 @@ class SeveralTimersEditorTest {
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(1)), PATIENCE_MS)
         assertEquals(
             // Each timer on a line of its own, in its order, as the card's View writes it.
-            listOf("Step 1", "Knead, prove and glaze.", "Dough · 10 min", "Knead, prove and glaze. · 1 h 20 min", "Glaze · 5 min"),
+            listOf("Step 1", "Knead, prove and glaze.", "Dough · 10 min", "Knead, prove and glaze. · timer 2 · 1 h 20 min", "Glaze · 5 min"),
             compose.textsOf(StepSheetTags.line(0)),
         )
         assertEquals(listOf("Step 2", "Bake.", "Bake. · 25 min"), compose.textsOf(StepSheetTags.line(1)))
@@ -627,7 +627,7 @@ class SeveralTimersEditorTest {
         open(recipe)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.step(0)), PATIENCE_MS)
         assertEquals(
-            listOf("Шаг 1", "Замесить.", "Dough · 10 мин", "Замесить. · 1 ч 20 мин"),
+            listOf("Шаг 1", "Замесить.", "Dough · 10 мин", "Замесить. · таймер 2 · 1 ч 20 мин"),
             compose.textsOf(StepSheetTags.line(0)),
         )
     }

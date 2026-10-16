@@ -193,6 +193,38 @@ class StepSheetTest {
     @Config(qualifiers = "ru")
     fun eachStepReadsAsTextWithNoFieldsInRussian() = rowsReadAsText(listOf("Peel 500 г beets.", "Simmer.", "Новый шаг", "Serve."), "Simmer · 40 мин")
 
+    // v0.38, T-270: an unnamed timer reads on its step's row by the step's first words, as the card shows it — cut at a
+    // word to about 24 characters with "…", one of several keeping its number; a step shorter than the cut reads whole.
+    @Test
+    fun anUnnamedTimerReadsOnItsRowByItsStepsFirstWords() = unnamedTimersRead(
+        "Bake until the crust is golden brown and the loaf sounds hollow when tapped", "Knead the dough",
+        listOf("Bake until the crust is… · 40 min", "Bake until the crust is… · timer 1 · 20 min", "Bake until the crust is… · timer 2 · 5 min", "Knead the dough · 10 min"),
+    )
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun anUnnamedTimerReadsOnItsRowByItsStepsFirstWordsInRussian() = unnamedTimersRead(
+        "Выпекайте до золотистой корочки около сорока минут при двухстах градусах", "Замесите тесто",
+        listOf("Выпекайте до золотистой… · 40 мин", "Выпекайте до золотистой… · таймер 1 · 20 мин", "Выпекайте до золотистой… · таймер 2 · 5 мин", "Замесите тесто · 10 мин"),
+    )
+
+    private fun unnamedTimersRead(long: String, short: String, expected: List<String>) {
+        val recipe = Recipe.create(created, owner = null).copy(
+            title = "Bread",
+            language = RecipeLanguage.EN,
+            steps = listOf(
+                Step(0, long, timers = listOf(Timer(40.minutes))),
+                Step(1, long, timers = listOf(Timer(20.minutes), Timer(5.minutes))),
+                Step(2, short, timers = listOf(Timer(10.minutes))),
+            ),
+        )
+        open(recipe)
+        assertEquals(
+            expected,
+            listOf(StepSheetTags.timer(0, 0), StepSheetTags.timer(1, 0), StepSheetTags.timer(1, 1), StepSheetTags.timer(2, 0)).map { compose.rowText(it) },
+        )
+    }
+
     private fun rowsReadAsText(expected: List<String>, timer: String) {
         val recipe = draft()
         open(recipe)

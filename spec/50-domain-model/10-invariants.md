@@ -1,7 +1,7 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-03
+updated: 2026-10-15
 ids: [DOM-001, DOM-002, DOM-003, DOM-004, DOM-005, DOM-006, DOM-007, DOM-008, DOM-015]
 ---
 
@@ -56,13 +56,22 @@ not display a mass or volume equivalent for it.
 **Acceptance criteria**
 - Given an ingredient measured in tablespoons, when the recipe is displayed at
   any scale, then its quantity is shown in tablespoons only.
+- Given a recipe calling for 2 cups («2 стакана») of flour, when it is read in
+  either unit system, then it reads 2 cups, and no gram amount appears beside it
+  (L10N-008).
 
-**Verification:** manual UI check on a recipe using household units.
+**Verification:** manual UI check on a recipe using household units, in both unit
+systems.
 **Source:** user decision, 2026-09-20. The product holds no ingredient weight
 table, and inventing one per ingredient would be a separate product with its own
-moderation burden. The dictionary's comparison factors are approximate masses
-but are never displayed and never used in scaling; they only order the
-ingredient filter (DOM-011), so this requirement stands.
+moderation burden. The dictionary's comparison factors are approximate masses;
+they are never used in scaling and never shown as such (DOM-011).
+**Confirmed 2026-10-15 (sync v0.31–v0.38):** since v0.35 a factor may turn a mass
+into cups for a US reader, marked "≈" — the opposite direction, which this
+requirement does not forbid. The owner chose at that sync that the household units
+belong to both unit systems, so a cup is never turned into grams for a metric
+reader; the v0.35 build still does so (a known departure). See
+[ADR — one unit system, converted on display](../decisions/20261015-one-unit-system-converted-on-display.md).
 
 ### DOM-004 — A parent reference is fixed and shallow
 

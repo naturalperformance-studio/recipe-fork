@@ -115,6 +115,20 @@ class RunningTimers(
         return timer
     }
 
+    /**
+     * Puts back [timer], cancelled while it ran, as it was: under its key, its name and number, ending at its own
+     * [RunningTimer.endsAt] — running still, or, where that moment has passed meanwhile, ended and not yet announced, so
+     * that it is announced and rings at once. Returns false, putting nothing back, where a timer is held under its key
+     * again — started since: that one is the reader's latest.
+     */
+    suspend fun restore(timer: RunningTimer): Boolean {
+        if (get(timer.key) != null) return false
+        val back = timer.copy(announced = false)
+        dao.put(RunningTimerEntity.of(back))
+        announcements.started(back)
+        return true
+    }
+
     /** The timers whose end is not yet announced, running or just ended. */
     suspend fun unannounced(): List<RunningTimer> = dao.unannounced().map { it.toTimer() }
 

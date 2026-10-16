@@ -108,6 +108,7 @@ class IngredientsEditorTest {
         show()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return RecipeId(requireNotNull(session.editing.value))
     }
@@ -264,11 +265,11 @@ class IngredientsEditorTest {
         val textFields = compose.onAllNodes(inSheet and hasSetTextAction()).fetchSemanticsNodes()
             .map { it.config[SemanticsProperties.TestTag] }
         assertEquals(listOf(EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), IngredientNoteTags.field(0)), textFields)
-        // Every control of the sheet, each tagged — it has no drag handle — in order: Done, then the fields; a row just
-        // added offers no actions while it holds nothing (T-218).
+        // Every control of the sheet, each tagged but Material's drag handle (T-272), in order: the handle, Done, then the
+        // fields; a row just added offers no actions while it holds nothing (T-218).
         fun controls() = compose.onAllNodes(inSheet and AccessibilityChecks.isInteractive).fetchSemanticsNodes()
-            .map { it.config[SemanticsProperties.TestTag] }
-        val fields = listOf(
+            .map(::controlName)
+        val fields = SHEET_HANDLE + listOf(
             IngredientSheetTags.DONE, EditorTags.ingredientName(0), EditorTags.ingredientQuantity(0), EditorTags.ingredientUnit(0),
             IngredientNoteTags.field(0),
         )

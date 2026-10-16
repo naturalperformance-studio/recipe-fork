@@ -1,6 +1,6 @@
 # A quantity anyone states lies on the grid
 
-**Status:** accepted
+**Status:** accepted; narrowed by [one unit system, converted on display](20261015-one-unit-system-converted-on-display.md) (2026-10-15) — a fixed amount may be typed in the unit a converted line is shown in
 **Context:** The rounding grid decided what a computed quantity displays, but
 nothing decided what may be stated. An author's quantity was "number or none"
 (SD-034), and a reader's fixed amount had no stated admissible values at all

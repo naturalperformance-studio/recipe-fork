@@ -57,6 +57,10 @@ import app.recipefork.core.scaling.Rational
 import app.recipefork.core.search.BookOrder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -69,6 +73,8 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.time.Instant
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * T-206: the book's filter "Enough equipment" — offered while My kitchen holds something that counts; on, it hides
@@ -288,9 +294,13 @@ class EquipmentFilterTest {
         compose.waitUntil(PATIENCE_MS) { !equipmentOn() }
         assertListed(*all)
         assertFalse(exists(LibraryTags.EQUIPMENT_FILTER))
-        // Ticking again does not bring it back on: it was switched off.
+        // Ticking again does not bring it back on: it was switched off. Told once the kitchen is known again — the
+        // sheet offers the filter — not on a screen that has not caught up yet.
         store.hold(listOf(FRYING_PAN), true)
-        compose.waitForIdle()
+        openTheSheet()
+        compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_CHOICE), PATIENCE_MS)
+        assertEquals(ToggleableState.Off, toggleState(LibraryTags.EQUIPMENT_CHOICE))
+        closeTheSheet()
         assertListed(*all)
         assertFalse(equipmentOn())
     }
@@ -405,5 +415,55 @@ class EquipmentFilterTest {
         restored.filter(LibraryView.MARKED, BookFilters(equipment = true))
         restored.showImported(app.recipefork.core.recipe.RecipeId("brought"))
         assertEquals(BookFilters(), restored.filters(LibraryView.MARKED).value)
+    }
+
+    /**
+     * Runs [block] while every thread of the computing pool is held by other work, as tests before this one in a full
+     * suite may leave it: what the book reads of the device's database waits on threads of its own.
+     */
+    private fun whileTheComputingThreadsAreHeld(block: () -> Unit) {
+        val held = CountDownLatch(1)
+        val busy = CoroutineScope(Dispatchers.Default)
+        // As many as the pool has threads, each surely holding its own before the block runs.
+        val threads = maxOf(2, Runtime.getRuntime().availableProcessors())
+        val holding = CountDownLatch(threads)
+        repeat(threads) {
+            busy.launch {
+                holding.countDown()
+                held.await()
+            }
+        }
+        assertTrue("every computing thread is held", holding.await(PATIENCE_MS, TimeUnit.MILLISECONDS))
+        try {
+            block()
+        } finally {
+            held.countDown()
+            busy.cancel()
+        }
+    }
+
+    // The filter on as the book opens waits for the kitchen to be known; it is known though every computing thread is
+    // held (T-274: the class's flakes in a full suite — the list never came, or stayed stale).
+    @Test
+    fun theFilterOnAsTheBookOpensFiltersWhileTheComputingThreadsAreHeld() = whileTheComputingThreadsAreHeld {
+        theBook()
+        session.filter(LibraryView.OWN, BookFilters(equipment = true))
+        show(LibraryView.OWN)
+        assertListed(*cookable)
+    }
+
+    // ... and the sheet offers it, and switched on there it filters, the threads held from before the book opens.
+    @Test
+    fun theFilterSwitchedOnFiltersWhileTheComputingThreadsAreHeld() {
+        theBook()
+        whileTheComputingThreadsAreHeld {
+            show(LibraryView.OWN)
+            assertListed(*all)
+            openTheSheet()
+            compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.EQUIPMENT_CHOICE), PATIENCE_MS)
+            click(LibraryTags.EQUIPMENT_CHOICE)
+            closeTheSheet()
+            assertListed(*cookable)
+        }
     }
 }

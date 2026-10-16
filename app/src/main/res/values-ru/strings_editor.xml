@@ -11,7 +11,7 @@
     <string name="editor_bar_new_recipe">Новый рецепт</string>
     <string name="editor_back_action">Показать рецепт</string>
     <string name="editor_title">Название</string>
-    <string name="editor_frozen">Этот рецепт нельзя изменить в его нынешнем состоянии.</string>
+    <string name="editor_frozen">Этот рецепт больше нельзя изменить. Чтобы изменить его, нажмите «Своя версия» на его карточке и правьте свою копию.</string>
     <string name="editor_language">Язык</string>
     <string name="editor_language_ru">Русский</string>
     <string name="editor_language_en">Английский</string>
@@ -98,6 +98,8 @@
     <string name="editor_step_edit">Изменить шаг</string>
     <!-- What an empty step reads as on its row, muted. -->
     <string name="editor_step_new">Новый шаг</string>
+    <!-- What an empty step's field says goes there. -->
+    <string name="editor_step_placeholder">Что сделать на этом шаге</string>
     <string name="editor_step_add">Добавить шаг</string>
     <string name="editor_step_add_action">Добавить шаг в конец</string>
     <string name="editor_step_remove">Убрать шаг</string>
@@ -110,7 +112,6 @@
     <string name="editor_step_offered_ingredient">%1$s — %2$s</string>
     <string name="editor_description">Описание</string>
     <string name="editor_description_optional">Описание (необязательно)</string>
-    <string name="editor_description_none">Описания нет</string>
     <string name="editor_fork_note">Что берёт своя версия</string>
     <string name="editor_fork_note_action">Показать, что берёт своя версия</string>
     <string name="editor_fork_note_close">Закрыть</string>
@@ -133,7 +134,8 @@
     <string name="editor_row_move_down">Переместить вниз</string>
     <string name="editor_row_group_above">Добавить группу выше</string>
     <!-- Часть ингредиента в шаге: предлагается рядом с целым, вводится в единице ингредиента. -->
-    <string name="editor_step_offered_part">%1$s — часть…</string>
+    <string name="editor_step_offered_part">Часть…</string>
+    <string name="editor_step_offered_part_name">Часть: %1$s…</string>
     <string name="editor_part_title">Часть: %1$s</string>
     <string name="editor_part_field">Сколько, %1$s</string>
     <string name="editor_part_of_whole">Из %1$s по списку.</string>
@@ -150,6 +152,12 @@
     <string name="editor_mark_ingredients_missing">У рецепта должен быть хотя бы один ингредиент.</string>
     <string name="editor_mark_steps_missing">У рецепта должен быть хотя бы один шаг.</string>
     <string name="editor_mark_characters_over">Больше лимита в %1$s символов: сейчас %2$s. Текст сохранён целиком.</string>
+    <!-- A text field's mark over its limit, in its supporting text; the counter beside it gives the numbers. -->
+    <string name="editor_mark_field_over">Больше лимита. Текст сохранён целиком.</string>
+    <!-- The counter beside a field's mark: what the field holds / its limit. -->
+    <string name="editor_mark_counter">%1$s / %2$s</string>
+    <!-- The counter as the screen reader reads it. -->
+    <string name="editor_mark_counted">Символов: %1$s из %2$s</string>
     <string name="editor_mark_ingredients_over">Больше %1$s ингредиентов: сейчас %2$s.</string>
     <string name="editor_mark_steps_over">Больше %1$s шагов: сейчас %2$s.</string>
     <!-- Чек-лист: неизменные советы, как написать рецепт; открывается сверху редактора и только читается (GUIDE-003, GUIDE-004). -->

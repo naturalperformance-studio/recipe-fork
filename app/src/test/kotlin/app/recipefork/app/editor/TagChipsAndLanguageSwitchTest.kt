@@ -86,6 +86,7 @@ class TagChipsAndLanguageSwitchTest {
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
         compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
         return RecipeId(requireNotNull(session.editing.value))
     }
@@ -120,7 +121,8 @@ class TagChipsAndLanguageSwitchTest {
         compose.onNodeWithTag(EditorTags.offered(10)).assertDoesNotExist()
     }
 
-    // A tag of the recipe is an input chip with a cross: it says it is chosen, names its removal, and a tap removes it.
+    // A tag of the recipe is an input chip with a cross: the chip names the tag, and its cross — the one thing on it that
+    // does anything (T-271) — is a 48 dp button named for the removal, whose tap removes the tag.
     @Test
     fun aChosenTagIsAnInputChipWithARemoveIcon() {
         val id = writeANewRecipe()
@@ -128,15 +130,14 @@ class TagChipsAndLanguageSwitchTest {
         compose.addTag("geor", 11)
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.remove(11)), PATIENCE_MS)
         listOf(10L to "Italian", 11L to "Georgian").forEach { (tag, label) ->
-            val chip = node(EditorTags.remove(tag))
-            assertEquals(true, chip.config.getOrNull(SemanticsProperties.Selected))
-            assertEquals(listOf(label), chip.config[SemanticsProperties.Text].map { it.text })
-            assertEquals("Remove the tag $label", AccessibilityChecks.clickActionLabel(chip))
+            assertEquals(listOf(label), compose.textsOf(EditorTags.chip(tag)))
+            val cross = node(EditorTags.remove(tag))
+            assertEquals(Role.Button, cross.config.getOrNull(SemanticsProperties.Role))
+            assertEquals("Remove the tag $label", AccessibilityChecks.announcedLabel(cross))
             // The cross is drawn inside the chip.
-            compose.onNode(
-                hasTestTag(EditorTags.removeIcon(tag)) and hasAnyAncestor(hasTestTag(EditorTags.remove(tag))),
-                useUnmergedTree = true,
-            ).assertExists()
+            val icon = compose.onNodeWithTag(EditorTags.removeIcon(tag), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+            val chip = node(EditorTags.chip(tag)).boundsInRoot
+            assertTrue("the cross $icon is outside the chip $chip", chip.contains(icon.topLeft) && chip.contains(icon.bottomRight))
         }
         // Two chips share a line.
         val italian = node(EditorTags.chosen(10)).boundsInRoot

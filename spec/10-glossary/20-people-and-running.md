@@ -1,7 +1,7 @@
 ---
 slug: GLOSS
 status: closed
-updated: 2026-10-03
+updated: 2026-10-15
 ids: []
 ---
 
@@ -216,6 +216,14 @@ selection or copying. What the touch-target rule measures (A11Y-003).
 **Recipe book** — the interface name, "My recipe book" («Моя книга рецептов»), of
 what this specification calls the favourites section: the recipes a person found
 and marked, and the recipes they wrote (FLOW-034).
+
+**Collection** («Коллекция») — a named, ordered list of recipes of one recipe book,
+made there or imported from a collection file; it refers to recipes and copies
+none, and an imported one is not edited (DOM-028, FLOW-076, FLOW-077).
+
+**Choosing several** — picking recipes in one view of the book to act on them at
+once: into a collection, onto the shopping list, onto paper, or out of the book
+(FLOW-078).
 
 **Serverless mode** — the state of a release built for after the product owner's
 server is switched off: everything that needs the server is gone, everything the

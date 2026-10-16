@@ -1,8 +1,8 @@
 ---
 slug: DOM
 status: closed
-updated: 2026-10-11
-ids: [DOM-021, DOM-022, DOM-023, DOM-024, DOM-025, DOM-026, DOM-027]
+updated: 2026-10-15
+ids: [DOM-021, DOM-022, DOM-023, DOM-024, DOM-025, DOM-026, DOM-027, DOM-028]
 ---
 
 # Synonyms, ingredient groups, notes, timers, equipment and the author's note on a step
@@ -11,7 +11,7 @@ Added on 2026-10-04 by the sync of v0.15–v0.24: what the dictionary entry, the
 ingredient list and the step gained after the builds the product owner touched.
 [20-ingredients-and-limits.md](20-ingredients-and-limits.md) was already at its
 size limit, so these live here. DOM-025 to DOM-027 were added on 2026-10-11 by
-the sync of v0.22–v0.30.
+the sync of v0.22–v0.30, and DOM-028 on 2026-10-15 by the sync of v0.31–v0.38.
 
 ### DOM-021 — An entry carries synonyms in each language
 
@@ -199,3 +199,31 @@ own recipe does (FORK-007).
 an optional author's part beside its required text", not carried by another
 account's fork like the description); the 500-character limit is the lead's,
 accepted with the build.
+
+### DOM-028 — A collection is a named, ordered list of a book's recipes
+
+A recipe book holds collections. A collection has an identity, a name of 1 to 60
+characters, an ordered list of recipes of the same book, and an origin — made in
+this book (own) or imported from a collection file (FLOW-077) — and, when imported,
+the author's nickname the file states, if it states one. A recipe may be in any
+number of collections, and is in each at most once. A collection holds references
+to recipes, not copies: it never changes a recipe, and a recipe never changes by
+being in one.
+
+**Acceptance criteria**
+- Given a recipe in two collections, when it is opened from either, then it is the
+  same recipe, with the same done marks and the same parent.
+- Given a recipe deleted or removed from the book, when its collections are shown,
+  then it is in none of them; given that deletion undone, then it is back in each
+  that still exists, at its place.
+- Given a collection deleted, when the book is shown, then every recipe it held is
+  still there.
+- Given an imported collection, when its owner looks for renaming, reordering or
+  removing a recipe from it, then none is offered: it is kept as the file stated
+  it, like a found recipe (FLOW-064).
+- Given two collections with the same name, when both are made, then both exist.
+
+**Source:** user decisions at the planning of v0.36 (2026-10-12): one concept named
+Collection («Коллекция»); an imported collection is not editable; a recipe may be in
+several. The name's length and the deletion rules are the lead's, built in v0.36
+and accepted with it (2026-10-13). Adopted at the sync of 2026-10-15.

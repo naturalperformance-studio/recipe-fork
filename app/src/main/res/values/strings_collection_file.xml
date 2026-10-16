@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- v0.36: sharing a collection as a file, from the collection's ⋮. -->
-    <string name="collection_share">Share</string>
-    <string name="collection_share_sheet">Share “%1$s”</string>
+    <!-- v0.36: a collection as a file, from the collection's ⋮ — "Export", as a recipe's file action (file_export, v0.38). -->
+    <string name="collection_share_sheet">Export “%1$s”</string>
     <string name="collection_sharing">Preparing the collection\'s file</string>
-    <string name="collection_share_failed">Couldn\'t share the collection</string>
+    <string name="collection_share_failed">Couldn\'t export the collection</string>
     <!-- v0.36: importing a collection file. %1$s is the collection's name, %2$s how many recipes the file holds
          (collection_import_recipes), %3$s how many of them the book held already (collection_import_held). -->
     <string name="collection_import_added">“%1$s” added: %2$s</string>
