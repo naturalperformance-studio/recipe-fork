@@ -16,8 +16,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -40,19 +44,49 @@ fun AppTheme(choice: ThemeChoice, content: @Composable () -> Unit) {
 
 /**
  * The application's theme, built from `res/values/app_theme.xml` (ADR 20261004): the light scheme, or the dark one
- * when [dark], whatever the system's mode; the corners and the main type sizes from the same file, the type in the
- * bundled fonts. The system bars' icons follow the scheme: dark on the light one, light on the dark one.
+ * when [dark], whatever the system's mode, with the colours beyond Material 3's roles ([MaterialTheme.appColors]); the
+ * corners and the main type sizes from the same file, the type in the bundled fonts. The system bars' icons follow the
+ * scheme: dark on the light one, light on the dark one.
  */
 @Composable
 fun AppTheme(dark: Boolean = false, content: @Composable () -> Unit) {
     val resources = LocalContext.current.resources
     val colors = remember(resources, dark) { appColorScheme(resources, dark) }
+    val extra = remember(resources, dark) { appColors(resources, dark) }
     val shapes = remember(resources) { appShapes(resources) }
     val typography = remember(resources) { appTypography(resources) }
     val activity = LocalActivity.current as? ComponentActivity
     LaunchedEffect(activity, dark) { activity?.showSystemBarsFor(dark) }
-    MaterialTheme(colorScheme = colors, shapes = shapes, typography = typography, content = content)
+    CompositionLocalProvider(LocalAppColors provides extra) {
+        MaterialTheme(colorScheme = colors, shapes = shapes, typography = typography, content = content)
+    }
 }
+
+/** The theme's colours beyond Material 3's roles, from `app_theme.xml` as the scheme is (T-308). */
+@Immutable
+data class AppColors(
+    /** A sheet lighter than the page in both schemes: the book's collection spines (the redesign's `s0`). */
+    val raisedPaper: Color,
+) {
+    companion object {
+        /** Outside [AppTheme] (a bare MaterialTheme in a test): nothing is specified, so nothing is drawn in them. */
+        val Unspecified = AppColors(raisedPaper = Color.Unspecified)
+    }
+}
+
+/** The colours beyond Material 3's roles `app_theme.xml` gives: its `theme_dark_<name>` ones when [dark], else `theme_light_<name>`. */
+fun appColors(resources: Resources, dark: Boolean): AppColors {
+    fun color(light: Int, darkOne: Int) = Color(resources.getColor(if (dark) darkOne else light, null))
+    return AppColors(raisedPaper = color(R.color.theme_light_raisedPaper, R.color.theme_dark_raisedPaper))
+}
+
+private val LocalAppColors = staticCompositionLocalOf { AppColors.Unspecified }
+
+/** The theme's colours beyond [MaterialTheme.colorScheme], as [AppTheme] gives them for its scheme. */
+val MaterialTheme.appColors: AppColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalAppColors.current
 
 /**
  * Draws [this] Activity edge to edge with the system bars' icons readable on the [dark] or light scheme: the status

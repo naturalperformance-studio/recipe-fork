@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.CollectionRow
+import app.recipefork.app.ui.appColors
 
 /**
  * The collections of a view of the book (v0.36) — the reader's own above the own recipes, the imported ones above the
@@ -65,8 +66,9 @@ internal fun CollectionsRow(collections: List<CollectionRow>, onOpen: (String) -
 }
 
 /**
- * One collection of the shelf, as a book's spine: a 3 dp stripe at its start, its name on one line — a long one ending
- * with an ellipsis — and its count of recipes under it; at least 48 dp high, growing with the text. Tapping it opens it.
+ * One collection of the shelf, as a book's spine on raised paper, lighter than the page in both schemes (T-308): a 3 dp
+ * stripe at its start, its name on one line — a long one ending with an ellipsis — and its count of recipes under it;
+ * at least 48 dp high, growing with the text. Tapping it opens it.
  */
 @Composable
 private fun CollectionSpine(collection: CollectionRow, onOpen: (String) -> Unit, enabled: Boolean) {
@@ -76,7 +78,8 @@ private fun CollectionSpine(collection: CollectionRow, onOpen: (String) -> Unit,
         onClick = open,
         enabled = enabled,
         shape = MaterialTheme.shapes.extraSmall,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        color = MaterialTheme.appColors.raisedPaper,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier
             .sizeIn(minWidth = SPINE_MIN_HEIGHT, minHeight = SPINE_MIN_HEIGHT, maxWidth = SPINE_MAX_WIDTH)

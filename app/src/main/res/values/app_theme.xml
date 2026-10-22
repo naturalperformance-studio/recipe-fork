@@ -3,6 +3,7 @@
     The application's theme: every colour, the corners and the main type sizes, in one file (ADR 20261004).
     Change a value here and rebuild; nothing in Kotlin needs touching. Every Material 3 colour role has a light and a
     dark value, theme_light_<role> and theme_dark_<role>; the app picks the scheme itself, not through values-night.
+    The few colours beyond Material 3's roles are named the same way, in their own block after the dark scheme.
     Each pair a screen draws text or an icon in is measured by ContrastTest (text 4.5:1, icons and boundaries 3:1)
     in both schemes, so a change that makes something unreadable fails the build's tests, not the phone.
     Colours are #AARRGGBB or #RRGGBB.
@@ -107,6 +108,12 @@
     <color name="theme_dark_tertiaryFixedDim">#FFE6A3A8</color>
     <color name="theme_dark_onTertiaryFixed">#FF3A0A12</color>
     <color name="theme_dark_onTertiaryFixedVariant">#FF72303A</color>
+
+    <!-- Beyond Material 3's roles, light and dark: read through the theme as MaterialTheme.appColors, never in a screen.
+         Raised paper: a sheet lighter than the page in both schemes — the book's collection spines (the redesign's
+         s0). -->
+    <color name="theme_light_raisedPaper">#FFFCF8F0</color>
+    <color name="theme_dark_raisedPaper">#FF2A251F</color>
 
     <!-- Corners: Material 3's shape scale, from the smallest (chips, menus) to the largest (sheets, dialogs). -->
     <dimen name="theme_shape_extraSmall">4dp</dimen>

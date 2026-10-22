@@ -1,14 +1,24 @@
 package app.recipefork.app.collections
 
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.res.Resources
 import androidx.activity.ComponentActivity
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.hasText
@@ -23,6 +33,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.Mode
+import app.recipefork.app.R
+import app.recipefork.app.book.CollectionRow
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -36,9 +48,13 @@ import app.recipefork.app.library.LibraryView
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.AppNavHost
+import app.recipefork.app.ui.AppColors
 import app.recipefork.app.ui.AppTheme
+import app.recipefork.app.ui.appColorScheme
+import app.recipefork.app.ui.appColors
 import app.recipefork.app.ui.WorkingFamily
 import app.recipefork.core.recipe.CollectionId
+import app.recipefork.core.recipe.CollectionOrigin
 import app.recipefork.core.recipe.Recipe
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -53,12 +69,14 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
+import kotlin.math.abs
 
 /**
  * The book's collections as narrow spines (v0.42, T-303): a sideways lazy row above the recipes, each spine at least
  * 48 dp high with a 3 dp stripe at its start, its name in Golos (titleSmall) on one line — a long one ending with an
  * ellipsis — and its count under it; tapping one opens the collection; at twice the font scale a spine grows and
  * nothing in it is cut. With the spines, at least four recipe rows still fit the first screen of a 360 × 780 dp phone.
+ * A spine stands on the theme's raised paper, lighter than the page, in the light theme and the dark one (T-308).
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -108,11 +126,16 @@ class CollectionSpinesTest {
         collections.create(name)!!.also { id -> members.forEach { collections.addTo(it.id, listOf(id)) } }
     }
 
-    private fun show(mode: Mode = Mode.Serverless) {
+    private lateinit var scheme: ColorScheme
+    private lateinit var extra: AppColors
+
+    private fun show(mode: Mode = Mode.Serverless, dark: Boolean = false) {
         session.choose(LibraryView.OWN)
         compose.setContent {
-            AppTheme {
+            AppTheme(dark = dark) {
                 type = MaterialTheme.typography
+                scheme = MaterialTheme.colorScheme
+                extra = MaterialTheme.appColors
                 AppNavHost(session, recipes, mode, editor = editor, collections = collections)
             }
         }
@@ -321,6 +344,64 @@ class CollectionSpinesTest {
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
     fun inRussianAtTwiceTheFontScaleASpineGrowsAndNothingIsCut() = assertGrowsAtTwiceTheFontScale()
+
+    // --- Raised paper (T-308) -------------------------------------------------------------------------------------
+
+    private fun pixelAt(x: Float, y: Float): Color =
+        Color(compose.onRoot().captureToImage().asAndroidBitmap().getPixel(x.toInt(), y.toInt()))
+
+    private fun assertColour(message: String, expected: Color, shown: Color) {
+        val close = listOf(shown.red - expected.red, shown.green - expected.green, shown.blue - expected.blue).all { abs(it) < 0.02f }
+        assertTrue("$message: $shown, not $expected", close)
+    }
+
+    /** Where a spine's own paper shows: inside its end padding, clear of its border, its words and its corners. */
+    private fun paperOf(id: CollectionId): Color = bounds(spine(id)).let { pixelAt(it.right - dp(6f), it.center.y) }
+
+    private fun assertOnRaisedPaper(dark: Boolean) {
+        val menu = collection("Menu", own("Bread"))
+        show(dark = dark)
+        await(spine(menu))
+        compose.waitForIdle()
+        val file = appColors(context.resources, dark).raisedPaper
+        assertEquals("the theme's raised paper is the file's", file, extra.raisedPaper)
+        val paper = paperOf(menu)
+        assertColour("the spine on raised paper", file, paper)
+        // The page beside the first spine, in the shelf's start padding.
+        val page = bounds(spine(menu)).let { pixelAt(bounds(CollectionScreenTags.ROW).left + dp(8f), it.center.y) }
+        assertColour("the page beside the spine", appColorScheme(context.resources, dark).surface, page)
+        assertTrue("the spine ($paper) lighter than the page ($page)", paper.luminance() > page.luminance())
+        assertColour("the spine's name in ink", scheme.onSurface, layoutOf(CollectionScreenTags.cardName(menu.value)).layoutInput.style.color)
+    }
+
+    @Test
+    fun inTheLightThemeASpineStandsOnRaisedPaperLighterThanThePage() = assertOnRaisedPaper(dark = false)
+
+    @Test
+    fun inTheDarkThemeASpineStandsOnRaisedPaperLighterThanThePage() = assertOnRaisedPaper(dark = true)
+
+    // The spine reads its paper through the theme: a raised paper changed in the file's resources is what it draws.
+    @Test
+    fun aChangedRaisedPaperInTheFileReachesTheSpine() {
+        val changed = Color(0xFF00796B)
+        val base = compose.activity
+        @Suppress("DEPRECATION")
+        val edited = object : Resources(base.assets, base.resources.displayMetrics, base.resources.configuration) {
+            override fun getColor(id: Int, theme: Theme?): Int =
+                if (id == R.color.theme_dark_raisedPaper) changed.toArgb() else super.getColor(id, theme)
+        }
+        val wrapped = object : ContextWrapper(base) {
+            override fun getResources(): Resources = edited
+        }
+        val row = CollectionRow("menu", "Menu", CollectionOrigin.OWN, null, now, 2)
+        compose.setContent {
+            CompositionLocalProvider(LocalContext provides wrapped) {
+                AppTheme(dark = true) { CollectionsRow(listOf(row), onOpen = {}) }
+            }
+        }
+        compose.waitForIdle()
+        assertColour("the spine on the changed paper", changed, bounds(CollectionScreenTags.card("menu")).let { pixelAt(it.right - dp(6f), it.center.y) })
+    }
 
     // --- The first screen ------------------------------------------------------------------------------------------
 
