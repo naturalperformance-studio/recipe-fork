@@ -215,7 +215,8 @@
 4721	сулугуни	suluguni	4700		g=1 tbsp=7 cup=100				kcal=286 protein=20.5 fat=22 carbs=0.4	skurikhin:Сулугуни
 # сулугуни копчёный → Skurikhin «Сулугуни» (1.6.4.3, p. 48-49)
 4722	сулугуни копчёный	smoked suluguni	4700		g=1				kcal=286 protein=20.5 fat=22 carbs=0.4	skurikhin:Сулугуни
-4723	имеретинский сыр	Imeretian cheese	4700		g=1
+# имеретинский сыр → Skurikhin «Брынза (из коровьего молока)» (1.6.4.2, p. 46-47): a brined rennet cheese
+4723	имеретинский сыр	Imeretian cheese	4700		g=1				kcal=262 protein=22.1 fat=19.2 carbs=0.4	skurikhin:Брынза (из коровьего молока)
 # Skurikhin 1.6.3.1, p. 46-47
 4724	адыгейский сыр	Adyghe cheese	4700		g=1				kcal=264 protein=19.8 fat=19.8 carbs=1.5	skurikhin:Адыгейский
 # брынза → Skurikhin «Брынза (из коровьего молока)» (1.6.4.2, p. 46-47)

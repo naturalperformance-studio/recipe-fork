@@ -27,8 +27,10 @@
 3812	кровяная колбаса	blood sausage	3800		g=1				kcal=379 protein=14.6 fat=34.5 carbs=1.29	fdc:171618
 # Skurikhin 3.6.6.3, p. 76-77
 3813	охотничьи колбаски	hunter's sausages	3800	false	g=1 pc=50				kcal=463 protein=25.3 fat=40 carbs=0.3	skurikhin:Охотничьи колбаски
-3814	суджук	sujuk	3800		g=1
-3815	казы	kazy	3800		g=1
+# суджук → Skurikhin «Брауншвейгская» (3.6.7.1, p. 76-77): a dry-cured sausage; the table has no sujuk
+3814	суджук	sujuk	3800		g=1				kcal=491 protein=27.7 fat=42.2 carbs=0.2	skurikhin:Брауншвейгская
+# казы → Skurikhin «Брауншвейгская» (3.6.7.1, p. 76-77): a dry-cured sausage; the table has no kazy
+3815	казы	kazy	3800		g=1				kcal=491 protein=27.7 fat=42.2 carbs=0.2	skurikhin:Брауншвейгская
 3816	мортаделла	mortadella	3800		g=1				kcal=311 protein=16.37 fat=25.39 carbs=3.05	fdc:174573
 3817	купаты	kupaty	3800	false	g=1 pc=100
 # колбаски для гриля → fdc:171622 bratwurst, pork and beef
@@ -62,9 +64,12 @@
 3850	ветчина	ham			g=1				kcal=162 protein=18.26 fat=8.39 carbs=2.28	fdc:168295
 3851	ветчина варёная	cooked ham	3850		g=1
 3852	ветчина копчёная	smoked ham	3850		g=1				kcal=246 protein=18.49 fat=18.52 carbs=0.06	fdc:167875
-3853	хамон	jamón	3850		g=1
-3854	прошутто	prosciutto	3850		g=1
-3855	пармская ветчина	Parma ham	3850		g=1
+# хамон → fdc:168282 country-style ham, lean only: the only dry-cured ham listed
+3853	хамон	jamón	3850		g=1				kcal=195 protein=27.8 fat=8.32 carbs=0.3	fdc:168282
+# прошутто → fdc:168282 country-style ham, lean only: the only dry-cured ham listed
+3854	прошутто	prosciutto	3850		g=1				kcal=195 protein=27.8 fat=8.32 carbs=0.3	fdc:168282
+# пармская ветчина → fdc:168282 country-style ham, lean only: the only dry-cured ham listed
+3855	пармская ветчина	Parma ham	3850		g=1				kcal=195 protein=27.8 fat=8.32 carbs=0.3	fdc:168282
 3856	ветчина из индейки	turkey ham	3850		g=1				kcal=134 protein=19.6 fat=5.8 carbs=0.93	fdc:168092
 3857	ветчина куриная	chicken ham	3850		g=1
 3858	окорок копчёный	smoked bone-in ham	3850		g=1				kcal=246 protein=18.49 fat=18.52 carbs=0.06	fdc:167875
@@ -74,7 +79,8 @@
 # бекон
 3870	бекон	bacon		true	g=1 pc=15				kcal=393 protein=13.66 fat=37.13 carbs=0	fdc:168277
 3871	панчетта	pancetta	3870		g=1
-3872	гуанчиале	guanciale	3870		g=1
+# гуанчиале → fdc:168269 raw pork jowl: guanciale is the cured jowl
+3872	гуанчиале	guanciale	3870		g=1				kcal=655 protein=6.38 fat=69.61 carbs=0	fdc:168269
 3873	бекон из индейки	turkey bacon	3870	true	g=1 pc=15				kcal=226 protein=15.94 fat=16.93 carbs=1.89	fdc:174592
 3874	бекон сырокопчёный	dry-cured bacon	3870	true	g=1 pc=15
 3875	бекон варёно-копчёный	cooked smoked bacon	3870	true	g=1 pc=15
