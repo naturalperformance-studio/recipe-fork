@@ -307,6 +307,35 @@ class CollectionScreenTest {
     }
 
     @Test
+    fun aRowThatComesAfterTheRecipesStandsInSightAboveTheFirstOfThemInEachView() {
+        // The recipes are listed before the book holds any collection; the row then comes to stand above them. A list
+        // at its top shows it there, not scrolled out above the first recipe (T-307). Nothing here scrolls the list.
+        val soup = own("Soup")
+        val borscht = found("Borscht")
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(soup.value))
+        assertFalse(exists(CollectionScreenTags.ROW))
+        collection("Menu", soup.value)
+        awaitRowInSightAbove(LibraryTags.entry(soup.value), LibraryView.OWN)
+
+        // The own view's row leaves with its page; the imported view holds no imported collection yet.
+        compose.runOnIdle { session.choose(LibraryView.MARKED) }
+        await(LibraryTags.entry(borscht.value))
+        awaitGone(CollectionScreenTags.ROW)
+        imported("Anna's pies", "anna", borscht.value)
+        awaitRowInSightAbove(LibraryTags.entry(borscht.value), LibraryView.MARKED)
+    }
+
+    /** Waits until the view's row of collections stands wholly in the list's sight, above the entry tagged [entry]. */
+    private fun awaitRowInSightAbove(entry: String, view: LibraryView) {
+        compose.waitUntil(PATIENCE_MS) {
+            exists(CollectionScreenTags.ROW) && exists(entry) &&
+                bounds(CollectionScreenTags.ROW).top >= bounds(list(view)).top &&
+                bounds(CollectionScreenTags.ROW).bottom <= bounds(entry).top
+        }
+    }
+
+    @Test
     fun theRowIsHiddenWithoutCollectionsAndWhileAViewIsSearched() {
         val soup = own("Soup")
         found("Borscht")
