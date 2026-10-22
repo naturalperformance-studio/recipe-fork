@@ -33,5 +33,6 @@ One exception since v0.31 (T-224): the servings − and + (`card/CardScreen.kt`,
 
 ## Exceptions to the skill
 
+- The book's search field (`library/ListHeader.kt`, v0.42, T-309) is a `BasicTextField` in `OutlinedTextFieldDefaults.DecorationBox`, with a leading magnifier and the whole hint as placeholder at rest and no floating label (the redesign's field); it is named «Поиск» through `contentDescription`. M3's leading-icon slot left the Russian hint cut at 360 dp.
 - Recipe deletion asks nothing: the book offers Undo while its notice shows (FLOW-053 as rewritten 2026-10-04; v0.23, T-172).
 - The proportions warning on the card (SCALE-009) may still appear and disappear; the recalculation status line above the ingredients does not shift them (v0.19).
