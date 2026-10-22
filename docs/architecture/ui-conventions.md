@@ -10,7 +10,10 @@ The general rules live in the `android-m3-ui` skill (`~/.claude/skills/android-m
 | Haptics | Only through `ui/Haptics.kt`: `Haptic.CONFIRM` → an 80 ms one-shot, `Haptic.TICK` → a 50 ms one-shot, at the default amplitude, played on the `Vibrator` with touch usage (the view's `performHapticFeedback` was silent on the owner's Samsung, and its predefined click and tick effects were not felt there — v0.34, T-245). From API 33 the system's touch-feedback switch silences them; below 33 the app reads `HAPTIC_FEEDBACK_ENABLED` itself. Tests use the `LocalHaptics` double. |
 | Strings | `res/values/strings_<feature>.xml` and `res/values-ru/strings_<feature>.xml`, both in the same change. |
 | Contrast | `ui/ContrastTest` lists every colour pair the interface draws; a new pair is added there. |
-| Theme | Every colour role (light and dark), corner size and main type size in `res/values/app_theme.xml` (ADR 20261004), built by `ui/AppTheme.kt`; screens take colours only from `MaterialTheme.colorScheme`. |
+| Theme | Every colour role (light and dark), corner size and main type size in `res/values/app_theme.xml` (ADR 20261004), built by `ui/AppTheme.kt`; screens take colours only from `MaterialTheme.colorScheme`. No dynamic (wallpaper) colour. |
+| Accents (redesign, v0.41) | One meaning per accent: olive (`primary` and its container) for actions, the current step and "done"; beet (`tertiary`) only for provenance marks — the provenance line, the provenance glyph where it marks a parent; the graphite colour (from v0.43) only for margin notes. `ui/BeetIsProvenanceTest` lists the beet reads. |
+| Type (redesign, v0.41) | What is read is Literata; what is pressed, counted and compared is Golos Text with tabular figures — labels, chips, tabs, timers, quantities, the summary under a title. Pick the role, not a family: reading roles (headlineSmall, titleLarge, titleMedium, bodyLarge, bodyMedium) are Literata, working roles (titleSmall, bodySmall, label*) are Golos. Fonts are bundled (`res/font/`, built by `scripts/fonts.sh`); never downloadable fonts. |
+| Recipes without a cover | A drop cap (the title's first letter) in the book from v0.42, never a stock picture: the app does not know what the dish is. |
 
 ## Patterns already in the code — reuse them
 
