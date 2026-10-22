@@ -1565,6 +1565,8 @@ fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> U
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(CardTags.FORK_HELD),
         icon = { ProvenanceGlyph(Modifier.size(HELD_GLYPH)) },
+        // The glyph marks provenance, so it is beet here, as the redesign draws the dialog.
+        iconContentColor = MaterialTheme.colorScheme.tertiary,
         text = { Text(stringResource(R.string.card_fork_held)) },
         confirmButton = {
             TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_OPEN)) {

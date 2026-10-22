@@ -147,6 +147,7 @@ class ContrastTest {
         // Beet: the tertiary colour marks provenance and nothing else (the redesign, T-296).
         text("a fork's provenance line on the card — \"Forked from …\"", c.tertiary, c.surface),
         text("a fork's provenance line on the container tint", c.tertiary, c.surfaceContainer),
+        graphic("the provenance glyph heading the held-fork dialog", c.tertiary, c.surfaceContainerHigh),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }
