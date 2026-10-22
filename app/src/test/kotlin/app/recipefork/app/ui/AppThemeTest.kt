@@ -26,6 +26,11 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontListFontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.ResourceFont
 import androidx.core.view.WindowCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.R
@@ -42,7 +47,7 @@ import java.io.File
 /**
  * The theme is one resource file (ADR 20261004): every colour role of both schemes, the corners and the main type sizes
  * come from `app_theme.xml`; both schemes are the redesign's paper and ink, never the wallpaper's colours; a changed
- * value reaches the screen; the system bars' icons follow the scheme.
+ * value reaches the screen; the system bars' icons follow the scheme; each type role is set in its bundled family (T-297).
  */
 @RunWith(AndroidJUnit4::class)
 class AppThemeTest {
@@ -109,13 +114,56 @@ class AppThemeTest {
     @Test
     fun theCornersAndTypeSizesComeFromTheFileAndAreMaterialsDefaultsButTheMediumCorner() {
         assertEquals(Shapes(medium = RoundedCornerShape(10.dp)), appShapes(resources))
-        assertEquals(Typography(), appTypography(resources))
+        assertEquals(sizes(Typography()), sizes(appTypography(resources)))
         var shown: Triple<ColorScheme, Shapes, Typography>? = null
         compose.setContent { AppTheme(dark = true) { shown = Triple(MaterialTheme.colorScheme, MaterialTheme.shapes, MaterialTheme.typography) } }
         compose.waitUntil { shown != null }
         assertEquals(roles(appColorScheme(resources, dark = true)), roles(shown!!.first))
         assertEquals(appShapes(resources), shown!!.second)
         assertEquals(appTypography(resources), shown!!.third)
+    }
+
+    /** Every text style of a [Typography], by role. */
+    private fun styles(typography: Typography): Map<String, TextStyle> = with(typography) {
+        mapOf(
+            "displayLarge" to displayLarge, "displayMedium" to displayMedium, "displaySmall" to displaySmall,
+            "headlineLarge" to headlineLarge, "headlineMedium" to headlineMedium, "headlineSmall" to headlineSmall,
+            "titleLarge" to titleLarge, "titleMedium" to titleMedium, "titleSmall" to titleSmall,
+            "bodyLarge" to bodyLarge, "bodyMedium" to bodyMedium, "bodySmall" to bodySmall,
+            "labelLarge" to labelLarge, "labelMedium" to labelMedium, "labelSmall" to labelSmall,
+        )
+    }
+
+    /** The size and line height of every role: what the fonts may not change. */
+    private fun sizes(typography: Typography) = styles(typography).mapValues { (_, style) -> style.fontSize to style.lineHeight }
+
+    // T-297, the design's role table: what is read in Literata, what is pressed and counted in Golos Text, the labels
+    // with tabular figures; the roles the app does not set keep Material's own.
+    @Test
+    fun eachRoleIsSetInItsFamilyAndWeight() {
+        val expected = mapOf(
+            "headlineSmall" to Triple(ReadingFamily, FontWeight.Normal, null),
+            "titleLarge" to Triple(ReadingFamily, FontWeight.Medium, null),
+            "titleMedium" to Triple(ReadingFamily, FontWeight.Medium, null),
+            "titleSmall" to Triple(WorkingFamily, FontWeight.Medium, null),
+            "bodyLarge" to Triple(ReadingFamily, FontWeight.Normal, null),
+            "bodyMedium" to Triple(ReadingFamily, FontWeight.Normal, null),
+            "bodySmall" to Triple(WorkingFamily, FontWeight.Normal, null),
+            "labelLarge" to Triple(WorkingFamily, FontWeight.Medium, "tnum"),
+            "labelMedium" to Triple(WorkingFamily, FontWeight.Medium, "tnum"),
+            "labelSmall" to Triple(WorkingFamily, FontWeight.Medium, "tnum"),
+        )
+        val material = styles(Typography())
+        styles(appTypography(resources)).forEach { (role, style) ->
+            val (family, weight, features) = expected[role] ?: material.getValue(role).let { Triple(it.fontFamily, it.fontWeight, it.fontFeatureSettings) }
+            assertEquals("$role's family", family, style.fontFamily)
+            assertEquals("$role's weight", weight, style.fontWeight)
+            assertEquals("$role's font features", features, style.fontFeatureSettings)
+        }
+        // The families are the bundled files, Regular and Medium each: never a downloadable font.
+        fun files(family: FontFamily) = (family as FontListFontFamily).fonts.map { (it as ResourceFont).resId to it.weight }
+        assertEquals(listOf(R.font.literata_regular to FontWeight.Normal, R.font.literata_medium to FontWeight.Medium), files(ReadingFamily))
+        assertEquals(listOf(R.font.golos_text_regular to FontWeight.Normal, R.font.golos_text_medium to FontWeight.Medium), files(WorkingFamily))
     }
 
     @Test

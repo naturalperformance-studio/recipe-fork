@@ -63,4 +63,27 @@ class FitWordsTest {
         val width = widestAtFull(wide) + 1
         assertEquals(style, fitWordsTogether(listOf(narrow, wide), style, width, measurer, density))
     }
+
+    // T-297, a bar's title ([fitLine]): one line where it fits drawn smaller; else two lines at the least size, the line
+    // height 28/22 of it; one line again where a word by itself is wider than the line.
+    @Test
+    fun aTitleTakesTwoLinesOnlyWhereOneDoesNotFitEvenAtTheLeastSize() {
+        val least = with(density) { style.fontSize.value.dp.toSp() }
+        val atLeast = style.copy(fontSize = least)
+        fun lineAtLeast(text: String) = measurer.measure(text, atLeast, softWrap = false, maxLines = 1).size.width
+
+        val fitsSmaller = fitLine(wide, style, lineAtLeast(wide) + 2, measurer, density)
+        assertEquals(1, fitsSmaller.lines)
+        assertTrue(px(fitsSmaller.style) < px(style))
+
+        val title = "$narrow $wide"
+        val two = fitLine(title, style, widestWord(listOf(title), atLeast, measurer) + 2, measurer, density)
+        assertEquals(2, two.lines)
+        assertEquals(px(atLeast), px(two.style), 0.01f)
+        assertEquals(two.style.fontSize.value * 28f / 22f, two.style.lineHeight.value, 0.01f)
+
+        val word = fitLine(title, style, widestWord(listOf(title), atLeast, measurer) / 2, measurer, density)
+        assertEquals(1, word.lines)
+        assertEquals(px(atLeast), px(word.style), 0.01f)
+    }
 }

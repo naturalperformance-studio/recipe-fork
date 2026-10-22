@@ -124,8 +124,9 @@ import kotlinx.coroutines.launch
  *
  * Once the book holds the collection no more — deleted here, or its book replaced — the screen closes.
  *
- * At large text (v0.38) the bar's name keeps to one line, ending with an ellipsis where it is too long even drawn
- * smaller ([LineFitText]), and a notice's action stands on a line of its own ([LibrarySnackbarHost], the book's).
+ * At large text (v0.38) the bar's name keeps to one line drawn smaller, or else two (T-297), ending with an ellipsis
+ * where it is too long even so ([LineFitText]), and a notice's action stands on a line of its own ([LibrarySnackbarHost],
+ * the book's).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,7 +193,7 @@ fun CollectionScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // On one line, never under the bar's actions nor spilling below it at a large font scale (v0.38).
+                    // On one line or two, never under the bar's actions nor spilling below it at a large font scale (v0.38, T-297).
                     BoxWithConstraints(Modifier.padding(end = TITLE_CLEARANCE)) {
                         LineFitText(
                             collection?.name.orEmpty(),

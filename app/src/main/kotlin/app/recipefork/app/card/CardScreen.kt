@@ -153,6 +153,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.ui.Haptic
 import app.recipefork.app.ui.rememberHaptics
 import app.recipefork.app.R
@@ -934,9 +935,13 @@ private val PART_GAP = 8.dp
 /** The most lines the bar gives the recipe's title. */
 private const val BAR_TITLE_LINES = 2
 
+/** The size and line height of the bar's title where it takes two lines: some thirty characters fit in Literata (T-297). */
+private val BAR_TITLE_SIZE = 15.sp
+private val BAR_TITLE_LINE = 22.sp
+
 /**
- * The recipe's [title] in the bar: in the bar's own large title style where it fits on one line; otherwise smaller, on
- * up to [BAR_TITLE_LINES] lines, ellipsized at the end of the last.
+ * The recipe's [title] in the bar: in the bar's own large title style where it fits on one line; otherwise smaller
+ * ([BAR_TITLE_SIZE]), on up to [BAR_TITLE_LINES] lines, ellipsized at the end of the last.
  */
 @Composable
 private fun BarTitle(title: String) {
@@ -947,9 +952,10 @@ private fun BarTitle(title: String) {
         val fits = remember(title, large, width, measurer) {
             !measurer.measure(title, large, maxLines = 1, softWrap = false, constraints = Constraints(maxWidth = width)).hasVisualOverflow
         }
+        val two = MaterialTheme.typography.titleMedium.copy(fontSize = BAR_TITLE_SIZE, lineHeight = BAR_TITLE_LINE)
         Text(
             title,
-            style = if (fits) large else MaterialTheme.typography.titleMedium,
+            style = if (fits) large else two,
             maxLines = if (fits) 1 else BAR_TITLE_LINES,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.testTag(CardTags.BAR_TITLE),
