@@ -219,7 +219,7 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * on, so a Cooking a notification brought is kept too, and the next card opens on it.
  *
  * View is one scrolling page: the cover, the title with its summary, the provenance, the description, the equipment, the
- * serving count, the ingredients in order, the steps numbered. A part the recipe does not hold is left out with no
+ * serving count, the ingredients in order, roughly what the dish holds ([NutritionSection]), the steps numbered. A part the recipe does not hold is left out with no
  * heading and no placeholder (FLOW-019 (1–3)), so a recipe holding only a title still reads as a whole recipe. Its bar holds back, the
  * title once it has scrolled away, and, only while the recipe is editable, the edit action that opens the editor on it
  * (FLOW-029 (2–4)); its ⋮ holds the recipe's removal — Delete for an own recipe in a deletable state, Remove for a found
@@ -351,6 +351,9 @@ fun CardScreen(
     // The same of the equipment, which folds on its own.
     val equipmentShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
     val shownAgain = remember(ingredientsShownAgain, equipmentShownAgain) { ShownAgain(equipmentShownAgain, ingredientsShownAgain) }
+    // Whether View's nutrition shows the whole dish rather than one serving: the card's, kept while it is open, as the
+    // reader turns to Cooking and back or the activity is recreated, and one serving each time a card opens.
+    val nutritionWhole = rememberSaveable(recipeId) { mutableStateOf(false) }
     // The recipe's timers running, or ringing, while their step is out of sight on the tab shown: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
     val timing = timersBar?.timers?.let { timers -> timers.held.values.any { !it.hasEnded(timers.now) || timers.rings(it.key) } } == true
@@ -541,6 +544,7 @@ fun CardScreen(
                             RecipeContent(
                                 recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                                 shownAgain, units,
+                                nutritionWhole = nutritionWhole,
                                 equipmentEntries = equipmentEntries,
                                 kitchen = kitchen,
                                 onOpenKitchen = onOpenKitchen,
@@ -999,6 +1003,7 @@ private fun RecipeContent(
     places: CardPlaces,
     shownAgain: ShownAgain,
     units: UnitSystem,
+    nutritionWhole: MutableState<Boolean>,
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
     onOpenKitchen: ((Long) -> Unit)?,
@@ -1111,6 +1116,11 @@ private fun RecipeContent(
                     mode = mode,
                     shownAgain = shownAgain.ingredients,
                 )
+            }
+            // On View, roughly what the dish holds, at the scale in force; nothing where no row can be counted.
+            if (viewing) {
+                val nutrition = remember(ordered, entries, list) { dishNutrition(ordered, entries, list) }
+                nutrition?.let { NutritionSection(it, ordered, list.lines, list.servingCount, language, nutritionWhole) }
             }
             // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(

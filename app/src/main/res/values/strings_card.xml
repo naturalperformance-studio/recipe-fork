@@ -144,4 +144,52 @@
     <string name="card_source_text">Original text</string>
     <string name="card_source_text_copy">Copy</string>
     <string name="card_source_text_copied">Text copied</string>
+    <!-- The card's nutrition (v0.40, T-293): its own section on View between the ingredients and the steps, roughly
+         what the dish holds, per serving or for the whole dish, and a sheet of details. -->
+    <string name="card_nutrition">Nutrition, approximate</string>
+    <string name="card_nutrition_per_serving">Per serving</string>
+    <string name="card_nutrition_whole">Whole dish</string>
+    <!-- A tile's word under its value; the space before a unit never breaks. -->
+    <string name="card_nutrition_kcal_label">kcal</string>
+    <string name="card_nutrition_grams">%1$s\u00A0g</string>
+    <string name="card_nutrition_protein">protein</string>
+    <string name="card_nutrition_fat">fat</string>
+    <string name="card_nutrition_carbs">carbs</string>
+    <!-- The rows left out of the count, by name, comma-separated. -->
+    <string name="card_nutrition_left_out">Not counted: %1$s</string>
+    <string name="card_nutrition_details">Details</string>
+    <!-- The details sheet: the kcal each counted row gives the whole dish, at the serving count shown ("2 servings",
+         "≈3 servings") where the card shows one. -->
+    <string name="card_nutrition_by_ingredient">By ingredient, whole dish</string>
+    <string name="card_nutrition_by_ingredient_servings">By ingredient, whole dish (%1$s)</string>
+    <string name="card_nutrition_row_kcal">%1$s\u00A0kcal</string>
+    <string name="card_nutrition_not_counted">Not counted</string>
+    <!-- Why a row is left out of the count. -->
+    <string name="card_nutrition_to_taste">to taste</string>
+    <string name="card_nutrition_no_amount">no amount</string>
+    <string name="card_nutrition_not_in_dictionary">not in the dictionary</string>
+    <string name="card_nutrition_no_data">no data</string>
+    <string name="card_nutrition_no_measure">no measure</string>
+    <string name="card_nutrition_how">Counted from raw ingredients: cooking losses are ignored, piece weights are averages.</string>
+    <!-- The serving count with its word, as the sheet's caption and the screen reader say it. -->
+    <plurals name="card_nutrition_servings">
+        <item quantity="one">%1$s serving</item>
+        <item quantity="other">%1$s servings</item>
+    </plurals>
+    <string name="card_nutrition_servings_fraction">%1$s servings</string>
+    <string name="card_nutrition_servings_fraction_below_one">%1$s serving</string>
+    <string name="card_nutrition_servings_approximate">≈%1$s</string>
+    <string name="card_nutrition_servings_approximate_spoken">about %1$s</string>
+    <!-- What the screen reader says for the four tiles, as one phrase: "Per serving: about 680 kilocalories, protein
+         37 grams, fat 37 grams, carbs 50 grams", "Whole dish, 2 servings: about 1360 kilocalories, …". -->
+    <string name="card_nutrition_spoken">%1$s: about %2$s, protein %3$s, fat %4$s, carbs %5$s</string>
+    <string name="card_nutrition_whole_servings_spoken">Whole dish, %1$s</string>
+    <plurals name="card_nutrition_kcal_spoken">
+        <item quantity="one">%1$s kilocalorie</item>
+        <item quantity="other">%1$s kilocalories</item>
+    </plurals>
+    <plurals name="card_nutrition_grams_spoken">
+        <item quantity="one">%1$s gram</item>
+        <item quantity="other">%1$s grams</item>
+    </plurals>
 </resources>
