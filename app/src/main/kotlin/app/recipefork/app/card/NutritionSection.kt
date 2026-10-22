@@ -1,6 +1,7 @@
 package app.recipefork.app.card
 
 import android.content.res.Resources
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,20 +80,32 @@ import java.math.BigInteger
 
 /**
  * The nutrition of the dish [ordered] makes as [list] shows it, read from the device's dictionary [entries]: at the
- * factor in force, one serving of the count shown where the card shows one. Null where no row can be counted. An entry's
- * measures go to the count as the dictionary hands them over, never to the screen (DOM-011).
+ * factor in force, one serving of the count shown where the card shows one, 100 g of the finished dish where the recipe
+ * gives its [finishedWeight]. Null where no row can be counted. An entry's measures go to the count as the dictionary
+ * hands them over, never to the screen (DOM-011).
  */
-internal fun dishNutrition(ordered: List<Ingredient>, entries: Map<Long, IngredientEntryEntity>, list: IngredientList): DishNutrition? {
+internal fun dishNutrition(
+    ordered: List<Ingredient>,
+    entries: Map<Long, IngredientEntryEntity>,
+    list: IngredientList,
+    finishedWeight: Int? = null,
+): DishNutrition? {
     val read = NutritionEntries { id -> entries[id]?.let { NutritionEntry.of(it.toDto()) } }
-    return Nutrition.of(ordered, list.factor, read, list.servingCount?.value?.takeIf { it.signum() > 0 })
+    return Nutrition.of(ordered, list.factor, read, list.servingCount?.value?.takeIf { it.signum() > 0 }, finishedWeight)
 }
 
+/** What the nutrition section's tiles show: 100 g of the finished dish, one serving, or the whole dish. */
+enum class NutritionShown { PER_100_G, SERVING, WHOLE }
+
 /**
- * The card's nutrition section on View (v0.40, T-293), between the ingredients and the steps: its heading, the switch
- * between one serving and the whole dish — or, for a recipe with no serving count, the words "Whole dish" alone — four
- * tiles of kcal, protein, fat and carbohydrates, the rows left out of the count by name, and "Details", which opens
- * [NutritionSheet]. The tiles are one phrase for the screen reader. [whole] is the switch's choice, kept by the card
- * while it is open; [lines] are the card's lines of [ordered], whose names the section writes as the card does.
+ * The card's nutrition section on View (v0.40, T-293; v0.44, T-320), between the ingredients and the steps: its
+ * heading, the switch between 100 g of the finished dish, one serving and the whole dish — those of them the recipe
+ * gives, or, where it gives the whole dish alone, the words "Whole dish" — four tiles of kcal, protein, fat and
+ * carbohydrates, the rows left out of the count by name, and "Details", which opens [NutritionSheet]. The tiles are one
+ * phrase for the screen reader. [chosen] is the switch's choice, kept by the card while it is open, null for the one it
+ * opens on: one serving, else the whole dish; a choice no longer offered goes back to that. [lines] are the card's
+ * lines of [ordered], whose names the section writes as the card does; [editable] tells whether the reader may edit the
+ * recipe, and so give it a finished weight.
  */
 @Composable
 internal fun NutritionSection(
@@ -100,7 +114,8 @@ internal fun NutritionSection(
     lines: List<IngredientLine>,
     servings: ServingCount?,
     language: InterfaceLanguage,
-    whole: MutableState<Boolean>,
+    chosen: MutableState<NutritionShown?>,
+    editable: Boolean,
 ) {
     val unnamed = stringResource(R.string.card_unnamed_ingredient)
     val names = remember(ordered, lines, unnamed) {
@@ -108,11 +123,23 @@ internal fun NutritionSection(
     }
     var details by rememberSaveable { mutableStateOf(false) }
     val perServing = dish.perServing
-    val showsWhole = perServing == null || whole.value
-    val values = if (showsWhole) dish.whole else perServing
+    val per100g = dish.per100g
+    val offered = listOfNotNull(
+        NutritionShown.PER_100_G.takeIf { per100g != null },
+        NutritionShown.SERVING.takeIf { perServing != null },
+        NutritionShown.WHOLE,
+    )
+    val opening = if (perServing != null) NutritionShown.SERVING else NutritionShown.WHOLE
+    val shown = chosen.value?.takeIf { it in offered } ?: opening
+    LaunchedEffect(offered) { if (chosen.value != null && chosen.value !in offered) chosen.value = null }
+    val values = when (shown) {
+        NutritionShown.PER_100_G -> checkNotNull(per100g)
+        NutritionShown.SERVING -> checkNotNull(perServing)
+        NutritionShown.WHOLE -> dish.whole
+    }
     val resources = LocalResources.current
     Section(R.string.card_nutrition, NutritionTags.SECTION, gap = 0.dp) {
-        if (perServing == null) {
+        if (offered.size == 1) {
             Text(
                 stringResource(R.string.card_nutrition_whole),
                 style = MaterialTheme.typography.labelMedium,
@@ -120,12 +147,12 @@ internal fun NutritionSection(
                 modifier = Modifier.padding(vertical = SWITCH_GAP).testTag(NutritionTags.WHOLE_ONLY),
             )
         } else {
-            NutritionSwitch(whole)
+            NutritionSwitch(offered, shown) { chosen.value = it }
         }
         NutritionTiles(
             values,
-            spoken = remember(values, showsWhole, servings, perServing, language, resources) {
-                spokenNutrition(resources, values, perServing = !showsWhole, servings?.takeIf { perServing != null }, language)
+            spoken = remember(values, shown, servings, perServing, language, resources) {
+                spokenNutrition(resources, values, shown, servings?.takeIf { perServing != null }, language)
             },
             language = language,
         )
@@ -150,17 +177,18 @@ internal fun NutritionSection(
         }
     }
     if (details) {
-        NutritionSheet(dish, names, servings?.takeIf { perServing != null }, language) { details = false }
+        NutritionSheet(dish, names, servings?.takeIf { perServing != null }, language, editable) { details = false }
     }
 }
 
 /**
- * "Per serving" | "Whole dish", an M3 segmented row the content's width, opening on one serving: each segment drawn
- * 40 dp tall — taller at a large font — with [SWITCH_GAP] above and below it at any size, its touch target the card's
- * [CardTarget] tall, reaching into that room; its role and selection told to the screen reader, the chosen one checked.
+ * "100 g" | "Serving" | "Whole dish", those of them [offered], an M3 segmented row the content's width of equal segments,
+ * [shown] chosen: each segment drawn 40 dp tall — taller at a large font, a label that does not fit broken as its text
+ * breaks — with [SWITCH_GAP] above and below it at any size, its touch target the card's [CardTarget] tall, reaching
+ * into that room; its role and selection told to the screen reader, the chosen one checked.
  */
 @Composable
-private fun NutritionSwitch(whole: MutableState<Boolean>) {
+private fun NutritionSwitch(offered: List<NutritionShown>, shown: NutritionShown, onChoose: (NutritionShown) -> Unit) {
     // A segment answers a touch within the card's target of it: Compose widens a touch to a click smaller than the view
     // configuration's minimum target, here the card's. At 40 dp drawn the gaps above and below are that target's room,
     // so Material lays out no room of its own around it; the gaps are each segment's, so they hold at any text size.
@@ -171,24 +199,27 @@ private fun NutritionSwitch(whole: MutableState<Boolean>) {
         }
     }
     CompositionLocalProvider(LocalViewConfiguration provides touch, LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag(NutritionTags.SWITCH)) {
-            listOf(false, true).forEachIndexed { index, choice ->
+        // The segments are as tall as the one whose label takes the most lines, so that each keeps its gaps.
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().height(IntrinsicSize.Min).testTag(NutritionTags.SWITCH)) {
+            offered.forEachIndexed { index, choice ->
                 SegmentedButton(
-                    selected = whole.value == choice,
-                    onClick = { whole.value = choice },
-                    shape = SegmentedButtonDefaults.itemShape(index, 2),
-                    modifier = Modifier.padding(vertical = SWITCH_GAP)
-                        .testTag(if (choice) NutritionTags.SWITCH_WHOLE else NutritionTags.SWITCH_PER_SERVING),
-                    label = {
-                        Text(
-                            stringResource(if (choice) R.string.card_nutrition_whole else R.string.card_nutrition_per_serving),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    },
+                    selected = shown == choice,
+                    onClick = { onChoose(choice) },
+                    shape = SegmentedButtonDefaults.itemShape(index, offered.size),
+                    modifier = Modifier.fillMaxHeight().padding(vertical = SWITCH_GAP).testTag(NutritionTags.segment(choice)),
+                    label = { Text(stringResource(labelOf(choice)), style = MaterialTheme.typography.labelLarge) },
                 )
             }
         }
     }
+}
+
+/** The switch's label for [shown]. */
+@StringRes
+private fun labelOf(shown: NutritionShown): Int = when (shown) {
+    NutritionShown.PER_100_G -> R.string.card_nutrition_100_g
+    NutritionShown.SERVING -> R.string.card_nutrition_serving
+    NutritionShown.WHOLE -> R.string.card_nutrition_whole
 }
 
 /**
@@ -253,8 +284,9 @@ private fun grams(amount: BigInteger, language: InterfaceLanguage): String =
     stringResource(R.string.card_nutrition_grams, QuantityText.whole(amount, language))
 
 /**
- * "Details": the kcal each counted row gives the whole dish, the rows left out with their reasons, and how it is
- * counted, under the section's title, in a sheet over the card. [names] are the rows' names by position; [servings] the
+ * "Details": the kcal each counted row gives the whole dish, the rows left out with their reasons, how it is counted,
+ * and the finished weight 100 g is counted by — or, without one, on a recipe the reader may edit ([editable]), where to
+ * give it — under the section's title, in a sheet over the card. [names] are the rows' names by position; [servings] the
  * count shown, null where the card shows none. A swipe down, the scrim or Back closes it ([onClose]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -264,6 +296,7 @@ private fun NutritionSheet(
     names: Map<Int, String>,
     servings: ServingCount?,
     language: InterfaceLanguage,
+    editable: Boolean,
     onClose: () -> Unit,
 ) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -309,6 +342,16 @@ private fun NutritionSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = HOW_GAP).testTag(NutritionTags.HOW),
             )
+            val weight = dish.finishedWeight
+            if (weight != null || editable) {
+                Text(
+                    weight?.let { resources.getString(R.string.card_nutrition_weight, weightText(resources, it, servings, language)) }
+                        ?: stringResource(R.string.card_nutrition_no_weight),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = HOW_GAP).testTag(if (weight != null) NutritionTags.WEIGHT else NutritionTags.NO_WEIGHT),
+                )
+            }
         }
     }
 }
@@ -377,19 +420,21 @@ internal fun reasonOf(reason: LeftOutReason): Int = when (reason) {
 }
 
 /**
- * What the screen reader says for the tiles showing [values]: «На порцию: примерно 680 килокалорий, белки 37 граммов, …»
- * for one serving, else «Всё блюдо, 2 порции: …» with the count shown — «примерно 3 порции» while a fixed amount sets it
- * — or «Всё блюдо: …» with no count.
+ * What the screen reader says for the tiles showing [values], as [shown]: «На 100 граммов готового блюда: примерно 210
+ * килокалорий, …» for 100 g, «На порцию: примерно 680 килокалорий, белки 37 граммов, …» for one serving, else «Всё
+ * блюдо, 2 порции: …» with the count shown — «примерно 3 порции» while a fixed amount sets it — or «Всё блюдо: …» with
+ * no count. Numbers are said plain, not grouped.
  */
 internal fun spokenNutrition(
     resources: Resources,
     values: NutritionValues,
-    perServing: Boolean,
+    shown: NutritionShown,
     servings: ServingCount?,
     language: InterfaceLanguage,
 ): String {
     val what = when {
-        perServing -> resources.getString(R.string.card_nutrition_per_serving)
+        shown == NutritionShown.PER_100_G -> resources.getString(R.string.card_nutrition_per_100_g_spoken)
+        shown == NutritionShown.SERVING -> resources.getString(R.string.card_nutrition_per_serving)
         servings == null -> resources.getString(R.string.card_nutrition_whole)
         else -> resources.getString(R.string.card_nutrition_whole_servings_spoken, servingsText(resources, servings, language, spoken = true))
     }
@@ -405,10 +450,27 @@ internal fun spokenNutrition(
 }
 
 /**
- * The serving [count] as the card writes it, with its word: "2 servings", «≈3 порции», or, [spoken], «примерно 3
- * порции»; a fraction below one in the singular, "½ serving".
+ * What the dish weighs at the scale, [grams], as the sheet names it: with the serving [count] shown, «1 120 г на 4
+ * порции», «560 г на ≈3 порции», "560 g for 2 servings"; with none, «560 г».
  */
-internal fun servingsText(resources: Resources, count: ServingCount, language: InterfaceLanguage, spoken: Boolean): String {
+internal fun weightText(resources: Resources, grams: BigInteger, count: ServingCount?, language: InterfaceLanguage): String {
+    val weight = QuantityText.whole(grams, language)
+    return count?.let {
+        resources.getString(R.string.card_nutrition_weight_servings, weight, servingsText(resources, it, language, spoken = false, R.plurals.card_nutrition_servings_for))
+    } ?: resources.getString(R.string.card_nutrition_grams, weight)
+}
+
+/**
+ * The serving [count] as the card writes it, with its word in the form of [plurals]: "2 servings", «≈3 порции», or,
+ * [spoken], «примерно 3 порции»; a fraction below one in the singular, "½ serving".
+ */
+internal fun servingsText(
+    resources: Resources,
+    count: ServingCount,
+    language: InterfaceLanguage,
+    spoken: Boolean,
+    @PluralsRes plurals: Int = R.plurals.card_nutrition_servings,
+): String {
     val number = RequestedServings.text(count.value, language)
     val shown = when {
         !count.approximate -> number
@@ -416,7 +478,7 @@ internal fun servingsText(resources: Resources, count: ServingCount, language: I
         else -> resources.getString(R.string.card_nutrition_servings_approximate, number)
     }
     return if (count.value.isWhole) {
-        resources.getQuantityString(R.plurals.card_nutrition_servings, pluralOf(count.value.numerator), shown)
+        resources.getQuantityString(plurals, pluralOf(count.value.numerator), shown)
     } else {
         val below = count.value < Rational.ONE
         resources.getString(if (below) R.string.card_nutrition_servings_fraction_below_one else R.string.card_nutrition_servings_fraction, shown)
@@ -461,6 +523,7 @@ internal const val TILES_SHOWN_APART = " | "
 object NutritionTags {
     const val SECTION = "card-nutrition"
     const val SWITCH = "card-nutrition-switch"
+    const val SWITCH_PER_100_G = "card-nutrition-per-100-g"
     const val SWITCH_PER_SERVING = "card-nutrition-per-serving"
     const val SWITCH_WHOLE = "card-nutrition-whole"
     /** "Whole dish" alone, in the switch's place, for a recipe with no serving count. */
@@ -475,6 +538,16 @@ object NutritionTags {
     /** The caption over the rows left out. */
     const val NOT_COUNTED = "card-nutrition-not-counted"
     const val HOW = "card-nutrition-how"
+    /** The finished weight 100 g is counted by. */
+    const val WEIGHT = "card-nutrition-weight"
+    /** Where to give a finished weight, on a recipe the reader may edit that gives none. */
+    const val NO_WEIGHT = "card-nutrition-no-weight"
+    /** The switch's segment for [shown]. */
+    fun segment(shown: NutritionShown) = when (shown) {
+        NutritionShown.PER_100_G -> SWITCH_PER_100_G
+        NutritionShown.SERVING -> SWITCH_PER_SERVING
+        NutritionShown.WHOLE -> SWITCH_WHOLE
+    }
     /** The tile at [index]: kcal, protein, fat, carbohydrates. */
     fun tile(index: Int) = "card-nutrition-tile-$index"
     /** The sheet's row of the counted ingredient at [position]. */

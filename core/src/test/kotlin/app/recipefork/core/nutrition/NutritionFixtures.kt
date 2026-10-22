@@ -86,18 +86,21 @@ internal fun free(text: String, quantity: Rational?, unit: QuantityUnit?) = Ingr
 )
 
 /**
- * The nutrition of a dish of [rows], numbered by their order, at [factor], one serving of [servings] where given.
+ * The nutrition of a dish of [rows], numbered by their order, at [factor], one serving of [servings] where given, 100 g
+ * of the finished dish where its [finishedWeight] is.
  */
 internal fun dish(
     vararg rows: Ingredient,
     factor: ScaleFactor = ScaleFactor.ONE,
     servings: Rational? = null,
     entries: Map<Long, NutritionEntry> = ENTRIES,
+    finishedWeight: Int? = null,
 ): DishNutrition? = Nutrition.of(
     rows.mapIndexed { i, row -> row.copy(position = i) },
     factor,
     NutritionEntries(entries::get),
     servings,
+    finishedWeight,
 )
 
 /** The protein in grams of a dish of [row] alone, [PURE] giving one gram of protein per gram. */
