@@ -218,7 +218,7 @@ class CardNutritionTest {
         assertEquals("Whole dish, 4 servings: about 790 kilocalories, protein 66 grams, fat 33 grams, carbs 53 grams", spoken())
         more(4)
         assertEquals(listOf("Servings: 8"), compose.textsOf(CardTags.SERVINGS))
-        assertEquals(listOf("1580 kcal", "132 g protein", "66 g fat", "106 g carbs"), shown())
+        assertEquals(listOf("1,580 kcal", "132 g protein", "66 g fat", "106 g carbs"), shown())
         assertEquals("Whole dish, 8 servings: about 1580 kilocalories, protein 132 grams, fat 66 grams, carbs 106 grams", spoken())
         choose(NutritionTags.SWITCH_PER_SERVING)
         assertEquals(listOf("200 kcal", "17 g protein", "8 g fat", "13 g carbs"), shown())
@@ -229,11 +229,11 @@ class CardNutritionTest {
         open()
         choose(NutritionTags.SWITCH_WHOLE)
         fixTheCheese()
-        assertEquals(listOf("1580 kcal", "132 g protein", "66 g fat", "106 g carbs"), shown())
+        assertEquals(listOf("1,580 kcal", "132 g protein", "66 g fat", "106 g carbs"), shown())
         assertEquals("Whole dish, about 8 servings: about 1580 kilocalories, protein 132 grams, fat 66 grams, carbs 106 grams", spoken())
         openDetails()
         assertEquals(listOf("By ingredient, whole dish (≈8 servings)"), compose.textsOf(NutritionTags.COUNTED))
-        assertEquals(listOf(listOf("cottage cheese", "1140 kcal"), listOf("flour", "440 kcal")), rowsOf(listOf(NutritionTags.counted(0), NutritionTags.counted(1))))
+        assertEquals(listOf(listOf("cottage cheese", "1,140 kcal"), listOf("flour", "440 kcal")), rowsOf(listOf(NutritionTags.counted(0), NutritionTags.counted(1))))
     }
 
     @Test

@@ -134,6 +134,9 @@ object QuantityText {
     /** A whole number — a count, a limit — grouped by three digits as L10N-009 states. */
     fun whole(number: Long, language: InterfaceLanguage): String = grouped(BigInteger.valueOf(number), language)
 
+    /** A whole number of any size — a dish's kcal or grams — grouped by three digits as L10N-009 states. */
+    fun whole(number: BigInteger, language: InterfaceLanguage): String = grouped(number, language)
+
     private fun grouped(number: BigInteger, language: InterfaceLanguage): String {
         val digits = number.abs().toString()
         val out = StringBuilder()
