@@ -42,6 +42,10 @@
     <!-- The menu at the end of an entry's title line, holding the entry's actions; it names the recipe. -->
     <string name="library_entry_actions">Actions for “%1$s”</string>
     <string name="library_entry_actions_action">Show the recipe\'s actions</string>
+    <!-- FORK-010: a version's entry names its parent under its title, by the title the version recorded or the parent
+         the book holds; a version whose parent is gone and whose title it never recorded says only that. -->
+    <string name="library_entry_parent">after “%1$s”</string>
+    <string name="library_entry_parent_unavailable">after a recipe not in this book</string>
     <!-- FLOW-053: deleting an own recipe from its entry. -->
     <string name="library_entry_delete">Delete</string>
     <!-- FLOW-042: the view of marked recipes when nothing is marked in the book: its one-line headline and its

@@ -24,11 +24,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,6 +50,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -253,6 +256,15 @@ private const val DROP_CAP_SIZE = 30f
 internal object BookEntryRowTags {
     /** The drop cap at the start of the entry of [recipeId]. */
     fun dropCap(recipeId: String) = "library-drop-cap-$recipeId"
+
+    /** The line under the title of the entry of [recipeId] that names its parent. */
+    fun provenance(recipeId: String) = "library-provenance-$recipeId"
+
+    /** The provenance glyph at the start of that line. */
+    fun provenanceGlyph(recipeId: String) = "library-provenance-glyph-$recipeId"
+
+    /** The words of that line, beside the glyph. */
+    fun provenanceWords(recipeId: String) = "library-provenance-words-$recipeId"
 }
 
 /** The letter a drop cap shows for [title]: its first letter or digit, in capitals; none for a title without one. */
@@ -386,6 +398,81 @@ internal fun EntryTags(recipeId: String, tags: String) {
         modifier = Modifier.testTag(LibraryTags.entryTags(recipeId)),
     )
 }
+
+/**
+ * The line under a version's title that names the recipe it was made from (FORK-010, decisions.md #3): the provenance
+ * glyph, 16 dp, and «по рецепту «…»» in Literata italics, both in beet — a provenance mark. [parentTitle] is the title
+ * the version recorded, else that of the parent the book holds; null when the parent is gone and the version recorded
+ * none, which the line then says, as the card does. The words wrap beside the glyph and are never cut short: a
+ * continued line starts where the words start, and the glyph stands level with the middle of their first line. It is
+ * part of the row's spoken label and does nothing of its own: a tap on it opens the recipe, as anywhere on the row.
+ */
+@Composable
+internal fun EntryProvenance(recipeId: String, parentTitle: String?) {
+    val text = if (parentTitle == null) {
+        stringResource(R.string.library_entry_parent_unavailable)
+    } else {
+        stringResource(R.string.library_entry_parent, parentTitle.ifBlank { stringResource(R.string.common_untitled_recipe) })
+    }
+    val beet = MaterialTheme.colorScheme.tertiary
+    // The height of the words' first line, as they were last laid out; the glyph is centred on it.
+    var firstLine by remember { mutableIntStateOf(0) }
+    val glyphTop = with(LocalDensity.current) { ((firstLine.toDp() - PROVENANCE_GLYPH) / 2).coerceAtLeast(0.dp) }
+    Row(
+        Modifier.testTag(BookEntryRowTags.provenance(recipeId)),
+        horizontalArrangement = Arrangement.spacedBy(PROVENANCE_GAP),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_provenance),
+            contentDescription = null,
+            tint = beet,
+            modifier = Modifier
+                .padding(top = glyphTop)
+                .size(PROVENANCE_GLYPH)
+                .testTag(BookEntryRowTags.provenanceGlyph(recipeId)),
+        )
+        // As the row's title: the words wrap between words and after hyphens, never inside one; at a large font they
+        // are made only as small as their widest word needs, never below their size at a font scale of 1.
+        val style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
+        val measurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+        val laid = remember { LaidTitle() }
+        BoxWithConstraints(
+            Modifier
+                .weight(1f)
+                // The words as written are what is read out, without the places to break [breakAfterHyphens] adds.
+                .semantics {
+                    this.text = AnnotatedString(text)
+                    getTextLayoutResult { layouts -> laid.result?.let(layouts::add) != null }
+                }
+                .testTag(BookEntryRowTags.provenanceWords(recipeId)),
+        ) {
+            val width = constraints.maxWidth
+            val fitted = remember(text, style, width, measurer, density) {
+                fitWords(text, style, width, measurer, density, hyphenParts = true)
+            }
+            Box(Modifier.clearAndSetSemantics {}) {
+                Text(
+                    breakAfterHyphens(text),
+                    style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
+                    color = beet,
+                    softWrap = true,
+                    onTextLayout = {
+                        laid.result = it
+                        firstLine = (it.getLineBottom(0) - it.getLineTop(0)).roundToInt()
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** The side of the provenance glyph on an entry (redesign-1 § 5, «Глиф «Происхождения»»). */
+internal val PROVENANCE_GLYPH = 16.dp
+
+/** The space between the provenance glyph and its words. */
+private val PROVENANCE_GAP = 6.dp
 
 /**
  * The author a found recipe's file states, under its title, marked as stated and not verified: in Literata italics, as

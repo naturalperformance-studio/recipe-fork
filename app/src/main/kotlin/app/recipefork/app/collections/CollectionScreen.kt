@@ -81,6 +81,7 @@ import app.recipefork.app.library.EntryAction
 import app.recipefork.app.library.BookEntryRow
 import app.recipefork.app.library.EntryAuthor
 import app.recipefork.app.library.EntryCover
+import app.recipefork.app.library.EntryProvenance
 import app.recipefork.app.library.EntryTitle
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibrarySnackbarHost
@@ -346,6 +347,7 @@ private fun CollectionEntry(
         },
     ) {
         EntryTitle(row.recipeId, row.title)
+        if (row.forked) EntryProvenance(row.recipeId, row.parentTitle)
         row.statedAuthor?.let { EntryAuthor(row.recipeId, it) }
     }
 }

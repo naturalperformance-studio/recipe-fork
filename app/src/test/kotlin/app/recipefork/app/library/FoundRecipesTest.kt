@@ -130,8 +130,9 @@ class FoundRecipesTest {
         val id = found()
         show(Mode.Serverless)
         awaitEntry(id)
+        // The file's recipe is a version of "Soup", which its entry names under the title (FORK-010, T-302).
         assertEquals(
-            listOf("Bean soup", "Author: anna (stated in the file, not verified)"),
+            listOf("Bean soup", "after “Soup”", "Author: anna (stated in the file, not verified)"),
             compose.textsOf(LibraryTags.entry(id.value)),
         )
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
@@ -145,7 +146,10 @@ class FoundRecipesTest {
         val id = found()
         show(Mode.Serverless)
         awaitEntry(id)
-        assertEquals(listOf("Bean soup", "Автор: anna (указан в файле, не проверен)"), compose.textsOf(LibraryTags.entry(id.value)))
+        assertEquals(
+            listOf("Bean soup", "по рецепту «Soup»", "Автор: anna (указан в файле, не проверен)"),
+            compose.textsOf(LibraryTags.entry(id.value)),
+        )
         openEntry(id)
         assertEquals("Автор: anna (указан в файле, не проверен)", compose.textsOf(CardTags.STATED_AUTHOR).single())
     }
@@ -178,7 +182,7 @@ class FoundRecipesTest {
         val id = found(TestRecipeFiles.soup(author = null))
         show(Mode.Serverless)
         awaitEntry(id)
-        assertEquals(listOf("Bean soup"), compose.textsOf(LibraryTags.entry(id.value)))
+        assertEquals(listOf("Bean soup", "after “Soup”"), compose.textsOf(LibraryTags.entry(id.value)))
         assertEquals(0, compose.onAllNodes(hasTestTag(LibraryTags.statedAuthor(id.value)), useUnmergedTree = true).fetchSemanticsNodes().size)
         openEntry(id)
         assertEquals(0, compose.onAllNodes(hasTestTag(CardTags.STATED_AUTHOR), useUnmergedTree = true).fetchSemanticsNodes().size)

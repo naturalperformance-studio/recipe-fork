@@ -224,6 +224,16 @@ internal const val COVER_OF_R =
     "(select m.media_id from media m where m.recipe_id = r.recipe_id and m.step_position is null " +
         "order by m.position limit 1)"
 
+/**
+ * Whether the recipe `r` is a version of another one, and its parent's title as its entry names it (FORK-010): the
+ * title the version recorded, else that of the parent `p` the book holds. It needs [PARENT_OF_R_JOIN]: the parent is
+ * read in the listing's own query, never one entry at a time.
+ */
+internal const val PARENT_OF_R = "r.parent is not null as forked, coalesce(r.stated_parent_title, p.title) as parent_title"
+
+/** The join [PARENT_OF_R] reads the parent the book holds through. */
+internal const val PARENT_OF_R_JOIN = "left join recipe p on p.recipe_id = r.parent"
+
 /** Everything of one recipe as its rows. */
 data class RecipeRows(
     val recipe: RecipeEntity,
@@ -261,7 +271,8 @@ abstract class BookRecipeDao {
      */
     @Query(
         "select r.recipe_id as recipe_id, r.title as title, r.state as state, r.sent as sent, " +
-            "$COVER_OF_R as cover_id, r.language as language, r.description as description from recipe r " +
+            "$COVER_OF_R as cover_id, r.language as language, r.description as description, $PARENT_OF_R " +
+            "from recipe r $PARENT_OF_R_JOIN " +
             "where r.recipe_id not in (select recipe_id from favourite) " +
             "order by r.content_changed_at desc, r.recipe_id limit :limit",
     )
@@ -625,8 +636,8 @@ interface FavouriteDao {
     @Query(
         "select f.recipe_id as recipe_id, coalesce(r.title, f.title) as title, r.stated_author as stated_author, " +
             "r.recipe_id is not null as held, $COVER_OF_R as cover_id, r.language as language, " +
-            "coalesce(r.description, '') as description " +
-            "from favourite f left join recipe r on r.recipe_id = f.recipe_id " +
+            "coalesce(r.description, '') as description, $PARENT_OF_R " +
+            "from favourite f left join recipe r on r.recipe_id = f.recipe_id $PARENT_OF_R_JOIN " +
             "order by f.added_at desc, f.recipe_id",
     )
     fun marked(): Flow<List<MarkedRecipeRow>>

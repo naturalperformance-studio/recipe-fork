@@ -152,6 +152,7 @@ class ContrastTest {
         // Beet: the tertiary colour marks provenance and nothing else (the redesign, T-296).
         text("a fork's provenance line on the card — \"Forked from …\"", c.tertiary, c.surface),
         text("a fork's provenance line on the container tint", c.tertiary, c.surfaceContainer),
+        text("a version's provenance line on a chosen row's tint", c.tertiary, c.secondaryContainer),
         graphic("the provenance glyph heading the held-fork dialog", c.tertiary, c.surfaceContainerHigh),
         graphic("the engraved mark's bent tine in an empty section of the book", c.tertiary, c.background),
     )
