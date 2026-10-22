@@ -234,12 +234,15 @@ are the proposal's illustration; the weight 560 g is an assumption. This entry a
      other totals (kcal to the nearest 10, grams whole). It does not change with the servings
      counter or a fixed amount, except through rounding. Sample: 210 ккал, белки 15 г, жиры 11 г,
      углеводы 12 г. Tile layout, styles and the 4-in-a-row / 2 × 2 rule: decision 3, unchanged.
-   - Screen reader, the tiles' one phrase with «100 г» selected: «На 100 г готового блюда:
+   - Screen reader, the tiles' one phrase with «100 г» selected: «На 100 граммов готового блюда:
      примерно 210 килокалорий, белки 15 граммов, жиры 11 граммов, углеводы 12 граммов» /
-     "Per 100 g of the finished dish: about 210 kilocalories, protein 15 grams, fat 11 grams,
+     "Per 100 grams of the finished dish: about 210 kilocalories, protein 15 grams, fat 11 grams,
      carbs 12 grams" (the existing `card_nutrition_spoken` pattern). The per serving phrase stays
      «На порцию: …» / "Per serving: …" (decision 3); the segment label and the spoken prefix
-     become separate strings.
+     become separate strings. The spoken prefix spells out «граммов» / "grams" so that «100 г» is
+     not read as «сто г»; visible texts keep «100 г» / "100 g" (the lead's wording, L2, 2026-10-22;
+     amends this entry's first wording «На 100 г готового блюда» / "Per 100 g of the finished
+     dish").
    - Fit of the labels with the selected segment's check (measured with Golos Text Medium 14 sp,
      12 dp side padding, 18 dp icon + 8 dp gap; segment 109 dp at 360 dp, 96 dp at 320 dp):
      - 360 dp, 100 %: every label on one line, except «Всё блюдо» / "Whole dish" when selected,
@@ -254,12 +257,27 @@ are the proposal's illustration; the weight 560 g is an assumption. This entry a
      Breaking inside a word is not covered by decision 2's wrapping rule. How the switch behaves
      where a label cannot fit whole is not decided here; it was returned to the lead as a fork
      (T-319 record report). Until it is answered, the rest of this decision can be built.
+   - Where a label cannot fit whole (decided by the owner via /team-lead (F-2), 2026-10-22):
+     the label breaks inside the word, as Compose does with the label's text; the segments stay
+     equal and the selected segment keeps its check icon. Nothing is added to the switch for this
+     case: no shorter label, no other control at large text, no change of segment widths. The
+     states measured above are the expected result (the 320 dp / 100 % default «Порц|ия»; at
+     200 % «Порц|ия», «блю|до», «10|0 г»). The owner's answer, verbatim: question «Переключатель
+     «100 г | Порция | Всё блюдо» не влезает на узком экране и при крупном шрифте. Как быть?» →
+     «Оставить перенос в слове». *Why:* the owner's choice. Its cost: on a 320 dp phone the
+     state every card opens in shows «Порция» broken across two lines, and at 200 % most labels
+     break inside a word, which reads worse than a break at a space. No principle in the
+     designer's list is broken: nothing is truncated or clipped, the label is whole, only broken.
+     *Rejected* (the options as `docs/increments/v0.44.md`, F-2, lists them; the designer had no
+     proposal file for this fork): «Equal segments with labels by width + a radio list at large
+     text / width by label only / a list always».
    *Why:* the owner's choice of 2А with their own labels; the proposal's case for 2А: one visual
    language, large numbers for all three sets. Its cost, as the proposal stated it: a third state
    of the switch, and labels that wrap at 360 dp and always at 320 dp; with the owner's shorter
    labels the 360 dp default now fits, the 320 dp default and 200 % do not (above). No principle
    in the designer's list is broken; the open fit is a defect to resolve, not a choice recorded
-   against a principle. *Rejected:* 2Б — a line «На 100 г готового блюда» with the values under
+   against a principle (resolved 2026-10-22 by the owner, F-2: the break inside the word stays,
+   above). *Rejected:* 2Б — a line «На 100 г готового блюда» with the values under
    the tiles, independent of the switch (the designer's recommendation); 2В — per 100 g only in
    the «Подробнее» sheet.
 
@@ -295,7 +313,7 @@ are the proposal's illustration; the weight 560 g is an assumption. This entry a
 | Segment | 100 г | 100 g |
 | Segment (was «На порцию») | Порция | Serving |
 | Segment | Всё блюдо | Whole dish |
-| Spoken prefix, per 100 g | На 100 г готового блюда | Per 100 g of the finished dish |
+| Spoken prefix, per 100 g | На 100 граммов готового блюда | Per 100 grams of the finished dish |
 | Sheet, weight line | На 100 г — по весу готового блюда из рецепта: %s. | Per 100 g is by the finished weight the recipe gives: %s. |
 | Sheet, no weight | Чтобы видеть «на 100 г», укажите в рецепте вес готового блюда. | To see per 100 g, give the finished dish weight in the recipe. |
 
@@ -316,3 +334,5 @@ line; decision 3 — a third value set (per 100 g) and its spoken phrase; decisi
 - The sheet gains one line (weight used, or where to give it on an editable recipe).
 - Ingredients changed after weighing: the weight stays as entered; the app does not warn.
 - Open: the switch where a label cannot fit whole (320 dp default state, 200 %) — fork to the lead.
+  Closed 2026-10-22 (F-2): the label breaks inside the word as Compose does; equal segments and
+  the check icon stay; no behaviour change beyond decision 2.
