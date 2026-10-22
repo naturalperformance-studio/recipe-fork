@@ -1,13 +1,13 @@
 # Pantry: flour (5000-5099), starches and thickening flours (5100-5149), bran and fiber (5150-5199),
 # grains and groats (5200-5299), rice (5300-5349), oats, flakes and cereals (5350-5399).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 # Spoon and cup factors are grams per level measure; a cup is 250 ml.
 @range 5000-6999
 
 # мука
 5000	мука	flour			g=1 tsp=3 tbsp=10 cup=130
-5001	мука пшеничная	wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5002	мука пшеничная высшего сорта	all-purpose flour	5000		g=1 tsp=3 tbsp=10 cup=130
+5001	мука пшеничная	wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=364 protein=10.33 fat=0.98 carbs=76.31	fdc:169761
+5002	мука пшеничная высшего сорта	all-purpose flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=364 protein=10.33 fat=0.98 carbs=76.31	fdc:169761
 5003	мука пшеничная первого сорта	all-purpose flour, first grade	5000		g=1 tsp=3 tbsp=10 cup=130
 5004	мука цельнозерновая	whole wheat flour	5000		g=1 tsp=3 tbsp=9 cup=125
 5005	мука хлебопекарная	bread flour	5000		g=1 tsp=3 tbsp=10 cup=135

@@ -1,10 +1,10 @@
 # Animal: eggs (4400-4449), milk and dairy (4450-4699), cheese (4700-4999).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 # Spoon and cup factors are grams per level measure (a cup is 250 ml).
 @range 3000-4999
 
 # яйцо
-4400	яйцо	egg		false	g=1 pc=55
+4400	яйцо	egg		false	g=1 pc=55				kcal=143 protein=12.56 fat=9.51 carbs=0.72	fdc:171287
 4401	яйцо перепелиное	quail egg	4400	false	g=1 pc=10
 4402	яичный желток	egg yolk	4400	false	g=1 pc=18
 4403	яичный белок	egg white	4400	false	g=1 pc=33 ml=1.04 tbsp=15
@@ -105,9 +105,9 @@
 4590	творог мягкий	soft quark	4580		g=1 tsp=6 tbsp=17 cup=240
 
 # масло сливочное
-4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227		масло
-4601	масло сливочное несолёное	unsalted butter	4600		g=1 tsp=5 tbsp=14 cup=227
-4602	масло сливочное солёное	salted butter	4600		g=1 tsp=5 tbsp=14 cup=227
+4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227		масло		kcal=717 protein=0.85 fat=81.11 carbs=0.06	fdc:173430
+4601	масло сливочное несолёное	unsalted butter	4600		g=1 tsp=5 tbsp=14 cup=227				kcal=717 protein=0.85 fat=81.11 carbs=0.06	fdc:173430
+4602	масло сливочное солёное	salted butter	4600		g=1 tsp=5 tbsp=14 cup=227				kcal=717 protein=0.85 fat=81.11 carbs=0.06	fdc:173410
 4603	масло топлёное	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
 4605	масло сливочное 82,5%	butter 82.5%	4600		g=1 tsp=5 tbsp=14 cup=227
 4606	масло сливочное 72,5%	butter 72.5%	4600		g=1 tsp=5 tbsp=14 cup=227

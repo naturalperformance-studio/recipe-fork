@@ -49,7 +49,9 @@ data class DictionariesDto(
  * its family; they only order, and nothing ever shows them. A [removed] entry is offered to nobody, yet stays so
  * that every recipe already naming it keeps its name (DOM-009, FLOW-001). [synonymsRu] and [synonymsEn] are the other
  * words cooks write for it in each language (картошка for картофель, icing sugar for powdered sugar): the field and
- * the book's search may find the entry by them, while its labels stay what it is shown as.
+ * the book's search may find the entry by them, while its labels stay what it is shown as. [nutrition] is what 100 g of
+ * the raw product holds, when the dictionary knows it; where the value comes from stays in the sources
+ * (dictionary/README.md).
  *
  * Every field after [labelEn] has a default, which the encoding omits, so an entry that sets none of them encodes
  * exactly as before they existed, and the version digest of an unchanged dictionary stays what it was.
@@ -65,6 +67,7 @@ data class IngredientEntryDto(
     override val removed: Boolean = false,
     override val synonymsRu: List<String> = emptyList(),
     override val synonymsEn: List<String> = emptyList(),
+    val nutrition: NutritionDto? = null,
 ) : DictionaryEntry {
     companion object {
         /**
@@ -76,6 +79,27 @@ data class IngredientEntryDto(
         /** Whether [factors] name only units of [FACTOR_UNITS], each with a finite number above zero. */
         fun validFactors(factors: Map<String, Double>): Boolean =
             factors.all { (unit, factor) -> unit in FACTOR_UNITS && factor.isFinite() && factor > 0 }
+    }
+}
+
+/**
+ * What 100 g of a raw product holds: its energy in [kcal], and its [protein], [fat] and [carbs] in grams. Each is a
+ * finite number of at least zero, within [MAX_KCAL] and [MAX_GRAMS], and the three grams together are within
+ * [MAX_GRAMS] too.
+ */
+@Serializable
+data class NutritionDto(
+    val kcal: Double,
+    val protein: Double,
+    val fat: Double,
+    val carbs: Double,
+) {
+    companion object {
+        /** The most energy 100 g may hold: pure fat holds about 900 kcal. */
+        const val MAX_KCAL = 900.0
+
+        /** The most grams of protein, fat and carbohydrate, each and together, that 100 g may hold. */
+        const val MAX_GRAMS = 100.0
     }
 }
 
