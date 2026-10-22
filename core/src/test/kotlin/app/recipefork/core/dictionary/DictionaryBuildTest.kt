@@ -521,4 +521,37 @@ class DictionaryBuildTest {
         refused(source("usda:171287"), "produce.tsv:3", "nutritionSource 'usda:171287' is neither 'fdc:<id>' nor 'skurikhin:<product name>'")
         refused(source("FDC:171287"), "produce.tsv:3", "is neither")
     }
+
+    // T-294: a child of another form that no source holds says `none`: it has no values of its own and must not take
+    // its parent's.
+    @Test
+    fun aChildMarkedNoneIsWrittenIntoTheAssetAsHavingNoValuesAndCoveredByTheVersion() {
+        val corn = "1000\tкукуруза\tcorn\t\t\tg=1\t\t\t\tkcal=86 protein=3.27 fat=1.35 carbs=18.7\tfdc:169998"
+        val baby = "1001\tмини-кукуруза\tbaby corn\t1000\t\tg=1"
+        val inheriting = built(ingredients(corn, baby))
+        val result = built(ingredients(corn, "$baby\t\t\t\t\tnone"))
+        val marked = result.dictionaries.ingredients.single { it.id == 1001L }
+        assertTrue(marked.noNutrition)
+        assertEquals(null, marked.nutrition)
+        assertTrue(result.text.contains("\"noNutrition\": true"), result.text)
+        assertTrue("none" !in result.text, result.text)
+        assertEquals(result.dictionaries, DictionaryBuild.parseSnapshot(result.text))
+        assertEquals(result.dictionaries.digest(), result.dictionaries.version)
+        assertTrue(result.dictionaries.version != inheriting.dictionaries.version)
+        // An entry without the mark is written as before it existed.
+        assertTrue("noNutrition" !in inheriting.text, inheriting.text)
+        assertEquals(false, inheriting.dictionaries.ingredients.single { it.id == 1001L }.noNutrition)
+    }
+
+    @Test
+    fun refusesNoneOnATopLevelEntryOrWithANutrition() {
+        refused(build(ingredients("$egg\t\tnone")), "produce.tsv:3", "nutritionSource 'none' on a top-level entry")
+        refused(
+            build(ingredients("$egg\tkcal=143 protein=12.56 fat=9.51 carbs=0.72\tfdc:171287", "1001\tперепелиное яйцо\tquail egg\t1000\t\tg=1\t\t\t\tkcal=158 protein=13.05 fat=11.09 carbs=0.41\tnone")),
+            "produce.tsv:4",
+            "nutritionSource 'none' with a nutrition",
+        )
+        // Only the exact word marks it.
+        refused(build(ingredients("$egg\t\tNone")), "produce.tsv:3", "nutritionSource 'None' without a nutrition")
+    }
 }

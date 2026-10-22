@@ -51,7 +51,8 @@ data class DictionariesDto(
  * words cooks write for it in each language (картошка for картофель, icing sugar for powdered sugar): the field and
  * the book's search may find the entry by them, while its labels stay what it is shown as. [nutrition] is what 100 g of
  * the raw product holds, when the dictionary knows it; where the value comes from stays in the sources
- * (dictionary/README.md).
+ * (dictionary/README.md). [noNutrition] marks a child entry known to have no values of its own, which must not take its
+ * parent's (a different form no source holds); such an entry has no [nutrition].
  *
  * Every field after [labelEn] has a default, which the encoding omits, so an entry that sets none of them encodes
  * exactly as before they existed, and the version digest of an unchanged dictionary stays what it was.
@@ -68,6 +69,7 @@ data class IngredientEntryDto(
     override val synonymsRu: List<String> = emptyList(),
     override val synonymsEn: List<String> = emptyList(),
     val nutrition: NutritionDto? = null,
+    val noNutrition: Boolean = false,
 ) : DictionaryEntry {
     companion object {
         /**

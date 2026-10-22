@@ -10,6 +10,7 @@
 2503	фундук жареный	roasted hazelnuts	2500		g=1 tbsp=9 cup=135				kcal=646 protein=15.03 fat=62.4 carbs=17.6	fdc:170583
 2504	фундук молотый	ground hazelnuts	2500		g=1 tbsp=6 cup=90				kcal=628 protein=14.95 fat=60.75 carbs=16.7	fdc:170581
 2505	кешью	cashews	2500		g=1 tbsp=9 cup=140				kcal=553 protein=18.22 fat=43.85 carbs=30.19	fdc:170162
+# фисташки → inherits орехи: fdc:170184 Nuts, pistachio nuts, raw (kcal=560 protein=20.16 fat=45.32 carbs=27.17) differs from the mixed nuts by less than the child rule (kcal 47, 8 %; fat 8.18 g, 15 %; carbs 4.75 g, 21 %); so do the other pistachios
 2506	фисташки	pistachios	2500		g=1 tbsp=8 cup=125
 2507	фисташки очищенные	shelled pistachios	2500		g=1 tbsp=8 cup=125
 2508	кедровые орехи	pine nuts	2500		g=1 tsp=3 tbsp=9 cup=135				kcal=673 protein=13.69 fat=68.37 carbs=13.08	fdc:170591

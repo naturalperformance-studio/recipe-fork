@@ -19,7 +19,8 @@ import java.math.BigInteger
  *   that unit. Every row is scaled by the factor in force, exactly.
  * - A row is left out for the first [LeftOutReason] that holds, in their order: free text, no entry in the dictionary,
  *   to taste, no quantity, no measure for its unit, no values on its entry or its parent.
- * - An entry without values of its own takes its parent's; its measures stay its own.
+ * - An entry without values of its own takes its parent's, unless it is marked as having none (`noNutrition`); its
+ *   measures stay its own.
  * - Totals are summed from exact values and rounded once, half up: kcal to the nearest 10, grams to whole grams. One
  *   serving is the exact whole divided by the serving count shown, rounded once the same way, so it stays the same as
  *   the count changes. Each counted row's kcal is rounded on its own, and the rows may not add up to the total.
@@ -58,7 +59,7 @@ object Nutrition {
         val quantity = row.quantity?.takeIf { it.signum() > 0 } ?: return Count.Left(LeftOutReason.NO_QUANTITY)
         val perUnit = row.unit?.let { gramsPerUnit(it, row, entry.factors) } ?: return Count.Left(LeftOutReason.NO_MEASURE)
         val nutrition = entry.nutrition
-            ?: entry.parentId?.let(entries::entry)?.nutrition
+            ?: entry.parentId?.takeUnless { entry.noNutrition }?.let(entries::entry)?.nutrition
             ?: return Count.Left(LeftOutReason.NO_DATA)
         return Count.Counted(Exact.of(nutrition) * (quantity * perUnit / HUNDRED))
     }

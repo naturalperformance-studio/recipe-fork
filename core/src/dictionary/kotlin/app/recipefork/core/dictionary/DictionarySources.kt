@@ -49,7 +49,7 @@ enum class Family(val prefix: String, val dictionary: Dictionary, val ranges: Li
  * A source is tab-separated text, one entry per line; `#` starts a comment line, and `@range FIRST-LAST` declares an
  * id range the file may use. An ingredient line is `id, labelRu, labelEn, parentId, divisible, factors, removed,
  * synonymsRu, synonymsEn, nutrition, nutritionSource` — each synonym list `;`-separated, the source kept in the sources
- * alone — trailing empty columns left out; a tag line is `id, labelRu, labelEn`;
+ * alone, a source `none` written as the entry's `noNutrition` — trailing empty columns left out; a tag line is `id, labelRu, labelEn`;
  * an equipment line is `id, labelRu, labelEn, parentId, removed, synonymsRu, synonymsEn`.
  */
 object DictionaryBuild {
@@ -57,6 +57,9 @@ object DictionaryBuild {
     private const val TAG_COLUMNS = 3
     private const val EQUIPMENT_COLUMNS = 7
     private const val SYNONYM_SEPARATOR = ';'
+
+    /** The `nutritionSource` of a child entry known to have no values of its own. */
+    private const val NO_NUTRITION = "none"
 
     /** The names of a `nutrition` cell, in the order the README gives them. */
     private val NUTRITION_NAMES = listOf("kcal", "protein", "fat", "carbs")
@@ -221,7 +224,7 @@ object DictionaryBuild {
         val synonymsRu = synonyms(at, "synonymsRu", cells[7], errors)
         val synonymsEn = synonyms(at, "synonymsEn", cells[8], errors)
         val nutrition = nutrition(at, cells[9], errors)
-        nutritionSource(at, cells[10], hasNutrition = cells[9].isNotEmpty(), errors)
+        val noNutrition = nutritionSource(at, cells[10], hasNutrition = cells[9].isNotEmpty(), isChild = cells[3].isNotEmpty(), errors)
         if ("pc" in factors && divisible == null) {
             errors += "$at: a 'pc' factor needs the divisible flag ('true' or 'false')"
         }
@@ -229,7 +232,7 @@ object DictionaryBuild {
         if (id == null || !labelled) return null
         return Row(
             at, id, listOf(cells[1], cells[2]),
-            IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition),
+            IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, noNutrition),
             parentId, removed, listOf(synonymsRu, synonymsEn),
         )
     }
@@ -329,16 +332,26 @@ object DictionaryBuild {
 
     /**
      * A `nutritionSource` cell: where the line's nutrition comes from — `fdc:<FoodData Central id>` or
-     * `skurikhin:<the table's product name>` — required with a nutrition and refused without one.
+     * `skurikhin:<the table's product name>` — required with a nutrition and refused without one; or `none`, on a child
+     * entry without a nutrition, which is known to have no values of its own and must not take its parent's. Whether the
+     * line says `none`.
      */
-    private fun nutritionSource(at: String, cell: String, hasNutrition: Boolean, errors: MutableList<String>) {
+    private fun nutritionSource(at: String, cell: String, hasNutrition: Boolean, isChild: Boolean, errors: MutableList<String>): Boolean {
+        if (cell == NO_NUTRITION) {
+            when {
+                hasNutrition -> errors += "$at: nutritionSource '$NO_NUTRITION' with a nutrition ('$NO_NUTRITION' marks an entry with no values of its own)"
+                !isChild -> errors += "$at: nutritionSource '$NO_NUTRITION' on a top-level entry (only a child may be kept from its parent's values)"
+                else -> return true
+            }
+            return false
+        }
         if (cell.isEmpty()) {
             if (hasNutrition) errors += "$at: nutrition needs its nutritionSource ('fdc:<id>' or 'skurikhin:<product name>')"
-            return
+            return false
         }
         if (!hasNutrition) {
             errors += "$at: nutritionSource '$cell' without a nutrition"
-            return
+            return false
         }
         when {
             cell.startsWith("fdc:") -> {
@@ -356,6 +369,7 @@ object DictionaryBuild {
             }
             else -> errors += "$at: nutritionSource '$cell' is neither 'fdc:<id>' nor 'skurikhin:<product name>'"
         }
+        return false
     }
 
     private fun uniqueIds(rows: List<Row<*>>, errors: MutableList<String>) {

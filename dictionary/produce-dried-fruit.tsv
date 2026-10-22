@@ -16,8 +16,10 @@
 2409	яблочные чипсы	apple chips	2400		g=1				kcal=346 protein=1.32 fat=0.58 carbs=93.53	fdc:173931
 2410	клюква сушёная	dried cranberries	2400		g=1 tbsp=8 cup=120				kcal=308 protein=0.17 fat=1.09 carbs=82.8	fdc:171723
 2411	вишня сушёная	dried cherries	2400		g=1 tbsp=9 cup=150				kcal=333 protein=1.25 fat=0.73 carbs=80.45	fdc:171708
-2412	черника сушёная	dried bilberries	2400		g=1 tbsp=9 cup=150
+# черника сушёная → fdc:168158 Blueberries, dried, sweetened: the nearest dried berry, no dried bilberry listed
+2412	черника сушёная	dried bilberries	2400		g=1 tbsp=9 cup=150				kcal=317 protein=2.5 fat=2.5 carbs=80	fdc:168158
 2413	ягоды годжи	goji berries	2400		g=1 tbsp=9 cup=110				kcal=349 protein=14.26 fat=0.39 carbs=77.06	fdc:173032
+# шиповник сушёный → Skurikhin «Шиповник сухой» (9.2.1.13, p. 156-157): the book prints kcal 284 with protein 3.4, fat 1.4, carbs 48.3 (its macros give about 219); copied as printed
 2414	шиповник сушёный	dried rose hips	2400		g=1				kcal=284 protein=3.4 fat=1.4 carbs=48.3	skurikhin:Шиповник сухой
 2415	малина сублимированная	freeze-dried raspberries	2400		g=1 tbsp=2 cup=30
 2416	клубника сублимированная	freeze-dried strawberries	2400		g=1 tbsp=2 cup=30

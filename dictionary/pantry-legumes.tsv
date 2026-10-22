@@ -102,8 +102,10 @@
 # сливки растительные → fdc:170867 dessert topping, pressurized: the non-dairy whipping cream Russian cooks buy
 6070	сливки растительные	non-dairy cream			g=1 ml=1.0 tsp=5 tbsp=15 cup=250				kcal=264 protein=0.98 fat=22.3 carbs=16.07	fdc:170867
 6071	сливки растительные для взбивания	non-dairy whipping cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250				kcal=264 protein=0.98 fat=22.3 carbs=16.07	fdc:170867
-6072	сливки соевые	soy cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250
-6073	сливки овсяные	oat cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250
+# сливки соевые → none: a soy cream, not the pressurized dessert topping its parent cites; no source holds it
+6072	сливки соевые	soy cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250					none
+# сливки овсяные → none: an oat cream, not the pressurized dessert topping its parent cites; no source holds it
+6073	сливки овсяные	oat cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250					none
 # сливки для кофе растительные → fdc:171261 cream substitute, liquid
 6074	сливки для кофе растительные	non-dairy creamer	6070		g=1 ml=1.0 tsp=5 tbsp=15				kcal=136 protein=1 fat=9.97 carbs=11.38	fdc:171261
 6075	сливки сухие растительные	powdered creamer	6070		g=1 tsp=2 tbsp=6				kcal=529 protein=2.48 fat=32.92 carbs=59.29	fdc:171263

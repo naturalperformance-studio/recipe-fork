@@ -163,6 +163,31 @@ class DictionarySeedingTest {
         )
     }
 
+    // T-294: a child known to have no values of its own is held so on the device, seeded from the snapshot or refreshed
+    // from the server, and read back as such; an entry without the mark holds none.
+    @Test
+    fun aChildWithoutValuesOfItsOwnKeepsItsMarkOnTheDevice() = runBlocking {
+        val corn = IngredientEntryDto(1, "кукуруза", "corn", nutrition = NutritionDto(86.0, 3.27, 1.35, 18.7))
+        val baby = IngredientEntryDto(2, "мини-кукуруза", "baby corn", 1, false, mapOf("g" to 1.0, "pc" to 10.0), noNutrition = true)
+        val frozen = IngredientEntryDto(3, "кукуруза замороженная", "frozen corn", 1)
+        shipped = DictionariesDto("s1", listOf(corn, baby, frozen), emptyList())
+        val catalog = DictionaryCatalog(dao, seeding)
+        assertEquals(listOf(corn, baby, frozen), catalog.ingredients().map { it.toDto() })
+        assertEquals(listOf(false, true, false), catalog.ingredients().map { it.noNutrition })
+
+        refreshFromServer(DictionariesDto("server-1", listOf(corn, baby.copy(noNutrition = false), frozen.copy(noNutrition = true)), emptyList()))
+        assertEquals(listOf(false, false, true), catalog.ingredients().map { it.noNutrition })
+    }
+
+    // The application's own snapshot carries the mark, and a clean device holds it.
+    @Test
+    fun theShippedMarkReachesTheDevice() = runBlocking {
+        shipped = DictionarySnapshot.read(context)
+        val held = DictionaryCatalog(dao, seeding).ingredients().associateBy { it.id }
+        assertTrue(held.getValue(1403L).noNutrition)
+        assertFalse(held.getValue(1402L).noNutrition)
+    }
+
     // The application's own snapshot carries the nutrition of its first entries, and a clean device holds it.
     @Test
     fun theShippedNutritionReachesTheDevice() = runBlocking {
@@ -242,6 +267,23 @@ class DictionarySeedingTest {
         v4.execSQL("insert into equipment_entry values (10000, 'Техника', 'Appliances', null, 0, '[]', '[]')")
     }
 
+    // T-294 gave the entry its mark of having no values of its own in version 6: a version-5 store — nutrition, no mark —
+    // is wiped and seeded again.
+    @Test
+    fun aVersionFiveStoreIsWipedAndTheDictionariesAreSeededAgainWithTheMark() = wipedAndSeededAgain(5) { v5 ->
+        v5.execSQL(
+            "create table ingredient_entry (id integer not null primary key, labelRu text not null, labelEn text not null, " +
+                "parentId integer, divisible integer, factors text not null, removed integer not null, " +
+                "synonymsRu text not null, synonymsEn text not null, nutrition text)",
+        )
+        v5.execSQL("insert into ingredient_entry values (1, 'курица', 'chicken', null, 1, '{\"pc\":1500.0}', 0, '[]', '[]', null)")
+        v5.execSQL(
+            "create table equipment_entry (id integer not null primary key, labelRu text not null, labelEn text not null, " +
+                "parentId integer, removed integer not null, synonymsRu text not null, synonymsEn text not null)",
+        )
+        v5.execSQL("insert into equipment_entry values (10000, 'Техника', 'Appliances', null, 0, '[]', '[]')")
+    }
+
     // T-201: the equipment is seeded from the snapshot exactly as the ingredients are — groups, items, synonyms and
     // removal — and an entry removed upstream is held removed, whether marked so or no longer carried; an answer that
     // carries no equipment at all (a server need not serve it) leaves it as it is.
@@ -290,6 +332,7 @@ class DictionarySeedingTest {
                     1, "курица", "chicken", divisible = true, factors = mapOf("pc" to 1500.0), synonymsRu = listOf("кура"),
                     nutrition = NutritionDto(144.0, 17.44, 8.1, 0.0),
                 ),
+                IngredientEntryDto(2, "куриные кости", "chicken bones", 1, noNutrition = true),
             ),
             emptyList(),
             listOf(EquipmentEntryDto(10000, "Техника", "Appliances")),
@@ -306,12 +349,13 @@ class DictionarySeedingTest {
                         1, "курица", "chicken", null, true, mapOf("pc" to 1500.0), synonymsRu = listOf("кура"),
                         nutrition = NutritionDto(144.0, 17.44, 8.1, 0.0),
                     ),
+                    IngredientEntryEntity(2, "куриные кости", "chicken bones", 1, noNutrition = true),
                 ),
                 catalog.ingredients(),
             )
             assertEquals("s1", dao.version())
             assertEquals(listOf(EquipmentEntryEntity(10000, "Техника", "Appliances")), catalog.equipment())
-            assertEquals(5, AppDatabase.VERSION)
+            assertEquals(6, AppDatabase.VERSION)
             assertEquals(AppDatabase.VERSION, opened.openHelper.readableDatabase.version)
         } finally {
             opened.close()

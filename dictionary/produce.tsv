@@ -62,7 +62,8 @@
 1115	черемша	wild garlic			g=1
 1120	чеснок	garlic		true	g=1 pc=45				kcal=149 protein=6.36 fat=0.5 carbs=33.06	fdc:169230
 1121	чеснок молодой	young garlic	1120	true	g=1 pc=40
-1122	чеснок чёрный	black garlic	1120	true	g=1 pc=40
+# чеснок чёрный → none: aged for weeks, drier and sweeter than fresh garlic; no source holds it
+1122	чеснок чёрный	black garlic	1120	true	g=1 pc=40					none
 1125	зубчик чеснока	garlic clove		false	g=1 pc=5 tsp=4 tbsp=12				kcal=149 protein=6.36 fat=0.5 carbs=33.06	fdc:169230
 1126	стрелки чеснока	garlic scapes			g=1
 # Cabbages (1200-1299)
@@ -145,7 +146,8 @@
 1400	кукуруза	corn			g=1 cup=150				kcal=86 protein=3.27 fat=1.35 carbs=18.7	fdc:169998
 1401	кукуруза замороженная	frozen corn	1400		g=1 cup=140
 1402	початок кукурузы	corn on the cob	1400	true	g=1 pc=250
-1403	мини-кукуруза	baby corn	1400	false	g=1 pc=10
+# мини-кукуруза → none: picked before its kernels form; sweet corn's values would be about three times too high, and no source holds baby corn
+1403	мини-кукуруза	baby corn	1400	false	g=1 pc=10					none
 1410	горошек зелёный	green peas			g=1 tbsp=10 cup=145				kcal=81 protein=5.42 fat=0.4 carbs=14.45	fdc:170419
 1411	горошек замороженный	frozen peas	1410		g=1 tbsp=10 cup=140
 1412	горох стручковый	snow peas	1410		g=1 cup=65				kcal=42 protein=2.8 fat=0.2 carbs=7.55	fdc:170010

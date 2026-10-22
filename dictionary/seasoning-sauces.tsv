@@ -7,7 +7,8 @@
 8001	соевый соус тёмный	dark soy sauce	8000		g=1 ml=1.2 tsp=6 tbsp=18
 8002	соевый соус светлый	light soy sauce	8000		g=1 ml=1.15 tsp=6 tbsp=17
 8003	соевый соус низкосолевой	low-sodium soy sauce	8000		g=1 ml=1.15 tsp=6 tbsp=17
-8004	соевый соус сладкий	sweet soy sauce	8000		g=1 ml=1.25 tsp=6 tbsp=19
+# соевый соус сладкий → none: thickened with sugar, far sweeter than soy sauce; no source holds it
+8004	соевый соус сладкий	sweet soy sauce	8000		g=1 ml=1.25 tsp=6 tbsp=19					none
 8005	тамари	tamari	8000		g=1 ml=1.17 tsp=6 tbsp=18
 8010	рыбный соус	fish sauce			g=1 ml=1.2 tsp=6 tbsp=18				kcal=35 protein=5.06 fat=0.01 carbs=3.64	fdc:174531
 8011	устричный соус	oyster sauce			g=1 tsp=6 tbsp=18				kcal=51 protein=1.35 fat=0.25 carbs=10.92	fdc:174529
@@ -115,9 +116,11 @@
 8201	горчица русская	hot Russian mustard	8200		g=1 tsp=5 tbsp=15
 8202	горчица дижонская	Dijon mustard	8200		g=1 tsp=5 tbsp=15
 8203	горчица зернистая	whole grain mustard	8200		g=1 tsp=5 tbsp=15
-8204	горчица медовая	honey mustard	8200		g=1 tsp=6 tbsp=17
+# горчица медовая → none: sweetened with honey, not plain mustard; no source holds it
+8204	горчица медовая	honey mustard	8200		g=1 tsp=6 tbsp=17					none
 8205	горчица жёлтая	yellow mustard	8200		g=1 tsp=5 tbsp=15				kcal=60 protein=3.74 fat=3.34 carbs=5.83	fdc:172234
-8206	горчица баварская	Bavarian sweet mustard	8200		g=1 tsp=6 tbsp=17
+# горчица баварская → none: a sweet mustard, not plain mustard; no source holds it
+8206	горчица баварская	Bavarian sweet mustard	8200		g=1 tsp=6 tbsp=17					none
 8210	хрен	prepared horseradish			g=1 tsp=5 tbsp=15				kcal=48 protein=1.18 fat=0.69 carbs=11.29	fdc:173472
 8211	хрен со свёклой	horseradish with beets	8210		g=1 tsp=5 tbsp=15
 8212	хреновина	khrenovina			g=1 tsp=5 tbsp=15
@@ -155,9 +158,11 @@
 # уксус → fdc:172237 distilled vinegar: what уксус means without a kind
 8300	уксус	vinegar			g=1 ml=1.01 tsp=5 tbsp=15 cup=250				kcal=18 protein=0 fat=0 carbs=0.04	fdc:172237
 8301	уксус столовый	white vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
-8302	уксус столовый 9%	white vinegar 9%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
+# уксус столовый 9% → none: about twice the acid of the 5 % vinegar its parent cites; no source holds it
+8302	уксус столовый 9%	white vinegar 9%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250					none
 8303	уксус столовый 6%	white vinegar 6%	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
-8304	уксусная эссенция	vinegar essence 70%	8300		g=1 ml=1.07 tsp=5.4 tbsp=16
+# уксусная эссенция → none: 70 % acid, about fourteen times the 5 % vinegar its parent cites; no source holds it
+8304	уксусная эссенция	vinegar essence 70%	8300		g=1 ml=1.07 tsp=5.4 tbsp=16					none
 8305	уксус яблочный	apple cider vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
 8306	уксус винный	wine vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250
 8307	уксус винный белый	white wine vinegar	8300		g=1 ml=1.01 tsp=5 tbsp=15 cup=250

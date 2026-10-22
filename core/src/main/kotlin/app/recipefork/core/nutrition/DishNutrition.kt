@@ -39,7 +39,7 @@ enum class LeftOutReason {
     /** The row's unit has no measure in grams: none on its entry, nor a piece weight on the row. */
     NO_MEASURE,
 
-    /** Neither the entry nor its parent says what 100 g of it holds. */
+    /** Neither the entry nor its parent says what 100 g of it holds, or the entry is known to have no values of its own. */
     NO_DATA,
 }
 

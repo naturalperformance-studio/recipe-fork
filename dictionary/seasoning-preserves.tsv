@@ -62,7 +62,8 @@
 8454	оливки фаршированные	stuffed olives	8450	false	g=1 pc=5 cup=140
 8455	оливки каламата	Kalamata olives	8450	false	g=1 pc=5 cup=140
 8456	оливки кастельветрано	Castelvetrano olives	8450	false	g=1 pc=6
-8457	маслины вяленые	dry-cured black olives	8450	false	g=1 pc=3
+# маслины вяленые → none: dry-cured, far less water than the pickled olives its parent cites; no source holds it
+8457	маслины вяленые	dry-cured black olives	8450	false	g=1 pc=3					none
 
 # Canned vegetables, fruit and coconut (8470-8519). pc is one standard can (whole contents, as sold); a can may be used in halves.
 8470	кукуруза консервированная	canned corn		true	g=1 pc=340 cup=165				kcal=61 protein=1.95 fat=0.77 carbs=13.86	fdc:170409

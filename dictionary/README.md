@@ -82,7 +82,7 @@ nutritionSource`; empty trailing columns may be left out:
 | `synonymsRu`| empty, or the other Russian words cooks write for the entry, separated by `;` (`картошка;картоха`)      |
 | `synonymsEn`| likewise in English (`confectioners' sugar;icing sugar`)                                               |
 | `nutrition` | empty, or what 100 g of the raw product holds: `kcal=<n> protein=<n> fat=<n> carbs=<n>`, all four, space-separated |
-| `nutritionSource` | where `nutrition` comes from: `fdc:<FoodData Central id>` or `skurikhin:<the table's product name>`; required with `nutrition`, refused without it |
+| `nutritionSource` | where `nutrition` comes from: `fdc:<FoodData Central id>` or `skurikhin:<the table's product name>`; required with `nutrition`, refused without it — or `none`, with an empty `nutrition`, on a child that must not take its parent's values |
 
 ```
 @range 3000-4999
@@ -122,6 +122,18 @@ citation stays in these sources and is not written into the asset, which carries
 An entry without nutrition is written into the asset exactly as before the column existed, so its digest does not
 change. A line may give nutrition to a parent as well as to its leaves: the generic entry when cooks mean one product by
 it (сахар — white sugar, масло сливочное — unsalted butter).
+
+A child without values of its own takes its parent's when the nutrition of a dish is counted. Where it is another form
+whose parent's values would be clearly wrong, and no source holds it fairly (мини-кукуруза under кукуруза, говяжьи кости
+under говядина), its `nutritionSource` is **`none`** and its `nutrition` stays empty: it is known to have no values of its
+own, and a recipe row naming it is left out of the count as «нет данных» instead. A `#` comment above the line says why.
+The asset carries the mark as the entry's `"noNutrition": true` (`IngredientEntryDto.noNutrition`), and the word `none`
+stays in the sources; an entry without the mark is written exactly as before it existed.
+
+```
+# мини-кукуруза → none: picked before its kernels form; sweet corn's values would be about three times too high
+1403	мини-кукуруза	baby corn	1400	false	g=1 pc=10					none
+```
 
 The tags file — `id, labelRu, labelEn`:
 
@@ -172,7 +184,8 @@ never counts (the application's My kitchen). The equipment is maintained here al
   value that is not a finite number of at least zero, kcal above 900, a gram value above 100, protein, fat and carbs
   together above 100;
 - a `nutrition` without a `nutritionSource`, a `nutritionSource` without a `nutrition`, or one that is neither
-  `fdc:<a positive whole number>` nor `skurikhin:<a product name>`.
+  `fdc:<a positive whole number>` nor `skurikhin:<a product name>`;
+- a `nutritionSource` of `none` on a top-level entry, or beside a `nutrition`.
 
 ## Content rules
 
