@@ -1,6 +1,7 @@
 package app.recipefork.app.library
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,7 +18,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -36,6 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.layout.HorizontalAlignmentLine
@@ -47,20 +54,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.getTextLayoutResult
+import androidx.compose.ui.semantics.text
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
-import app.recipefork.app.ui.FittedText
 import app.recipefork.app.ui.fitWords
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -75,9 +87,9 @@ import kotlin.math.roundToInt
  *
  * Where [onSelect] is given, a long press on the entry calls it: the book's selection starts with it. While the selection
  * is on, [selected] says whether the entry is chosen (null while it is off): a tap, or a long press, calls [onSelect] in
- * place of opening the recipe, the entry's start shows its mark of being chosen ([SelectionMark]) in place of its
- * cover, a chosen entry is tinted (`secondaryContainer`), its menu is not offered, and the screen reader hears
- * "Selected" or "Not selected" (A11Y-008).
+ * place of opening the recipe, its mark of being chosen ([RowSelectionMark]) stands over the bottom-end corner of its
+ * cover or drop cap, a chosen entry is tinted (`secondaryContainer`), its menu is not offered, and the screen reader
+ * hears "Selected" or "Not selected" (A11Y-008).
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -145,11 +157,14 @@ internal fun BookEntryRow(
                             .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty()) 16.dp else MENU_ROOM),
                         horizontalArrangement = Arrangement.spacedBy(ROW_GAP),
                     ) {
-                        Box(Modifier.size(LEADING_SIZE), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(LEADING_SIZE)) {
+                            cover(coverId, LibraryTags.cover(recipeId)) { DropCap(recipeId, title) }
                             if (marked) {
-                                SelectionMark(recipeId, selected == true)
-                            } else {
-                                cover(coverId, LibraryTags.cover(recipeId)) { DropCap(recipeId, title) }
+                                RowSelectionMark(
+                                    recipeId,
+                                    selected == true,
+                                    Modifier.align(Alignment.BottomEnd).offset(MARK_OUTSET, MARK_OUTSET),
+                                )
                             }
                         }
                         Column(
@@ -179,10 +194,53 @@ internal fun BookEntryRow(
     }
 }
 
+/** The diameter of an entry's mark of being chosen, and how far it stands out past its cover's bottom-end corner. */
+private val MARK_SIZE = 26.dp
+private val MARK_OUTSET = 4.dp
+
+/** The ring round an entry's mark of being chosen, and the size of the check drawn in it. */
+private val MARK_RING = 2.dp
+private val MARK_CHECK = 16.dp
+
+/**
+ * An entry's mark in the book's selection, over its cover's bottom-end corner (redesign-1 § 4.1, § 5): a round check —
+ * filled in the primary colour, the check in `onPrimary`, ringed by the page's colour — when it is chosen; an empty
+ * circle on the page's colour, outlined in `onSurfaceVariant`, when it is not. The row already says which to the screen
+ * reader, so the mark says nothing.
+ */
+@Composable
+private fun RowSelectionMark(recipeId: String, selected: Boolean, modifier: Modifier = Modifier) {
+    val colours = MaterialTheme.colorScheme
+    val fill = if (selected) colours.primary else colours.surface
+    val ring = if (selected) colours.surface else colours.onSurfaceVariant
+    Box(
+        modifier
+            .size(MARK_SIZE)
+            .background(fill, CircleShape)
+            .border(MARK_RING, ring, CircleShape)
+            .clearAndSetSemantics { testTag = LibraryTags.selectionMark(recipeId) },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            val check = colours.onPrimary
+            Canvas(Modifier.size(MARK_CHECK)) {
+                // The redesign's check, drawn on a 24-unit square: M5 12.5 l4.5 4.5 L19 7.5, stroke 2.6, round.
+                val unit = size.width / 24f
+                val path = Path().apply {
+                    moveTo(5f * unit, 12.5f * unit)
+                    lineTo(9.5f * unit, 17f * unit)
+                    lineTo(19f * unit, 7.5f * unit)
+                }
+                drawPath(path, check, style = Stroke(width = 2.6f * unit, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            }
+        }
+    }
+}
+
 /** The least height of an entry's row. */
 internal val ROW_MIN_HEIGHT = 84.dp
 
-/** The side of the cover, the drop cap and the selection mark's place at an entry's start. */
+/** The side of the cover and the drop cap at an entry's start. */
 internal val LEADING_SIZE = 60.dp
 
 /** The space between an entry's cover and its text, and between its text and its ⋮. */
@@ -245,35 +303,78 @@ internal fun DropCap(recipeId: String, title: String) {
 }
 
 /**
- * An entry's title, in Literata (titleLarge), which tells the entry's menu where its first line stands ([TitleLine]).
- * At a large font scale it is made smaller just as far as its widest word needs to fit its room, never below its size at
- * a font scale of 1 ([fitWords]): it wraps between words, never inside one.
+ * An entry's title, in Literata Medium at [TITLE_SIZE] (as the redesign draws a contents line), which tells the entry's
+ * menu where its first line stands ([TitleLine]). At a large font scale it is made smaller just as far as its widest
+ * word — a hyphenated word counting as its parts — needs to fit its room, never below its size at a font scale of 1
+ * ([fitWords]): it wraps between words, and after the hyphen of a hyphenated word ([breakAfterHyphens]). A word wider
+ * than the room even then is hyphenated across lines, never cut short: every word of the title stays.
  */
 @Composable
 internal fun EntryTitle(recipeId: String, title: String) {
     // The middle of the first line, as the title was last laid out; the text is laid out while it is measured.
     val firstLine = remember { FirstLine() }
+    val laid = remember { LaidTitle() }
     val text = title.ifBlank { stringResource(R.string.common_untitled_recipe) }
-    val style = MaterialTheme.typography.titleLarge
+    val style = MaterialTheme.typography.titleLarge.copy(fontSize = TITLE_SIZE, lineHeight = TITLE_LINE)
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     BoxWithConstraints(
-        Modifier.layout { measurable, constraints ->
-            val placeable = measurable.measure(constraints)
-            val centre = firstLine.centre.coerceIn(0, placeable.height)
-            layout(placeable.width, placeable.height, mapOf(TitleLine to centre)) { placeable.place(0, 0) }
-        },
+        Modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                val centre = firstLine.centre.coerceIn(0, placeable.height)
+                layout(placeable.width, placeable.height, mapOf(TitleLine to centre)) { placeable.place(0, 0) }
+            }
+            // The title as written is what is read out, without the places to break [breakAfterHyphens] adds.
+            .semantics {
+                this.text = AnnotatedString(text)
+                getTextLayoutResult { layouts ->
+                    laid.result?.let(layouts::add) != null
+                }
+            }
+            .testTag(LibraryTags.entryTitle(recipeId)),
     ) {
         val width = constraints.maxWidth
-        val fitted = remember(text, style, width, measurer, density) { fitWords(text, style, width, measurer, density) }
-        FittedText(
-            text,
-            fitted,
-            modifier = Modifier.testTag(LibraryTags.entryTitle(recipeId)),
-            onTextLayout = { firstLine.centre = ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt() },
-        )
+        val fitted = remember(text, style, width, measurer, density) {
+            fitWords(text, style, width, measurer, density, hyphenParts = true)
+        }
+        Box(Modifier.clearAndSetSemantics {}) {
+            Text(
+                breakAfterHyphens(text),
+                style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
+                softWrap = true,
+                onTextLayout = {
+                    laid.result = it
+                    firstLine.centre = ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt()
+                },
+            )
+        }
     }
 }
+
+/** How an entry's title was last laid out, for the screen reader and the tests to ask of it. */
+private class LaidTitle(var result: TextLayoutResult? = null)
+
+/**
+ * [text] with a zero-width space after each hyphen inside a word: the line breaker without hyphenation breaks a word like
+ * «Картофельно-грибная» before its hyphen, or inside a part, rather than after the hyphen; the space gives it that
+ * place to break. It is not drawn, and the screen reader passes over it.
+ */
+internal fun breakAfterHyphens(text: String): String = buildString {
+    text.forEachIndexed { i, c ->
+        append(c)
+        val next = text.getOrNull(i + 1)
+        if (c == '-' && next != null && next != '-' && !next.isWhitespace()) append(ZERO_WIDTH_SPACE)
+    }
+}
+
+/** A place a line may break at, not drawn. */
+private const val ZERO_WIDTH_SPACE = '\u200B'
+
+
+/** The size and line height of an entry's title: the redesign's contents line, Literata Medium 17.5, rounded to 18. */
+private val TITLE_SIZE = 18.sp
+private val TITLE_LINE = 24.sp
 
 /** Where the middle of a title's first line stands, in pixels from the title's top. */
 private class FirstLine(var centre: Int = 0)

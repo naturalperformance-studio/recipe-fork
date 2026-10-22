@@ -57,6 +57,8 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.interfaceLanguage
+import app.recipefork.app.ui.WorkingFamily
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.search.BookOrder
@@ -146,14 +149,16 @@ internal fun ListHeader(
             onValueChange = search::type,
             enabled = enabled,
             singleLine = true,
-            // What is typed and the hint are set in the working face, Golos, whose narrower letters keep the whole hint
-            // on a 360 dp phone (T-304).
-            textStyle = MaterialTheme.typography.titleSmall,
+            // The field is set wholly in the working face, Golos, regular: what is typed and the hint in its 14 sp role,
+            // whose narrower letters keep the whole hint on a 360 dp phone; the label in its face at the sizes the field
+            // gives it, resting and risen (T-304).
+            textStyle = searchStyle(),
             // A short label on one line, which the field keeps room for above its outline when it rises there; the
             // longer words stand inside as its placeholder, cut short only where even they do not fit.
             label = {
                 Text(
                     stringResource(R.string.library_search),
+                    fontFamily = WorkingFamily,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.testTag(LibraryTags.SEARCH_LABEL),
@@ -162,7 +167,7 @@ internal fun ListHeader(
             placeholder = {
                 Text(
                     stringResource(R.string.library_search_placeholder),
-                    style = MaterialTheme.typography.titleSmall,
+                    style = searchStyle(),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.testTag(LibraryTags.SEARCH_PLACEHOLDER),
@@ -191,6 +196,10 @@ internal fun ListHeader(
     }
     if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, kitchen, onClose = { sheetOpen = false })
 }
+
+/** What the search field's text and hint are set in: the working face's 14 sp role, Golos, at regular weight. */
+@Composable
+private fun searchStyle(): TextStyle = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Normal)
 
 /**
  * The view's order (FLOW-035 (3)): a chip reading the order in force in words, with a chevron, that opens the menu of

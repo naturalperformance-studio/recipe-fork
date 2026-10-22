@@ -46,6 +46,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
@@ -54,6 +55,9 @@ import java.time.Instant
  * original and opens it; both are in the own-recipes view.
  */
 @OptIn(ExperimentalTestApi::class)
+// A phone-sized window: with the book's two-row title bar and a version's provenance line, the default 320 × 470 dp
+// window leaves the second entry below the fold when the test returns to the book.
+@Config(qualifiers = "w360dp-h640dp")
 @RunWith(AndroidJUnit4::class)
 class ForkFromTheCardTest {
     @get:Rule

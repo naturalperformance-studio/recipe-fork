@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -24,7 +26,9 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -166,11 +170,13 @@ class BookEntryRowTest {
 
     private fun screen(): Bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
 
+    private fun close(pixel: Color, colour: Color, within: Float = 0.02f) =
+        listOf(pixel.red - colour.red, pixel.green - colour.green, pixel.blue - colour.blue).all { abs(it) < within }
+
     /** Whether the pixel at [x], [y] of [image] is [colour], within a little of rounding. */
     private fun assertPixel(message: String, image: Bitmap, x: Float, y: Float, colour: Color) {
         val pixel = Color(image.getPixel(x.toInt(), y.toInt()))
-        val close = listOf(pixel.red - colour.red, pixel.green - colour.green, pixel.blue - colour.blue).all { abs(it) < 0.02f }
-        assertTrue("$message: $pixel, not $colour", close)
+        assertTrue("$message: $pixel, not $colour", close(pixel, colour))
     }
 
     private fun bringIntoView(list: String, recipe: Recipe) {
@@ -201,7 +207,9 @@ class BookEntryRowTest {
             assertEquals("the title beside it", start.right + dp(12f), title.left, 1f)
             val titleStyle = layoutOf(LibraryTags.entryTitle(id)).layoutInput.style
             assertEquals("the title in Literata", ReadingFamily, titleStyle.fontFamily)
-            assertEquals("as titleLarge", type.titleLarge.fontSize, titleStyle.fontSize)
+            assertEquals("Medium", type.titleLarge.fontWeight, titleStyle.fontWeight)
+            assertEquals("at the redesign's 18 sp", 18.sp, titleStyle.fontSize)
+            assertEquals("on 24 sp lines", 24.sp, titleStyle.lineHeight)
             val tags = bounds(LibraryTags.entryTags(id))
             assertTrue("the tags under the title", tags.top >= title.bottom)
             assertEquals("the tags in Golos", WorkingFamily, layoutOf(LibraryTags.entryTags(id)).layoutInput.style.fontFamily)
@@ -293,7 +301,7 @@ class BookEntryRowTest {
     }
 
     @Test
-    fun aChosenRowShowsARoundCheckInPlaceOfItsCoverOnATint() {
+    fun aChosenRowShowsARoundCheckOverItsCoverOnATint() {
         val pictured = own("Borscht", soup, media = listOf(cover("c1")))
         val bare = own("Shchi", minutesAgo = 1)
         show(LibraryView.OWN)
@@ -308,10 +316,12 @@ class BookEntryRowTest {
             bringIntoView(LibraryTags.OWN_LIST, recipe)
             val entry = bounds(LibraryTags.entry(rid))
             val mark = bounds(LibraryTags.selectionMark(rid))
-            assertEquals("the mark in the cover's place", entry.left + dp(16f + 30f), mark.center.x, 1f)
-            assertEquals(entry.top + dp(12f + 30f), mark.center.y, 1f)
-            assertFalse("no cover beside it", exists(LibraryTags.coverSlot(LibraryTags.cover(rid))))
-            assertFalse("no drop cap beside it", exists(BookEntryRowTags.dropCap(rid)))
+            assertEquals("a 26 dp circle", dp(26f), mark.width, 1f)
+            assertEquals(dp(26f), mark.height, 1f)
+            assertEquals("over the cover's bottom-end corner, 4 dp out", entry.left + dp(16f + 60f + 4f), mark.right, 1f)
+            assertEquals(entry.top + dp(12f + 60f + 4f), mark.bottom, 1f)
+            val picture = if (recipe == pictured) LibraryTags.coverSlot(LibraryTags.cover(rid)) else BookEntryRowTags.dropCap(rid)
+            assertTrue("the cover or drop cap stays under it", exists(picture))
             assertFalse("no ⋮ while choosing", exists(LibraryTags.actions(rid)))
             val config = compose.onNodeWithTag(LibraryTags.entry(rid)).fetchSemanticsNode().config
             assertEquals(chosen, config[SemanticsProperties.Selected])
@@ -323,10 +333,67 @@ class BookEntryRowTest {
             val ground = if (chosen) scheme.secondaryContainer else scheme.surface
             assertPixel("the row's ground", image, entry.left + dp(4f), entry.top + dp(4f), ground)
             assertPixel("across the row", image, entry.right - dp(4f), entry.bottom - dp(4f), ground)
+            if (chosen) {
+                assertPixel("a chosen mark is filled in the primary colour", image, mark.left + dp(4f), mark.center.y, scheme.primary)
+                assertPixel("ringed by the page's colour", image, mark.left + dp(1f), mark.center.y, scheme.surface)
+                val ticked = (mark.left.toInt() until mark.right.toInt()).sumOf { x ->
+                    (mark.top.toInt() until mark.bottom.toInt()).count { y -> close(Color(image.getPixel(x, y)), scheme.onPrimary) }
+                }
+                assertTrue("its check drawn in onPrimary ($ticked px)", ticked > dp(10f))
+            } else {
+                assertPixel("a mark not chosen is the page's colour", image, mark.center.x, mark.center.y, scheme.surface)
+                assertPixel("outlined in onSurfaceVariant", image, mark.left + dp(1f), mark.center.y, scheme.onSurfaceVariant)
+            }
         }
         assertEquals("the text does not move", before.left, bounds(LibraryTags.entryTitle(id)).left, 0.5f)
-        // A tap lets it go: the cover comes back, and the selection with no entry left ends.
+        // A tap lets it go: the mark goes, and the selection with no entry left ends.
         compose.onNodeWithTag(LibraryTags.entry(id)).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.SELECTION_BAR) && exists(LibraryTags.cover(id)) }
+        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.SELECTION_BAR) && !exists(LibraryTags.selectionMark(id)) }
+        assertTrue(exists(LibraryTags.cover(id)))
     }
+
+    /** Every word of the title of [recipe] is laid out whole: nothing cut short, nothing past its room. */
+    private fun assertEveryWordShows(recipe: Recipe) {
+        val tag = LibraryTags.entryTitle(recipe.id.value)
+        await(tag)
+        bringIntoView(LibraryTags.OWN_LIST, recipe)
+        val layout = layoutOf(tag)
+        val laid = layout.layoutInput.text.text
+        assertEquals("the title, a break place after its hyphens aside", recipe.title, laid.replace("\u200B", ""))
+        val last = layout.lineCount - 1
+        assertTrue("${recipe.title}: no line cut short", (0..last).none { layout.isLineEllipsized(it) })
+        assertEquals("${recipe.title}: the last line ends the title", laid.length, layout.getLineEnd(last))
+        assertFalse("${recipe.title}: nothing past its room", layout.hasVisualOverflow)
+        val words = recipe.title.split(' ').flatMap { word -> Regex("""[^-]*-+|[^-]+""").findAll(word).map { it.value }.toList() }
+        words.forEach { word ->
+            val start = laid.indexOf(word)
+            assertTrue("«$word» is laid out", start >= 0)
+            val line = layout.getLineForOffset(start)
+            assertEquals("«$word» stays on one line", line, layout.getLineForOffset(start + word.length - 1))
+        }
+    }
+
+    private fun longTitles(fontScale: Float) {
+        val potato = own("Картофельно-грибная запеканка")
+        val crumble = own("Strawberry-rhubarb crumble", minutesAgo = 1)
+        session.choose(LibraryView.OWN)
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                AppTheme {
+                    scheme = MaterialTheme.colorScheme
+                    type = MaterialTheme.typography
+                    AppNavHost(session, recipes, Mode.Serverless, editor = editor)
+                }
+            }
+        }
+        compose.waitForIdle()
+        listOf(potato, crumble).forEach(::assertEveryWordShows)
+    }
+
+    @Test
+    fun longTitlesKeepEveryWord() = longTitles(1f)
+
+    @Test
+    fun longTitlesKeepEveryWordAtTwiceTheFontSize() = longTitles(2f)
 }

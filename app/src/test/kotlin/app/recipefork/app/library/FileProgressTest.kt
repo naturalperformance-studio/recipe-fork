@@ -68,6 +68,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import org.robolectric.Shadows.shadowOf
 import java.io.File
 import java.time.Instant
@@ -212,7 +213,10 @@ class FileProgressTest {
 
     // Leaving the book for a card while the snackbar says an imported recipe closes it: coming back, it is not said
     // again, and the list keeps the place it was left at rather than going back to that recipe.
+    // On a phone of the usual height: under the book's title on its own row (v0.42), a 470 dp window leaves the notice
+    // over the only entries shown.
     @Test
+    @Config(qualifiers = "w360dp-h640dp")
     fun leavingTheBookClosesTheNoticeAndTheListKeepsItsPlace() {
         val earlier = found(30)
         reading.countDown()
