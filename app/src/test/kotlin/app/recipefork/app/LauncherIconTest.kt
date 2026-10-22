@@ -3,11 +3,9 @@ package app.recipefork.app
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.VectorDrawable
-import androidx.core.graphics.PathParser
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -24,9 +22,10 @@ import kotlin.math.abs
 import kotlin.math.hypot
 
 /**
- * The application's launcher icon: the manifest names an adaptive icon (and a round one) whose foreground, background
- * and monochrome (themed icon, Android 13+) layers are all there, and whose picture stays inside the 66 dp safe zone
- * of the 108 dp canvas, so no launcher mask cuts it.
+ * The application's launcher icon: the manifest names an adaptive icon (and a round one) whose background, foreground
+ * and monochrome (themed icon, Android 13+) layers are all there. The background is paper; the foreground is mark 2б
+ * in ink with its bent tine in beet; the monochrome layer is the same paths in one colour; and the picture stays
+ * inside the 66 dp safe circle of the 108 dp canvas, so no launcher mask cuts it.
  *
  * It also renders the icon for Google Play: [rendersThePlayStoreIcon] writes `app/build/play/icon-512.png`, a 512×512
  * opaque full-bleed square (Play rounds its corners itself) of the background and foreground layers, the canvas's
@@ -59,27 +58,73 @@ class LauncherIconTest {
     }
 
     @Test
-    fun theBackgroundIsTheThemesPrimaryContainer() {
-        assertEquals(context.getColor(R.color.theme_light_primaryContainer), context.getColor(R.color.ic_launcher_background))
+    fun bothLauncherIconsNameTheBackgroundTheForegroundAndTheMonochrome() {
+        val expected = mapOf(
+            "background" to R.color.ic_launcher_background,
+            "foreground" to R.drawable.ic_launcher_foreground,
+            "monochrome" to R.drawable.ic_launcher_monochrome,
+        )
+        for (icon in listOf(R.mipmap.ic_launcher, R.mipmap.ic_launcher_round)) {
+            val layers = mutableMapOf<String, Int>()
+            context.resources.getXml(icon).use { parser ->
+                while (parser.next() != XmlPullParser.END_DOCUMENT) {
+                    if (parser.eventType == XmlPullParser.START_TAG && parser.name in expected) {
+                        layers[parser.name] = parser.getAttributeResourceValue(ANDROID, "drawable", 0)
+                    }
+                }
+            }
+            assertEquals(context.resources.getResourceEntryName(icon), expected, layers)
+        }
     }
 
     @Test
-    fun theForegroundAndTheMonochromeSitInsideTheSafeZone() {
+    fun theBackgroundIsPaper() {
+        assertEquals(PAPER, context.getColor(R.color.ic_launcher_background))
+    }
+
+    @Test
+    fun theForegroundIsTheMarkInInkWithItsBentTineInBeet() {
+        val foreground = readVector(context, R.drawable.ic_launcher_foreground)
+        assertEquals(listOf(INK, BEET), foreground.paths.map { it.fillColor })
+        assertEquals(listOf(INK, BEET), foreground.paths.map { it.strokeColor })
+
+        val icon = renderDrawable(context, R.drawable.ic_launcher_foreground, RENDER)
+        assertSameColour("the handle", INK, icon.getPixel(renderPixel(Mark2b.HANDLE, 0), renderPixel(Mark2b.HANDLE, 1)))
+        assertSameColour("the bent tine", BEET, icon.getPixel(renderPixel(Mark2b.BENT_TINE, 0), renderPixel(Mark2b.BENT_TINE, 1)))
+    }
+
+    @Test
+    fun theMonochromeIsTheForegroundsPathsInOneColour() {
+        val foreground = readVector(context, R.drawable.ic_launcher_foreground)
+        val monochrome = readVector(context, R.drawable.ic_launcher_monochrome)
+        assertEquals(foreground.copy(paths = emptyList()), monochrome.copy(paths = emptyList()))
+        assertEquals(foreground.paths.map { it.pathData }, monochrome.paths.map { it.pathData })
+        assertEquals(foreground.paths.map { it.strokeWidth }, monochrome.paths.map { it.strokeWidth })
+        val colours = monochrome.paths.flatMap { listOfNotNull(it.fillColor, it.strokeColor) }.toSet()
+        assertEquals("the monochrome layer's colours", 1, colours.size)
+        assertEquals("the monochrome layer is not opaque", 0xFF, colours.single() ushr 24)
+    }
+
+    @Test
+    fun theForegroundAndTheMonochromeSitInsideTheSafeCircle() {
         for (drawable in listOf(R.drawable.ic_launcher_foreground, R.drawable.ic_launcher_monochrome)) {
             val name = context.resources.getResourceEntryName(drawable)
-            val vector = vectorOf(drawable)
-            assertEquals("$name viewport width", CANVAS, vector.viewportWidth, 0f)
-            assertEquals("$name viewport height", CANVAS, vector.viewportHeight, 0f)
-            assertTrue("$name has no path", vector.paths.isNotEmpty())
-            for (data in vector.paths) {
-                val bounds = RectF().also { PathParser.createPathFromPathData(data).computeBounds(it, true) }
-                val zone = RectF(CENTRE - SAFE_RADIUS, CENTRE - SAFE_RADIUS, CENTRE + SAFE_RADIUS, CENTRE + SAFE_RADIUS)
-                assertTrue("$name: $bounds leaves the safe zone $zone", zone.contains(bounds))
-                // The safe zone is a circle: even the bounds' corners stay inside it.
-                for ((x, y) in listOf(bounds.left to bounds.top, bounds.right to bounds.top, bounds.left to bounds.bottom, bounds.right to bounds.bottom)) {
-                    assertTrue("$name: corner ($x, $y) of $bounds leaves the safe circle", hypot(x - CENTRE, y - CENTRE) <= SAFE_RADIUS)
-                }
+            val vector = readVector(context, drawable)
+            assertEquals("$name width", CANVAS, vector.widthDp, 0f)
+            assertEquals("$name viewport", CANVAS to CANVAS, vector.viewportWidth to vector.viewportHeight)
+
+            val icon = renderDrawable(context, drawable, RENDER)
+            val pixelsPerDp = RENDER / CANVAS
+            var farthest = 0f
+            for (y in 0 until RENDER) for (x in 0 until RENDER) {
+                if (icon.getPixel(x, y) ushr 24 == 0) continue
+                val distance = hypot((x + 0.5f) / pixelsPerDp - CENTRE, (y + 0.5f) / pixelsPerDp - CENTRE)
+                // Antialiasing may spread an edge by up to one pixel.
+                assertTrue("$name: pixel ($x, $y) is drawn ${distance}dp from the centre", distance <= SAFE_RADIUS + 1 / pixelsPerDp)
+                farthest = maxOf(farthest, distance)
             }
+            // As large as the safe circle allows: the handle's end comes up to it.
+            assertTrue("$name reaches only ${farthest}dp from the centre", farthest > SAFE_RADIUS - 1)
         }
     }
 
@@ -92,37 +137,14 @@ class LauncherIconTest {
 
         assertEquals(PLAY_SIZE, icon.width)
         assertEquals(PLAY_SIZE, icon.height)
-        val background = context.getColor(R.color.ic_launcher_background)
-        val card = context.getColor(R.color.theme_light_primary)
         for ((x, y) in listOf(0 to 0, PLAY_SIZE - 1 to 0, 0 to PLAY_SIZE - 1, PLAY_SIZE - 1 to PLAY_SIZE - 1)) {
-            assertSameColour("corner ($x, $y)", background, icon.getPixel(x, y))
+            assertSameColour("corner ($x, $y)", PAPER, icon.getPixel(x, y))
         }
-        assertSameColour("the card", card, icon.getPixel(playPixel(40f), playPixel(60f)))
-        assertSameColour("the fork's handle, cut out of the card", background, icon.getPixel(playPixel(54f), playPixel(62f)))
+        assertSameColour("the handle", INK, icon.getPixel(playPixel(Mark2b.HANDLE, 0), playPixel(Mark2b.HANDLE, 1)))
+        assertSameColour("the bent tine", BEET, icon.getPixel(playPixel(Mark2b.BENT_TINE, 0), playPixel(Mark2b.BENT_TINE, 1)))
         for (y in 0 until PLAY_SIZE) for (x in 0 until PLAY_SIZE) {
             if (icon.getPixel(x, y) ushr 24 != 0xFF) throw AssertionError("pixel ($x, $y) is not opaque")
         }
-    }
-
-    private class Vector(val viewportWidth: Float, val viewportHeight: Float, val paths: List<String>)
-
-    private fun vectorOf(drawable: Int): Vector {
-        var width = 0f
-        var height = 0f
-        val paths = mutableListOf<String>()
-        context.resources.getXml(drawable).use { parser ->
-            while (parser.next() != XmlPullParser.END_DOCUMENT) {
-                if (parser.eventType != XmlPullParser.START_TAG) continue
-                when (parser.name) {
-                    "vector" -> {
-                        width = parser.getAttributeFloatValue(ANDROID, "viewportWidth", 0f)
-                        height = parser.getAttributeFloatValue(ANDROID, "viewportHeight", 0f)
-                    }
-                    "path" -> paths += parser.getAttributeValue(ANDROID, "pathData")
-                }
-            }
-        }
-        return Vector(width, height, paths)
     }
 
     private fun mergedManifestApplication(): org.w3c.dom.Element {
@@ -134,7 +156,18 @@ class LauncherIconTest {
         return document.getElementsByTagName("application").item(0) as org.w3c.dom.Element
     }
 
-    private fun playPixel(canvasDp: Float): Int = ((canvasDp - INSET) / (CANVAS - 2 * INSET) * PLAY_SIZE).toInt()
+    /** The pixel, in a [RENDER]-pixel rendering of the canvas, of the mark's [point]'s [axis] (0 for x, 1 for y). */
+    private fun renderPixel(point: Pair<Double, Double>, axis: Int): Int {
+        val (x, y) = Mark2b.onLauncherCanvas(point.first, point.second)
+        return ((if (axis == 0) x else y) * RENDER / CANVAS).toInt()
+    }
+
+    /** The pixel, in the Play icon, of the mark's [point]'s [axis] (0 for x, 1 for y). */
+    private fun playPixel(point: Pair<Double, Double>, axis: Int): Int {
+        val (x, y) = Mark2b.onLauncherCanvas(point.first, point.second)
+        val canvasDp = (if (axis == 0) x else y).toFloat()
+        return ((canvasDp - INSET) / (CANVAS - 2 * INSET) * PLAY_SIZE).toInt()
+    }
 
     private fun assertSameColour(what: String, expected: Int, actual: Int) {
         val close = listOf(16, 8, 0).all { abs((expected shr it and 0xFF) - (actual shr it and 0xFF)) <= 2 }
@@ -148,6 +181,10 @@ class LauncherIconTest {
         private const val SAFE_RADIUS = 33f
         private const val INSET = 18f
         private const val PLAY_SIZE = 512
+        private const val RENDER = 1080
+        private const val PAPER = 0xFFF6F0E4.toInt()
+        private const val INK = 0xFF2B241E.toInt()
+        private const val BEET = 0xFF8E3B46.toInt()
 
         /**
          * The launcher icon as Google Play takes it: the adaptive icon's background and foreground layers, the 108 dp
