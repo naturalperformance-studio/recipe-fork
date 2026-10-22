@@ -159,8 +159,9 @@ internal fun NutritionSection(
  */
 @Composable
 private fun NutritionSwitch(whole: MutableState<Boolean>) {
-    // A segment answers a touch within the card's target of it, which Compose takes from the view configuration: at
-    // 40 dp drawn, the gaps above and below are that target's room, so Material lays out no room of its own around it.
+    // A segment answers a touch within the card's target of it, which Compose takes from the view configuration. The
+    // gaps above and below belong to each segment, outside its own click, so a touch in them reaches it: at 40 dp drawn
+    // they are that target's room, and Material lays out no room of its own around it.
     val configuration = LocalViewConfiguration.current
     val touch = remember(configuration) {
         object : ViewConfiguration by configuration {
@@ -168,13 +169,14 @@ private fun NutritionSwitch(whole: MutableState<Boolean>) {
         }
     }
     CompositionLocalProvider(LocalViewConfiguration provides touch, LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(vertical = SWITCH_GAP).testTag(NutritionTags.SWITCH)) {
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag(NutritionTags.SWITCH)) {
             listOf(false, true).forEachIndexed { index, choice ->
                 SegmentedButton(
                     selected = whole.value == choice,
                     onClick = { whole.value = choice },
                     shape = SegmentedButtonDefaults.itemShape(index, 2),
-                    modifier = Modifier.testTag(if (choice) NutritionTags.SWITCH_WHOLE else NutritionTags.SWITCH_PER_SERVING),
+                    modifier = Modifier.padding(vertical = SWITCH_GAP)
+                        .testTag(if (choice) NutritionTags.SWITCH_WHOLE else NutritionTags.SWITCH_PER_SERVING),
                     label = {
                         Text(
                             stringResource(if (choice) R.string.card_nutrition_whole else R.string.card_nutrition_per_serving),
