@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -101,7 +102,7 @@ class NothingWrittenTest {
 
     /** Takes the offer and returns the recipe the editor opened on. */
     private fun takeTheOffer(): String {
-        compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.WRITE).performScrollTo().performClick()
         compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return requireNotNull(session.editing.value)
