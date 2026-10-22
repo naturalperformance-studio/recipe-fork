@@ -1483,7 +1483,7 @@ object LibraryTags {
     const val SELECTION_PRINT = "library-selection-print"
     const val SELECTION_SHARE_PDF = "library-selection-share-pdf"
     const val PRINT_PROGRESS = PrintTags.PROGRESS
-    /** An entry's mark of being chosen, at its start, in place of its cover, while the selection is on. */
+    /** An entry's mark of being chosen, over its cover's bottom-end corner, while the selection is on. */
     fun selectionMark(recipeId: String) = "library-selection-mark-$recipeId"
     /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */
     fun coverSlot(coverTag: String) = "$coverTag-slot"

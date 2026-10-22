@@ -120,6 +120,7 @@ class ContrastTest {
         graphic("a suggestion chip's and the language switch's boundary", c.outline, c.surface),
         graphic("an entry's ⋮, on the page", c.onSurface, c.surface),
         graphic("an entry's mark of being chosen in the book's selection — the filled circle with its check — on the chosen row's tint", c.primary, c.secondaryContainer),
+        graphic("the check in an entry's mark of being chosen, on its primary fill", c.onPrimary, c.primary),
         graphic("an entry's mark of not being chosen in the book's selection — the empty circle — on the page", c.onSurfaceVariant, c.surface),
         text("the book's selection bar — its count, its ✕, its icons and its ⋮ — on its tint (v0.38)", c.onSecondaryContainer, c.secondaryContainer),
         graphic("the indicator of a list being read", c.primary, c.surface),

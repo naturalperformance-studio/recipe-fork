@@ -33,10 +33,18 @@ internal data class FittedWords(val style: TextStyle, val overflows: Boolean)
 /**
  * [style], made smaller just as far as the widest word of [text] needs to fit in [width] pixels; unchanged if it fits.
  * It is never made smaller than the style's own size at a font scale of 1 in [density] — smaller would undo the reader's
- * larger text, and on a narrow window make it unreadable — and where a word is too wide even then, it says so.
+ * larger text, and on a narrow window make it unreadable — and where a word is too wide even then, it says so. With
+ * [hyphenParts], a hyphenated word counts as its parts, the hyphen kept on the first — the line may break after it.
  */
-internal fun fitWords(text: String, style: TextStyle, width: Int, measurer: TextMeasurer, density: Density): FittedWords {
-    val words = wordsOf(text)
+internal fun fitWords(
+    text: String,
+    style: TextStyle,
+    width: Int,
+    measurer: TextMeasurer,
+    density: Density,
+    hyphenParts: Boolean = false,
+): FittedWords {
+    val words = if (hyphenParts) wordsOf(text).flatMap(::hyphenPartsOf) else wordsOf(text)
     if (words.isEmpty() || width <= 0 || !style.fontSize.isSp) return FittedWords(style, false)
     val least = leastSize(style.fontSize, density).value
     var fitted = style
@@ -203,6 +211,9 @@ internal fun widestWord(texts: List<String>, style: TextStyle, measurer: TextMea
     texts.flatMap(::wordsOf).maxOfOrNull { measurer.measure(it, style, softWrap = false, maxLines = 1).size.width } ?: 0
 
 private fun wordsOf(text: String): List<String> = text.split(' ').filter { it.isNotEmpty() }
+
+/** The parts of [word] a line may break between: after each hyphen, which stays on the part before it. */
+internal fun hyphenPartsOf(word: String): List<String> = Regex("""[^-]*-+|[^-]+""").findAll(word).map { it.value }.toList()
 
 /** How many times the words are made smaller at most, and how much below the exact ratio each time. */
 private const val FIT_STEPS = 8
