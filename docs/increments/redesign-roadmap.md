@@ -14,4 +14,4 @@ The owner's redesign of 2026-10-15 (`docs/brand/identity/decisions.md` wins over
 Found after planning (v0.42 design QA, 2026-10-22), not yet placed in an increment:
 - The «Фильтры» sheet as redesign-1 § 4.1 draws it: an underline ingredient field, tag and language chips, the kitchen switch, «Сбросить фильтры» and a filled «Готово» at the bottom.
 - One icon family: the book's remaining Material icons (cart, gear, filter, ⋮, ✕, import) replaced by the mock's stroked symbols, as the selection bar's already are; likewise on the other screens as each is redrawn.
-- The shopping list's «Добавить пункт» in primary, as the mock's `.fab` (v0.45).
+- The shopping list's «Добавить пункт» in primary, as the mock's `.fab`, and its empty state centred (v0.45).
