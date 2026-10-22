@@ -10,3 +10,8 @@ The owner's redesign of 2026-10-15 (`docs/brand/identity/decisions.md` wins over
 | v0.44 | Cooking: round done marks, the current step on the olive plate with «Текущий шаг · N из M» visible, timer pills, the running timer as one 56 dp control with a quiet «Отменить таймер» under it (also in the bottom bar), Undo kept. | redesign § 4.4; fixes 4 |
 | v0.45 | The editor (underline fields, sheets on paper), the shopping list, collections, My kitchen, settings under three captions, backup states. | redesign § 4.3, 4.5, 4.6 |
 | v0.46 | Store: Play screenshots regenerated from the build in the new look, the listing's lines on the shopping list and My kitchen, graphics paths moved to `docs/brand/store/export/`. | store-kit; handoff §2 item 6 |
+
+Found after planning (v0.42 design QA, 2026-10-22), not yet placed in an increment:
+- The «Фильтры» sheet as redesign-1 § 4.1 draws it: an underline ingredient field, tag and language chips, the kitchen switch, «Сбросить фильтры» and a filled «Готово» at the bottom.
+- One icon family: the book's remaining Material icons (cart, gear, filter, ⋮, ✕, import) replaced by the mock's stroked symbols, as the selection bar's already are; likewise on the other screens as each is redrawn.
+- The shopping list's «Добавить пункт» in primary, as the mock's `.fab` (v0.45).
