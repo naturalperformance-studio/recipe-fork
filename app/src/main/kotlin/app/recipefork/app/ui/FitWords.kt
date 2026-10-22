@@ -153,19 +153,39 @@ internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = 
     }
 }
 
+/** [style] as [fitLine] gives it, and on how many [lines] the text is drawn: one, or two where it must. */
+internal data class FittedLine(val style: TextStyle, val lines: Int)
+
 /**
- * [text] in [style] on one line within [width] pixels — a top bar's title (v0.38) — the whole of it made smaller as far
- * as it needs to fit ([fitWords], the text taken as one word); never smaller than the style's size at a font scale of 1.
- * Longer than its room even then, it ends with an ellipsis: at a large font scale it neither wraps nor spills out of
- * the bar.
+ * [text] in [style] within [width] pixels, a top bar's title: on one line, the whole of it made smaller as far as it
+ * needs to fit ([fitWords], the text taken as one word), never smaller than the style's size at a font scale of 1. Longer
+ * than its room even then (T-297), it takes two lines at that size, the line height [TWO_LINE_HEIGHT] times the size —
+ * unless a word of it is wider than the line by itself, when it keeps to one line.
+ */
+internal fun fitLine(text: String, style: TextStyle, width: Int, measurer: TextMeasurer, density: Density): FittedLine {
+    val line = fitWords(text.replace(' ', NO_BREAK), style, width, measurer, density)
+    if (!line.overflows || widestWord(listOf(text), line.style, measurer) > width) return FittedLine(line.style, 1)
+    return FittedLine(line.style.copy(lineHeight = line.style.fontSize * TWO_LINE_HEIGHT), 2)
+}
+
+/**
+ * [text] in [style] within [width] pixels as [fitLine] lays it out — a top bar's title (v0.38, T-297): on one line,
+ * made smaller as far as its size at a font scale of 1; else on two lines, broken between words; ending with an
+ * ellipsis where it is longer still. At a large font scale it never spills out of the bar.
  */
 @Composable
 internal fun LineFitText(text: String, style: TextStyle, width: Int, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val fitted = remember(text, style, width, measurer, density) { fitWords(text.replace(' ', NO_BREAK), style, width, measurer, density) }
-    Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
+    val fitted = remember(text, style, width, measurer, density) { fitLine(text, style, width, measurer, density) }
+    Text(
+        text, style = fitted.style, maxLines = fitted.lines, softWrap = fitted.lines > 1, overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }
+
+/** A two-line title's line height, by its size: 28 to 22, as Material's large title at its own size. */
+private const val TWO_LINE_HEIGHT = 28f / 22f
 
 /** The space that keeps the words beside it together, so that [fitWords] measures a whole line as one word. */
 private const val NO_BREAK = '\u00A0'
