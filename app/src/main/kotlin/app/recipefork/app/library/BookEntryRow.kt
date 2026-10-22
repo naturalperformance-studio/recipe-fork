@@ -163,7 +163,7 @@ internal fun BookEntryRow(
                                 RowSelectionMark(
                                     recipeId,
                                     selected == true,
-                                    Modifier.align(Alignment.BottomEnd).offset(MARK_OUTSET, MARK_OUTSET),
+                                    Modifier.align(Alignment.BottomEnd).offset(-MARK_INSET, MARK_BELOW),
                                 )
                             }
                         }
@@ -194,30 +194,37 @@ internal fun BookEntryRow(
     }
 }
 
-/** The diameter of an entry's mark of being chosen, and how far it stands out past its cover's bottom-end corner. */
-private val MARK_SIZE = 26.dp
-private val MARK_OUTSET = 4.dp
+/**
+ * The diameter of an entry's mark of being chosen, and where it stands by its cover's bottom-end corner, as the
+ * redesign's `.selmk` draws it: its end edge [MARK_INSET] inside the cover's end edge, its bottom [MARK_BELOW] below
+ * the cover's bottom.
+ */
+internal val MARK_SIZE = 26.dp
+internal val MARK_INSET = 6.dp
+internal val MARK_BELOW = 4.dp
 
-/** The ring round an entry's mark of being chosen, and the size of the check drawn in it. */
+/** The ring round an entry's mark while it is not chosen, and the size of the check drawn in it when it is. */
 private val MARK_RING = 2.dp
 private val MARK_CHECK = 16.dp
 
 /**
- * An entry's mark in the book's selection, over its cover's bottom-end corner (redesign-1 § 4.1, § 5): a round check —
- * filled in the primary colour, the check in `onPrimary`, ringed by the page's colour — when it is chosen; an empty
- * circle on the page's colour, outlined in `onSurfaceVariant`, when it is not. The row already says which to the screen
- * reader, so the mark says nothing.
+ * An entry's mark in the book's selection, over its cover's bottom-end corner (redesign-1 § 4.1, § 5, `.selmk`): a plain
+ * disc in the primary colour with the check in `onPrimary`, no ring, when it is chosen; an empty circle on the page's
+ * colour, outlined in `onSurfaceVariant`, when it is not. The row already says which to the screen reader, so the mark
+ * says nothing.
  */
 @Composable
 private fun RowSelectionMark(recipeId: String, selected: Boolean, modifier: Modifier = Modifier) {
     val colours = MaterialTheme.colorScheme
-    val fill = if (selected) colours.primary else colours.surface
-    val ring = if (selected) colours.surface else colours.onSurfaceVariant
+    val drawn = if (selected) {
+        Modifier.background(colours.primary, CircleShape)
+    } else {
+        Modifier.background(colours.surface, CircleShape).border(MARK_RING, colours.onSurfaceVariant, CircleShape)
+    }
     Box(
         modifier
             .size(MARK_SIZE)
-            .background(fill, CircleShape)
-            .border(MARK_RING, ring, CircleShape)
+            .then(drawn)
             .clearAndSetSemantics { testTag = LibraryTags.selectionMark(recipeId) },
         contentAlignment = Alignment.Center,
     ) {

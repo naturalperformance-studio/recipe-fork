@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.fadeIn
@@ -199,8 +200,9 @@ const val OWN_PAGE = 30
  * below the status bar, the action above the navigation bar, and the lists run under the navigation bar, their last
  * entry kept clear of it.
  *
- * While entries are chosen (the selection), the bar is the selection's, tinted, and the view does not change: the
- * pages are not swiped, and the tabs, the search, the filters and the collections do not respond (v0.38). A notice the
+ * While entries are chosen (the selection), the bar is the selection's, tinted, its actions stand at the bottom in place
+ * of the view's action ([SelectionActionBar], v0.42), and the view does not change: the pages are not swiped, and the
+ * tabs, the search, the filters and the collections do not respond (v0.38). A notice the
  * book gives ends when the reader shows the other view.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -263,6 +265,9 @@ fun LibraryScreen(
     val work by session.work.collectAsState()
     val selection by session.selection.collectAsState()
     val selecting = selection != null
+    // The selection last on, for its actions while they fade out once it has ended.
+    var lastSelection by remember { mutableStateOf<BookSelection?>(null) }
+    SideEffect { if (selection != null) lastSelection = selection }
     SelectionStartFeedback(session)
     val restored by session.restored.collectAsState()
     // What each view lists, as the selection sees it: what "Select all" chooses and what an action applies to.
@@ -292,7 +297,6 @@ fun LibraryScreen(
                         if (chosen != null) {
                             SelectionBar(
                                 chosen.count,
-                                selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding, printing),
                                 onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
                                 onClose = session::endSelection,
                             )
@@ -336,7 +340,8 @@ fun LibraryScreen(
                         .padding(horizontal = TAB_ROW_MARGIN)
                         .onSizeChanged { rowWidth = it.width }
                         .testTag(LibraryTags.SWITCH),
-                    indicator = { ViewIndicator(Modifier.tabIndicatorOffset(page, matchContentSize = false)) },
+                    // While entries are chosen the tabs do not respond, and read as muted, indicator and all.
+                    indicator = { ViewIndicator(Modifier.tabIndicatorOffset(page, matchContentSize = false).muted(selecting)) },
                 ) {
                     val markedAction =
                         if (mode == Mode.Serverless) R.string.library_view_marked_action_serverless else R.string.library_view_marked_action
@@ -347,6 +352,20 @@ fun LibraryScreen(
                         } else {
                             ViewTab(tab, shown, markedLabel, markedAction, choose, words, labelSize, enabled = !selecting)
                         }
+                    }
+                }
+            }
+        },
+        // The selection's actions stand at the bottom, under the thumb, while it is on (decisions.md #5); fading out, they
+        // take no touch, as the selection's bar above.
+        bottomBar = {
+            AnimatedVisibility(selection != null, enter = fadeIn(), exit = fadeOut()) {
+                val chosen = selection ?: lastSelection
+                Box(Modifier.leaving(transition.targetState == EnterExitState.PostExit)) {
+                    if (chosen != null) {
+                        SelectionActionBar(
+                            selectionActions(chosen, selectables[chosen.view].orEmpty(), session, recipes, files, timers, card.marks, adding, printing),
+                        )
                     }
                 }
             }
@@ -364,8 +383,13 @@ fun LibraryScreen(
     ) { padding ->
         // The lists run under the navigation bar, their last entry kept clear of it and of the view's action — taller
         // than its usual height where its words take two lines at a large font scale.
-        val room = maxOf(ACTION_ROOM, with(LocalDensity.current) { actionHeight.toDp() } + ACTION_MARGINS)
-        val bottom = padding.calculateBottomPadding() + room
+        // While entries are chosen the view's action is hidden: the lists keep no room for it, only a margin above the
+        // selection's actions.
+        val room = if (selecting) SELECTING_ROOM else maxOf(ACTION_ROOM, with(LocalDensity.current) { actionHeight.toDp() } + ACTION_MARGINS)
+        // While the selection's actions stand at the bottom, the lists end above them: an entry brought into view is
+        // never one under them.
+        val actionsBelow = if (selecting) padding.calculateBottomPadding() else 0.dp
+        val bottom = padding.calculateBottomPadding() - actionsBelow + room
         val layout = LocalLayoutDirection.current
         HorizontalPager(
             state = pager,
@@ -378,6 +402,7 @@ fun LibraryScreen(
                     top = padding.calculateTopPadding(),
                     start = padding.calculateStartPadding(layout),
                     end = padding.calculateEndPadding(layout),
+                    bottom = actionsBelow,
                 )
                 .consumeWindowInsets(padding)
                 .testTag(LibraryTags.PAGER),
@@ -543,13 +568,13 @@ private fun ListedForSelection(view: LibraryView, session: LibrarySession, liste
 }
 
 /**
- * The actions of the selection's bar on the recipes [selection] chose of [listed], in this order: "Add to collection" and
- * "Add to shopping list" ([adding]), on those the book holds the content of, in the order they were chosen; then Print
- * and Share as PDF ([printing]) of those, in the order the view lists them, as one document; then Delete in
- * the own view, Remove in the marked one, offered while it applies to one of them at least, and taking only those it
- * applies to — at once, asking nothing, one notice with one Undo for all (FLOW-053). An action taken ends the selection;
- * Print and Share as PDF end it once they have run to their end, the document handed over or its failure said, if it
- * is still the selection on.
+ * The selection's actions at the bottom on the recipes [selection] chose of [listed], always these five in this order
+ * (decisions.md #5): "Add to collection" and "Add to shopping list" ([adding]), on those the book holds the content of,
+ * in the order they were chosen; Print and Share as PDF ([printing]) of those, in the order the view lists them, as one
+ * document; then Delete in the own view, Remove in the marked one, taking only those it applies to — at once, asking
+ * nothing, one notice with one Undo for all (FLOW-053). An action that applies to none of the recipes chosen does not
+ * respond. An action taken ends the selection; Print and Share as PDF end it once they have run to their end, the
+ * document handed over or its failure said, if it is still the selection on.
  */
 private fun selectionActions(
     selection: BookSelection,
@@ -567,33 +592,34 @@ private fun selectionActions(
     val holding = chosen.filter { it.holds }.mapTo(HashSet()) { it.recipeId }
     // In the order they were chosen ("Select all": in the view's).
     val held = selection.ids.filter { it in holding }
-    return buildList {
-        if (held.isNotEmpty()) {
-            add(SelectionAction(R.string.collection_sheet_menu, LibraryTags.SELECTION_ADD_TO_COLLECTION, R.drawable.ic_add_to_collection) {
-                adding.addAllToCollection(held)
-            })
-            add(SelectionAction(R.string.shopping_add, LibraryTags.SELECTION_ADD_TO_SHOPPING, R.drawable.ic_add_shopping) {
-                adding.addAllToShopping(held)
-            })
-            // In the order the view lists them.
-            val shown = chosen.filter { it.holds }.map { it.recipeId }
-            add(SelectionAction(R.string.print_menu_print, LibraryTags.SELECTION_PRINT) { printing.all(shown, PrintWay.PRINT) })
-            add(SelectionAction(R.string.print_menu_share, LibraryTags.SELECTION_SHARE_PDF) { printing.all(shown, PrintWay.SHARE) })
-        }
-        if (removable.isNotEmpty()) {
-            val own = selection.view == LibraryView.OWN
-            add(
-                SelectionAction(
-                    if (own) R.string.library_entry_delete else R.string.library_entry_remove,
-                    if (own) LibraryTags.SELECTION_DELETE else LibraryTags.SELECTION_REMOVE,
-                    destructive = true,
-                ) {
-                    session.endSelection()
-                    if (own) deleteRecipes(recipes, timers, marks, removable, session::removed) else removeAllFound(files, timers, marks, removable, session::removed)
-                },
-            )
-        }
-    }
+    // In the order the view lists them.
+    val shown = chosen.filter { it.holds }.map { it.recipeId }
+    val holds = held.isNotEmpty()
+    val own = selection.view == LibraryView.OWN
+    val removal = if (own) R.string.library_entry_delete else R.string.library_entry_remove
+    return listOf(
+        SelectionAction(
+            R.string.library_selection_to_collection, R.string.collection_sheet_menu, LibraryTags.SELECTION_ADD_TO_COLLECTION,
+            R.drawable.ic_selection_collection, holds,
+        ) { adding.addAllToCollection(held) },
+        SelectionAction(
+            R.string.library_selection_to_shopping, R.string.shopping_add, LibraryTags.SELECTION_ADD_TO_SHOPPING,
+            R.drawable.ic_selection_shopping, holds,
+        ) { adding.addAllToShopping(held) },
+        SelectionAction(
+            R.string.library_selection_print, R.string.library_selection_print_action, LibraryTags.SELECTION_PRINT, R.drawable.ic_print, holds,
+        ) { printing.all(shown, PrintWay.PRINT) },
+        SelectionAction(
+            R.string.library_selection_pdf, R.string.print_menu_share, LibraryTags.SELECTION_SHARE_PDF, R.drawable.ic_share, holds,
+        ) { printing.all(shown, PrintWay.SHARE) },
+        SelectionAction(
+            removal, removal, if (own) LibraryTags.SELECTION_DELETE else LibraryTags.SELECTION_REMOVE, R.drawable.ic_delete,
+            removable.isNotEmpty(), destructive = true,
+        ) {
+            session.endSelection()
+            if (own) deleteRecipes(recipes, timers, marks, removable, session::removed) else removeAllFound(files, timers, marks, removable, session::removed)
+        },
+    )
 }
 
 /** The collections of [origin] the book holds, as they change; none until they are read. */
@@ -680,6 +706,9 @@ private fun pageOf(view: LibraryView): Int = VIEWS.indexOf(view)
 
 /** The room kept under a list's last entry for the view's action: the action's usual height and its margins. */
 private val ACTION_ROOM = 88.dp
+
+/** The room at a list's end while entries are chosen: a margin above the selection's actions. */
+private val SELECTING_ROOM = 8.dp
 
 /** The margins of the view's action: below it, to the bottom of the screen, and above it, to what it must not cover. */
 private val ACTION_MARGINS = 32.dp
@@ -813,6 +842,8 @@ private fun ViewTab(
         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .heightIn(min = 48.dp)
+            // Not responding — while entries are chosen — it reads as muted (redesign-1 § 4.1, `.tabs.mute`).
+            .muted(!enabled)
             // The tab announces what choosing it does: which recipes it shows (A11Y-005).
             .semantics {
                 if (enabled) {
@@ -1021,7 +1052,7 @@ private fun OwnList(
     if (shown != null && shown.viewIsEmpty && !shown.narrowed) {
         // A book with no recipe written in it may still hold collections of found ones: they stand above.
         Column(Modifier.fillMaxSize()) {
-            CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP), enabled = !selecting)
+            CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP).muted(selecting), enabled = !selecting)
             NothingWritten(onWrite, Modifier.padding(bottom = bottom))
         }
         return
@@ -1059,7 +1090,7 @@ private fun OwnList(
             ) {
                 // The entries' rows meet at their hairlines; the collections keep the gap above them.
                 if (above > 0) item(key = COLLECTIONS_KEY) {
-                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP), enabled = !selecting)
+                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP).muted(selecting), enabled = !selecting)
                 }
                 items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                     OwnEntry(
@@ -1346,7 +1377,7 @@ private fun MarkedList(
             // in [Mode.Standard] the view has no action, and its empty state none.
             if (empty) {
                 // Imported collections whose recipes were all removed still stand above, to be opened or deleted.
-                CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP), enabled = !selecting)
+                CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP).muted(selecting), enabled = !selecting)
                 val serverless = mode == Mode.Serverless
                 EmptyState(
                     engraving = Engraving.MARK,
@@ -1395,7 +1426,7 @@ private fun MarkedList(
             ) {
                 // The entries' rows meet at their hairlines; the collections keep the gap above them.
                 if (above > 0) item(key = COLLECTIONS_KEY) {
-                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP), enabled = !selecting)
+                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP).muted(selecting), enabled = !selecting)
                 }
                 items(marked.orEmpty(), key = { it.recipeId }) { row ->
                     MarkedEntry(
@@ -1615,17 +1646,17 @@ object LibraryTags {
     fun statedAuthor(recipeId: String) = "library-stated-author-$recipeId"
     fun remove(recipeId: String) = "library-remove-$recipeId"
     fun cover(recipeId: String) = "library-cover-$recipeId"
-    /** The selection's bar, in place of the book's title while entries are chosen: its ✕, its count, its ⋮ and items. */
+    /** The selection's bar, in place of the book's title while entries are chosen: its ✕, its count and "Select all". */
     const val SELECTION_BAR = "library-selection-bar"
     /** A bar fading out as the other fades in, which takes no touch and is hidden from the screen reader. */
     const val BAR_LEAVING = "library-bar-leaving"
     const val SELECTION_CLOSE = "library-selection-close"
     const val SELECTION_COUNT = "library-selection-count"
-    const val SELECTION_MENU = "library-selection-menu"
     const val SELECT_ALL = "library-select-all"
     const val SELECTION_DELETE = "library-selection-delete"
     const val SELECTION_REMOVE = "library-selection-remove"
-    /** The selection's "Add to collection" and "Add to shopping list", in its bar. */
+    /** The selection's actions at the bottom (v0.42); among them "Add to collection" and "Add to shopping list". */
+    const val SELECTION_ACTIONS = "library-selection-actions"
     const val SELECTION_ADD_TO_COLLECTION = "library-selection-add-to-collection"
     const val SELECTION_ADD_TO_SHOPPING = "library-selection-add-to-shopping"
     /** An entry's "Add to collection" and "Add to shopping list" ("Update in shopping list"), in its menu. */

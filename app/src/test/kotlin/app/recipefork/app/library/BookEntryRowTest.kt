@@ -318,8 +318,9 @@ class BookEntryRowTest {
             val mark = bounds(LibraryTags.selectionMark(rid))
             assertEquals("a 26 dp circle", dp(26f), mark.width, 1f)
             assertEquals(dp(26f), mark.height, 1f)
-            assertEquals("over the cover's bottom-end corner, 4 dp out", entry.left + dp(16f + 60f + 4f), mark.right, 1f)
-            assertEquals(entry.top + dp(12f + 60f + 4f), mark.bottom, 1f)
+            // As the redesign's .selmk draws it (T-305): its end edge 6 dp inside the cover's, its bottom 4 dp below it.
+            assertEquals("its end edge 6 dp inside the cover's", entry.left + dp(16f + 60f - 6f), mark.right, 1f)
+            assertEquals("its bottom 4 dp below the cover's", entry.top + dp(12f + 60f + 4f), mark.bottom, 1f)
             val picture = if (recipe == pictured) LibraryTags.coverSlot(LibraryTags.cover(rid)) else BookEntryRowTags.dropCap(rid)
             assertTrue("the cover or drop cap stays under it", exists(picture))
             assertFalse("no ⋮ while choosing", exists(LibraryTags.actions(rid)))
@@ -335,7 +336,8 @@ class BookEntryRowTest {
             assertPixel("across the row", image, entry.right - dp(4f), entry.bottom - dp(4f), ground)
             if (chosen) {
                 assertPixel("a chosen mark is filled in the primary colour", image, mark.left + dp(4f), mark.center.y, scheme.primary)
-                assertPixel("ringed by the page's colour", image, mark.left + dp(1f), mark.center.y, scheme.surface)
+                assertPixel("a plain disc, no ring", image, mark.left + dp(1.5f), mark.center.y, scheme.primary)
+                assertPixel("its top as well", image, mark.center.x, mark.top + dp(1.5f), scheme.primary)
                 val ticked = (mark.left.toInt() until mark.right.toInt()).sumOf { x ->
                     (mark.top.toInt() until mark.bottom.toInt()).count { y -> close(Color(image.getPixel(x, y)), scheme.onPrimary) }
                 }
