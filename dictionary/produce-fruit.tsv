@@ -1,46 +1,47 @@
 # Produce: citrus with their juice and zest, apples and pears, stone fruit, tropical fruit, coconut, melons and grapes.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Citrus (2000-2049), their juice (2050-2059) and zest (2060-2069)
-2000	лимон	lemon		true	g=1 pc=100
+2000	лимон	lemon		true	g=1 pc=100				kcal=29 protein=1.1 fat=0.3 carbs=9.32	fdc:167746
 2001	лимон мейер	Meyer lemon	2000	true	g=1 pc=100
 2002	долька лимона	lemon wedge	2000	false	g=1 pc=12
 2003	ломтик лимона	lemon slice	2000	false	g=1 pc=8
-2010	лайм	lime		true	g=1 pc=70
+2010	лайм	lime		true	g=1 pc=70				kcal=30 protein=0.7 fat=0.2 carbs=10.54	fdc:168155
 2011	долька лайма	lime wedge	2010	false	g=1 pc=8
 2012	ломтик лайма	lime slice	2010	false	g=1 pc=5
 2013	лайм мексиканский	key lime	2010	true	g=1 pc=30
 2014	лайм кафир	makrut lime	2010	true	g=1 pc=50
-2020	апельсин	orange		true	g=1 pc=180
+2020	апельсин	orange		true	g=1 pc=180				kcal=47 protein=0.94 fat=0.12 carbs=11.75	fdc:169097
 2021	апельсин красный	blood orange	2020	true	g=1 pc=150
 2022	апельсин навел	navel orange	2020	true	g=1 pc=200
 2023	апельсин валенсия	Valencia orange	2020	true	g=1 pc=180
 2024	апельсин горький	sour orange	2020	true	g=1 pc=150
 2025	долька апельсина	orange segment	2020	false	g=1 pc=12
 2026	кружок апельсина	orange slice	2020	false	g=1 pc=15
-2030	мандарин	mandarin		true	g=1 pc=80
+2030	мандарин	mandarin		true	g=1 pc=80				kcal=53 protein=0.81 fat=0.31 carbs=13.34	fdc:169105
 2031	клементин	clementine	2030	true	g=1 pc=70
 2032	танжерин	tangerine	2030	true	g=1 pc=80
 2033	мандарин сацума	satsuma	2030	true	g=1 pc=80
 2034	минеола	minneola	2030	true	g=1 pc=150
-2040	грейпфрут	grapefruit		true	g=1 pc=350
-2041	грейпфрут розовый	pink grapefruit	2040	true	g=1 pc=350
-2045	помело	pomelo		true	g=1 pc=1000
+2040	грейпфрут	grapefruit		true	g=1 pc=350				kcal=32 protein=0.63 fat=0.1 carbs=8.08	fdc:173033
+2041	грейпфрут розовый	pink grapefruit	2040	true	g=1 pc=350				kcal=42 protein=0.77 fat=0.14 carbs=10.66	fdc:174673
+2045	помело	pomelo		true	g=1 pc=1000				kcal=38 protein=0.76 fat=0.04 carbs=9.62	fdc:167754
 2046	свити	oroblanco		true	g=1 pc=400
-2047	кумкват	kumquat		false	g=1 pc=15
+2047	кумкват	kumquat		false	g=1 pc=15				kcal=71 protein=1.88 fat=0.86 carbs=15.9	fdc:168154
 2048	юдзу	yuzu		true	g=1 pc=100
-2050	лимонный сок	lemon juice			g=1 ml=1.03 tsp=5 tbsp=15 cup=255
-2051	сок лайма	lime juice			g=1 ml=1.03 tsp=5 tbsp=15 cup=255
-2052	апельсиновый сок	orange juice			g=1 ml=1.04 tsp=5 tbsp=15 cup=260
-2060	цедра	citrus zest			g=1 tsp=2 tbsp=6
+2050	лимонный сок	lemon juice			g=1 ml=1.03 tsp=5 tbsp=15 cup=255				kcal=22 protein=0.35 fat=0.24 carbs=6.9	fdc:167747
+2051	сок лайма	lime juice			g=1 ml=1.03 tsp=5 tbsp=15 cup=255				kcal=25 protein=0.42 fat=0.07 carbs=8.42	fdc:168156
+2052	апельсиновый сок	orange juice			g=1 ml=1.04 tsp=5 tbsp=15 cup=260				kcal=45 protein=0.7 fat=0.2 carbs=10.4	fdc:169098
+# цедра → fdc:167749 Lemon peel, raw: lemon zest is the one most used
+2060	цедра	citrus zest			g=1 tsp=2 tbsp=6				kcal=47 protein=1.5 fat=0.3 carbs=16	fdc:167749
 2061	цедра лимона	lemon zest	2060		g=1 tsp=2 tbsp=6
 2062	цедра лайма	lime zest	2060		g=1 tsp=2 tbsp=6
-2063	цедра апельсина	orange zest	2060		g=1 tsp=2 tbsp=6
+2063	цедра апельсина	orange zest	2060		g=1 tsp=2 tbsp=6				kcal=97 protein=1.5 fat=0.2 carbs=25	fdc:169103
 2064	цедра мандарина	mandarin zest	2060		g=1 tsp=2 tbsp=6
 2065	цедра грейпфрута	grapefruit zest	2060		g=1 tsp=2 tbsp=6
 # Apples (2100-2119), pears (2120-2129), quince and loquat (2130-2139)
-2100	яблоко	apple		true	g=1 pc=180 cup=110
+2100	яблоко	apple		true	g=1 pc=180 cup=110				kcal=52 protein=0.26 fat=0.17 carbs=13.81	fdc:171688
 2101	яблоко зелёное	green apple	2100	true	g=1 pc=180 cup=110
 2102	яблоко красное	red apple	2100	true	g=1 pc=180 cup=110
 2103	яблоко кислое	tart apple	2100	true	g=1 pc=200 cup=110
@@ -50,71 +51,74 @@
 2107	яблоко гренни смит	Granny Smith apple	2100	true	g=1 pc=180 cup=110
 2108	яблоко голден	Golden Delicious apple	2100	true	g=1 pc=180 cup=110
 2109	яблоко гала	Gala apple	2100	true	g=1 pc=160 cup=110
-2110	яблоко фуджи	Fuji apple	2100	true	g=1 pc=200 cup=110
+2110	яблоко фуджи	Fuji apple	2100	true	g=1 pc=200 cup=110				kcal=63 protein=0.2 fat=0.18 carbs=15.22	fdc:167793
 2111	яблоко ред делишес	Red Delicious apple	2100	true	g=1 pc=180 cup=110
-2112	ранетки	crab apples	2100	false	g=1 pc=25
-2120	груша	pear		true	g=1 pc=180 cup=140
+2112	ранетки	crab apples	2100	false	g=1 pc=25				kcal=76 protein=0.4 fat=0.3 carbs=19.95	fdc:171721
+2120	груша	pear		true	g=1 pc=180 cup=140				kcal=57 protein=0.36 fat=0.14 carbs=15.23	fdc:169118
 2121	груша конференция	Conference pear	2120	true	g=1 pc=180
 2122	груша вильямс	Bartlett pear	2120	true	g=1 pc=180
-2123	груша боск	Bosc pear	2120	true	g=1 pc=180
+2123	груша боск	Bosc pear	2120	true	g=1 pc=180				kcal=67 protein=0.36 fat=0.09 carbs=16.1	fdc:167778
 2124	груша анжу	Anjou pear	2120	true	g=1 pc=200
-2125	груша наши	Asian pear	2120	true	g=1 pc=300
-2130	айва	quince		true	g=1 pc=300
-2131	мушмула	loquat		false	g=1 pc=30
+2125	груша наши	Asian pear	2120	true	g=1 pc=300				kcal=42 protein=0.5 fat=0.23 carbs=10.65	fdc:168177
+2130	айва	quince		true	g=1 pc=300				kcal=57 protein=0.4 fat=0.1 carbs=15.3	fdc:168163
+2131	мушмула	loquat		false	g=1 pc=30				kcal=47 protein=0.43 fat=0.2 carbs=12.14	fdc:169908
 # Stone fruit (2140-2149)
-2140	персик	peach		true	g=1 pc=150 cup=155
+2140	персик	peach		true	g=1 pc=150 cup=155				kcal=39 protein=0.91 fat=0.25 carbs=9.54	fdc:169928
 2141	персик плоский	donut peach	2140	true	g=1 pc=100
 2142	нектарин	nectarine	2140	true	g=1 pc=140 cup=145
-2143	абрикос	apricot		true	g=1 pc=40 cup=155
-2144	унаби	jujube		false	g=1 pc=15
-2145	слива	plum		true	g=1 pc=40 cup=165
+2143	абрикос	apricot		true	g=1 pc=40 cup=155				kcal=48 protein=1.4 fat=0.39 carbs=11.12	fdc:171697
+2144	унаби	jujube		false	g=1 pc=15				kcal=79 protein=1.2 fat=0.2 carbs=20.23	fdc:168151
+2145	слива	plum		true	g=1 pc=40 cup=165				kcal=46 protein=0.7 fat=0.28 carbs=11.42	fdc:169949
 2146	слива венгерка	Italian prune plum	2145	true	g=1 pc=30
 2147	слива жёлтая	yellow plum	2145	true	g=1 pc=40
 2148	слива чёрная	black plum	2145	true	g=1 pc=60
 2149	мирабель	mirabelle plums	2145	false	g=1 pc=15
-2138	алыча	cherry plum	2145	false	g=1 pc=20
+2138	алыча	cherry plum	2145	false	g=1 pc=20				kcal=34 protein=0.2 fat=0.1 carbs=7.9	skurikhin:Алыча
 2139	тёрн	sloes	2145		g=1
 # Tropical and exotic fruit, coconut (2150-2199)
-2150	банан	banana		true	g=1 pc=120 cup=150
+2150	банан	banana		true	g=1 pc=120 cup=150				kcal=89 protein=1.09 fat=0.33 carbs=22.84	fdc:173944
 2151	банан мини	baby banana	2150	true	g=1 pc=50
-2152	плантан	plantain	2150	true	g=1 pc=250
-2155	манго	mango		true	g=1 pc=300 cup=165
+2152	плантан	plantain	2150	true	g=1 pc=250				kcal=122 protein=1.3 fat=0.35 carbs=31.89	fdc:169130
+2155	манго	mango		true	g=1 pc=300 cup=165				kcal=60 protein=0.82 fat=0.38 carbs=14.98	fdc:169910
 2156	манго замороженное	frozen mango	2155		g=1 cup=165
-2160	ананас	pineapple		true	g=1 pc=1000 cup=165
-2165	киви	kiwi		true	g=1 pc=75
+2160	ананас	pineapple		true	g=1 pc=1000 cup=165				kcal=50 protein=0.54 fat=0.12 carbs=13.12	fdc:169124
+2165	киви	kiwi		true	g=1 pc=75				kcal=61 protein=1.14 fat=0.52 carbs=14.66	fdc:168153
 2166	киви золотой	golden kiwi	2165	true	g=1 pc=90
 2167	киви мини	kiwi berries	2165	false	g=1 pc=8
-2170	авокадо	avocado		true	g=1 pc=170 cup=150
+2170	авокадо	avocado		true	g=1 pc=170 cup=150				kcal=160 protein=2 fat=14.66 carbs=8.53	fdc:171705
 2171	авокадо хасс	Hass avocado	2170	true	g=1 pc=170 cup=150
-2175	папайя	papaya		true	g=1 pc=500 cup=145
-2176	маракуйя	passion fruit		true	g=1 pc=20
-2177	гранат	pomegranate		true	g=1 pc=300
+2175	папайя	papaya		true	g=1 pc=500 cup=145				kcal=43 protein=0.47 fat=0.26 carbs=10.82	fdc:169926
+2176	маракуйя	passion fruit		true	g=1 pc=20				kcal=97 protein=2.2 fat=0.7 carbs=23.38	fdc:169108
+2177	гранат	pomegranate		true	g=1 pc=300				kcal=83 protein=1.67 fat=1.17 carbs=18.7	fdc:169134
 2178	зёрна граната	pomegranate seeds	2177		g=1 tbsp=11 cup=175
-2179	личи	lychee		false	g=1 pc=10
-2180	лонган	longan		false	g=1 pc=8
+2179	личи	lychee		false	g=1 pc=10				kcal=66 protein=0.83 fat=0.44 carbs=16.53	fdc:169086
+2180	лонган	longan		false	g=1 pc=8				kcal=60 protein=1.31 fat=0.1 carbs=15.14	fdc:169089
 2181	рамбутан	rambutan		false	g=1 pc=30
-2182	хурма	persimmon		true	g=1 pc=200
+2182	хурма	persimmon		true	g=1 pc=200				kcal=70 protein=0.58 fat=0.19 carbs=18.59	fdc:169941
 2183	хурма королёк	chocolate persimmon	2182	true	g=1 pc=180
-2184	фейхоа	feijoa		true	g=1 pc=40
-2185	инжир	fig		true	g=1 pc=50
-2186	карамбола	star fruit		true	g=1 pc=90
-2187	гуава	guava		true	g=1 pc=55
+2184	фейхоа	feijoa		true	g=1 pc=40				kcal=61 protein=0.71 fat=0.42 carbs=15.21	fdc:168176
+2185	инжир	fig		true	g=1 pc=50				kcal=74 protein=0.75 fat=0.3 carbs=19.18	fdc:173021
+2186	карамбола	star fruit		true	g=1 pc=90				kcal=31 protein=1.04 fat=0.33 carbs=6.73	fdc:171715
+2187	гуава	guava		true	g=1 pc=55				kcal=68 protein=2.55 fat=0.95 carbs=14.32	fdc:173044
 2188	питахайя	dragon fruit		true	g=1 pc=350
-2189	джекфрут	jackfruit			g=1
+2189	джекфрут	jackfruit			g=1				kcal=95 protein=1.72 fat=0.64 carbs=23.25	fdc:174687
 2190	мангостин	mangosteen		false	g=1 pc=80
-2191	физалис	physalis		false	g=1 pc=5
-2192	черимойя	cherimoya		true	g=1 pc=300
-2193	кивано	horned melon		true	g=1 pc=250
-2195	кокос	coconut			g=1
+2191	физалис	physalis		false	g=1 pc=5				kcal=53 protein=1.9 fat=0.7 carbs=11.2	fdc:173043
+2192	черимойя	cherimoya		true	g=1 pc=300				kcal=75 protein=1.57 fat=0.68 carbs=17.71	fdc:173953
+2193	кивано	horned melon		true	g=1 pc=250				kcal=44 protein=1.78 fat=1.26 carbs=7.56	fdc:167791
+# кокос → fdc:170169 Nuts, coconut meat, raw
+2195	кокос	coconut			g=1				kcal=354 protein=3.33 fat=33.49 carbs=15.23	fdc:170169
 2196	мякоть кокоса	fresh coconut	2195		g=1 cup=80
-2197	кокосовая стружка	unsweetened shredded coconut	2195		g=1 tbsp=5 cup=80
-2198	кокосовые чипсы	coconut chips	2195		g=1 cup=60
+2197	кокосовая стружка	unsweetened shredded coconut	2195		g=1 tbsp=5 cup=80				kcal=660 protein=6.88 fat=64.53 carbs=23.65	fdc:170170
+# кокосовые чипсы → fdc:170579 Nuts, coconut meat, dried (desiccated), toasted
+2198	кокосовые чипсы	coconut chips	2195		g=1 cup=60				kcal=592 protein=5.3 fat=47 carbs=44.4	fdc:170579
 # Melons and grapes, fruit in general (2200-2299)
-2200	дыня	melon		true	g=1 pc=1500 cup=160
+# дыня → fdc:169911 Melons, honeydew, raw: a smooth-skinned sweet melon like those sold in Russia
+2200	дыня	melon		true	g=1 pc=1500 cup=160				kcal=36 protein=0.54 fat=0.14 carbs=9.09	fdc:169911
 2201	дыня канталупа	cantaloupe	2200	true	g=1 pc=1000 cup=160
 2202	дыня медовая	honeydew melon	2200	true	g=1 pc=1500 cup=170
-2205	арбуз	watermelon			g=1 cup=150
-2210	виноград	grapes			g=1 cup=150
+2205	арбуз	watermelon			g=1 cup=150				kcal=30 protein=0.61 fat=0.15 carbs=7.55	fdc:167765
+2210	виноград	grapes			g=1 cup=150				kcal=69 protein=0.72 fat=0.16 carbs=18.1	fdc:174683
 2211	виноград зелёный	green grapes	2210		g=1 cup=150
 2212	виноград красный	red grapes	2210		g=1 cup=150
 2213	виноград тёмный	black grapes	2210		g=1 cup=150

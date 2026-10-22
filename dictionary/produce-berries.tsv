@@ -1,46 +1,52 @@
 # Produce: berries, fresh and frozen.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Berries, fresh and frozen (2300-2399)
 2300	ягоды	berries			g=1 cup=145
 2301	ягоды замороженные	frozen berries	2300		g=1 cup=140
-2302	крыжовник	gooseberries	2300		g=1 cup=150
-2303	земляника	wild strawberries	2300		g=1 cup=145
-2304	голубика	blueberries			g=1 tbsp=9 cup=145
-2305	морошка	cloudberries	2300		g=1 cup=140
+2302	крыжовник	gooseberries	2300		g=1 cup=150				kcal=44 protein=0.88 fat=0.58 carbs=10.18	fdc:173030
+# земляника → fdc:167762 Strawberries, raw: FoodData Central has no wild strawberry
+2303	земляника	wild strawberries	2300		g=1 cup=145				kcal=32 protein=0.67 fat=0.3 carbs=7.68	fdc:167762
+2304	голубика	blueberries			g=1 tbsp=9 cup=145				kcal=57 protein=0.74 fat=0.33 carbs=14.49	fdc:171711
+2305	морошка	cloudberries	2300		g=1 cup=140				kcal=51 protein=2.4 fat=0.8 carbs=8.6	fdc:169802
 2306	жимолость	haskap berries	2300		g=1 cup=145
-2307	шелковица	mulberries	2300		g=1 cup=140
+2307	шелковица	mulberries	2300		g=1 cup=140				kcal=43 protein=1.44 fat=0.39 carbs=9.8	fdc:169913
 2308	ирга	serviceberries	2300		g=1 cup=145
-2309	рябина	rowan berries	2300		g=1 cup=130
-2310	черноплодная рябина	chokeberries	2300		g=1 cup=140
+# рябина → Skurikhin «Рябина садовая красная», the red rowan of the table
+2309	рябина	rowan berries	2300		g=1 cup=130				kcal=50 protein=1.4 fat=0.2 carbs=8.9	skurikhin:Рябина садовая красная
+2310	черноплодная рябина	chokeberries	2300		g=1 cup=140				kcal=55 protein=1.5 fat=0.2 carbs=10.9	skurikhin:Рябина черноплодная
 2311	калина	viburnum berries	2300		g=1 cup=130
 2312	кизил	cornelian cherries	2300		g=1 cup=145
-2313	шиповник	rose hips	2300		g=1
-2314	бузина	elderberries	2300		g=1 cup=145
+# шиповник → Skurikhin: FoodData Central's only rose hips (fdc:168998) are a North American wild species
+2313	шиповник	rose hips	2300		g=1				kcal=109 protein=1.6 fat=0.7 carbs=22.4	skurikhin:Шиповник
+2314	бузина	elderberries	2300		g=1 cup=145				kcal=73 protein=0.66 fat=0.5 carbs=18.4	fdc:171727
 2315	боярышник	hawthorn berries	2300		g=1
-2320	клубника	strawberries		false	g=1 pc=15 cup=150
+2320	клубника	strawberries		false	g=1 pc=15 cup=150				kcal=32 protein=0.67 fat=0.3 carbs=7.68	fdc:167762
 2321	клубника замороженная	frozen strawberries	2320	false	g=1 pc=15 cup=150
-2325	малина	raspberries			g=1 cup=125
+2325	малина	raspberries			g=1 cup=125				kcal=52 protein=1.2 fat=0.65 carbs=11.94	fdc:167755
 2326	малина замороженная	frozen raspberries	2325		g=1 cup=125
-2330	черника	bilberries			g=1 tbsp=9 cup=145
+2330	черника	bilberries			g=1 tbsp=9 cup=145				kcal=44 protein=1.1 fat=0.6 carbs=7.6	skurikhin:Черника
 2331	черника замороженная	frozen bilberries	2330		g=1 tbsp=9 cup=145
-2335	ежевика	blackberries			g=1 cup=145
-2336	ежевика замороженная	frozen blackberries	2335		g=1 cup=145
-2340	вишня	sour cherries			g=1 cup=155
+2335	ежевика	blackberries			g=1 cup=145				kcal=43 protein=1.39 fat=0.49 carbs=9.61	fdc:173946
+2336	ежевика замороженная	frozen blackberries	2335		g=1 cup=145				kcal=64 protein=1.18 fat=0.43 carbs=15.67	fdc:171710
+2340	вишня	sour cherries			g=1 cup=155				kcal=50 protein=1 fat=0.3 carbs=12.18	fdc:173954
 2341	вишня замороженная	frozen sour cherries	2340		g=1 cup=155
-2345	черешня	cherries		false	g=1 pc=8 cup=155
+2345	черешня	cherries		false	g=1 pc=8 cup=155				kcal=63 protein=1.06 fat=0.2 carbs=16.01	fdc:171719
 2346	черешня замороженная	frozen cherries	2345	false	g=1 pc=8 cup=155
-2350	смородина	currants			g=1 tbsp=8 cup=112
+# смородина → fdc:173963 Currants, european black, raw: black currant is what the bare word means
+2350	смородина	currants			g=1 tbsp=8 cup=112				kcal=63 protein=1.4 fat=0.41 carbs=15.38	fdc:173963
 2351	смородина чёрная	black currants	2350		g=1 tbsp=8 cup=112
 2352	смородина красная	red currants	2350		g=1 tbsp=8 cup=112
 2353	смородина белая	white currants	2350		g=1 tbsp=8 cup=112
 2354	смородина замороженная	frozen currants	2350		g=1 tbsp=8 cup=112
-2360	клюква	cranberries			g=1 tbsp=7 cup=100
+# клюква → Skurikhin: the Russian bog cranberry, not the American cranberry of FoodData Central
+2360	клюква	cranberries			g=1 tbsp=7 cup=100				kcal=28 protein=0.5 fat=0.2 carbs=3.7	skurikhin:Клюква
 2361	клюква замороженная	frozen cranberries	2360		g=1 tbsp=7 cup=100
-2365	брусника	lingonberries			g=1 tbsp=8 cup=120
+# брусника → fdc:169805 Cranberry, low bush or lingenberry, raw (Alaska Native)
+2365	брусника	lingonberries			g=1 tbsp=8 cup=120				kcal=55 protein=0.4 fat=0.5 carbs=12.2	fdc:169805
 2366	брусника замороженная	frozen lingonberries	2365		g=1 tbsp=8 cup=120
-2370	облепиха	sea buckthorn			g=1 tbsp=8 cup=120
+2370	облепиха	sea buckthorn			g=1 tbsp=8 cup=120				kcal=82 protein=1.2 fat=5.4 carbs=5.7	skurikhin:Облепиха
 2371	облепиха замороженная	frozen sea buckthorn	2370		g=1 tbsp=8 cup=120
 2316	голубика замороженная	frozen blueberries	2304		g=1 tbsp=9 cup=145
 2342	вишня без косточек	pitted sour cherries	2340		g=1 cup=155

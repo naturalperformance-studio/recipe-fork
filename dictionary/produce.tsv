@@ -1,9 +1,9 @@
 # Produce: vegetables, roots, onions and garlic, cabbages, tomatoes and peppers, squash, corn and peas, leafy greens and salads.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Potatoes and roots (1000-1099)
-1000	картофель	potato		true	g=1 pc=150		картошка
+1000	картофель	potato		true	g=1 pc=150		картошка		kcal=77 protein=2.05 fat=0.09 carbs=17.49	fdc:170026
 1001	картофель молодой	new potatoes	1000	true	g=1 pc=50
 1002	картофель мелкий	baby potatoes	1000	true	g=1 pc=30
 1003	картофель красный	red potato	1000	true	g=1 pc=150
@@ -11,82 +11,83 @@
 1005	картофель фиолетовый	purple potato	1000	true	g=1 pc=120
 1006	картофель рассыпчатый	starchy potato	1000	true	g=1 pc=150
 1007	картофель руссет	russet potato	1000	true	g=1 pc=250
-1008	картофель фри замороженный	frozen French fries	1000		g=1
-1009	картофельные дольки замороженные	frozen potato wedges	1000		g=1
-1020	батат	sweet potato		true	g=1 pc=250 cup=135
+1008	картофель фри замороженный	frozen French fries	1000		g=1				kcal=147 protein=2.24 fat=4.66 carbs=24.81	fdc:170523
+1009	картофельные дольки замороженные	frozen potato wedges	1000		g=1				kcal=162 protein=2.56 fat=7.47 carbs=22.22	fdc:168946
+1020	батат	sweet potato		true	g=1 pc=250 cup=135				kcal=86 protein=1.57 fat=0.05 carbs=20.12	fdc:168482
 1021	батат фиолетовый	purple sweet potato	1020	true	g=1 pc=250
-1030	морковь	carrot		true	g=1 pc=80 cup=120		морковка
+1030	морковь	carrot		true	g=1 pc=80 cup=120		морковка		kcal=41 protein=0.93 fat=0.24 carbs=9.58	fdc:170393
 1031	морковь молодая	young carrots	1030	true	g=1 pc=40
 1032	морковь мини	baby carrots	1030	false	g=1 pc=10 cup=130
 1033	морковь фиолетовая	purple carrot	1030	true	g=1 pc=80
 1034	морковь жёлтая	yellow carrot	1030	true	g=1 pc=80
-1040	свёкла	beet		true	g=1 pc=200 cup=135
+1040	свёкла	beet		true	g=1 pc=200 cup=135				kcal=43 protein=1.61 fat=0.17 carbs=9.56	fdc:169145
 1041	свёкла молодая	baby beets	1040	true	g=1 pc=80
 1042	свёкла варёная	cooked beets	1040	true	g=1 pc=180
 1043	свёкла золотистая	golden beets	1040	true	g=1 pc=150
-1050	редис	radish		true	g=1 pc=15 cup=115
+1050	редис	radish		true	g=1 pc=15 cup=115				kcal=16 protein=0.68 fat=0.1 carbs=3.4	fdc:169276
 1051	редька чёрная	black radish	1049	true	g=1 pc=300
 1052	редька зелёная	green radish	1049	true	g=1 pc=400
-1053	дайкон	daikon	1049	true	g=1 pc=500 cup=115
-1054	репа	turnip		true	g=1 pc=200 cup=130
-1055	брюква	rutabaga		true	g=1 pc=500 cup=140
-1056	пастернак	parsnip		true	g=1 pc=150 cup=135
-1057	петрушка корневая	parsley root		true	g=1 pc=60		корень петрушки
-1058	сельдерей корневой	celeriac		true	g=1 pc=600 cup=155
-1059	топинамбур	Jerusalem artichoke		true	g=1 pc=50 cup=150
-1060	имбирь	ginger			g=1 tsp=2 tbsp=6
-1061	корень хрена	horseradish root			g=1 tsp=2 tbsp=7
+1053	дайкон	daikon	1049	true	g=1 pc=500 cup=115				kcal=18 protein=0.6 fat=0.1 carbs=4.1	fdc:168451
+1054	репа	turnip		true	g=1 pc=200 cup=130				kcal=28 protein=0.9 fat=0.1 carbs=6.43	fdc:170465
+1055	брюква	rutabaga		true	g=1 pc=500 cup=140				kcal=37 protein=1.08 fat=0.16 carbs=8.62	fdc:168454
+1056	пастернак	parsnip		true	g=1 pc=150 cup=135				kcal=75 protein=1.2 fat=0.3 carbs=17.99	fdc:170417
+1057	петрушка корневая	parsley root		true	g=1 pc=60		корень петрушки		kcal=51 protein=1.5 fat=0.6 carbs=10.1	skurikhin:Петрушка (корень)
+1058	сельдерей корневой	celeriac		true	g=1 pc=600 cup=155				kcal=42 protein=1.5 fat=0.3 carbs=9.2	fdc:170400
+1059	топинамбур	Jerusalem artichoke		true	g=1 pc=50 cup=150				kcal=73 protein=2 fat=0.01 carbs=17.44	fdc:169236
+1060	имбирь	ginger			g=1 tsp=2 tbsp=6				kcal=80 protein=1.82 fat=0.75 carbs=17.77	fdc:169231
+1061	корень хрена	horseradish root			g=1 tsp=2 tbsp=7				kcal=59 protein=3.2 fat=0.4 carbs=10.5	skurikhin:Хрен
 1062	куркума свежая	fresh turmeric			g=1 tsp=3
 1063	галангал	galangal			g=1 tsp=2 tbsp=6
-1064	маниока	cassava		true	g=1 pc=400
-1065	ямс	yam		true	g=1 pc=400
-1066	таро	taro		true	g=1 pc=150
-1067	хикама	jicama		true	g=1 pc=500 cup=130
-1068	корень лотоса	lotus root			g=1
-1069	корень лопуха	burdock root			g=1
-1070	скорцонера	salsify			g=1
+1064	маниока	cassava		true	g=1 pc=400				kcal=160 protein=1.36 fat=0.28 carbs=38.06	fdc:169985
+1065	ямс	yam		true	g=1 pc=400				kcal=118 protein=1.53 fat=0.17 carbs=27.88	fdc:170071
+1066	таро	taro		true	g=1 pc=150				kcal=112 protein=1.5 fat=0.2 carbs=26.46	fdc:169308
+1067	хикама	jicama		true	g=1 pc=500 cup=130				kcal=38 protein=0.72 fat=0.09 carbs=8.82	fdc:170073
+1068	корень лотоса	lotus root			g=1				kcal=74 protein=2.6 fat=0.1 carbs=17.23	fdc:169250
+1069	корень лопуха	burdock root			g=1				kcal=72 protein=1.53 fat=0.15 carbs=17.34	fdc:169974
+# скорцонера → fdc:169277 Salsify (vegetable oyster), raw: the nearest root FoodData Central holds
+1070	скорцонера	salsify			g=1				kcal=82 protein=3.3 fat=0.2 carbs=18.6	fdc:169277
 # Onions and garlic (1100-1199)
-1100	лук	onion		true	g=1 pc=100 tbsp=10 cup=160
+1100	лук	onion		true	g=1 pc=100 tbsp=10 cup=160				kcal=40 protein=1.1 fat=0.1 carbs=9.34	fdc:170000
 1101	лук репчатый	yellow onion	1100	true	g=1 pc=100 tbsp=10 cup=160
 1102	лук красный	red onion	1100	true	g=1 pc=120 tbsp=10 cup=160
 1103	лук белый	white onion	1100	true	g=1 pc=120 tbsp=10 cup=160
 1104	лук сладкий	sweet onion	1100	true	g=1 pc=250 tbsp=10 cup=160
-1105	лук-шалот	shallot	1100	true	g=1 pc=30 tbsp=10
-1106	лук-порей	leek	1100	true	g=1 pc=250 cup=90
+1105	лук-шалот	shallot	1100	true	g=1 pc=30 tbsp=10				kcal=72 protein=2.5 fat=0.1 carbs=16.8	fdc:170499
+1106	лук-порей	leek	1100	true	g=1 pc=250 cup=90				kcal=61 protein=1.5 fat=0.3 carbs=14.15	fdc:169246
 1107	лук зелёный	scallion	1100	true	g=1 pc=15 tbsp=6 cup=100			green onion;spring onion
 1108	лук жемчужный	pearl onions	1100	false	g=1 pc=10
-1109	лук-батун	Welsh onion	1100	true	g=1 pc=20 tbsp=6
-1110	шнитт-лук	chives	1100		g=1 tsp=1 tbsp=3 cup=50
+1109	лук-батун	Welsh onion	1100	true	g=1 pc=20 tbsp=6				kcal=34 protein=1.9 fat=0.4 carbs=6.5	fdc:170007
+1110	шнитт-лук	chives	1100		g=1 tsp=1 tbsp=3 cup=50				kcal=30 protein=3.27 fat=0.73 carbs=4.35	fdc:169994
 1111	лук душистый	garlic chives	1100		g=1 tbsp=3
 1115	черемша	wild garlic			g=1
-1120	чеснок	garlic		true	g=1 pc=45
+1120	чеснок	garlic		true	g=1 pc=45				kcal=149 protein=6.36 fat=0.5 carbs=33.06	fdc:169230
 1121	чеснок молодой	young garlic	1120	true	g=1 pc=40
 1122	чеснок чёрный	black garlic	1120	true	g=1 pc=40
-1125	зубчик чеснока	garlic clove		false	g=1 pc=5 tsp=4 tbsp=12
+1125	зубчик чеснока	garlic clove		false	g=1 pc=5 tsp=4 tbsp=12				kcal=149 protein=6.36 fat=0.5 carbs=33.06	fdc:169230
 1126	стрелки чеснока	garlic scapes			g=1
 # Cabbages (1200-1299)
-1200	капуста	cabbage		true	g=1 pc=1500 cup=70
+1200	капуста	cabbage		true	g=1 pc=1500 cup=70				kcal=25 protein=1.28 fat=0.1 carbs=5.8	fdc:169975
 1201	капуста белокочанная	green cabbage	1200	true	g=1 pc=1500 cup=70
 1202	капуста краснокочанная	red cabbage	1200	true	g=1 pc=1000 cup=70
 1203	капуста савойская	savoy cabbage	1200	true	g=1 pc=900 cup=70
-1204	капуста пекинская	napa cabbage	1200	true	g=1 pc=900 cup=75
+1204	капуста пекинская	napa cabbage	1200	true	g=1 pc=900 cup=75				kcal=16 protein=1.2 fat=0.2 carbs=3.23	fdc:169979
 1205	капуста молодая	young cabbage	1200	true	g=1 pc=800 cup=70
-1206	пак-чой	bok choy	1200	true	g=1 pc=150
-1207	капуста кейл	kale	1200		g=1 cup=25
+1206	пак-чой	bok choy	1200	true	g=1 pc=150				kcal=13 protein=1.5 fat=0.2 carbs=2.18	fdc:170390
+1207	капуста кейл	kale	1200		g=1 cup=25				kcal=35 protein=2.92 fat=1.49 carbs=4.42	fdc:168421
 1208	капуста романеско	romanesco	1200	true	g=1 pc=500 cup=90
 1209	кольраби	kohlrabi	1200	true	g=1 pc=250 cup=135
 1210	капуста листовая	collard greens	1200		g=1 cup=35
 1211	чой-сум	choy sum	1200		g=1
 1212	капустный лист	cabbage leaf	1200	false	g=1 pc=40
-1220	брокколи	broccoli		true	g=1 pc=400 cup=90
+1220	брокколи	broccoli		true	g=1 pc=400 cup=90				kcal=34 protein=2.82 fat=0.37 carbs=6.64	fdc:170379
 1221	брокколи замороженная	frozen broccoli	1220		g=1 cup=90
 1222	брокколини	broccolini	1220		g=1
-1230	цветная капуста	cauliflower		true	g=1 pc=700 cup=105
+1230	цветная капуста	cauliflower		true	g=1 pc=700 cup=105				kcal=25 protein=1.92 fat=0.28 carbs=4.97	fdc:169986
 1231	цветная капуста замороженная	frozen cauliflower	1230		g=1 cup=105
-1240	брюссельская капуста	Brussels sprouts		false	g=1 pc=15 cup=90
+1240	брюссельская капуста	Brussels sprouts		false	g=1 pc=15 cup=90				kcal=43 protein=3.38 fat=0.3 carbs=8.95	fdc:170383
 1241	брюссельская капуста замороженная	frozen Brussels sprouts	1240	false	g=1 pc=15 cup=90
 # Tomatoes, cucumbers, peppers, eggplant (1300-1399)
-1300	помидор	tomato		true	g=1 pc=120 cup=180		томат
+1300	помидор	tomato		true	g=1 pc=120 cup=180		томат		kcal=18 protein=0.88 fat=0.2 carbs=3.89	fdc:170457
 1301	помидор черри	cherry tomato	1300	false	g=1 pc=15 cup=150
 1302	помидор сливка	plum tomato	1300	true	g=1 pc=70 cup=180			roma tomato
 1303	помидор бычье сердце	beefsteak tomato	1300	true	g=1 pc=300
@@ -96,12 +97,13 @@
 1307	помидор на ветке	vine tomato	1300	true	g=1 pc=100
 1308	помидор черри жёлтый	yellow cherry tomato	1300	false	g=1 pc=15 cup=150
 1309	помидор черри сливовидный	grape tomato	1300	false	g=1 pc=10 cup=150
-1315	томатилло	tomatillo		true	g=1 pc=35
-1320	огурец	cucumber		true	g=1 pc=120 cup=120
+1315	томатилло	tomatillo		true	g=1 pc=35				kcal=32 protein=0.96 fat=1.02 carbs=5.84	fdc:168566
+1320	огурец	cucumber		true	g=1 pc=120 cup=120				kcal=15 protein=0.65 fat=0.11 carbs=3.63	fdc:168409
 1321	огурец длинноплодный	English cucumber	1320	true	g=1 pc=300 cup=120
 1322	огурец короткоплодный	mini cucumber	1320	true	g=1 pc=80
 1323	огурец для засолки	pickling cucumber	1320	true	g=1 pc=80
-1330	перец болгарский	bell pepper		true	g=1 pc=150 cup=150		сладкий перец	sweet pepper
+# перец болгарский → fdc:170108 Peppers, sweet, red, raw: the red one is the one most bought
+1330	перец болгарский	bell pepper		true	g=1 pc=150 cup=150		сладкий перец	sweet pepper	kcal=26 protein=0.99 fat=0.3 carbs=6.03	fdc:170108
 1331	перец болгарский красный	red bell pepper	1330	true	g=1 pc=160 cup=150
 1332	перец болгарский жёлтый	yellow bell pepper	1330	true	g=1 pc=160 cup=150
 1333	перец болгарский зелёный	green bell pepper	1330	true	g=1 pc=140 cup=150
@@ -111,69 +113,71 @@
 1337	перец падрон	padrón pepper	1330	false	g=1 pc=8
 1338	перец шишито	shishito pepper	1330	false	g=1 pc=6
 1339	перец банановый	banana pepper	1330	true	g=1 pc=50
-1340	перец чили	chili pepper		true	g=1 pc=15 tsp=3		острый перец	hot pepper
+1340	перец чили	chili pepper		true	g=1 pc=15 tsp=3		острый перец	hot pepper	kcal=40 protein=1.87 fat=0.44 carbs=8.81	fdc:170106
 1341	перец чили красный	red chili	1340	true	g=1 pc=15 tsp=3
 1342	перец чили зелёный	green chili	1340	true	g=1 pc=10 tsp=3
-1343	халапеньо	jalapeño	1340	true	g=1 pc=15 tsp=3
+1343	халапеньо	jalapeño	1340	true	g=1 pc=15 tsp=3				kcal=29 protein=0.91 fat=0.37 carbs=6.5	fdc:168576
 1344	перец хабанеро	habanero	1340	true	g=1 pc=10
 1345	перец птичий глаз	bird's eye chili	1340	false	g=1 pc=2
 1346	перец серрано	serrano pepper	1340	true	g=1 pc=6
 1347	перец поблано	poblano pepper	1340	true	g=1 pc=120
 1348	перец скотч боннет	Scotch bonnet	1340	true	g=1 pc=10
 1349	перец анахайм	Anaheim pepper	1340	true	g=1 pc=50
-1350	баклажан	eggplant		true	g=1 pc=300 cup=80
+1350	баклажан	eggplant		true	g=1 pc=300 cup=80				kcal=25 protein=0.98 fat=0.18 carbs=5.88	fdc:169228
 1351	баклажан японский	Japanese eggplant	1350	true	g=1 pc=150
 1352	баклажан белый	white eggplant	1350	true	g=1 pc=250
-1360	кабачок	summer squash		true	g=1 pc=300 cup=125
+1360	кабачок	summer squash		true	g=1 pc=300 cup=125				kcal=16 protein=1.21 fat=0.18 carbs=3.35	fdc:170487
 1361	цукини	zucchini	1360	true	g=1 pc=250 cup=125
 1362	кабачок молодой	baby zucchini	1360	true	g=1 pc=120
 1363	кабачок жёлтый	yellow squash	1360	true	g=1 pc=250 cup=125
 1364	цветки кабачка	squash blossoms	1360	false	g=1 pc=6
-1365	патиссон	pattypan squash		true	g=1 pc=200
-1370	тыква	pumpkin			g=1 cup=120
-1371	тыква мускатная	butternut squash	1370	true	g=1 pc=1000 cup=140
+1365	патиссон	pattypan squash		true	g=1 pc=200				kcal=18 protein=1.2 fat=0.2 carbs=3.84	fdc:169289
+1370	тыква	pumpkin			g=1 cup=120				kcal=26 protein=1 fat=0.1 carbs=6.5	fdc:168448
+1371	тыква мускатная	butternut squash	1370	true	g=1 pc=1000 cup=140				kcal=45 protein=1 fat=0.1 carbs=11.69	fdc:169295
 1372	тыква хоккайдо	red kuri squash	1370	true	g=1 pc=1200 cup=120
 1373	тыква спагетти	spaghetti squash	1370	true	g=1 pc=1200
-1374	тыква жёлудевая	acorn squash	1370	true	g=1 pc=600
+1374	тыква жёлудевая	acorn squash	1370	true	g=1 pc=600				kcal=40 protein=0.8 fat=0.1 carbs=10.42	fdc:168472
 1375	тыква кабоча	kabocha squash	1370	true	g=1 pc=1200 cup=120
 1376	тыква деликата	delicata squash	1370	true	g=1 pc=500
 1377	тыква замороженная	frozen pumpkin	1370		g=1 cup=120
-1380	чайот	chayote		true	g=1 pc=200
+1380	чайот	chayote		true	g=1 pc=200				kcal=19 protein=0.82 fat=0.13 carbs=4.51	fdc:170402
 # Corn, peas and green beans (1400-1499)
-1400	кукуруза	corn			g=1 cup=150
+1400	кукуруза	corn			g=1 cup=150				kcal=86 protein=3.27 fat=1.35 carbs=18.7	fdc:169998
 1401	кукуруза замороженная	frozen corn	1400		g=1 cup=140
 1402	початок кукурузы	corn on the cob	1400	true	g=1 pc=250
 1403	мини-кукуруза	baby corn	1400	false	g=1 pc=10
-1410	горошек зелёный	green peas			g=1 tbsp=10 cup=145
+1410	горошек зелёный	green peas			g=1 tbsp=10 cup=145				kcal=81 protein=5.42 fat=0.4 carbs=14.45	fdc:170419
 1411	горошек замороженный	frozen peas	1410		g=1 tbsp=10 cup=140
-1412	горох стручковый	snow peas	1410		g=1 cup=65
-1413	горошек сахарный	sugar snap peas	1410		g=1 cup=65
-1414	ростки гороха	pea shoots	1410		g=1
-1420	фасоль стручковая	green beans			g=1 cup=110
+1412	горох стручковый	snow peas	1410		g=1 cup=65				kcal=42 protein=2.8 fat=0.2 carbs=7.55	fdc:170010
+1413	горошек сахарный	sugar snap peas	1410		g=1 cup=65				kcal=42 protein=2.8 fat=0.2 carbs=7.55	fdc:170010
+# ростки гороха → fdc:169224 Cowpeas, leafy tips, raw: the leafy tips of a legume, no pea shoots listed
+1414	ростки гороха	pea shoots	1410		g=1				kcal=29 protein=4.1 fat=0.25 carbs=4.82	fdc:169224
+1420	фасоль стручковая	green beans			g=1 cup=110				kcal=31 protein=1.83 fat=0.22 carbs=6.97	fdc:169961
 1421	фасоль стручковая замороженная	frozen green beans	1420		g=1 cup=110
 1422	фасоль стручковая жёлтая	yellow wax beans	1420		g=1 cup=110
-1423	фасоль спаржевая	yardlong beans	1420		g=1
+1423	фасоль спаржевая	yardlong beans	1420		g=1				kcal=47 protein=2.8 fat=0.4 carbs=8.35	fdc:169222
 # Stalks, other vegetables, sprouts, mixes (1500-1599)
-1500	сельдерей	celery		true	g=1 pc=500 cup=100
+1500	сельдерей	celery		true	g=1 pc=500 cup=100				kcal=14 protein=0.69 fat=0.17 carbs=2.97	fdc:169988
 1501	зелень сельдерея	celery leaves	1500		g=1 tbsp=2
-1505	спаржа	asparagus		false	g=1 pc=20 cup=135
+1505	спаржа	asparagus		false	g=1 pc=20 cup=135				kcal=20 protein=2.2 fat=0.12 carbs=3.88	fdc:168389
 1506	спаржа зелёная	green asparagus	1505	false	g=1 pc=20 cup=135
 1507	спаржа белая	white asparagus	1505	false	g=1 pc=35
-1510	артишок	artichoke		true	g=1 pc=200
+1510	артишок	artichoke		true	g=1 pc=200				kcal=47 protein=3.27 fat=0.15 carbs=10.51	fdc:169205
 1511	артишок мини	baby artichoke	1510	true	g=1 pc=50
-1515	фенхель	fennel		true	g=1 pc=250 cup=90
-1516	бамия	okra		false	g=1 pc=12 cup=100
-1517	ревень	rhubarb		true	g=1 pc=60 cup=120
-1518	папоротник	fiddleheads			g=1
-1520	ростки фасоли	bean sprouts			g=1 cup=105
-1521	ростки люцерны	alfalfa sprouts			g=1 cup=35
+1515	фенхель	fennel		true	g=1 pc=250 cup=90				kcal=31 protein=1.24 fat=0.2 carbs=7.3	fdc:169385
+1516	бамия	okra		false	g=1 pc=12 cup=100				kcal=33 protein=1.93 fat=0.19 carbs=7.45	fdc:169260
+1517	ревень	rhubarb		true	g=1 pc=60 cup=120				kcal=21 protein=0.9 fat=0.2 carbs=4.54	fdc:167758
+1518	папоротник	fiddleheads			g=1				kcal=34 protein=4.55 fat=0.4 carbs=5.54	fdc:169405
+1520	ростки фасоли	bean sprouts			g=1 cup=105				kcal=30 protein=3.04 fat=0.18 carbs=5.94	fdc:169957
+1521	ростки люцерны	alfalfa sprouts			g=1 cup=35				kcal=23 protein=3.99 fat=0.69 carbs=2.1	fdc:168384
 1522	микрозелень	microgreens			g=1
 1530	овощи	vegetables			g=1
-1531	овощная смесь замороженная	frozen mixed vegetables	1530		g=1 cup=135
+1531	овощная смесь замороженная	frozen mixed vegetables	1530		g=1 cup=135				kcal=72 protein=3.33 fat=0.52 carbs=13.47	fdc:170471
 1532	мексиканская смесь	Mexican vegetable mix	1530		g=1 cup=135
 1533	овощи для вока	stir-fry vegetables	1530		g=1
 # Leafy greens and salads (1600-1699)
-1600	листья салата	salad greens			g=1 cup=30
+# листья салата → fdc:169249 Lettuce, green leaf, raw
+1600	листья салата	salad greens			g=1 cup=30				kcal=15 protein=1.36 fat=0.15 carbs=2.87	fdc:169249
 1601	салат листовой	lettuce	1600	true	g=1 pc=300 cup=50
 1602	салат айсберг	iceberg lettuce	1600	true	g=1 pc=500 cup=70
 1603	салат романо	romaine lettuce	1600	true	g=1 pc=400 cup=50
@@ -183,36 +187,39 @@
 1607	салат дубовый лист	oak leaf lettuce	1600	true	g=1 pc=200
 1608	салат кочанный	butterhead lettuce	1600	true	g=1 pc=250
 1609	салат корн	mâche	1600		g=1 cup=20
-1610	руккола	arugula	1600		g=1 cup=20
+1610	руккола	arugula	1600		g=1 cup=20				kcal=25 protein=2.58 fat=0.66 carbs=3.65	fdc:169387
 1611	радиккио	radicchio	1600	true	g=1 pc=250
 1612	эндивий	endive	1600	true	g=1 pc=120
 1613	фризе	frisée	1600		g=1 cup=25
 1614	эскариоль	escarole	1600		g=1 cup=25
-1615	кресс-салат	garden cress	1600		g=1
+1615	кресс-салат	garden cress	1600		g=1				kcal=32 protein=2.6 fat=0.7 carbs=5.5	fdc:168407
 1616	водяной кресс	watercress	1600		g=1 cup=35
 1617	мизуна	mizuna	1600		g=1 cup=25
 1618	салатный микс	mixed greens	1600		g=1 cup=30
 1619	лист салата	lettuce leaf	1600	false	g=1 pc=10
-1630	шпинат	spinach			g=1 cup=30
+1630	шпинат	spinach			g=1 cup=30				kcal=23 protein=2.86 fat=0.39 carbs=3.63	fdc:168462
 1631	шпинат молодой	baby spinach	1630		g=1 cup=30
 1632	шпинат замороженный	frozen spinach	1630		g=1
-1635	мангольд	Swiss chard			g=1 cup=36
-1636	щавель	sorrel		true	g=1 pc=100
-1637	крапива	nettles			g=1
-1638	свекольная ботва	beet greens			g=1
-1639	листья одуванчика	dandelion greens			g=1
-1640	листовая горчица	mustard greens			g=1
-1641	портулак	purslane			g=1
-1642	водяной шпинат	water spinach			g=1
-1643	виноградный лист	grape leaf		false	g=1 pc=3
+1635	мангольд	Swiss chard			g=1 cup=36				kcal=19 protein=1.8 fat=0.2 carbs=3.74	fdc:169991
+# щавель → fdc:170076 Dock, raw (Rumex, the sorrels)
+1636	щавель	sorrel		true	g=1 pc=100				kcal=22 protein=2 fat=0.7 carbs=3.2	fdc:170076
+# крапива → fdc:169819 Stinging Nettles, blanched: FoodData Central has no raw form
+1637	крапива	nettles			g=1				kcal=42 protein=2.71 fat=0.11 carbs=7.49	fdc:169819
+1638	свекольная ботва	beet greens			g=1				kcal=22 protein=2.2 fat=0.13 carbs=4.33	fdc:170375
+1639	листья одуванчика	dandelion greens			g=1				kcal=45 protein=2.7 fat=0.7 carbs=9.2	fdc:169226
+1640	листовая горчица	mustard greens			g=1				kcal=27 protein=2.86 fat=0.42 carbs=4.67	fdc:169256
+1641	портулак	purslane			g=1				kcal=20 protein=2.03 fat=0.36 carbs=3.39	fdc:169274
+1642	водяной шпинат	water spinach			g=1				kcal=19 protein=2.6 fat=0.2 carbs=3.13	fdc:169301
+1643	виноградный лист	grape leaf		false	g=1 pc=3				kcal=93 protein=5.6 fat=2.12 carbs=17.31	fdc:168575
 1010	картофель юкон голд	Yukon Gold potato	1000	true	g=1 pc=170
 1011	картофель фингерлинг	fingerling potatoes	1000	false	g=1 pc=40
-1012	картофельное пюре	mashed potatoes			g=1 tbsp=13 cup=210
+# картофельное пюре → fdc:168555 Potatoes, mashed, home-prepared, whole milk and butter added
+1012	картофельное пюре	mashed potatoes			g=1 tbsp=13 cup=210				kcal=113 protein=1.86 fat=4.22 carbs=16.81	fdc:168555
 1112	лук ялтинский	Crimean red onion	1100	true	g=1 pc=150 tbsp=10 cup=160
 1113	лук чипполини	cipollini onions	1100	false	g=1 pc=30
-1114	лук-порей мини	baby leeks	1100	true	g=1 pc=60
-1213	капуста тосканская	Tuscan kale	1200		g=1 cup=25
-1214	пак-чой мини	baby bok choy	1200	true	g=1 pc=60
+1114	лук-порей мини	baby leeks	1100	true	g=1 pc=60				kcal=61 protein=1.5 fat=0.3 carbs=14.15	fdc:169246
+1213	капуста тосканская	Tuscan kale	1200		g=1 cup=25				kcal=35 protein=2.92 fat=1.49 carbs=4.42	fdc:168421
+1214	пак-чой мини	baby bok choy	1200	true	g=1 pc=60				kcal=13 protein=1.5 fat=0.2 carbs=2.18	fdc:170390
 1223	соцветие брокколи	broccoli floret	1220	false	g=1 pc=10
 1224	китайская брокколи	Chinese broccoli	1220		g=1
 1232	соцветие цветной капусты	cauliflower floret	1230	false	g=1 pc=15
@@ -221,25 +228,27 @@
 1312	помидор чёрный	black tomato	1300	true	g=1 pc=150
 1324	огурец армянский	Armenian cucumber	1320	true	g=1 pc=300
 1366	кабачок замороженный	frozen zucchini	1360		g=1 cup=125
-1381	момордика	bitter melon		true	g=1 pc=200
-1382	нопалес	nopales		true	g=1 pc=80
+1381	момордика	bitter melon		true	g=1 pc=200				kcal=17 protein=1 fat=0.17 carbs=3.7	fdc:168393
+1382	нопалес	nopales		true	g=1 pc=80				kcal=16 protein=1.32 fat=0.09 carbs=3.33	fdc:168571
 1424	фасоль стручковая плоская	romano beans	1420		g=1 cup=110
 1508	спаржа фиолетовая	purple asparagus	1505	false	g=1 pc=20
-1523	ростки пшеницы	wheat sprouts			g=1
-1524	ростки редиса	radish sprouts			g=1
+1523	ростки пшеницы	wheat sprouts			g=1				kcal=198 protein=7.49 fat=1.27 carbs=42.53	fdc:169725
+1524	ростки редиса	radish sprouts			g=1				kcal=43 protein=3.81 fat=2.53 carbs=3.6	fdc:170095
 1534	овощи для борща	borscht vegetable mix	1530		g=1
 1535	овощи для супа	soup vegetable mix	1530		g=1
 1620	салат лолло бионда	lollo bionda	1600	true	g=1 pc=200
-1644	листья репы	turnip greens			g=1
+1644	листья репы	turnip greens			g=1				kcal=32 protein=1.5 fat=0.3 carbs=7.13	fdc:170061
 1035	морковь замороженная	frozen carrots	1030		g=1 cup=130
 1044	свёкла чиоджа	Chioggia beets	1040	true	g=1 pc=150
-1071	редис арбузный	watermelon radish		true	g=1 pc=150
-1116	лук-шалот банановый	banana shallot	1100	true	g=1 pc=60 tbsp=10
+# редис арбузный → fdc:168451 Radishes, oriental, raw: it is a Chinese radish
+1071	редис арбузный	watermelon radish		true	g=1 pc=150				kcal=18 protein=0.6 fat=0.1 carbs=4.1	fdc:168451
+1116	лук-шалот банановый	banana shallot	1100	true	g=1 pc=60 tbsp=10				kcal=72 protein=2.5 fat=0.1 carbs=16.8	fdc:170499
 1127	чеснок слоновый	elephant garlic	1120	true	g=1 pc=150
 1313	помидор оранжевый	orange tomato	1300	true	g=1 pc=120
 1319	перец болгарский замороженный	frozen bell pepper	1330		g=1 cup=150
 1367	патиссон мини	baby pattypan squash	1365	false	g=1 pc=40
-1525	ростки сои	soybean sprouts			g=1 cup=70
+1525	ростки сои	soybean sprouts			g=1 cup=70				kcal=122 protein=13.09 fat=6.7 carbs=9.57	fdc:169284
 1526	ростки подсолнечника	sunflower sprouts			g=1
-1049	редька	winter radish		true	g=1 pc=400
+# редька → Skurikhin «Редька черная», the winter radish Russian cooks mean
+1049	редька	winter radish		true	g=1 pc=400				kcal=36 protein=1.9 fat=0.2 carbs=6.7	skurikhin:Редька черная
 1502	стебель сельдерея	celery stalk	1500	true	g=1 pc=40 cup=100

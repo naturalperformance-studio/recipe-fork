@@ -1,44 +1,49 @@
 # Produce: mushrooms, fresh, frozen and dried.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Mushrooms, fresh, frozen and dried (1800-1899)
-1800	грибы	mushrooms			g=1 cup=70
+# грибы → fdc:169251 Mushrooms, white, raw
+1800	грибы	mushrooms			g=1 cup=70				kcal=22 protein=3.09 fat=0.34 carbs=3.26	fdc:169251
 1801	шампиньоны	button mushrooms	1800	true	g=1 pc=20 cup=70
 1802	шампиньоны королевские	cremini mushrooms	1800	true	g=1 pc=25 cup=70
 1803	портобелло	portobello mushroom	1800	true	g=1 pc=100
-1804	вешенки	oyster mushrooms	1800		g=1 cup=85
+1804	вешенки	oyster mushrooms	1800		g=1 cup=85				kcal=33 protein=3.31 fat=0.41 carbs=6.09	fdc:168580
 1805	королевская вешенка	king oyster mushroom	1800	true	g=1 pc=60
-1806	шиитаке	shiitake	1800	true	g=1 pc=15 cup=70
-1807	белые грибы	porcini	1800		g=1 cup=70
-1808	лисички	chanterelles	1800		g=1 cup=55
-1809	опята	honey mushrooms	1800		g=1 cup=70
-1810	подберёзовики	birch boletes	1800		g=1
-1811	подосиновики	aspen boletes	1800		g=1
+1806	шиитаке	shiitake	1800	true	g=1 pc=15 cup=70				kcal=34 protein=2.24 fat=0.49 carbs=6.79	fdc:169242
+1807	белые грибы	porcini	1800		g=1 cup=70				kcal=34 protein=3.7 fat=1.7 carbs=1.1	skurikhin:Белые
+1808	лисички	chanterelles	1800		g=1 cup=55				kcal=32 protein=1.49 fat=0.53 carbs=6.86	fdc:168422
+1809	опята	honey mushrooms	1800		g=1 cup=70				kcal=22 protein=2.2 fat=1.2 carbs=0.5	skurikhin:Опята
+1810	подберёзовики	birch boletes	1800		g=1				kcal=20 protein=2.1 fat=0.8 carbs=1.2	skurikhin:Подберезовики
+1811	подосиновики	aspen boletes	1800		g=1				kcal=22 protein=3.3 fat=0.5 carbs=1.2	skurikhin:Подосиновики
 1812	маслята	slippery jacks	1800		g=1
 1813	грузди	milk caps	1800		g=1
 1814	рыжики	saffron milk caps	1800		g=1
 1815	сыроежки	russula	1800		g=1
 1816	сморчки	morels	1800		g=1
-1817	эноки	enoki	1800		g=1
+1817	эноки	enoki	1800		g=1				kcal=37 protein=2.66 fat=0.29 carbs=7.81	fdc:169382
 1818	шимеджи	shimeji	1800		g=1
-1819	майтаке	maitake	1800		g=1
+1819	майтаке	maitake	1800		g=1				kcal=31 protein=1.94 fat=0.19 carbs=6.97	fdc:169403
 1820	ежовик	lion's mane mushroom	1800		g=1
-1821	муэр	wood ear mushrooms	1800		g=1
+# муэр → fdc:168581 Fungi, Cloud ears, dried: it is sold dried
+1821	муэр	wood ear mushrooms	1800		g=1				kcal=284 protein=9.25 fat=0.73 carbs=73.01	fdc:168581
 1822	трюфель	truffle	1800		g=1
 1823	лесные грибы	wild mushrooms	1800		g=1 cup=70
 1830	грибы замороженные	frozen mushrooms	1800		g=1
 1831	шампиньоны замороженные	frozen button mushrooms	1800		g=1
-1832	белые грибы замороженные	frozen porcini	1800		g=1
-1833	лисички замороженные	frozen chanterelles	1800		g=1
-1834	опята замороженные	frozen honey mushrooms	1800		g=1
-1840	грибы сушёные	dried mushrooms	1800		g=1
-1841	белые грибы сушёные	dried porcini	1800		g=1
-1842	шиитаке сушёные	dried shiitake	1800	false	g=1 pc=3
-1843	сморчки сушёные	dried morels	1800		g=1
-1835	вешенки замороженные	frozen oyster mushrooms	1800		g=1
+1832	белые грибы замороженные	frozen porcini	1800		g=1				kcal=34 protein=3.7 fat=1.7 carbs=1.1	skurikhin:Белые
+1833	лисички замороженные	frozen chanterelles	1800		g=1				kcal=32 protein=1.49 fat=0.53 carbs=6.86	fdc:168422
+1834	опята замороженные	frozen honey mushrooms	1800		g=1				kcal=22 protein=2.2 fat=1.2 carbs=0.5	skurikhin:Опята
+# грибы сушёные → Skurikhin «Белые сушеные», the dried mushroom Russian cooks mean
+1840	грибы сушёные	dried mushrooms	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
+1841	белые грибы сушёные	dried porcini	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
+1842	шиитаке сушёные	dried shiitake	1800	false	g=1 pc=3				kcal=296 protein=9.58 fat=0.99 carbs=75.37	fdc:168436
+# сморчки сушёные → Skurikhin «Белые сушеные»: a dried mushroom, no dried morel listed
+1843	сморчки сушёные	dried morels	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
+1835	вешенки замороженные	frozen oyster mushrooms	1800		g=1				kcal=33 protein=3.31 fat=0.41 carbs=6.09	fdc:168580
 1836	маслята замороженные	frozen slippery jacks	1800		g=1
-1844	лисички сушёные	dried chanterelles	1800		g=1
+# лисички сушёные → Skurikhin «Белые сушеные»: a dried mushroom, no dried chanterelle listed
+1844	лисички сушёные	dried chanterelles	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
 1824	трюфель чёрный	black truffle	1800		g=1
 1825	трюфель белый	white truffle	1800		g=1
 1826	моховики	bay boletes	1800		g=1
