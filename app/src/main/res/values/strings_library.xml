@@ -84,7 +84,6 @@
     <string name="library_search_clear">Clear the search</string>
     <string name="library_nothing_found">Nothing found for “%1$s”</string>
     <!-- FLOW-035 (3): the order of each view, and its three choices. -->
-    <string name="library_order">Order: %1$s</string>
     <string name="library_order_action">Choose the order of the list</string>
     <string name="library_order_newest">Newest first</string>
     <string name="library_order_oldest">Oldest first</string>

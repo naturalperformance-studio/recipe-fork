@@ -57,7 +57,6 @@
     <string name="library_search_clear">Очистить поиск</string>
     <string name="library_nothing_found">По запросу «%1$s» ничего не найдено</string>
     <!-- FLOW-035 (3): порядок каждого вида и три варианта. -->
-    <string name="library_order">Порядок: %1$s</string>
     <string name="library_order_action">Выбрать порядок списка</string>
     <string name="library_order_newest">Сначала новые</string>
     <string name="library_order_oldest">Сначала старые</string>

@@ -36,8 +36,9 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 
 /**
- * FLOW-035: in the book, the search field and the order share the first line of the header, and the row of filter chips
- * stands under them about 12 dp apart — never touching the field, at the usual font size and at twice it.
+ * FLOW-035: in the book, the search field has the first line of the header to itself, and the row of filter chips — the
+ * order its second chip (T-304) — stands under it about 12 dp apart, never touching the field, at the usual font size
+ * and at twice it.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -97,12 +98,10 @@ class FilterRowGapTest {
         val firstChip = bounds(LibraryTags.FILTER_ADD)
         val row = bounds(LibraryTags.FILTERS)
 
-        // Search and order share the first line: the order at the field's end, level with it.
-        assertTrue("order $order beside search $search", order.left >= search.right - 1)
-        assertTrue("order $order level with search $search", order.top < search.bottom && order.bottom > search.top)
-        assertTrue("order $order within the line of search $search", order.center.y in search.top..search.bottom)
-        // The chip row lies wholly below the first line.
-        assertTrue("row $row under the order $order", row.top >= order.bottom)
+        // The order is a chip of the row, after "All filters", level with it.
+        assertTrue("order $order after the first chip $firstChip", order.left >= firstChip.right - 1)
+        assertTrue("order $order level with the first chip $firstChip", order.center.y in firstChip.top..firstChip.bottom)
+        // The chip row lies wholly below the field.
         assertTrue("row $row under the search $search", row.top >= search.bottom)
         // About 12 dp between the field and the first chip; they never overlap or touch.
         val gap = (firstChip.top - search.bottom) / px
