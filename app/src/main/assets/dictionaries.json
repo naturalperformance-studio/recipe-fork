@@ -1,5 +1,5 @@
 {
-  "version": "1f13fd4c06fbef1e77d8197640c82208a82d86967491ea53fac9fb9467f3a1f1",
+  "version": "2cb1946fc2c26e394091baa058f13fa6bd94f49bbc7516857075a4696f4c814a",
   "ingredients": [
     {
       "id": 1,
@@ -61,7 +61,13 @@
       },
       "synonymsRu": [
         "картошка"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 77.0,
+        "protein": 2.05,
+        "fat": 0.09,
+        "carbs": 17.49
+      }
     },
     {
       "id": 1001,
@@ -147,6 +153,12 @@
       "parentId": 1000,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 147.0,
+        "protein": 2.24,
+        "fat": 4.66,
+        "carbs": 24.81
       }
     },
     {
@@ -156,6 +168,12 @@
       "parentId": 1000,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 162.0,
+        "protein": 2.56,
+        "fat": 7.47,
+        "carbs": 22.22
       }
     },
     {
@@ -188,6 +206,12 @@
         "g": 1.0,
         "tbsp": 13.0,
         "cup": 210.0
+      },
+      "nutrition": {
+        "kcal": 113.0,
+        "protein": 1.86,
+        "fat": 4.22,
+        "carbs": 16.81
       }
     },
     {
@@ -199,6 +223,12 @@
         "g": 1.0,
         "pc": 250.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 86.0,
+        "protein": 1.57,
+        "fat": 0.05,
+        "carbs": 20.12
       }
     },
     {
@@ -224,7 +254,13 @@
       },
       "synonymsRu": [
         "морковка"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 41.0,
+        "protein": 0.93,
+        "fat": 0.24,
+        "carbs": 9.58
+      }
     },
     {
       "id": 1031,
@@ -290,6 +326,12 @@
         "g": 1.0,
         "pc": 200.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 1.61,
+        "fat": 0.17,
+        "carbs": 9.56
       }
     },
     {
@@ -344,6 +386,12 @@
       "factors": {
         "g": 1.0,
         "pc": 400.0
+      },
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 1.9,
+        "fat": 0.2,
+        "carbs": 6.7
       }
     },
     {
@@ -355,6 +403,12 @@
         "g": 1.0,
         "pc": 15.0,
         "cup": 115.0
+      },
+      "nutrition": {
+        "kcal": 16.0,
+        "protein": 0.68,
+        "fat": 0.1,
+        "carbs": 3.4
       }
     },
     {
@@ -389,6 +443,12 @@
         "g": 1.0,
         "pc": 500.0,
         "cup": 115.0
+      },
+      "nutrition": {
+        "kcal": 18.0,
+        "protein": 0.6,
+        "fat": 0.1,
+        "carbs": 4.1
       }
     },
     {
@@ -400,6 +460,12 @@
         "g": 1.0,
         "pc": 200.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 28.0,
+        "protein": 0.9,
+        "fat": 0.1,
+        "carbs": 6.43
       }
     },
     {
@@ -411,6 +477,12 @@
         "g": 1.0,
         "pc": 500.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 37.0,
+        "protein": 1.08,
+        "fat": 0.16,
+        "carbs": 8.62
       }
     },
     {
@@ -422,6 +494,12 @@
         "g": 1.0,
         "pc": 150.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 75.0,
+        "protein": 1.2,
+        "fat": 0.3,
+        "carbs": 17.99
       }
     },
     {
@@ -435,7 +513,13 @@
       },
       "synonymsRu": [
         "корень петрушки"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 51.0,
+        "protein": 1.5,
+        "fat": 0.6,
+        "carbs": 10.1
+      }
     },
     {
       "id": 1058,
@@ -446,6 +530,12 @@
         "g": 1.0,
         "pc": 600.0,
         "cup": 155.0
+      },
+      "nutrition": {
+        "kcal": 42.0,
+        "protein": 1.5,
+        "fat": 0.3,
+        "carbs": 9.2
       }
     },
     {
@@ -457,6 +547,12 @@
         "g": 1.0,
         "pc": 50.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 73.0,
+        "protein": 2.0,
+        "fat": 0.01,
+        "carbs": 17.44
       }
     },
     {
@@ -467,6 +563,12 @@
         "g": 1.0,
         "tsp": 2.0,
         "tbsp": 6.0
+      },
+      "nutrition": {
+        "kcal": 80.0,
+        "protein": 1.82,
+        "fat": 0.75,
+        "carbs": 17.77
       }
     },
     {
@@ -477,6 +579,12 @@
         "g": 1.0,
         "tsp": 2.0,
         "tbsp": 7.0
+      },
+      "nutrition": {
+        "kcal": 59.0,
+        "protein": 3.2,
+        "fat": 0.4,
+        "carbs": 10.5
       }
     },
     {
@@ -506,6 +614,12 @@
       "factors": {
         "g": 1.0,
         "pc": 400.0
+      },
+      "nutrition": {
+        "kcal": 160.0,
+        "protein": 1.36,
+        "fat": 0.28,
+        "carbs": 38.06
       }
     },
     {
@@ -516,6 +630,12 @@
       "factors": {
         "g": 1.0,
         "pc": 400.0
+      },
+      "nutrition": {
+        "kcal": 118.0,
+        "protein": 1.53,
+        "fat": 0.17,
+        "carbs": 27.88
       }
     },
     {
@@ -526,6 +646,12 @@
       "factors": {
         "g": 1.0,
         "pc": 150.0
+      },
+      "nutrition": {
+        "kcal": 112.0,
+        "protein": 1.5,
+        "fat": 0.2,
+        "carbs": 26.46
       }
     },
     {
@@ -537,6 +663,12 @@
         "g": 1.0,
         "pc": 500.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 38.0,
+        "protein": 0.72,
+        "fat": 0.09,
+        "carbs": 8.82
       }
     },
     {
@@ -545,6 +677,12 @@
       "labelEn": "lotus root",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 74.0,
+        "protein": 2.6,
+        "fat": 0.1,
+        "carbs": 17.23
       }
     },
     {
@@ -553,6 +691,12 @@
       "labelEn": "burdock root",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 72.0,
+        "protein": 1.53,
+        "fat": 0.15,
+        "carbs": 17.34
       }
     },
     {
@@ -561,6 +705,12 @@
       "labelEn": "salsify",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 82.0,
+        "protein": 3.3,
+        "fat": 0.2,
+        "carbs": 18.6
       }
     },
     {
@@ -571,6 +721,12 @@
       "factors": {
         "g": 1.0,
         "pc": 150.0
+      },
+      "nutrition": {
+        "kcal": 18.0,
+        "protein": 0.6,
+        "fat": 0.1,
+        "carbs": 4.1
       }
     },
     {
@@ -583,6 +739,12 @@
         "pc": 100.0,
         "tbsp": 10.0,
         "cup": 160.0
+      },
+      "nutrition": {
+        "kcal": 40.0,
+        "protein": 1.1,
+        "fat": 0.1,
+        "carbs": 9.34
       }
     },
     {
@@ -647,6 +809,12 @@
         "g": 1.0,
         "pc": 30.0,
         "tbsp": 10.0
+      },
+      "nutrition": {
+        "kcal": 72.0,
+        "protein": 2.5,
+        "fat": 0.1,
+        "carbs": 16.8
       }
     },
     {
@@ -659,6 +827,12 @@
         "g": 1.0,
         "pc": 250.0,
         "cup": 90.0
+      },
+      "nutrition": {
+        "kcal": 61.0,
+        "protein": 1.5,
+        "fat": 0.3,
+        "carbs": 14.15
       }
     },
     {
@@ -699,6 +873,12 @@
         "g": 1.0,
         "pc": 20.0,
         "tbsp": 6.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 1.9,
+        "fat": 0.4,
+        "carbs": 6.5
       }
     },
     {
@@ -711,6 +891,12 @@
         "tsp": 1.0,
         "tbsp": 3.0,
         "cup": 50.0
+      },
+      "nutrition": {
+        "kcal": 30.0,
+        "protein": 3.27,
+        "fat": 0.73,
+        "carbs": 4.35
       }
     },
     {
@@ -756,6 +942,12 @@
       "factors": {
         "g": 1.0,
         "pc": 60.0
+      },
+      "nutrition": {
+        "kcal": 61.0,
+        "protein": 1.5,
+        "fat": 0.3,
+        "carbs": 14.15
       }
     },
     {
@@ -776,6 +968,12 @@
         "g": 1.0,
         "pc": 60.0,
         "tbsp": 10.0
+      },
+      "nutrition": {
+        "kcal": 72.0,
+        "protein": 2.5,
+        "fat": 0.1,
+        "carbs": 16.8
       }
     },
     {
@@ -786,6 +984,12 @@
       "factors": {
         "g": 1.0,
         "pc": 45.0
+      },
+      "nutrition": {
+        "kcal": 149.0,
+        "protein": 6.36,
+        "fat": 0.5,
+        "carbs": 33.06
       }
     },
     {
@@ -820,6 +1024,12 @@
         "pc": 5.0,
         "tsp": 4.0,
         "tbsp": 12.0
+      },
+      "nutrition": {
+        "kcal": 149.0,
+        "protein": 6.36,
+        "fat": 0.5,
+        "carbs": 33.06
       }
     },
     {
@@ -850,6 +1060,12 @@
         "g": 1.0,
         "pc": 1500.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 25.0,
+        "protein": 1.28,
+        "fat": 0.1,
+        "carbs": 5.8
       }
     },
     {
@@ -898,6 +1114,12 @@
         "g": 1.0,
         "pc": 900.0,
         "cup": 75.0
+      },
+      "nutrition": {
+        "kcal": 16.0,
+        "protein": 1.2,
+        "fat": 0.2,
+        "carbs": 3.23
       }
     },
     {
@@ -921,6 +1143,12 @@
       "factors": {
         "g": 1.0,
         "pc": 150.0
+      },
+      "nutrition": {
+        "kcal": 13.0,
+        "protein": 1.5,
+        "fat": 0.2,
+        "carbs": 2.18
       }
     },
     {
@@ -931,6 +1159,12 @@
       "factors": {
         "g": 1.0,
         "cup": 25.0
+      },
+      "nutrition": {
+        "kcal": 35.0,
+        "protein": 2.92,
+        "fat": 1.49,
+        "carbs": 4.42
       }
     },
     {
@@ -995,6 +1229,12 @@
       "factors": {
         "g": 1.0,
         "cup": 25.0
+      },
+      "nutrition": {
+        "kcal": 35.0,
+        "protein": 2.92,
+        "fat": 1.49,
+        "carbs": 4.42
       }
     },
     {
@@ -1006,6 +1246,12 @@
       "factors": {
         "g": 1.0,
         "pc": 60.0
+      },
+      "nutrition": {
+        "kcal": 13.0,
+        "protein": 1.5,
+        "fat": 0.2,
+        "carbs": 2.18
       }
     },
     {
@@ -1017,6 +1263,12 @@
         "g": 1.0,
         "pc": 400.0,
         "cup": 90.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 2.82,
+        "fat": 0.37,
+        "carbs": 6.64
       }
     },
     {
@@ -1067,6 +1319,12 @@
         "g": 1.0,
         "pc": 700.0,
         "cup": 105.0
+      },
+      "nutrition": {
+        "kcal": 25.0,
+        "protein": 1.92,
+        "fat": 0.28,
+        "carbs": 4.97
       }
     },
     {
@@ -1099,6 +1357,12 @@
         "g": 1.0,
         "pc": 15.0,
         "cup": 90.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 3.38,
+        "fat": 0.3,
+        "carbs": 8.95
       }
     },
     {
@@ -1125,7 +1389,13 @@
       },
       "synonymsRu": [
         "томат"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 18.0,
+        "protein": 0.88,
+        "fat": 0.2,
+        "carbs": 3.89
+      }
     },
     {
       "id": 1301,
@@ -1286,6 +1556,12 @@
       "factors": {
         "g": 1.0,
         "pc": 35.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 0.96,
+        "fat": 1.02,
+        "carbs": 5.84
       }
     },
     {
@@ -1307,6 +1583,12 @@
         "g": 1.0,
         "pc": 120.0,
         "cup": 120.0
+      },
+      "nutrition": {
+        "kcal": 15.0,
+        "protein": 0.65,
+        "fat": 0.11,
+        "carbs": 3.63
       }
     },
     {
@@ -1369,7 +1651,13 @@
       ],
       "synonymsEn": [
         "sweet pepper"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 26.0,
+        "protein": 0.99,
+        "fat": 0.3,
+        "carbs": 6.03
+      }
     },
     {
       "id": 1331,
@@ -1489,7 +1777,13 @@
       ],
       "synonymsEn": [
         "hot pepper"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 40.0,
+        "protein": 1.87,
+        "fat": 0.44,
+        "carbs": 8.81
+      }
     },
     {
       "id": 1341,
@@ -1525,6 +1819,12 @@
         "g": 1.0,
         "pc": 15.0,
         "tsp": 3.0
+      },
+      "nutrition": {
+        "kcal": 29.0,
+        "protein": 0.91,
+        "fat": 0.37,
+        "carbs": 6.5
       }
     },
     {
@@ -1602,6 +1902,12 @@
         "g": 1.0,
         "pc": 300.0,
         "cup": 80.0
+      },
+      "nutrition": {
+        "kcal": 25.0,
+        "protein": 0.98,
+        "fat": 0.18,
+        "carbs": 5.88
       }
     },
     {
@@ -1635,6 +1941,12 @@
         "g": 1.0,
         "pc": 300.0,
         "cup": 125.0
+      },
+      "nutrition": {
+        "kcal": 16.0,
+        "protein": 1.21,
+        "fat": 0.18,
+        "carbs": 3.35
       }
     },
     {
@@ -1691,6 +2003,12 @@
       "factors": {
         "g": 1.0,
         "pc": 200.0
+      },
+      "nutrition": {
+        "kcal": 18.0,
+        "protein": 1.2,
+        "fat": 0.2,
+        "carbs": 3.84
       }
     },
     {
@@ -1721,6 +2039,12 @@
       "factors": {
         "g": 1.0,
         "cup": 120.0
+      },
+      "nutrition": {
+        "kcal": 26.0,
+        "protein": 1.0,
+        "fat": 0.1,
+        "carbs": 6.5
       }
     },
     {
@@ -1733,6 +2057,12 @@
         "g": 1.0,
         "pc": 1000.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 45.0,
+        "protein": 1.0,
+        "fat": 0.1,
+        "carbs": 11.69
       }
     },
     {
@@ -1767,6 +2097,12 @@
       "factors": {
         "g": 1.0,
         "pc": 600.0
+      },
+      "nutrition": {
+        "kcal": 40.0,
+        "protein": 0.8,
+        "fat": 0.1,
+        "carbs": 10.42
       }
     },
     {
@@ -1810,6 +2146,12 @@
       "factors": {
         "g": 1.0,
         "pc": 200.0
+      },
+      "nutrition": {
+        "kcal": 19.0,
+        "protein": 0.82,
+        "fat": 0.13,
+        "carbs": 4.51
       }
     },
     {
@@ -1820,6 +2162,12 @@
       "factors": {
         "g": 1.0,
         "pc": 200.0
+      },
+      "nutrition": {
+        "kcal": 17.0,
+        "protein": 1.0,
+        "fat": 0.17,
+        "carbs": 3.7
       }
     },
     {
@@ -1830,6 +2178,12 @@
       "factors": {
         "g": 1.0,
         "pc": 80.0
+      },
+      "nutrition": {
+        "kcal": 16.0,
+        "protein": 1.32,
+        "fat": 0.09,
+        "carbs": 3.33
       }
     },
     {
@@ -1839,6 +2193,12 @@
       "factors": {
         "g": 1.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 86.0,
+        "protein": 3.27,
+        "fat": 1.35,
+        "carbs": 18.7
       }
     },
     {
@@ -1881,6 +2241,12 @@
         "g": 1.0,
         "tbsp": 10.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 81.0,
+        "protein": 5.42,
+        "fat": 0.4,
+        "carbs": 14.45
       }
     },
     {
@@ -1902,6 +2268,12 @@
       "factors": {
         "g": 1.0,
         "cup": 65.0
+      },
+      "nutrition": {
+        "kcal": 42.0,
+        "protein": 2.8,
+        "fat": 0.2,
+        "carbs": 7.55
       }
     },
     {
@@ -1912,6 +2284,12 @@
       "factors": {
         "g": 1.0,
         "cup": 65.0
+      },
+      "nutrition": {
+        "kcal": 42.0,
+        "protein": 2.8,
+        "fat": 0.2,
+        "carbs": 7.55
       }
     },
     {
@@ -1930,6 +2308,12 @@
       "factors": {
         "g": 1.0,
         "cup": 110.0
+      },
+      "nutrition": {
+        "kcal": 31.0,
+        "protein": 1.83,
+        "fat": 0.22,
+        "carbs": 6.97
       }
     },
     {
@@ -1959,6 +2343,12 @@
       "parentId": 1420,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 47.0,
+        "protein": 2.8,
+        "fat": 0.4,
+        "carbs": 8.35
       }
     },
     {
@@ -1980,6 +2370,12 @@
         "g": 1.0,
         "pc": 500.0,
         "cup": 100.0
+      },
+      "nutrition": {
+        "kcal": 14.0,
+        "protein": 0.69,
+        "fat": 0.17,
+        "carbs": 2.97
       }
     },
     {
@@ -2013,6 +2409,12 @@
         "g": 1.0,
         "pc": 20.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 20.0,
+        "protein": 2.2,
+        "fat": 0.12,
+        "carbs": 3.88
       }
     },
     {
@@ -2057,6 +2459,12 @@
       "factors": {
         "g": 1.0,
         "pc": 200.0
+      },
+      "nutrition": {
+        "kcal": 47.0,
+        "protein": 3.27,
+        "fat": 0.15,
+        "carbs": 10.51
       }
     },
     {
@@ -2079,6 +2487,12 @@
         "g": 1.0,
         "pc": 250.0,
         "cup": 90.0
+      },
+      "nutrition": {
+        "kcal": 31.0,
+        "protein": 1.24,
+        "fat": 0.2,
+        "carbs": 7.3
       }
     },
     {
@@ -2090,6 +2504,12 @@
         "g": 1.0,
         "pc": 12.0,
         "cup": 100.0
+      },
+      "nutrition": {
+        "kcal": 33.0,
+        "protein": 1.93,
+        "fat": 0.19,
+        "carbs": 7.45
       }
     },
     {
@@ -2101,6 +2521,12 @@
         "g": 1.0,
         "pc": 60.0,
         "cup": 120.0
+      },
+      "nutrition": {
+        "kcal": 21.0,
+        "protein": 0.9,
+        "fat": 0.2,
+        "carbs": 4.54
       }
     },
     {
@@ -2109,6 +2535,12 @@
       "labelEn": "fiddleheads",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 4.55,
+        "fat": 0.4,
+        "carbs": 5.54
       }
     },
     {
@@ -2118,6 +2550,12 @@
       "factors": {
         "g": 1.0,
         "cup": 105.0
+      },
+      "nutrition": {
+        "kcal": 30.0,
+        "protein": 3.04,
+        "fat": 0.18,
+        "carbs": 5.94
       }
     },
     {
@@ -2127,6 +2565,12 @@
       "factors": {
         "g": 1.0,
         "cup": 35.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.99,
+        "fat": 0.69,
+        "carbs": 2.1
       }
     },
     {
@@ -2143,6 +2587,12 @@
       "labelEn": "wheat sprouts",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 198.0,
+        "protein": 7.49,
+        "fat": 1.27,
+        "carbs": 42.53
       }
     },
     {
@@ -2151,6 +2601,12 @@
       "labelEn": "radish sprouts",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 3.81,
+        "fat": 2.53,
+        "carbs": 3.6
       }
     },
     {
@@ -2160,6 +2616,12 @@
       "factors": {
         "g": 1.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 122.0,
+        "protein": 13.09,
+        "fat": 6.7,
+        "carbs": 9.57
       }
     },
     {
@@ -2186,6 +2648,12 @@
       "factors": {
         "g": 1.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 72.0,
+        "protein": 3.33,
+        "fat": 0.52,
+        "carbs": 13.47
       }
     },
     {
@@ -2232,6 +2700,12 @@
       "factors": {
         "g": 1.0,
         "cup": 30.0
+      },
+      "nutrition": {
+        "kcal": 15.0,
+        "protein": 1.36,
+        "fat": 0.15,
+        "carbs": 2.87
       }
     },
     {
@@ -2344,6 +2818,12 @@
       "factors": {
         "g": 1.0,
         "cup": 20.0
+      },
+      "nutrition": {
+        "kcal": 25.0,
+        "protein": 2.58,
+        "fat": 0.66,
+        "carbs": 3.65
       }
     },
     {
@@ -2395,6 +2875,12 @@
       "parentId": 1600,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 2.6,
+        "fat": 0.7,
+        "carbs": 5.5
       }
     },
     {
@@ -2456,6 +2942,12 @@
       "factors": {
         "g": 1.0,
         "cup": 30.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 2.86,
+        "fat": 0.39,
+        "carbs": 3.63
       }
     },
     {
@@ -2484,6 +2976,12 @@
       "factors": {
         "g": 1.0,
         "cup": 36.0
+      },
+      "nutrition": {
+        "kcal": 19.0,
+        "protein": 1.8,
+        "fat": 0.2,
+        "carbs": 3.74
       }
     },
     {
@@ -2494,6 +2992,12 @@
       "factors": {
         "g": 1.0,
         "pc": 100.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 2.0,
+        "fat": 0.7,
+        "carbs": 3.2
       }
     },
     {
@@ -2502,6 +3006,12 @@
       "labelEn": "nettles",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 42.0,
+        "protein": 2.71,
+        "fat": 0.11,
+        "carbs": 7.49
       }
     },
     {
@@ -2510,6 +3020,12 @@
       "labelEn": "beet greens",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 2.2,
+        "fat": 0.13,
+        "carbs": 4.33
       }
     },
     {
@@ -2518,6 +3034,12 @@
       "labelEn": "dandelion greens",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 45.0,
+        "protein": 2.7,
+        "fat": 0.7,
+        "carbs": 9.2
       }
     },
     {
@@ -2526,6 +3048,12 @@
       "labelEn": "mustard greens",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 27.0,
+        "protein": 2.86,
+        "fat": 0.42,
+        "carbs": 4.67
       }
     },
     {
@@ -2534,6 +3062,12 @@
       "labelEn": "purslane",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 20.0,
+        "protein": 2.03,
+        "fat": 0.36,
+        "carbs": 3.39
       }
     },
     {
@@ -2542,6 +3076,12 @@
       "labelEn": "water spinach",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 19.0,
+        "protein": 2.6,
+        "fat": 0.2,
+        "carbs": 3.13
       }
     },
     {
@@ -2552,6 +3092,12 @@
       "factors": {
         "g": 1.0,
         "pc": 3.0
+      },
+      "nutrition": {
+        "kcal": 93.0,
+        "protein": 5.6,
+        "fat": 2.12,
+        "carbs": 17.31
       }
     },
     {
@@ -2560,6 +3106,12 @@
       "labelEn": "turnip greens",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 1.5,
+        "fat": 0.3,
+        "carbs": 7.13
       }
     },
     {
@@ -2592,7 +3144,13 @@
       ],
       "synonymsEn": [
         "dill"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 3.46,
+        "fat": 1.12,
+        "carbs": 7.02
+      }
     },
     {
       "id": 1702,
@@ -2612,7 +3170,13 @@
       ],
       "synonymsEn": [
         "parsley"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 2.97,
+        "fat": 0.79,
+        "carbs": 6.33
+      }
     },
     {
       "id": 1703,
@@ -2626,6 +3190,12 @@
         "tsp": 1.0,
         "tbsp": 4.0,
         "cup": 60.0
+      },
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 2.97,
+        "fat": 0.79,
+        "carbs": 6.33
       }
     },
     {
@@ -2640,6 +3210,12 @@
         "tsp": 1.0,
         "tbsp": 4.0,
         "cup": 60.0
+      },
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 2.97,
+        "fat": 0.79,
+        "carbs": 6.33
       }
     },
     {
@@ -2660,7 +3236,13 @@
       ],
       "synonymsEn": [
         "cilantro"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 2.13,
+        "fat": 0.52,
+        "carbs": 3.67
+      }
     },
     {
       "id": 1706,
@@ -2679,7 +3261,13 @@
       ],
       "synonymsEn": [
         "basil"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.15,
+        "fat": 0.64,
+        "carbs": 2.65
+      }
     },
     {
       "id": 1707,
@@ -2692,6 +3280,12 @@
         "pc": 30.0,
         "tbsp": 3.0,
         "cup": 40.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.15,
+        "fat": 0.64,
+        "carbs": 2.65
       }
     },
     {
@@ -2705,6 +3299,12 @@
         "pc": 30.0,
         "tbsp": 3.0,
         "cup": 40.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.15,
+        "fat": 0.64,
+        "carbs": 2.65
       }
     },
     {
@@ -2716,6 +3316,12 @@
       "factors": {
         "g": 1.0,
         "pc": 0.5
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.15,
+        "fat": 0.64,
+        "carbs": 2.65
       }
     },
     {
@@ -2735,7 +3341,13 @@
       ],
       "synonymsEn": [
         "mint"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 3.29,
+        "fat": 0.73,
+        "carbs": 8.41
+      }
     },
     {
       "id": 1711,
@@ -2748,6 +3360,12 @@
         "pc": 30.0,
         "tbsp": 1.5,
         "cup": 25.0
+      },
+      "nutrition": {
+        "kcal": 70.0,
+        "protein": 3.75,
+        "fat": 0.94,
+        "carbs": 14.89
       }
     },
     {
@@ -2761,6 +3379,12 @@
         "pc": 30.0,
         "tbsp": 1.5,
         "cup": 25.0
+      },
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 3.29,
+        "fat": 0.73,
+        "carbs": 8.41
       }
     },
     {
@@ -2772,6 +3396,12 @@
       "factors": {
         "g": 1.0,
         "pc": 0.3
+      },
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 3.29,
+        "fat": 0.73,
+        "carbs": 8.41
       }
     },
     {
@@ -2783,6 +3413,12 @@
       "factors": {
         "g": 1.0,
         "pc": 2.0
+      },
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 3.29,
+        "fat": 0.73,
+        "carbs": 8.41
       }
     },
     {
@@ -2794,6 +3430,12 @@
       "factors": {
         "g": 1.0,
         "pc": 1.0
+      },
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 2.97,
+        "fat": 0.79,
+        "carbs": 6.33
       }
     },
     {
@@ -2805,6 +3447,12 @@
       "factors": {
         "g": 1.0,
         "pc": 1.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 3.46,
+        "fat": 1.12,
+        "carbs": 7.02
       }
     },
     {
@@ -2856,7 +3504,13 @@
       ],
       "synonymsEn": [
         "rosemary"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 131.0,
+        "protein": 3.31,
+        "fat": 5.86,
+        "carbs": 20.7
+      }
     },
     {
       "id": 1721,
@@ -2873,7 +3527,13 @@
       ],
       "synonymsEn": [
         "thyme"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 101.0,
+        "protein": 5.56,
+        "fat": 1.68,
+        "carbs": 24.45
+      }
     },
     {
       "id": 1722,
@@ -2950,6 +3610,12 @@
       "parentId": 1700,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 21.0,
+        "protein": 1.8,
+        "fat": 0.7,
+        "carbs": 3.06
       }
     },
     {
@@ -2972,6 +3638,12 @@
       "factors": {
         "g": 1.0,
         "pc": 20.0
+      },
+      "nutrition": {
+        "kcal": 99.0,
+        "protein": 1.82,
+        "fat": 0.49,
+        "carbs": 25.31
       }
     },
     {
@@ -3077,6 +3749,12 @@
         "g": 1.0,
         "pc": 30.0,
         "tbsp": 3.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.15,
+        "fat": 0.64,
+        "carbs": 2.65
       }
     },
     {
@@ -3088,6 +3766,12 @@
         "g": 1.0,
         "tsp": 0.8,
         "tbsp": 2.4
+      },
+      "nutrition": {
+        "kcal": 101.0,
+        "protein": 5.56,
+        "fat": 1.68,
+        "carbs": 24.45
       }
     },
     {
@@ -3118,6 +3802,12 @@
       "factors": {
         "g": 1.0,
         "tbsp": 4.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 3.46,
+        "fat": 1.12,
+        "carbs": 7.02
       }
     },
     {
@@ -3128,6 +3818,12 @@
       "factors": {
         "g": 1.0,
         "tbsp": 4.0
+      },
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 2.97,
+        "fat": 0.79,
+        "carbs": 6.33
       }
     },
     {
@@ -3139,6 +3835,12 @@
       "factors": {
         "g": 1.0,
         "pc": 2.0
+      },
+      "nutrition": {
+        "kcal": 131.0,
+        "protein": 3.31,
+        "fat": 5.86,
+        "carbs": 20.7
       }
     },
     {
@@ -3150,6 +3852,12 @@
       "factors": {
         "g": 1.0,
         "pc": 1.0
+      },
+      "nutrition": {
+        "kcal": 101.0,
+        "protein": 5.56,
+        "fat": 1.68,
+        "carbs": 24.45
       }
     },
     {
@@ -3172,6 +3880,12 @@
       "factors": {
         "g": 1.0,
         "pc": 3.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 3.15,
+        "fat": 0.64,
+        "carbs": 2.65
       }
     },
     {
@@ -3183,6 +3897,12 @@
       "factors": {
         "g": 1.0,
         "pc": 1.0
+      },
+      "nutrition": {
+        "kcal": 23.0,
+        "protein": 2.13,
+        "fat": 0.52,
+        "carbs": 3.67
       }
     },
     {
@@ -3203,6 +3923,12 @@
       "factors": {
         "g": 1.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 3.09,
+        "fat": 0.34,
+        "carbs": 3.26
       }
     },
     {
@@ -3248,6 +3974,12 @@
       "factors": {
         "g": 1.0,
         "cup": 85.0
+      },
+      "nutrition": {
+        "kcal": 33.0,
+        "protein": 3.31,
+        "fat": 0.41,
+        "carbs": 6.09
       }
     },
     {
@@ -3271,6 +4003,12 @@
         "g": 1.0,
         "pc": 15.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 2.24,
+        "fat": 0.49,
+        "carbs": 6.79
       }
     },
     {
@@ -3281,6 +4019,12 @@
       "factors": {
         "g": 1.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 3.7,
+        "fat": 1.7,
+        "carbs": 1.1
       }
     },
     {
@@ -3291,6 +4035,12 @@
       "factors": {
         "g": 1.0,
         "cup": 55.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 1.49,
+        "fat": 0.53,
+        "carbs": 6.86
       }
     },
     {
@@ -3301,6 +4051,12 @@
       "factors": {
         "g": 1.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 2.2,
+        "fat": 1.2,
+        "carbs": 0.5
       }
     },
     {
@@ -3310,6 +4066,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 20.0,
+        "protein": 2.1,
+        "fat": 0.8,
+        "carbs": 1.2
       }
     },
     {
@@ -3319,6 +4081,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 3.3,
+        "fat": 0.5,
+        "carbs": 1.2
       }
     },
     {
@@ -3373,6 +4141,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 37.0,
+        "protein": 2.66,
+        "fat": 0.29,
+        "carbs": 7.81
       }
     },
     {
@@ -3391,6 +4165,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 31.0,
+        "protein": 1.94,
+        "fat": 0.19,
+        "carbs": 6.97
       }
     },
     {
@@ -3409,6 +4189,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 284.0,
+        "protein": 9.25,
+        "fat": 0.73,
+        "carbs": 73.01
       }
     },
     {
@@ -3500,6 +4286,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 3.7,
+        "fat": 1.7,
+        "carbs": 1.1
       }
     },
     {
@@ -3509,6 +4301,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 1.49,
+        "fat": 0.53,
+        "carbs": 6.86
       }
     },
     {
@@ -3518,6 +4316,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 2.2,
+        "fat": 1.2,
+        "carbs": 0.5
       }
     },
     {
@@ -3527,6 +4331,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 33.0,
+        "protein": 3.31,
+        "fat": 0.41,
+        "carbs": 6.09
       }
     },
     {
@@ -3545,6 +4355,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 286.0,
+        "protein": 30.3,
+        "fat": 14.3,
+        "carbs": 9.0
       }
     },
     {
@@ -3554,6 +4370,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 286.0,
+        "protein": 30.3,
+        "fat": 14.3,
+        "carbs": 9.0
       }
     },
     {
@@ -3565,6 +4387,12 @@
       "factors": {
         "g": 1.0,
         "pc": 3.0
+      },
+      "nutrition": {
+        "kcal": 296.0,
+        "protein": 9.58,
+        "fat": 0.99,
+        "carbs": 75.37
       }
     },
     {
@@ -3593,6 +4421,12 @@
       "factors": {
         "g": 1.0,
         "pc": 100.0
+      },
+      "nutrition": {
+        "kcal": 29.0,
+        "protein": 1.1,
+        "fat": 0.3,
+        "carbs": 9.32
       }
     },
     {
@@ -3636,6 +4470,12 @@
       "factors": {
         "g": 1.0,
         "pc": 70.0
+      },
+      "nutrition": {
+        "kcal": 30.0,
+        "protein": 0.7,
+        "fat": 0.2,
+        "carbs": 10.54
       }
     },
     {
@@ -3690,6 +4530,12 @@
       "factors": {
         "g": 1.0,
         "pc": 180.0
+      },
+      "nutrition": {
+        "kcal": 47.0,
+        "protein": 0.94,
+        "fat": 0.12,
+        "carbs": 11.75
       }
     },
     {
@@ -3766,6 +4612,12 @@
       "factors": {
         "g": 1.0,
         "pc": 80.0
+      },
+      "nutrition": {
+        "kcal": 53.0,
+        "protein": 0.81,
+        "fat": 0.31,
+        "carbs": 13.34
       }
     },
     {
@@ -3820,6 +4672,12 @@
       "factors": {
         "g": 1.0,
         "pc": 350.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 0.63,
+        "fat": 0.1,
+        "carbs": 8.08
       }
     },
     {
@@ -3831,6 +4689,12 @@
       "factors": {
         "g": 1.0,
         "pc": 350.0
+      },
+      "nutrition": {
+        "kcal": 42.0,
+        "protein": 0.77,
+        "fat": 0.14,
+        "carbs": 10.66
       }
     },
     {
@@ -3841,6 +4705,12 @@
       "factors": {
         "g": 1.0,
         "pc": 1000.0
+      },
+      "nutrition": {
+        "kcal": 38.0,
+        "protein": 0.76,
+        "fat": 0.04,
+        "carbs": 9.62
       }
     },
     {
@@ -3861,6 +4731,12 @@
       "factors": {
         "g": 1.0,
         "pc": 15.0
+      },
+      "nutrition": {
+        "kcal": 71.0,
+        "protein": 1.88,
+        "fat": 0.86,
+        "carbs": 15.9
       }
     },
     {
@@ -3893,6 +4769,12 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 255.0
+      },
+      "nutrition": {
+        "kcal": 22.0,
+        "protein": 0.35,
+        "fat": 0.24,
+        "carbs": 6.9
       }
     },
     {
@@ -3905,6 +4787,12 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 255.0
+      },
+      "nutrition": {
+        "kcal": 25.0,
+        "protein": 0.42,
+        "fat": 0.07,
+        "carbs": 8.42
       }
     },
     {
@@ -3917,6 +4805,12 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 260.0
+      },
+      "nutrition": {
+        "kcal": 45.0,
+        "protein": 0.7,
+        "fat": 0.2,
+        "carbs": 10.4
       }
     },
     {
@@ -3927,6 +4821,12 @@
         "g": 1.0,
         "tsp": 2.0,
         "tbsp": 6.0
+      },
+      "nutrition": {
+        "kcal": 47.0,
+        "protein": 1.5,
+        "fat": 0.3,
+        "carbs": 16.0
       }
     },
     {
@@ -3960,6 +4860,12 @@
         "g": 1.0,
         "tsp": 2.0,
         "tbsp": 6.0
+      },
+      "nutrition": {
+        "kcal": 97.0,
+        "protein": 1.5,
+        "fat": 0.2,
+        "carbs": 25.0
       }
     },
     {
@@ -3993,6 +4899,12 @@
         "g": 1.0,
         "pc": 180.0,
         "cup": 110.0
+      },
+      "nutrition": {
+        "kcal": 52.0,
+        "protein": 0.26,
+        "fat": 0.17,
+        "carbs": 13.81
       }
     },
     {
@@ -4110,6 +5022,12 @@
         "g": 1.0,
         "pc": 200.0,
         "cup": 110.0
+      },
+      "nutrition": {
+        "kcal": 63.0,
+        "protein": 0.2,
+        "fat": 0.18,
+        "carbs": 15.22
       }
     },
     {
@@ -4133,6 +5051,12 @@
       "factors": {
         "g": 1.0,
         "pc": 25.0
+      },
+      "nutrition": {
+        "kcal": 76.0,
+        "protein": 0.4,
+        "fat": 0.3,
+        "carbs": 19.95
       }
     },
     {
@@ -4180,6 +5104,12 @@
         "g": 1.0,
         "pc": 180.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 57.0,
+        "protein": 0.36,
+        "fat": 0.14,
+        "carbs": 15.23
       }
     },
     {
@@ -4213,6 +5143,12 @@
       "factors": {
         "g": 1.0,
         "pc": 180.0
+      },
+      "nutrition": {
+        "kcal": 67.0,
+        "protein": 0.36,
+        "fat": 0.09,
+        "carbs": 16.1
       }
     },
     {
@@ -4235,6 +5171,12 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
+      },
+      "nutrition": {
+        "kcal": 42.0,
+        "protein": 0.5,
+        "fat": 0.23,
+        "carbs": 10.65
       }
     },
     {
@@ -4245,6 +5187,12 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
+      },
+      "nutrition": {
+        "kcal": 57.0,
+        "protein": 0.4,
+        "fat": 0.1,
+        "carbs": 15.3
       }
     },
     {
@@ -4255,6 +5203,12 @@
       "factors": {
         "g": 1.0,
         "pc": 30.0
+      },
+      "nutrition": {
+        "kcal": 47.0,
+        "protein": 0.43,
+        "fat": 0.2,
+        "carbs": 12.14
       }
     },
     {
@@ -4288,6 +5242,12 @@
       "factors": {
         "g": 1.0,
         "pc": 20.0
+      },
+      "nutrition": {
+        "kcal": 34.0,
+        "protein": 0.2,
+        "fat": 0.1,
+        "carbs": 7.9
       }
     },
     {
@@ -4308,6 +5268,12 @@
         "g": 1.0,
         "pc": 150.0,
         "cup": 155.0
+      },
+      "nutrition": {
+        "kcal": 39.0,
+        "protein": 0.91,
+        "fat": 0.25,
+        "carbs": 9.54
       }
     },
     {
@@ -4342,6 +5308,12 @@
         "g": 1.0,
         "pc": 40.0,
         "cup": 155.0
+      },
+      "nutrition": {
+        "kcal": 48.0,
+        "protein": 1.4,
+        "fat": 0.39,
+        "carbs": 11.12
       }
     },
     {
@@ -4352,6 +5324,12 @@
       "factors": {
         "g": 1.0,
         "pc": 15.0
+      },
+      "nutrition": {
+        "kcal": 79.0,
+        "protein": 1.2,
+        "fat": 0.2,
+        "carbs": 20.23
       }
     },
     {
@@ -4363,6 +5341,12 @@
         "g": 1.0,
         "pc": 40.0,
         "cup": 165.0
+      },
+      "nutrition": {
+        "kcal": 46.0,
+        "protein": 0.7,
+        "fat": 0.28,
+        "carbs": 11.42
       }
     },
     {
@@ -4418,6 +5402,12 @@
         "g": 1.0,
         "pc": 120.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 89.0,
+        "protein": 1.09,
+        "fat": 0.33,
+        "carbs": 22.84
       }
     },
     {
@@ -4440,6 +5430,12 @@
       "factors": {
         "g": 1.0,
         "pc": 250.0
+      },
+      "nutrition": {
+        "kcal": 122.0,
+        "protein": 1.3,
+        "fat": 0.35,
+        "carbs": 31.89
       }
     },
     {
@@ -4472,6 +5468,12 @@
         "g": 1.0,
         "pc": 300.0,
         "cup": 165.0
+      },
+      "nutrition": {
+        "kcal": 60.0,
+        "protein": 0.82,
+        "fat": 0.38,
+        "carbs": 14.98
       }
     },
     {
@@ -4515,6 +5517,12 @@
         "g": 1.0,
         "pc": 1000.0,
         "cup": 165.0
+      },
+      "nutrition": {
+        "kcal": 50.0,
+        "protein": 0.54,
+        "fat": 0.12,
+        "carbs": 13.12
       }
     },
     {
@@ -4535,6 +5543,12 @@
       "factors": {
         "g": 1.0,
         "pc": 75.0
+      },
+      "nutrition": {
+        "kcal": 61.0,
+        "protein": 1.14,
+        "fat": 0.52,
+        "carbs": 14.66
       }
     },
     {
@@ -4568,6 +5582,12 @@
         "g": 1.0,
         "pc": 170.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 160.0,
+        "protein": 2.0,
+        "fat": 14.66,
+        "carbs": 8.53
       }
     },
     {
@@ -4602,6 +5622,12 @@
         "g": 1.0,
         "pc": 500.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 0.47,
+        "fat": 0.26,
+        "carbs": 10.82
       }
     },
     {
@@ -4612,6 +5638,12 @@
       "factors": {
         "g": 1.0,
         "pc": 20.0
+      },
+      "nutrition": {
+        "kcal": 97.0,
+        "protein": 2.2,
+        "fat": 0.7,
+        "carbs": 23.38
       }
     },
     {
@@ -4622,6 +5654,12 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
+      },
+      "nutrition": {
+        "kcal": 83.0,
+        "protein": 1.67,
+        "fat": 1.17,
+        "carbs": 18.7
       }
     },
     {
@@ -4643,6 +5681,12 @@
       "factors": {
         "g": 1.0,
         "pc": 10.0
+      },
+      "nutrition": {
+        "kcal": 66.0,
+        "protein": 0.83,
+        "fat": 0.44,
+        "carbs": 16.53
       }
     },
     {
@@ -4653,6 +5697,12 @@
       "factors": {
         "g": 1.0,
         "pc": 8.0
+      },
+      "nutrition": {
+        "kcal": 60.0,
+        "protein": 1.31,
+        "fat": 0.1,
+        "carbs": 15.14
       }
     },
     {
@@ -4673,6 +5723,12 @@
       "factors": {
         "g": 1.0,
         "pc": 200.0
+      },
+      "nutrition": {
+        "kcal": 70.0,
+        "protein": 0.58,
+        "fat": 0.19,
+        "carbs": 18.59
       }
     },
     {
@@ -4694,6 +5750,12 @@
       "factors": {
         "g": 1.0,
         "pc": 40.0
+      },
+      "nutrition": {
+        "kcal": 61.0,
+        "protein": 0.71,
+        "fat": 0.42,
+        "carbs": 15.21
       }
     },
     {
@@ -4704,6 +5766,12 @@
       "factors": {
         "g": 1.0,
         "pc": 50.0
+      },
+      "nutrition": {
+        "kcal": 74.0,
+        "protein": 0.75,
+        "fat": 0.3,
+        "carbs": 19.18
       }
     },
     {
@@ -4714,6 +5782,12 @@
       "factors": {
         "g": 1.0,
         "pc": 90.0
+      },
+      "nutrition": {
+        "kcal": 31.0,
+        "protein": 1.04,
+        "fat": 0.33,
+        "carbs": 6.73
       }
     },
     {
@@ -4724,6 +5798,12 @@
       "factors": {
         "g": 1.0,
         "pc": 55.0
+      },
+      "nutrition": {
+        "kcal": 68.0,
+        "protein": 2.55,
+        "fat": 0.95,
+        "carbs": 14.32
       }
     },
     {
@@ -4742,6 +5822,12 @@
       "labelEn": "jackfruit",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 95.0,
+        "protein": 1.72,
+        "fat": 0.64,
+        "carbs": 23.25
       }
     },
     {
@@ -4762,6 +5848,12 @@
       "factors": {
         "g": 1.0,
         "pc": 5.0
+      },
+      "nutrition": {
+        "kcal": 53.0,
+        "protein": 1.9,
+        "fat": 0.7,
+        "carbs": 11.2
       }
     },
     {
@@ -4772,6 +5864,12 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
+      },
+      "nutrition": {
+        "kcal": 75.0,
+        "protein": 1.57,
+        "fat": 0.68,
+        "carbs": 17.71
       }
     },
     {
@@ -4782,6 +5880,12 @@
       "factors": {
         "g": 1.0,
         "pc": 250.0
+      },
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 1.78,
+        "fat": 1.26,
+        "carbs": 7.56
       }
     },
     {
@@ -4790,6 +5894,12 @@
       "labelEn": "coconut",
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 354.0,
+        "protein": 3.33,
+        "fat": 33.49,
+        "carbs": 15.23
       }
     },
     {
@@ -4811,6 +5921,12 @@
         "g": 1.0,
         "tbsp": 5.0,
         "cup": 80.0
+      },
+      "nutrition": {
+        "kcal": 660.0,
+        "protein": 6.88,
+        "fat": 64.53,
+        "carbs": 23.65
       }
     },
     {
@@ -4821,6 +5937,12 @@
       "factors": {
         "g": 1.0,
         "cup": 60.0
+      },
+      "nutrition": {
+        "kcal": 592.0,
+        "protein": 5.3,
+        "fat": 47.0,
+        "carbs": 44.4
       }
     },
     {
@@ -4843,6 +5965,12 @@
         "g": 1.0,
         "pc": 1500.0,
         "cup": 160.0
+      },
+      "nutrition": {
+        "kcal": 36.0,
+        "protein": 0.54,
+        "fat": 0.14,
+        "carbs": 9.09
       }
     },
     {
@@ -4900,6 +6028,12 @@
       "factors": {
         "g": 1.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 30.0,
+        "protein": 0.61,
+        "fat": 0.15,
+        "carbs": 7.55
       }
     },
     {
@@ -4919,6 +6053,12 @@
       "factors": {
         "g": 1.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 69.0,
+        "protein": 0.72,
+        "fat": 0.16,
+        "carbs": 18.1
       }
     },
     {
@@ -5026,6 +6166,12 @@
       "factors": {
         "g": 1.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 0.88,
+        "fat": 0.58,
+        "carbs": 10.18
       }
     },
     {
@@ -5036,6 +6182,12 @@
       "factors": {
         "g": 1.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 0.67,
+        "fat": 0.3,
+        "carbs": 7.68
       }
     },
     {
@@ -5046,6 +6198,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 57.0,
+        "protein": 0.74,
+        "fat": 0.33,
+        "carbs": 14.49
       }
     },
     {
@@ -5056,6 +6214,12 @@
       "factors": {
         "g": 1.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 51.0,
+        "protein": 2.4,
+        "fat": 0.8,
+        "carbs": 8.6
       }
     },
     {
@@ -5076,6 +6240,12 @@
       "factors": {
         "g": 1.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 1.44,
+        "fat": 0.39,
+        "carbs": 9.8
       }
     },
     {
@@ -5096,6 +6266,12 @@
       "factors": {
         "g": 1.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 50.0,
+        "protein": 1.4,
+        "fat": 0.2,
+        "carbs": 8.9
       }
     },
     {
@@ -5106,6 +6282,12 @@
       "factors": {
         "g": 1.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 55.0,
+        "protein": 1.5,
+        "fat": 0.2,
+        "carbs": 10.9
       }
     },
     {
@@ -5135,6 +6317,12 @@
       "parentId": 2300,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 109.0,
+        "protein": 1.6,
+        "fat": 0.7,
+        "carbs": 22.4
       }
     },
     {
@@ -5145,6 +6333,12 @@
       "factors": {
         "g": 1.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 73.0,
+        "protein": 0.66,
+        "fat": 0.5,
+        "carbs": 18.4
       }
     },
     {
@@ -5195,6 +6389,12 @@
         "g": 1.0,
         "pc": 15.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 32.0,
+        "protein": 0.67,
+        "fat": 0.3,
+        "carbs": 7.68
       }
     },
     {
@@ -5216,6 +6416,12 @@
       "factors": {
         "g": 1.0,
         "cup": 125.0
+      },
+      "nutrition": {
+        "kcal": 52.0,
+        "protein": 1.2,
+        "fat": 0.65,
+        "carbs": 11.94
       }
     },
     {
@@ -5246,6 +6452,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 44.0,
+        "protein": 1.1,
+        "fat": 0.6,
+        "carbs": 7.6
       }
     },
     {
@@ -5266,6 +6478,12 @@
       "factors": {
         "g": 1.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 43.0,
+        "protein": 1.39,
+        "fat": 0.49,
+        "carbs": 9.61
       }
     },
     {
@@ -5276,6 +6494,12 @@
       "factors": {
         "g": 1.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 64.0,
+        "protein": 1.18,
+        "fat": 0.43,
+        "carbs": 15.67
       }
     },
     {
@@ -5285,6 +6509,12 @@
       "factors": {
         "g": 1.0,
         "cup": 155.0
+      },
+      "nutrition": {
+        "kcal": 50.0,
+        "protein": 1.0,
+        "fat": 0.3,
+        "carbs": 12.18
       }
     },
     {
@@ -5316,6 +6546,12 @@
         "g": 1.0,
         "pc": 8.0,
         "cup": 155.0
+      },
+      "nutrition": {
+        "kcal": 63.0,
+        "protein": 1.06,
+        "fat": 0.2,
+        "carbs": 16.01
       }
     },
     {
@@ -5350,6 +6586,12 @@
         "g": 1.0,
         "tbsp": 8.0,
         "cup": 112.0
+      },
+      "nutrition": {
+        "kcal": 63.0,
+        "protein": 1.4,
+        "fat": 0.41,
+        "carbs": 15.38
       }
     },
     {
@@ -5404,6 +6646,12 @@
         "g": 1.0,
         "tbsp": 7.0,
         "cup": 100.0
+      },
+      "nutrition": {
+        "kcal": 28.0,
+        "protein": 0.5,
+        "fat": 0.2,
+        "carbs": 3.7
       }
     },
     {
@@ -5425,6 +6673,12 @@
         "g": 1.0,
         "tbsp": 8.0,
         "cup": 120.0
+      },
+      "nutrition": {
+        "kcal": 55.0,
+        "protein": 0.4,
+        "fat": 0.5,
+        "carbs": 12.2
       }
     },
     {
@@ -5446,6 +6700,12 @@
         "g": 1.0,
         "tbsp": 8.0,
         "cup": 120.0
+      },
+      "nutrition": {
+        "kcal": 82.0,
+        "protein": 1.2,
+        "fat": 5.4,
+        "carbs": 5.7
       }
     },
     {
@@ -5478,6 +6738,12 @@
         "g": 1.0,
         "pc": 20.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 249.0,
+        "protein": 3.3,
+        "fat": 0.93,
+        "carbs": 63.87
       }
     },
     {
@@ -5488,6 +6754,12 @@
       "factors": {
         "g": 1.0,
         "cup": 85.0
+      },
+      "nutrition": {
+        "kcal": 243.0,
+        "protein": 0.93,
+        "fat": 0.32,
+        "carbs": 65.89
       }
     },
     {
@@ -5497,6 +6769,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 262.0,
+        "protein": 1.87,
+        "fat": 0.63,
+        "carbs": 69.7
       }
     },
     {
@@ -5506,6 +6784,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 239.0,
+        "protein": 3.61,
+        "fat": 0.76,
+        "carbs": 61.33
       }
     },
     {
@@ -5515,6 +6799,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 319.0,
+        "protein": 2.45,
+        "fat": 1.18,
+        "carbs": 78.58
       }
     },
     {
@@ -5543,6 +6833,12 @@
       "factors": {
         "g": 1.0,
         "cup": 70.0
+      },
+      "nutrition": {
+        "kcal": 519.0,
+        "protein": 2.3,
+        "fat": 33.6,
+        "carbs": 58.4
       }
     },
     {
@@ -5552,6 +6848,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 346.0,
+        "protein": 1.32,
+        "fat": 0.58,
+        "carbs": 93.53
       }
     },
     {
@@ -5563,6 +6865,12 @@
         "g": 1.0,
         "tbsp": 8.0,
         "cup": 120.0
+      },
+      "nutrition": {
+        "kcal": 308.0,
+        "protein": 0.17,
+        "fat": 1.09,
+        "carbs": 82.8
       }
     },
     {
@@ -5574,6 +6882,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 333.0,
+        "protein": 1.25,
+        "fat": 0.73,
+        "carbs": 80.45
       }
     },
     {
@@ -5596,6 +6910,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 110.0
+      },
+      "nutrition": {
+        "kcal": 349.0,
+        "protein": 14.26,
+        "fat": 0.39,
+        "carbs": 77.06
       }
     },
     {
@@ -5605,6 +6925,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 284.0,
+        "protein": 3.4,
+        "fat": 1.4,
+        "carbs": 48.3
       }
     },
     {
@@ -5636,6 +6962,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 346.0,
+        "protein": 3.89,
+        "fat": 1.81,
+        "carbs": 88.28
       }
     },
     {
@@ -5645,6 +6977,12 @@
       "parentId": 2400,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 274.0,
+        "protein": 1.38,
+        "fat": 0.59,
+        "carbs": 73.43
       }
     },
     {
@@ -5664,6 +7002,12 @@
         "g": 1.0,
         "tbsp": 10.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 299.0,
+        "protein": 3.3,
+        "fat": 0.25,
+        "carbs": 79.32
       }
     },
     {
@@ -5748,6 +7092,12 @@
         "pc": 8.0,
         "tbsp": 10.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 241.0,
+        "protein": 3.39,
+        "fat": 0.51,
+        "carbs": 62.64
       }
     },
     {
@@ -5770,6 +7120,12 @@
         "g": 1.0,
         "pc": 8.0,
         "cup": 170.0
+      },
+      "nutrition": {
+        "kcal": 240.0,
+        "protein": 2.18,
+        "fat": 0.38,
+        "carbs": 63.88
       }
     },
     {
@@ -5792,6 +7148,12 @@
         "g": 1.0,
         "pc": 8.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 282.0,
+        "protein": 2.45,
+        "fat": 0.39,
+        "carbs": 75.03
       }
     },
     {
@@ -5813,6 +7175,12 @@
         "g": 1.0,
         "tbsp": 10.0,
         "cup": 160.0
+      },
+      "nutrition": {
+        "kcal": 322.0,
+        "protein": 0.34,
+        "fat": 0.07,
+        "carbs": 82.74
       }
     },
     {
@@ -5853,6 +7221,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 607.0,
+        "protein": 19.5,
+        "fat": 53.5,
+        "carbs": 22.42
       }
     },
     {
@@ -5867,7 +7241,13 @@
       },
       "synonymsRu": [
         "грецкий орех"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 654.0,
+        "protein": 15.23,
+        "fat": 65.21,
+        "carbs": 13.71
+      }
     },
     {
       "id": 2502,
@@ -5878,6 +7258,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 628.0,
+        "protein": 14.95,
+        "fat": 60.75,
+        "carbs": 16.7
       }
     },
     {
@@ -5889,6 +7275,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 646.0,
+        "protein": 15.03,
+        "fat": 62.4,
+        "carbs": 17.6
       }
     },
     {
@@ -5900,6 +7292,12 @@
         "g": 1.0,
         "tbsp": 6.0,
         "cup": 90.0
+      },
+      "nutrition": {
+        "kcal": 628.0,
+        "protein": 14.95,
+        "fat": 60.75,
+        "carbs": 16.7
       }
     },
     {
@@ -5911,6 +7309,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 553.0,
+        "protein": 18.22,
+        "fat": 43.85,
+        "carbs": 30.19
       }
     },
     {
@@ -5945,6 +7349,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 673.0,
+        "protein": 13.69,
+        "fat": 68.37,
+        "carbs": 13.08
       }
     },
     {
@@ -5956,6 +7366,12 @@
         "g": 1.0,
         "tbsp": 7.0,
         "cup": 100.0
+      },
+      "nutrition": {
+        "kcal": 691.0,
+        "protein": 9.17,
+        "fat": 71.97,
+        "carbs": 13.86
       }
     },
     {
@@ -5967,6 +7383,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 718.0,
+        "protein": 7.91,
+        "fat": 75.77,
+        "carbs": 13.82
       }
     },
     {
@@ -5979,6 +7401,12 @@
         "g": 1.0,
         "pc": 5.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 659.0,
+        "protein": 14.32,
+        "fat": 67.1,
+        "carbs": 11.74
       }
     },
     {
@@ -5990,6 +7418,12 @@
       "factors": {
         "g": 1.0,
         "pc": 10.0
+      },
+      "nutrition": {
+        "kcal": 196.0,
+        "protein": 1.63,
+        "fat": 1.25,
+        "carbs": 44.17
       }
     },
     {
@@ -6011,6 +7445,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 574.0,
+        "protein": 15.31,
+        "fat": 46.35,
+        "carbs": 32.69
       }
     },
     {
@@ -6033,6 +7473,12 @@
       "factors": {
         "g": 1.0,
         "pc": 8.0
+      },
+      "nutrition": {
+        "kcal": 245.0,
+        "protein": 3.17,
+        "fat": 2.2,
+        "carbs": 52.96
       }
     },
     {
@@ -6044,6 +7490,12 @@
         "g": 1.0,
         "tbsp": 8.0,
         "cup": 100.0
+      },
+      "nutrition": {
+        "kcal": 654.0,
+        "protein": 15.23,
+        "fat": 65.21,
+        "carbs": 13.71
       }
     },
     {
@@ -6055,6 +7507,12 @@
         "g": 1.0,
         "tbsp": 6.0,
         "cup": 80.0
+      },
+      "nutrition": {
+        "kcal": 654.0,
+        "protein": 15.23,
+        "fat": 65.21,
+        "carbs": 13.71
       }
     },
     {
@@ -6066,6 +7524,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 553.0,
+        "protein": 18.22,
+        "fat": 43.85,
+        "carbs": 30.19
       }
     },
     {
@@ -6076,6 +7540,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 579.0,
+        "protein": 21.15,
+        "fat": 49.93,
+        "carbs": 21.55
       }
     },
     {
@@ -6164,6 +7634,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 135.0
+      },
+      "nutrition": {
+        "kcal": 629.0,
+        "protein": 13.7,
+        "fat": 61.15,
+        "carbs": 17.0
       }
     },
     {
@@ -6174,6 +7650,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 567.0,
+        "protein": 25.8,
+        "fat": 49.24,
+        "carbs": 16.13
       }
     },
     {
@@ -6230,6 +7712,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 584.0,
+        "protein": 20.78,
+        "fat": 51.46,
+        "carbs": 20.0
       }
     },
     {
@@ -6242,6 +7730,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 582.0,
+        "protein": 19.33,
+        "fat": 49.8,
+        "carbs": 24.07
       }
     },
     {
@@ -6254,6 +7748,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 559.0,
+        "protein": 30.23,
+        "fat": 49.05,
+        "carbs": 10.71
       }
     },
     {
@@ -6266,6 +7766,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 574.0,
+        "protein": 29.84,
+        "fat": 49.05,
+        "carbs": 14.71
       }
     },
     {
@@ -6278,6 +7784,12 @@
         "tsp": 3.0,
         "tbsp": 10.0,
         "cup": 170.0
+      },
+      "nutrition": {
+        "kcal": 534.0,
+        "protein": 18.29,
+        "fat": 42.16,
+        "carbs": 28.88
       }
     },
     {
@@ -6290,6 +7802,12 @@
         "tsp": 2.0,
         "tbsp": 7.0,
         "cup": 110.0
+      },
+      "nutrition": {
+        "kcal": 534.0,
+        "protein": 18.29,
+        "fat": 42.16,
+        "carbs": 28.88
       }
     },
     {
@@ -6302,6 +7820,12 @@
         "tsp": 4.0,
         "tbsp": 12.0,
         "cup": 170.0
+      },
+      "nutrition": {
+        "kcal": 486.0,
+        "protein": 16.54,
+        "fat": 30.74,
+        "carbs": 42.12
       }
     },
     {
@@ -6314,6 +7838,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 140.0
+      },
+      "nutrition": {
+        "kcal": 525.0,
+        "protein": 17.99,
+        "fat": 41.56,
+        "carbs": 28.13
       }
     },
     {
@@ -6326,6 +7856,12 @@
         "tsp": 3.0,
         "tbsp": 10.0,
         "cup": 160.0
+      },
+      "nutrition": {
+        "kcal": 553.0,
+        "protein": 31.56,
+        "fat": 48.75,
+        "carbs": 8.67
       }
     },
     {
@@ -6337,6 +7873,12 @@
         "tsp": 3.0,
         "tbsp": 9.0,
         "cup": 145.0
+      },
+      "nutrition": {
+        "kcal": 573.0,
+        "protein": 17.73,
+        "fat": 49.67,
+        "carbs": 23.45
       }
     },
     {
@@ -6385,6 +7927,12 @@
         "tsp": 3.0,
         "tbsp": 10.0,
         "cup": 170.0
+      },
+      "nutrition": {
+        "kcal": 534.0,
+        "protein": 18.29,
+        "fat": 42.16,
+        "carbs": 28.88
       }
     },
     {
@@ -6408,6 +7956,12 @@
         "tsp": 3.0,
         "tbsp": 10.0,
         "cup": 170.0
+      },
+      "nutrition": {
+        "kcal": 534.0,
+        "protein": 18.29,
+        "fat": 42.16,
+        "carbs": 28.88
       }
     },
     {

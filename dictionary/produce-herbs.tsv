@@ -1,37 +1,38 @@
 # Produce: fresh herbs and edible leaves.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Fresh herbs and edible leaves (1700-1799). A base herb label carries «свежий» (seasoning owns the dried ones); varieties, leaves and sprigs do not. pc of a soft herb is a bunch; sprigs and leaves are their own entries.
 1700	зелень	fresh herbs		true	g=1 pc=50 tbsp=4 cup=50
-1701	укроп свежий	fresh dill	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40		укроп	dill
-1702	петрушка свежая	fresh parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60		петрушка	parsley
-1703	петрушка листовая	flat-leaf parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60
-1704	петрушка кудрявая	curly parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60
-1705	кинза свежая	fresh cilantro	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40		кинза	cilantro
-1706	базилик свежий	fresh basil	1700	true	g=1 pc=30 tbsp=3 cup=40		базилик	basil
-1707	базилик фиолетовый	purple basil	1700	true	g=1 pc=30 tbsp=3 cup=40
-1708	базилик тайский	Thai basil	1700	true	g=1 pc=30 tbsp=3 cup=40
-1709	лист базилика	basil leaf	1700	false	g=1 pc=0.5
-1710	мята свежая	fresh mint	1700	true	g=1 pc=30 tbsp=1.5 cup=25		мята	mint
-1711	мята перечная	peppermint	1700	true	g=1 pc=30 tbsp=1.5 cup=25
-1712	мята кудрявая	spearmint	1700	true	g=1 pc=30 tbsp=1.5 cup=25
-1713	лист мяты	mint leaf	1700	false	g=1 pc=0.3
-1714	веточка мяты	mint sprig	1700	false	g=1 pc=2
-1715	веточка петрушки	parsley sprig	1700	false	g=1 pc=1
-1716	веточка укропа	dill sprig	1700	false	g=1 pc=1
+1701	укроп свежий	fresh dill	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40		укроп	dill	kcal=43 protein=3.46 fat=1.12 carbs=7.02	fdc:172233
+1702	петрушка свежая	fresh parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60		петрушка	parsley	kcal=36 protein=2.97 fat=0.79 carbs=6.33	fdc:170416
+1703	петрушка листовая	flat-leaf parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60				kcal=36 protein=2.97 fat=0.79 carbs=6.33	fdc:170416
+1704	петрушка кудрявая	curly parsley	1700	true	g=1 pc=50 tsp=1 tbsp=4 cup=60				kcal=36 protein=2.97 fat=0.79 carbs=6.33	fdc:170416
+1705	кинза свежая	fresh cilantro	1700	true	g=1 pc=40 tsp=1 tbsp=3 cup=40		кинза	cilantro	kcal=23 protein=2.13 fat=0.52 carbs=3.67	fdc:169997
+1706	базилик свежий	fresh basil	1700	true	g=1 pc=30 tbsp=3 cup=40		базилик	basil	kcal=23 protein=3.15 fat=0.64 carbs=2.65	fdc:172232
+1707	базилик фиолетовый	purple basil	1700	true	g=1 pc=30 tbsp=3 cup=40				kcal=23 protein=3.15 fat=0.64 carbs=2.65	fdc:172232
+1708	базилик тайский	Thai basil	1700	true	g=1 pc=30 tbsp=3 cup=40				kcal=23 protein=3.15 fat=0.64 carbs=2.65	fdc:172232
+1709	лист базилика	basil leaf	1700	false	g=1 pc=0.5				kcal=23 protein=3.15 fat=0.64 carbs=2.65	fdc:172232
+# мята → fdc:173475 Spearmint, fresh: the mint sold for cooking
+1710	мята свежая	fresh mint	1700	true	g=1 pc=30 tbsp=1.5 cup=25		мята	mint	kcal=44 protein=3.29 fat=0.73 carbs=8.41	fdc:173475
+1711	мята перечная	peppermint	1700	true	g=1 pc=30 tbsp=1.5 cup=25				kcal=70 protein=3.75 fat=0.94 carbs=14.89	fdc:173474
+1712	мята кудрявая	spearmint	1700	true	g=1 pc=30 tbsp=1.5 cup=25				kcal=44 protein=3.29 fat=0.73 carbs=8.41	fdc:173475
+1713	лист мяты	mint leaf	1700	false	g=1 pc=0.3				kcal=44 protein=3.29 fat=0.73 carbs=8.41	fdc:173475
+1714	веточка мяты	mint sprig	1700	false	g=1 pc=2				kcal=44 protein=3.29 fat=0.73 carbs=8.41	fdc:173475
+1715	веточка петрушки	parsley sprig	1700	false	g=1 pc=1				kcal=36 protein=2.97 fat=0.79 carbs=6.33	fdc:170416
+1716	веточка укропа	dill sprig	1700	false	g=1 pc=1				kcal=43 protein=3.46 fat=1.12 carbs=7.02	fdc:172233
 1717	мелисса свежая	fresh lemon balm	1700	true	g=1 pc=30 tbsp=3
-1720	розмарин свежий	fresh rosemary	1700		g=1 tsp=0.6 tbsp=1.7		розмарин	rosemary
-1721	тимьян свежий	fresh thyme	1700		g=1 tsp=0.8 tbsp=2.4		тимьян	thyme
+1720	розмарин свежий	fresh rosemary	1700		g=1 tsp=0.6 tbsp=1.7		розмарин	rosemary	kcal=131 protein=3.31 fat=5.86 carbs=20.7	fdc:173473
+1721	тимьян свежий	fresh thyme	1700		g=1 tsp=0.8 tbsp=2.4		тимьян	thyme	kcal=101 protein=5.56 fat=1.68 carbs=24.45	fdc:173470
 1722	шалфей свежий	fresh sage	1700		g=1 tbsp=2		шалфей	sage
 1723	орегано свежий	fresh oregano	1700		g=1 tbsp=2
 1724	майоран свежий	fresh marjoram	1700		g=1 tbsp=2
 1725	эстрагон свежий	fresh tarragon	1700	true	g=1 pc=30 tbsp=3
 1726	кервель свежий	fresh chervil	1700		g=1 tbsp=2
 1727	любисток свежий	fresh lovage	1700		g=1 tbsp=3
-1728	огуречная трава	borage	1700		g=1
+1728	огуречная трава	borage	1700		g=1				kcal=21 protein=1.8 fat=0.7 carbs=3.06	fdc:170481
 1729	шисо	shiso	1700	false	g=1 pc=1
-1730	лемонграсс	lemongrass	1700	true	g=1 pc=20
+1730	лемонграсс	lemongrass	1700	true	g=1 pc=20				kcal=99 protein=1.82 fat=0.49 carbs=25.31	fdc:168573
 1731	лист лайма кафир	makrut lime leaf	1700	false	g=1 pc=0.5
 1732	листья карри	curry leaves	1700		g=1
 1733	лист пандана	pandan leaf	1700	false	g=1 pc=3
@@ -43,15 +44,19 @@
 1739	цветы бузины	elderflowers	1700		g=1
 1718	кинза вьетнамская	Vietnamese coriander	1700	true	g=1 pc=30 tbsp=3
 1719	зелень замороженная	frozen herbs	1700		g=1 tbsp=4
-1740	базилик лимонный	lemon basil	1700	true	g=1 pc=30 tbsp=3
-1741	тимьян лимонный	lemon thyme	1700		g=1 tsp=0.8 tbsp=2.4
+# базилик лимонный → fdc:172232 Basil, fresh
+1740	базилик лимонный	lemon basil	1700	true	g=1 pc=30 tbsp=3				kcal=23 protein=3.15 fat=0.64 carbs=2.65	fdc:172232
+# тимьян лимонный → fdc:173470 Thyme, fresh
+1741	тимьян лимонный	lemon thyme	1700		g=1 tsp=0.8 tbsp=2.4				kcal=101 protein=5.56 fat=1.68 carbs=24.45	fdc:173470
 1742	чабер свежий	fresh savory	1700		g=1 tbsp=2
 1743	зелень фенхеля	fennel fronds	1700		g=1 tbsp=2
-1744	укроп замороженный	frozen dill	1700		g=1 tbsp=4
-1745	петрушка замороженная	frozen parsley	1700		g=1 tbsp=4
-1746	веточка розмарина	rosemary sprig	1700	false	g=1 pc=2
-1747	веточка тимьяна	thyme sprig	1700	false	g=1 pc=1
+# укроп замороженный → fdc:172233 Dill weed, fresh: frozen raw, no frozen form listed
+1744	укроп замороженный	frozen dill	1700		g=1 tbsp=4				kcal=43 protein=3.46 fat=1.12 carbs=7.02	fdc:172233
+# петрушка замороженная → fdc:170416 Parsley, fresh: frozen raw, no frozen form listed
+1745	петрушка замороженная	frozen parsley	1700		g=1 tbsp=4				kcal=36 protein=2.97 fat=0.79 carbs=6.33	fdc:170416
+1746	веточка розмарина	rosemary sprig	1700	false	g=1 pc=2				kcal=131 protein=3.31 fat=5.86 carbs=20.7	fdc:173473
+1747	веточка тимьяна	thyme sprig	1700	false	g=1 pc=1				kcal=101 protein=5.56 fat=1.68 carbs=24.45	fdc:173470
 1748	веточка орегано	oregano sprig	1700	false	g=1 pc=1
-1749	веточка базилика	basil sprig	1700	false	g=1 pc=3
-1750	веточка кинзы	cilantro sprig	1700	false	g=1 pc=1
+1749	веточка базилика	basil sprig	1700	false	g=1 pc=3				kcal=23 protein=3.15 fat=0.64 carbs=2.65	fdc:172232
+1750	веточка кинзы	cilantro sprig	1700	false	g=1 pc=1				kcal=23 protein=2.13 fat=0.52 carbs=3.67	fdc:169997
 1751	лист шалфея	sage leaf	1700	false	g=1 pc=1
