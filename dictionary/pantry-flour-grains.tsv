@@ -13,14 +13,15 @@
 5003	мука пшеничная первого сорта	all-purpose flour, first grade	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=330 protein=10.6 fat=1.3 carbs=69	skurikhin:Мука 1 сорта
 5004	мука цельнозерновая	whole wheat flour	5000		g=1 tsp=3 tbsp=9 cup=125				kcal=340 protein=13.21 fat=2.5 carbs=71.97	fdc:168893
 5005	мука хлебопекарная	bread flour	5000		g=1 tsp=3 tbsp=10 cup=135				kcal=361 protein=11.98 fat=1.66 carbs=72.53	fdc:168913
-5006	мука 00	00 flour	5000		g=1 tsp=3 tbsp=10 cup=130
+# мука 00 → fdc:2003586 Flour, 00 (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5006	мука 00	00 flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=365.610744 protein=11.4 fat=1.52 carbs=74.4462	fdc:2003586
 5007	мука самоподнимающаяся	self-rising flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=354 protein=9.89 fat=0.97 carbs=74.22	fdc:168895
 # мука ржаная → fdc:168886 medium rye flour
 5009	мука ржаная	rye flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=349 protein=10.88 fat=1.52 carbs=75.43	fdc:168886
 # Skurikhin 6.3.3, p. 120-121
 5010	мука ржаная обдирная	medium rye flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=298 protein=8.9 fat=1.7 carbs=61.8	skurikhin:Мука обдирная
-# мука полбяная → fdc:169745 spelt, uncooked: FoodData Central has no spelt flour; flour milled from the whole grain holds what the grain does
-5011	мука полбяная	spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=338 protein=14.57 fat=2.43 carbs=70.19	fdc:169745
+# мука полбяная → fdc:2003587 Flour, spelt, whole grain (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5011	мука полбяная	spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=340.5831 protein=14.475 fat=2.543 carbs=70.723	fdc:2003587
 5012	мука ячменная	barley flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=345 protein=10.5 fat=1.6 carbs=74.52	fdc:169739
 5013	мука гречневая	buckwheat flour	5000		g=1 tsp=3 tbsp=9 cup=130				kcal=335 protein=12.62 fat=3.1 carbs=70.59	fdc:170687
 # мука кукурузная → fdc:168929 degermed yellow cornmeal, unenriched: the fine corn flour Russian shops sell
@@ -30,20 +31,21 @@
 # мука рисовая клейкая → fdc:1104867 glutinous rice flour (Foundation; SR Legacy has none)
 5017	мука рисовая клейкая	glutinous rice flour	5000		g=1 tsp=3 tbsp=10 cup=160				kcal=358 protein=6.69 fat=1.16 carbs=80.1	fdc:1104867
 5018	мука овсяная	oat flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=404 protein=14.66 fat=9.12 carbs=65.7	fdc:169741
-# мука миндальная → fdc:170568 blanched almonds: almond flour is ground blanched almonds
-5019	мука миндальная	almond flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=590 protein=21.4 fat=52.52 carbs=18.67	fdc:170568
-5020	мука кокосовая	coconut flour	5000		g=1 tsp=2 tbsp=7 cup=120
+# мука миндальная → fdc:2261420 Flour, almond (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5019	мука миндальная	almond flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=577.62536 protein=26.24375 fat=50.23 carbs=16.24925	fdc:2261420
+# мука кокосовая → fdc:2515382 Flour, coconut (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5020	мука кокосовая	coconut flour	5000		g=1 tsp=2 tbsp=7 cup=120				kcal=423.62737 protein=16.1385 fat=15.28 carbs=58.9025	fdc:2515382
 5021	мука нутовая	chickpea flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=387 protein=22.39 fat=6.69 carbs=57.82	fdc:174288
 # мука гороховая → fdc:172428 split peas, raw: pea flour is milled dried peas
 5022	мука гороховая	pea flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=364 protein=23.12 fat=3.89 carbs=61.63	fdc:172428
 5023	мука соевая	soy flour	5000		g=1 tsp=2 tbsp=5 cup=90				kcal=434 protein=37.81 fat=20.65 carbs=31.92	fdc:174273
 5024	мука льняная	flaxseed meal	5000		g=1 tsp=2 tbsp=7 cup=110
-# мука амарантовая → fdc:170682 amaranth grain, uncooked: no amaranth flour in FoodData Central; flour of the whole grain holds what the grain does
-5025	мука амарантовая	amaranth flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=371 protein=13.56 fat=7.02 carbs=65.25	fdc:170682
-# мука из киноа → fdc:168874 quinoa, uncooked: no quinoa flour in FoodData Central; flour of the whole grain holds what the grain does
-5026	мука из киноа	quinoa flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=368 protein=14.12 fat=6.07 carbs=64.16	fdc:168874
-# мука каштановая → fdc:170167 european chestnuts, dried, peeled: chestnut flour is milled dried chestnuts
-5027	мука каштановая	chestnut flour	5000		g=1 tsp=2 tbsp=6 cup=105				kcal=369 protein=5.01 fat=3.91 carbs=78.43	fdc:170167
+# мука амарантовая → fdc:2512371 Flour, amaranth (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5025	мука амарантовая	amaranth flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=377.9609 protein=13.2093 fat=6.236 carbs=68.7787	fdc:2512371
+# мука из киноа → fdc:2512372 Flour, quinoa (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5026	мука из киноа	quinoa flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=378.394015 protein=11.92235 fat=6.601 carbs=69.52465	fdc:2512372
+# мука каштановая → fdc:2515377 Flour, chestnut (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5027	мука каштановая	chestnut flour	5000		g=1 tsp=2 tbsp=6 cup=105				kcal=384.58086 protein=5.28675 fat=4.636 carbs=80.45025	fdc:2515377
 5028	мука конопляная	hemp flour	5000		g=1 tsp=2 tbsp=7 cup=110
 5029	мука тыквенная	pumpkin seed flour	5000		g=1 tsp=2 tbsp=7 cup=110
 5030	мука кедровая	pine nut flour	5000		g=1 tsp=2 tbsp=6 cup=100
@@ -65,10 +67,11 @@
 5040	мука кондитерская	cake flour	5000		g=1 tsp=3 tbsp=9 cup=125				kcal=362 protein=8.2 fat=0.86 carbs=78.03	fdc:169723
 # мука ржаная цельнозерновая → fdc:168885 dark rye flour, the whole-meal rye flour in FoodData Central
 5041	мука ржаная цельнозерновая	whole grain rye flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=325 protein=15.91 fat=2.22 carbs=68.63	fdc:168885
-# мука спельтовая цельнозерновая → fdc:169745 spelt, uncooked: whole-grain flour holds what the grain does
-5042	мука спельтовая цельнозерновая	whole grain spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=338 protein=14.57 fat=2.43 carbs=70.19	fdc:169745
+# мука спельтовая цельнозерновая → fdc:2003587 Flour, spelt, whole grain (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5042	мука спельтовая цельнозерновая	whole grain spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=340.5831 protein=14.475 fat=2.543 carbs=70.723	fdc:2003587
 5044	мука рисовая коричневая	brown rice flour	5000		g=1 tsp=3 tbsp=10 cup=155				kcal=363 protein=7.23 fat=2.78 carbs=76.48	fdc:168898
-5045	мука маниоковая	cassava flour	5000		g=1 tsp=3 tbsp=9 cup=135
+# мука маниоковая → fdc:2512377 Flour, cassava (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5045	мука маниоковая	cassava flour	5000		g=1 tsp=3 tbsp=9 cup=135				kcal=358.55706075 protein=0.918225 fat=0.4938 carbs=87.312975	fdc:2512377
 # мука арахисовая → fdc:172435 low-fat peanut flour: peanut flour is milled from pressed peanuts
 5046	мука арахисовая	peanut flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=428 protein=33.8 fat=21.9 carbs=31.27	fdc:172435
 # мука кунжутная → fdc:170153 partially defatted sesame flour: sesame flour is milled from pressed seed
@@ -187,8 +190,10 @@
 5305	рис жасмин	jasmine rice	5300		g=1 tbsp=12 cup=200
 5306	рис бурый	brown rice	5300		g=1 tbsp=12 cup=200				kcal=367 protein=7.54 fat=3.2 carbs=76.25	fdc:169703
 5307	рис дикий	wild rice	5300		g=1 tbsp=10 cup=170				kcal=357 protein=14.73 fat=1.08 carbs=74.9	fdc:169726
-5308	рис красный	red rice	5300		g=1 tbsp=12 cup=200
-5309	рис чёрный	black rice	5300		g=1 tbsp=12 cup=200
+# рис красный → fdc:2710838 Rice, red, unenriched, dry, raw (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5308	рис красный	red rice	5300		g=1 tbsp=12 cup=200				kcal=359.99995 protein=8.5625 fat=3.44 carbs=76.1545	fdc:2710838
+# рис чёрный → fdc:2710825 Rice, black, unenriched, raw (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5309	рис чёрный	black rice	5300		g=1 tbsp=12 cup=200				kcal=360.53871 protein=7.56875 fat=3.438 carbs=77.18825	fdc:2710825
 5310	рис арборио	arborio rice	5300		g=1 tbsp=13 cup=220
 5311	рис карнароли	carnaroli rice	5300		g=1 tbsp=13 cup=220
 5312	рис для суши	sushi rice	5300		g=1 tbsp=13 cup=220

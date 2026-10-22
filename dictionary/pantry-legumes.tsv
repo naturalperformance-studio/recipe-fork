@@ -82,7 +82,8 @@
 
 # растительное молоко и сливки
 6050	молоко растительное	plant milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-6051	молоко овсяное	oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+# молоко овсяное → fdc:2257046 Oat milk, unsweetened, plain, refrigerated (Foundation); energy from nutrient 2047 (Atwater general factors): the Foundation food has no 1008
+6051	молоко овсяное	oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=48.3298 protein=0.796875 fat=2.749 carbs=5.100325	fdc:2257046
 # молоко соевое → fdc:172446 soymilk, original, unfortified
 6052	молоко соевое	soy milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=54 protein=3.27 fat=1.75 carbs=6.28	fdc:172446
 # молоко миндальное → fdc:174832 almond milk, unsweetened, shelf stable
@@ -93,7 +94,8 @@
 6057	молоко гороховое	pea milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 6058	молоко гречневое	buckwheat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 6059	молоко конопляное	hemp milk	6050		g=1 ml=1.02 tsp=5 tbsp=15 cup=255
-6060	молоко овсяное бариста	barista oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+# молоко овсяное бариста → fdc:2257046 Oat milk, unsweetened, plain, refrigerated (Foundation): the only oat milk in FoodData Central; energy from nutrient 2047 (Atwater general factors): the Foundation food has no 1008
+6060	молоко овсяное бариста	barista oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=48.3298 protein=0.796875 fat=2.749 carbs=5.100325	fdc:2257046
 # сливки растительные → fdc:170867 dessert topping, pressurized: the non-dairy whipping cream Russian cooks buy
 6070	сливки растительные	non-dairy cream			g=1 ml=1.0 tsp=5 tbsp=15 cup=250				kcal=264 protein=0.98 fat=22.3 carbs=16.07	fdc:170867
 6071	сливки растительные для взбивания	non-dairy whipping cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250				kcal=264 protein=0.98 fat=22.3 carbs=16.07	fdc:170867
