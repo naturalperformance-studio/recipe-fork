@@ -6,9 +6,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -204,17 +207,46 @@ class CollectionSpinesTest {
         compose.waitUntil(PATIENCE_MS) { exists(CollectionScreenTags.SCREEN) && exists(LibraryTags.entry(bread.id.value)) }
     }
 
-    // The newest collection stands first: made while the book shows, it is shown at the start, not put out of sight.
+    // The shelf keeps its sideways place: opening a collection from its far end and coming back shows that spine again.
     @Test
-    fun aCollectionMadeWhileTheBookShowsStandsInSightAtTheStart() {
+    fun theShelfKeepsItsPlaceWhenACollectionIsOpenedAndLeft() {
         val bread = own("Bread")
-        val menu = collection("Menu", bread)
+        val shelf = (0 until 8).map { collection("Collection number $it", bread) }
+        show()
+        await(LibraryTags.entry(bread.id.value))
+        await(CollectionScreenTags.ROW)
+        // The last made stands first: the oldest is at the far end.
+        val far = shelf.first()
+        compose.onNodeWithTag(CollectionScreenTags.ROW).performScrollToIndex(shelf.lastIndex)
+        compose.waitUntil(PATIENCE_MS) { exists(spine(far)) }
+        assertInSight(far)
+        compose.onNodeWithTag(spine(far)).performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CollectionScreenTags.SCREEN) }
+        compose.onNodeWithTag(CollectionScreenTags.BACK).performClick()
+        compose.waitUntil(PATIENCE_MS) { !exists(CollectionScreenTags.SCREEN) && exists(CollectionScreenTags.ROW) }
+        compose.waitForIdle()
+        assertTrue("the far spine is still there", exists(spine(far)))
+        assertInSight(far)
+        assertFalse("the shelf is not back at its start", exists(spine(shelf.last())))
+    }
+
+    private fun assertInSight(id: CollectionId) {
+        val row = bounds(CollectionScreenTags.ROW)
+        val shown = bounds(spine(id))
+        assertTrue("$shown in sight within $row", shown.width > 0f && shown.left >= row.left - 0.5f && shown.right <= row.right + 0.5f)
+    }
+
+    // The shelf shows no heading, but the screen reader can move to it by its heading.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp")
+    fun theShelfIsAHeadingForTheScreenReaderOnly() {
+        val menu = collection("Меню", own("Суп"))
         show()
         await(spine(menu))
-        val made = collection("Salads")
-        compose.waitUntil(PATIENCE_MS) { exists(spine(made)) && bounds(spine(made)).right <= bounds(spine(menu)).left }
-        compose.waitForIdle()
-        assertEquals("16 dp in from the start", bounds(CollectionScreenTags.ROW).left + dp(16f), bounds(spine(made)).left, 1f)
+        val row = compose.onNodeWithTag(CollectionScreenTags.ROW).fetchSemanticsNode().config
+        assertTrue("a heading", SemanticsProperties.Heading in row)
+        assertEquals(listOf("Коллекции"), row[SemanticsProperties.ContentDescription])
+        assertTrue("no heading drawn", compose.onAllNodes(hasText("Коллекции"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
     }
 
     // Collections read after the recipes do not stand out of sight above the first recipe at the top of the book.

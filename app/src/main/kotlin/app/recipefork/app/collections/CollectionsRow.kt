@@ -21,12 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,14 +44,18 @@ import app.recipefork.app.book.CollectionRow
 @Composable
 internal fun CollectionsRow(collections: List<CollectionRow>, onOpen: (String) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     if (collections.isEmpty()) return
-    val shelf = rememberLazyListState()
-    // A lazy row keeps its first spine in place by its key: a collection made since — the newest, standing first — would
-    // be put out of sight before it. The row is brought back to its start whenever its first spine changes.
-    val first = collections.first().collectionId
-    LaunchedEffect(first) { shelf.scrollToItem(0) }
+    // Named as a heading for the screen reader only: the shelf shows no heading.
+    val heading = stringResource(R.string.collections_heading)
+    // The shelf's sideways place is kept (saveable), as the book keeps its own.
     LazyRow(
-        modifier.fillMaxWidth().testTag(CollectionScreenTags.ROW),
-        state = shelf,
+        modifier
+            .fillMaxWidth()
+            .semantics {
+                heading()
+                contentDescription = heading
+            }
+            .testTag(CollectionScreenTags.ROW),
+        state = rememberLazyListState(),
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(SPINE_GAP),
         verticalAlignment = Alignment.CenterVertically,
@@ -125,7 +130,7 @@ internal val SPINE_MIN_HEIGHT = 48.dp
 /** The stripe at a spine's start. */
 internal val SPINE_STRIPE = 3.dp
 
-/** The stripe is the secondary ink, lightened, as the redesign draws it. */
+/** The stripe is onSurfaceVariant at 60 %, as the redesign draws it. */
 private const val STRIPE_ALPHA = 0.6f
 
 /** The space between two spines. */
