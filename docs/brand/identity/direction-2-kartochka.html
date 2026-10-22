@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recipe Fork — направление 2: «Карточка»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{
+  --mono:"IBM Plex Mono","PT Mono","DejaVu Sans Mono",monospace;
+  --sans:"PT Sans","Noto Sans","Segoe UI",Arial,sans-serif;
+  /* light tokens */
+  --primary:#284B8F; --onPrimary:#FFFFFF; --primaryContainer:#DCE5F5; --onPrimaryContainer:#142A55;
+  --secondary:#7A5A2B; --onSecondary:#FFFFFF; --secondaryContainer:#E3CC9A; --onSecondaryContainer:#1F2230;
+  --tertiary:#A8322B; --onTertiary:#FFFFFF; --tertiaryContainer:#F6DAD5; --onTertiaryContainer:#4F1212;
+  --surface:#FBF7EC; --surfaceContainer:#F3EEDF; --surfaceContainerHigh:#ECE6D4;
+  --onSurface:#1F2230; --onSurfaceVariant:#4A4D5C; --outline:#77725F; --outlineVariant:#B9C8E3;
+  --error:#8C1D3B; --onError:#FFFFFF;
+  --rule:#B9C8E3; --margin:#A8322B;
+}
+.dark{
+  --primary:#A9C1F0; --onPrimary:#102650; --primaryContainer:#2B4377; --onPrimaryContainer:#DCE5F8;
+  --secondary:#E0C38F; --onSecondary:#3A2A0E; --secondaryContainer:#5A4421; --onSecondaryContainer:#F5E3BF;
+  --tertiary:#FF9C8A; --onTertiary:#5A1208; --tertiaryContainer:#7D2A1F; --onTertiaryContainer:#FFDAD3;
+  --surface:#141A2B; --surfaceContainer:#1B2236; --surfaceContainerHigh:#242C42;
+  --onSurface:#F1EBDC; --onSurfaceVariant:#C3C0B4; --outline:#8E93A6; --outlineVariant:#39425C;
+  --error:#FFB4C2; --onError:#5E1028;
+  --rule:#39425C; --margin:#FF9C8A;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#EFEADB;color:#1F2230;font-family:var(--sans);font-size:17px;line-height:1.5}
+.wrap{max-width:1300px;margin:0 auto;padding:0 40px 80px}
+section{padding:56px 0 24px;border-top:2px solid #1F2230}
+h1,h2,h3{font-family:var(--sans);font-weight:700;line-height:1.15;margin:0 0 .5em}
+h1{font-size:46px;letter-spacing:-.01em}
+h2{font-size:32px}
+h2 .num{font-family:var(--mono);font-weight:500;font-size:16px;color:#A8322B;display:block;letter-spacing:.08em;margin-bottom:6px}
+h3{font-size:21px;margin-top:1.2em}
+p{margin:0 0 .8em;max-width:78ch}
+.mono{font-family:var(--mono)}
+.small{font-size:14px;color:#4A4D5C}
+.lead{font-size:20px;max-width:72ch}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media (max-width:1100px){.grid3{grid-template-columns:1fr 1fr}}
+.paper{background:#FBF7EC;border:1.5px solid #77725F;border-radius:6px;padding:24px;position:relative}
+.ruled{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 27px,#B9C8E3 27px,#B9C8E3 28px);background-position:0 12px}
+.margin-l{box-shadow:inset 46px 0 0 -44px #A8322B}
+.kw{display:inline-block;font-family:var(--mono);font-size:14px;border:1.5px solid #1F2230;border-radius:3px;padding:2px 10px;margin:0 6px 6px 0;background:#FBF7EC}
+.note{font-family:var(--mono);font-size:13px;color:#4A4D5C}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #C9C1A8;vertical-align:middle}
+th{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#4A4D5C}
+td code,.code{font-family:var(--mono);font-size:13px}
+.chip-sw{display:inline-block;width:22px;height:22px;border-radius:3px;border:1px solid #77725F;vertical-align:middle;margin-right:8px}
+.ok{font-family:var(--mono);font-size:12px}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+
+/* stamp, copy edge, stack, typed check — the signature device */
+.stamp{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:.05em;color:var(--tertiary);
+  border:1.5px solid var(--tertiary);border-radius:3px;padding:2px 6px 1px;transform:rotate(-2deg);box-shadow:inset 0 0 0 1.5px var(--surface),inset 0 0 0 2.5px var(--tertiary);line-height:1.3;white-space:nowrap;background:var(--surface)}
+.stamp.lg{font-size:16px;padding:5px 12px 4px;border-width:2px}
+.stamp.ink{color:var(--onSurfaceVariant);border-color:var(--onSurfaceVariant);box-shadow:inset 0 0 0 1.5px var(--surface),inset 0 0 0 2.5px var(--onSurfaceVariant)}
+.stamp.blue{color:var(--primary);border-color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--surface),inset 0 0 0 2.5px var(--primary)}
+.copied{position:relative;isolation:isolate}
+.copied::before{content:"";position:absolute;inset:0;transform:translate(6px,6px);border:1.5px dashed var(--tertiary);border-radius:inherit;background:var(--surface);z-index:-1}
+.stack{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--onSurfaceVariant)}
+.stack svg{width:20px;height:18px}
+.tbox{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;border:2px solid var(--onSurface);border-radius:3px;font-family:var(--mono);font-weight:600;color:var(--onSurface)}
+.tbox svg{width:18px;height:18px}
+.struck{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--onSurface)}
+
+/* phones */
+.phones{display:flex;flex-wrap:wrap;gap:44px 36px;justify-content:flex-start}
+figure{margin:0}
+.phone-wrap{width:380px}
+.phone-wrap figcaption{font-size:14px;color:#4A4D5C;margin-top:18px;max-width:360px}
+.phone-wrap figcaption b{color:#1F2230;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.04em}
+.phone{width:360px;height:780px;border-radius:30px;overflow:hidden;position:relative;margin:10px;background:var(--surface);color:var(--onSurface);
+  box-shadow:0 0 0 9px #22252F,0 0 0 10px #555A66,0 14px 30px -10px rgba(0,0,0,.35);font-family:var(--sans);font-size:15px;line-height:1.4}
+.sb{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 22px;font-family:var(--sans);font-size:13px;font-weight:700;color:var(--onSurface);background:var(--surface)}
+.sb .ic{display:flex;gap:5px;align-items:center}
+.sb svg{width:15px;height:15px;fill:var(--onSurface)}
+.sb .cam{position:absolute;left:50%;top:9px;width:11px;height:11px;border-radius:50%;background:#111;transform:translateX(-50%)}
+.bar{height:56px;display:flex;align-items:center;gap:6px;padding:0 6px 0 4px;background:var(--surface)}
+.bar .t{flex:1;font-size:21px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:8px}
+.ib{width:48px;height:48px;display:grid;place-items:center;flex:none}
+.ib svg{width:24px;height:24px;fill:none;stroke:var(--onSurfaceVariant);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.body{position:absolute;left:0;right:0;top:86px;bottom:0;overflow:hidden}
+.navb{position:absolute;left:0;right:0;bottom:0;height:80px;background:var(--surfaceContainer);border-top:1.5px solid var(--outlineVariant);display:flex;justify-content:space-around;padding-top:10px}
+.navb div{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;color:var(--onSurfaceVariant);width:96px}
+.navb .pill{width:60px;height:30px;border-radius:4px;display:grid;place-items:center}
+.navb .on .pill{background:var(--secondaryContainer);box-shadow:inset 0 0 0 1.5px var(--onSurface)}
+.navb .on{color:var(--onSurface);font-weight:600}
+.navb svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gesture{position:absolute;bottom:6px;left:50%;width:110px;height:4px;border-radius:2px;background:var(--onSurface);opacity:.6;transform:translateX(-50%)}
+/* index tabs as M3 tabs */
+.tabs{display:flex;align-items:flex-end;gap:4px;padding:0 12px;height:48px;border-bottom:2px solid var(--onSurface);background:var(--surface)}
+.tabs div{flex:1;height:40px;display:grid;place-items:center;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--onSurfaceVariant);border:1.5px solid var(--outline);border-bottom:none;border-radius:8px 8px 0 0;background:var(--surfaceContainer)}
+.tabs .on{height:46px;background:var(--secondaryContainer);color:var(--onSecondaryContainer);border:2px solid var(--onSurface);border-bottom:none;font-weight:600}
+.search{margin:4px 14px 10px;height:48px;border:1.5px solid var(--outline);border-radius:4px;display:flex;align-items:center;gap:10px;padding:0 12px;color:var(--onSurfaceVariant);font-size:15px;background:var(--surfaceContainer)}
+.search svg{width:20px;height:20px;fill:none;stroke:var(--onSurfaceVariant);stroke-width:2;stroke-linecap:round}
+.chips{display:flex;gap:8px;padding:0 14px 12px;overflow:hidden}
+.chip{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border:1.5px solid var(--outline);border-radius:4px;font-family:var(--mono);font-size:12.5px;color:var(--onSurfaceVariant);white-space:nowrap}
+.chip.on{background:var(--secondaryContainer);color:var(--onSecondaryContainer);border-color:var(--onSurface)}
+.chip svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.entry{margin:0 14px 12px;border:1.5px solid var(--outline);border-radius:4px;background:var(--surface);padding:10px 12px 10px 18px;position:relative;box-shadow:inset 4px 0 0 0 var(--surface),inset 5.5px 0 0 0 var(--margin)}
+.entry h4{font-size:17px;margin:0 0 2px;font-weight:700;line-height:1.25}
+.entry .meta{font-family:var(--mono);font-size:12px;color:var(--onSurfaceVariant)}
+.entry .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.entry.copied::before{display:none}
+.entry.copied{box-shadow:inset 4px 0 0 0 var(--surface),inset 5.5px 0 0 0 var(--margin),6px 6px 0 -1.5px var(--surface),6px 6px 0 0 var(--tertiary)}
+.fab{position:absolute;right:16px;bottom:96px;height:56px;border-radius:6px;background:var(--primary);color:var(--onPrimary);display:flex;align-items:center;gap:10px;padding:0 20px 0 16px;font-family:var(--mono);font-weight:600;font-size:15px;box-shadow:3px 3px 0 0 var(--onSurface)}
+.fab svg{width:26px;height:26px}
+.sec-h{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--onSurfaceVariant);padding:10px 16px 6px;display:flex;justify-content:space-between}
+.lines{margin:0 14px;border-top:1.5px solid var(--rule)}
+.line{display:flex;justify-content:space-between;align-items:center;min-height:36px;border-bottom:1px solid var(--rule);font-size:15px;gap:10px}
+.line .q{font-family:var(--mono);font-size:14px;white-space:nowrap}
+.der{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--primary);border:1.2px solid var(--primary);border-radius:2px;padding:0 3px;margin-right:4px;vertical-align:1px}
+.scaler{display:flex;align-items:center;margin:8px 14px 6px;border:1.5px solid var(--onSurface);border-radius:4px;height:48px}
+.scaler .b{width:48px;height:100%;display:grid;place-items:center;font-family:var(--mono);font-size:22px;font-weight:600;color:var(--primary)}
+.scaler .v{flex:1;text-align:center;font-family:var(--mono);font-size:15px;font-weight:600;border-left:1.5px solid var(--outline);border-right:1.5px solid var(--outline);height:100%;display:grid;place-items:center}
+/* cooking */
+.ck-line{display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-bottom:1px solid var(--rule);font-size:18px}
+.ck-line .q{font-family:var(--mono);font-size:17px;margin-left:auto;white-space:nowrap}
+.fold{display:flex;align-items:center;gap:12px;min-height:56px;margin:0 14px;padding:0 12px;border:1.5px solid var(--outline);border-radius:4px;font-family:var(--mono);font-size:14px;color:var(--onSurfaceVariant)}
+.cur{margin:10px 12px;border:2px solid var(--onSurface);border-radius:5px;padding:14px 14px 16px;background:var(--surfaceContainer);position:relative}
+.cur .stp{font-size:24px;line-height:1.35;margin:10px 0 14px}
+.timer{display:flex;align-items:center;gap:10px;height:56px;border-radius:5px;padding:0 14px;font-family:var(--mono);font-size:22px;font-weight:600;margin-top:10px}
+.timer.run{background:var(--primary);color:var(--onPrimary)}
+.timer.idle{border:2px solid var(--onSurface);color:var(--onSurface)}
+.timer svg{width:24px;height:24px}
+.timer .lbl{font-size:13px;font-weight:500;margin-left:auto;opacity:1}
+/* sheet */
+.scrim{position:absolute;inset:0;background:rgba(20,22,30,.48)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surfaceContainer);border-radius:14px 14px 0 0;border-top:2px solid var(--onSurface);padding:10px 18px 24px}
+.handle{width:36px;height:4px;border-radius:2px;background:var(--outline);margin:4px auto 14px}
+.btn{height:48px;border-radius:5px;display:inline-grid;place-items:center;padding:0 20px;font-family:var(--mono);font-weight:600;font-size:15px}
+.btn.fill{background:var(--primary);color:var(--onPrimary)}
+.btn.text{color:var(--primary)}
+
+/* store */
+.shots{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.shots svg{width:300px;height:auto;border:1px solid #77725F}
+svg.banner{width:100%;max-width:1024px;height:auto;display:block;border:1px solid #77725F}
+.logo-block,.palette,.icon-block,.sig-grid{background:#FBF7EC;border:1.5px solid #1F2230;border-radius:6px;padding:28px}
+.sw{border:1.5px solid #1F2230;border-radius:4px;overflow:hidden;background:#FBF7EC}
+.sw .c{height:96px;display:flex;align-items:flex-end;padding:8px 10px;font-family:var(--mono);font-size:12px}
+.sw .d{padding:10px;font-size:13px;line-height:1.35}
+.sw .d b{font-family:var(--mono);font-size:13px}
+.swgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+@media (max-width:1100px){.swgrid{grid-template-columns:repeat(3,1fr)}}
+.do-dont{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.dd{border:1.5px solid #77725F;border-radius:4px;padding:12px;background:#FBF7EC;font-size:13px}
+.dd svg{width:100%;height:90px;display:block;margin-bottom:6px}
+.x-lbl{font-family:var(--mono);font-weight:600;font-size:12px;color:#8C1D3B}
+.typescale td{padding:8px}
+.icon-block figure{width:256px}
+.icon-block figure>svg{display:block;outline:1px solid #C9C1A8}
+.icon-block figcaption{margin-top:8px;line-height:1.4}
+table td:nth-child(2){white-space:nowrap}
+.grid2>table{align-self:start}
+</style>
+</head>
+<body>
+
+<!-- sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mk" viewBox="0 0 48 48">
+      <rect x="13.25" y="21.25" width="27.5" height="22.5" rx="3" fill="none" stroke="var(--mk-copy,currentColor)" stroke-width="2.5"/>
+      <path fill="currentColor" d="M10 15V4.6a1.6 1.6 0 0 1 3.2 0V11h2.2V4.6a1.6 1.6 0 0 1 3.2 0V11h2.2V4.6a1.6 1.6 0 0 1 3.2 0V15H31a3 3 0 0 1 3 3v17a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V18a3 3 0 0 1 3-3z"/>
+      <path d="M10.5 22.5H29.5M10.5 27.5H29.5M10.5 32.5H23" stroke="var(--mk-paper,#FBF7EC)" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="i-sig" viewBox="0 0 16 16"><path d="M1 15h2v-3H1zM5 15h2V9H5zM9 15h2V6H9zM13 15h2V2h-2z"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 16 16"><path d="M8 14l7-8.5C13 3.8 10.6 3 8 3S3 3.8 1 5.5z"/></symbol>
+    <symbol id="i-bat" viewBox="0 0 16 16"><path d="M5 1.5h6v1.5h1.5v12h-9v-12H5z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 5v.01M12 12v.01M12 19v.01" stroke-width="3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></symbol>
+    <symbol id="i-cat" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="1.5"/><path d="M6 7V4h5v3M7 12h10M7 16h6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2zM5 18a2 2 0 0 1 2-2h11M9 8h5"/></symbol>
+    <symbol id="i-pot" viewBox="0 0 24 24"><path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM2 10h20M9 6.5c0-1 1-1.5 1-2.5M14 6.5c0-1 1-1.5 1-2.5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 18 18"><path d="M3 3l12 12M15 3L3 15" stroke="currentColor" stroke-width="2.6" stroke-linecap="square" fill="none"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></symbol>
+    <symbol id="i-stack" viewBox="0 0 20 18"><rect x="6" y="1" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="4" width="13" height="10" rx="1.5" fill="var(--surface,#FBF7EC)" stroke="currentColor" stroke-width="1.6"/><rect x="1" y="7" width="13" height="10" rx="1.5" fill="var(--surface,#FBF7EC)" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-kitchen-miss" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<!-- 1. HEADER -->
+<header style="padding:56px 0 32px">
+  <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1;min-width:520px">
+      <div class="note" style="color:#A8322B;letter-spacing:.08em">ФИРМЕННЫЙ СТИЛЬ · ВАРИАНТ ДЛЯ ВЫБОРА · 15.10.2026</div>
+      <h1 style="margin-top:10px">Recipe Fork — направление 2: «Карточка»</h1>
+      <p class="lead">Рецепт как карточка из кухонной картотеки: разлинованный бланк, количество напечатано машинкой, сбоку красное поле, на углу — штамп. Такую карточку переписывают под себя: снимают копию через копирку и правят уже копию, а оригинал остаётся в ящике как был. Стиль тактильный и честный, без бумажных текстур и шума: бумагу передают только линейка, края, штампы и шрифт. Ведёт себя приложение при этом как цифровое — пересчитывает, держит таймеры, сворачивает сделанное.</p>
+      <div style="margin:14px 0 18px">
+        <span class="kw">картотека</span><span class="kw">машинопись</span><span class="kw">копирка</span><span class="kw">штамп</span><span class="kw">линованный бланк</span><span class="kw">порядок на кухне</span>
+      </div>
+      <p><b>Референсы:</b> библиотечные каталожные карточки и ящики-картотеки; кулинарные карточки в жестяных коробках 1960–70-х; машинописные бланки и накладные с копиркой; конторские штампы «КОПИЯ», «ПОЛУЧЕНО»; разделители-закладки из крафт-картона.</p>
+      <p><b>Форк в этом направлении</b> — это копия под копирку: у форка за карточкой виден сдвинутый край второго листа, а на углу стоит штамп «ФОРК · от автора»; число форков — стопка краёв с цифрой.</p>
+    </div>
+    <div class="paper ruled margin-l" style="width:380px;padding:22px 22px 22px 60px;margin-top:30px">
+      <div class="copied" style="border-radius:4px">
+        <div style="background:#FBF7EC;border:1.5px solid #1F2230;border-radius:4px;padding:14px 16px">
+          <span class="stamp">ФОРК · от quiet_amber_fox</span>
+          <div style="font-weight:700;font-size:22px;margin-top:10px">Сырники на рисовой муке</div>
+          <div class="mono" style="font-size:13px;color:#4A4D5C">4 порц · 7 ингредиентов · 5 шагов</div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:10px;font-size:15px"><span class="tbox" style="--onSurface:#1F2230"><svg><use href="#i-x"/></svg></span><span class="struck">Творог 5 % — 500 г</span></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px;font-size:15px"><span class="tbox"></span><span>Мука рисовая — <span class="mono">60 г</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 2. MARK -->
+<section id="mark">
+  <h2><span class="num">02</span>Знак и логотип</h2>
+  <div class="logo-block">
+    <div class="grid2" style="grid-template-columns:420px 1fr;align-items:start">
+      <div>
+        <svg viewBox="-4 -4 56 56" width="400" height="400" role="img" aria-label="Построение знака на сетке 48 на 48">
+          <rect x="0" y="0" width="48" height="48" fill="#FBF7EC"/>
+          <g stroke="#DCE5F5" stroke-width=".12">
+            <path d="M0 1H48M0 2H48M0 3H48M0 4H48M0 5H48M0 6H48M0 7H48M0 8H48M0 9H48M0 10H48M0 11H48M0 12H48M0 13H48M0 14H48M0 15H48M0 16H48M0 17H48M0 18H48M0 19H48M0 20H48M0 21H48M0 22H48M0 23H48M0 24H48M0 25H48M0 26H48M0 27H48M0 28H48M0 29H48M0 30H48M0 31H48M0 32H48M0 33H48M0 34H48M0 35H48M0 36H48M0 37H48M0 38H48M0 39H48M0 40H48M0 41H48M0 42H48M0 43H48M0 44H48M0 45H48M0 46H48M0 47H48"/>
+            <path d="M1 0V48M2 0V48M3 0V48M4 0V48M5 0V48M6 0V48M7 0V48M8 0V48M9 0V48M10 0V48M11 0V48M12 0V48M13 0V48M14 0V48M15 0V48M16 0V48M17 0V48M18 0V48M19 0V48M20 0V48M21 0V48M22 0V48M23 0V48M24 0V48M25 0V48M26 0V48M27 0V48M28 0V48M29 0V48M30 0V48M31 0V48M32 0V48M33 0V48M34 0V48M35 0V48M36 0V48M37 0V48M38 0V48M39 0V48M40 0V48M41 0V48M42 0V48M43 0V48M44 0V48M45 0V48M46 0V48M47 0V48"/>
+          </g>
+          <rect x="0" y="0" width="48" height="48" fill="none" stroke="#77725F" stroke-width=".25"/>
+          <circle cx="24" cy="24" r="22" fill="none" stroke="#A8322B" stroke-width=".2" stroke-dasharray=".8 .6"/>
+          <use href="#mk" x="0" y="0" width="48" height="48" style="color:#284B8F;--mk-copy:#A8322B"/>
+          <g stroke="#A8322B" stroke-width=".15" fill="none">
+            <path d="M6 -2V50M34 -2V50M13.25 -2V50M40.75 -2V50"/>
+            <path d="M-2 15H50M-2 38H50M-2 4H50M-2 43.75H50"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="1.5" fill="#A8322B">
+            <text x="6.3" y="47.2">6</text><text x="31.3" y="47.2">34</text><text x="41" y="2.2">41</text>
+            <text x="-3.6" y="15.5">15</text><text x="-3.6" y="38.5">38</text><text x="-3.2" y="3.5">3</text>
+          </g>
+        </svg>
+        <p class="note" style="margin-top:6px">Сетка 48 × 48. Карточка 28 × 23 с радиусом 3; копия сдвинута на +7 / +6, обводка 2,5. Три зубца по 3,2 с просветом 2,2 — язычок картотечного разделителя, вырезанный вилкой. Линейка — 3 строки толщиной 2.</p>
+      </div>
+      <div>
+        <p><b>Знак.</b> Каталожная карточка, у которой вместо язычка-разделителя — зубцы вилки. Сама карточка — это черенок: вилка и рецепт в одном предмете. За ней сдвинут край второй карточки — копия под копирку, то есть форк. Знак не похож на граф ветвления: в нём нет кружков-коммитов и линий, только два листа и вилка.</p>
+        <div style="display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:24px 0">
+          <!-- horizontal lockup -->
+          <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;border:1px dashed #B9C8E3">
+            <svg width="72" height="72" style="color:#284B8F;--mk-copy:#A8322B"><use href="#mk"/></svg>
+            <div>
+              <div class="mono" style="font-size:34px;font-weight:600;letter-spacing:-.01em;line-height:1;color:#1F2230">recipe<span style="color:#A8322B">·</span>fork</div>
+              <div class="mono" style="font-size:12px;letter-spacing:.14em;color:#4A4D5C;margin-top:6px">КАРТОТЕКА РЕЦЕПТОВ</div>
+            </div>
+          </div>
+          <!-- stacked -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 22px;border:1px dashed #B9C8E3">
+            <svg width="88" height="88" style="color:#284B8F;--mk-copy:#A8322B"><use href="#mk"/></svg>
+            <div class="mono" style="font-size:22px;font-weight:600;color:#1F2230;line-height:1">recipe<span style="color:#A8322B">·</span>fork</div>
+          </div>
+          <!-- symbol only -->
+          <div style="display:flex;gap:16px;align-items:flex-end;padding:18px 22px;border:1px dashed #B9C8E3">
+            <svg width="96" height="96" style="color:#284B8F;--mk-copy:#A8322B"><use href="#mk"/></svg>
+            <svg width="48" height="48" style="color:#284B8F;--mk-copy:#A8322B"><use href="#mk"/></svg>
+            <svg width="24" height="24" style="color:#1F2230"><use href="#mk"/></svg>
+            <div style="background:#141A2B;padding:10px;border-radius:4px;display:flex;gap:10px;align-items:flex-end">
+              <svg width="48" height="48" style="color:#F1EBDC;--mk-copy:#FF9C8A;--mk-paper:#141A2B"><use href="#mk"/></svg>
+              <svg width="24" height="24" style="color:#F1EBDC;--mk-paper:#141A2B"><use href="#mk"/></svg>
+            </div>
+          </div>
+        </div>
+        <p><b>Словесный знак</b> — название, набранное IBM Plex Mono SemiBold строчными, с красной точкой-разделителем вместо пробела: как заголовок на машинописном бланке. Ничего не рисуется от руки, буквы не модифицируются.</p>
+        <p><b>Минимальный размер:</b> знак — 24 dp (в одном цвете, без цвета копии), в цвете — от 32 dp; горизонтальная связка — от 120 dp по ширине. Поле вокруг знака — не меньше ширины одного зубца ×2 (≈ 6/48 высоты знака).</p>
+        <p><b>Переименование.</b> Название — рабочее. Система держится на знаке (карточка-вилка и копия), на штампе и на машинописном наборе; словесный знак — это просто имя, набранное Plex Mono с красной точкой между словами. Новое имя, на любом языке и любой длины, ставится в ту же связку без перерисовки: «рецепт·вилка», «форкбук», одно слово — точка тогда пропадает. Штамп «ФОРК» зависит от термина в продукте, а не от названия.</p>
+      </div>
+    </div>
+    <h3>Что нельзя</h3>
+    <div class="do-dont">
+      <div class="dd"><svg viewBox="0 0 120 90"><g transform="translate(36 13) rotate(-14 24 24)"><use href="#mk" width="48" height="48" style="color:#284B8F;--mk-copy:#A8322B"/></g></svg><span class="x-lbl">НЕЛЬЗЯ</span> наклонять знак. Наклон бывает только у штампа, и не больше 3°.</div>
+      <div class="dd"><svg viewBox="0 0 120 90"><g transform="translate(36 21)"><use href="#mk" width="48" height="48" style="color:#A8322B;--mk-copy:#284B8F"/></g></svg><span class="x-lbl">НЕЛЬЗЯ</span> менять цвета местами: красный — только у копии, то есть у форка.</div>
+      <div class="dd"><svg viewBox="0 0 120 90"><circle cx="40" cy="45" r="5" fill="#284B8F"/><circle cx="80" cy="25" r="5" fill="#284B8F"/><circle cx="80" cy="65" r="5" fill="#284B8F"/><path d="M45 45h10l20-18M55 45l20 18" stroke="#284B8F" stroke-width="3" fill="none"/></svg><span class="x-lbl">НЕЛЬЗЯ</span> заменять знак графом ветвления из кружков — это чужая метафора.</div>
+      <div class="dd"><svg viewBox="0 0 120 90"><defs><pattern id="nz" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#D9C9A2"/><circle cx="1" cy="1" r=".8" fill="#B9A57A"/><circle cx="3" cy="3" r=".6" fill="#E9DDBF"/></pattern></defs><rect x="20" y="8" width="80" height="74" fill="url(#nz)"/><g transform="translate(36 21)"><use href="#mk" width="48" height="48" style="color:#284B8F;--mk-copy:#A8322B"/></g></svg><span class="x-lbl">НЕЛЬЗЯ</span> класть знак на текстуру бумаги, шум, «состаренный» фон.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. PALETTE -->
+<section id="palette">
+  <h2><span class="num">03</span>Палитра</h2>
+  <p>Пять материалов картотеки: бумага карточки, синяя линейка (она же синяя копировальная краска), красное поле, чёрно-синие чернила машинки, крафт-картон разделителей. Тёмная тема — копирка и синька: глубокий чернильно-синий фон, текст цвета слоновой кости.</p>
+  <div class="palette">
+    <div class="swgrid">
+      <div class="sw"><div class="c" style="background:#FBF7EC;color:#1F2230">#FBF7EC</div><div class="d"><b>Бумага</b><br>surface. Фон карточек и экранов.</div></div>
+      <div class="sw"><div class="c" style="background:#1F2230;color:#FBF7EC">#1F2230</div><div class="d"><b>Чернила</b><br>onSurface. Текст, отметка «сделано», рамки текущего.</div></div>
+      <div class="sw"><div class="c" style="background:#284B8F;color:#FFFFFF">#284B8F</div><div class="d"><b>Синяя копирка</b><br>primary. Главные действия, ссылки, таймер.</div></div>
+      <div class="sw"><div class="c" style="background:#B9C8E3;color:#1F2230">#B9C8E3</div><div class="d"><b>Линейка</b><br>outlineVariant. Только строки бланка, не текст.</div></div>
+      <div class="sw"><div class="c" style="background:#A8322B;color:#FFFFFF">#A8322B</div><div class="d"><b>Красное поле</b><br>tertiary. Штамп «ФОРК», край копии, поле карточки.</div></div>
+      <div class="sw"><div class="c" style="background:#E3CC9A;color:#1F2230">#E3CC9A</div><div class="d"><b>Крафт</b><br>secondaryContainer. Активная вкладка, выбранный чип.</div></div>
+    </div>
+    <div class="swgrid" style="margin-top:14px">
+      <div class="sw"><div class="c" style="background:#141A2B;color:#F1EBDC">#141A2B</div><div class="d"><b>Копирка</b><br>surface тёмной темы.</div></div>
+      <div class="sw"><div class="c" style="background:#F1EBDC;color:#141A2B">#F1EBDC</div><div class="d"><b>Слоновая кость</b><br>onSurface тёмной темы.</div></div>
+      <div class="sw"><div class="c" style="background:#A9C1F0;color:#102650">#A9C1F0</div><div class="d"><b>Синька</b><br>primary тёмной темы.</div></div>
+      <div class="sw"><div class="c" style="background:#FF9C8A;color:#5A1208">#FF9C8A</div><div class="d"><b>Штемпель</b><br>tertiary тёмной темы.</div></div>
+      <div class="sw"><div class="c" style="background:#5A4421;color:#F5E3BF">#5A4421</div><div class="d"><b>Тёмный крафт</b><br>secondaryContainer тёмной темы.</div></div>
+      <div class="sw"><div class="c" style="background:#8C1D3B;color:#FFFFFF">#8C1D3B</div><div class="d"><b>Ошибка</b><br>error. Бордовый, не красный штамп; всегда со значком и словом.</div></div>
+    </div>
+  </div>
+
+  <h3>Токены для app_theme.xml</h3>
+  <p class="small">Значения вставляются в <code class="code">theme_light_*</code> и <code class="code">theme_dark_*</code>. Контраст посчитан по формуле WCAG (относительная яркость sRGB), а не на глаз. Порог: текст 4,5:1, крупный текст и границы элементов 3:1.</p>
+  <div class="grid2">
+    <table>
+      <tr><th>Роль</th><th>Светлая</th><th>Пара · контраст</th></tr>
+      <tr><td>primary</td><td><span class="chip-sw" style="background:#284B8F"></span><code>#284B8F</code></td><td class="ok">на surface 7,87 · onPrimary на нём 8,42</td></tr>
+      <tr><td>onPrimary</td><td><span class="chip-sw" style="background:#FFFFFF"></span><code>#FFFFFF</code></td><td class="ok">—</td></tr>
+      <tr><td>primaryContainer</td><td><span class="chip-sw" style="background:#DCE5F5"></span><code>#DCE5F5</code></td><td class="ok">onPrimaryContainer 11,10</td></tr>
+      <tr><td>onPrimaryContainer</td><td><span class="chip-sw" style="background:#142A55"></span><code>#142A55</code></td><td class="ok">—</td></tr>
+      <tr><td>secondary</td><td><span class="chip-sw" style="background:#7A5A2B"></span><code>#7A5A2B</code></td><td class="ok">на surface 5,90</td></tr>
+      <tr><td>secondaryContainer</td><td><span class="chip-sw" style="background:#E3CC9A"></span><code>#E3CC9A</code></td><td class="ok">onSecondaryContainer #1F2230 10,05</td></tr>
+      <tr><td>tertiary</td><td><span class="chip-sw" style="background:#A8322B"></span><code>#A8322B</code></td><td class="ok">на surface 6,22 · на surfaceContainer 5,74 · onTertiary #FFF 6,65</td></tr>
+      <tr><td>tertiaryContainer</td><td><span class="chip-sw" style="background:#F6DAD5"></span><code>#F6DAD5</code></td><td class="ok">onTertiaryContainer #4F1212 11,14</td></tr>
+      <tr><td>surface</td><td><span class="chip-sw" style="background:#FBF7EC"></span><code>#FBF7EC</code></td><td class="ok">onSurface 14,75</td></tr>
+      <tr><td>surfaceContainer</td><td><span class="chip-sw" style="background:#F3EEDF"></span><code>#F3EEDF</code></td><td class="ok">primary 7,26 · onSurfaceVariant 7,22</td></tr>
+      <tr><td>surfaceContainerHigh</td><td><span class="chip-sw" style="background:#ECE6D4"></span><code>#ECE6D4</code></td><td class="ok">onSurface 12,66 · primary 6,75</td></tr>
+      <tr><td>onSurface</td><td><span class="chip-sw" style="background:#1F2230"></span><code>#1F2230</code></td><td class="ok">на surface 14,75</td></tr>
+      <tr><td>onSurfaceVariant</td><td><span class="chip-sw" style="background:#4A4D5C"></span><code>#4A4D5C</code></td><td class="ok">на surface 7,82 · на High 6,71</td></tr>
+      <tr><td>outline</td><td><span class="chip-sw" style="background:#77725F"></span><code>#77725F</code></td><td class="ok">граница на surface 4,50 · на Container 4,16</td></tr>
+      <tr><td>outlineVariant</td><td><span class="chip-sw" style="background:#B9C8E3"></span><code>#B9C8E3</code></td><td class="ok">1,58 — только декоративная линейка</td></tr>
+      <tr><td>error</td><td><span class="chip-sw" style="background:#8C1D3B"></span><code>#8C1D3B</code></td><td class="ok">на surface 8,33</td></tr>
+      <tr><td>onError</td><td><span class="chip-sw" style="background:#FFFFFF"></span><code>#FFFFFF</code></td><td class="ok">на error 8,92</td></tr>
+    </table>
+    <table>
+      <tr><th>Роль</th><th>Тёмная</th><th>Пара · контраст</th></tr>
+      <tr><td>primary</td><td><span class="chip-sw" style="background:#A9C1F0"></span><code>#A9C1F0</code></td><td class="ok">на surface 9,55 · onPrimary на нём 8,18</td></tr>
+      <tr><td>onPrimary</td><td><span class="chip-sw" style="background:#102650"></span><code>#102650</code></td><td class="ok">—</td></tr>
+      <tr><td>primaryContainer</td><td><span class="chip-sw" style="background:#2B4377"></span><code>#2B4377</code></td><td class="ok">onPrimaryContainer 7,65</td></tr>
+      <tr><td>onPrimaryContainer</td><td><span class="chip-sw" style="background:#DCE5F8"></span><code>#DCE5F8</code></td><td class="ok">—</td></tr>
+      <tr><td>secondary</td><td><span class="chip-sw" style="background:#E0C38F"></span><code>#E0C38F</code></td><td class="ok">на surface 10,20</td></tr>
+      <tr><td>secondaryContainer</td><td><span class="chip-sw" style="background:#5A4421"></span><code>#5A4421</code></td><td class="ok">onSecondaryContainer #F5E3BF 7,28</td></tr>
+      <tr><td>tertiary</td><td><span class="chip-sw" style="background:#FF9C8A"></span><code>#FF9C8A</code></td><td class="ok">на surface 8,56 · на High 6,85</td></tr>
+      <tr><td>tertiaryContainer</td><td><span class="chip-sw" style="background:#7D2A1F"></span><code>#7D2A1F</code></td><td class="ok">onTertiaryContainer #FFDAD3 7,30</td></tr>
+      <tr><td>surface</td><td><span class="chip-sw" style="background:#141A2B"></span><code>#141A2B</code></td><td class="ok">onSurface 14,56</td></tr>
+      <tr><td>surfaceContainer</td><td><span class="chip-sw" style="background:#1B2236"></span><code>#1B2236</code></td><td class="ok">primary 8,71 · onSurfaceVariant 8,67</td></tr>
+      <tr><td>surfaceContainerHigh</td><td><span class="chip-sw" style="background:#242C42"></span><code>#242C42</code></td><td class="ok">onSurface 11,66 · onSurfaceVariant 7,61</td></tr>
+      <tr><td>onSurface</td><td><span class="chip-sw" style="background:#F1EBDC"></span><code>#F1EBDC</code></td><td class="ok">на surface 14,56</td></tr>
+      <tr><td>onSurfaceVariant</td><td><span class="chip-sw" style="background:#C3C0B4"></span><code>#C3C0B4</code></td><td class="ok">на surface 9,50</td></tr>
+      <tr><td>outline</td><td><span class="chip-sw" style="background:#8E93A6"></span><code>#8E93A6</code></td><td class="ok">граница на surface 5,67 · на Container 5,17</td></tr>
+      <tr><td>outlineVariant</td><td><span class="chip-sw" style="background:#39425C"></span><code>#39425C</code></td><td class="ok">1,74 — только линейка</td></tr>
+      <tr><td>error</td><td><span class="chip-sw" style="background:#FFB4C2"></span><code>#FFB4C2</code></td><td class="ok">на surface 10,36</td></tr>
+      <tr><td>onError</td><td><span class="chip-sw" style="background:#5E1028"></span><code>#5E1028</code></td><td class="ok">на error 7,95</td></tr>
+    </table>
+  </div>
+  <p class="small" style="margin-top:10px">Остальные роли файла (background = surface, surfaceVariant = surfaceContainerHigh, inverse*, *Fixed) выводятся из этих же значений; для onSecondary светлой темы — #FFFFFF (на secondary 6,32), тёмной — #3A2A0E (8,15).</p>
+
+  <h3>Где какой цвет</h3>
+  <div class="grid2">
+    <div>
+      <p><b>Синяя копирка (primary)</b> — всё, что делается: кнопка «Форкнуть», запущенный таймер, ссылка на родителя, +/− порций, отметка пересчитанного количества.</p>
+      <p><b>Красное поле (tertiary)</b> — только происхождение. Штамп «ФОРК · от …», пунктирный край копии за карточкой, вертикальное поле на карточке каталога. Красным не пишут обычный текст и не помечают ошибки.</p>
+      <p><b>Крафт (secondaryContainer)</b> — выбор: активная вкладка «Чтение / Готовка», выбранный чип сортировки, активный пункт нижней навигации. Всегда с чернильной рамкой 1,5–2 dp, так что выбор виден и без цвета.</p>
+    </div>
+    <div>
+      <p><b>Маркер форка</b> = красный штамп со словом «ФОРК» — слово несёт смысл, цвет только помогает (контраст штампа 6,22 и 8,56). На карточке каталога к нему добавлен сдвинутый край копии.</p>
+      <p><b>«Сделано» в Готовке</b> = чернила, не цвет: в квадрате печатный X, строка перечёркнута линией 2 dp. Экранный диктор читает «сделано». Зелёный в системе не используется вообще.</p>
+      <p><b>Ошибка</b> — бордовый #8C1D3B со значком «!» и текстом; от красного штампа его отделяет и оттенок, и форма (у ошибки нет рамки-штампа).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. TYPE -->
+<section id="type">
+  <h2><span class="num">04</span>Шрифт</h2>
+  <div class="grid2">
+    <div class="paper">
+      <div class="note">ДЛЯ КОЛИЧЕСТВ, МЕТОК, ШТАМПОВ, ТАЙМЕРОВ</div>
+      <div class="mono" style="font-size:40px;font-weight:600;line-height:1.1;margin:8px 0">IBM Plex Mono</div>
+      <div class="mono" style="font-size:22px;line-height:1.4">Свёкла 300 г · Fork 1½ ст. л.<br>АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ<br>абвгдеёжзийклмнопрстуфхцчшщъыьэюя<br>0123456789 ½ ¼ ¾ × − + ° %</div>
+      <p class="small" style="margin-top:10px">SIL Open Font License 1.1. Кириллица есть (подмножества cyrillic и cyrillic-ext в Google Fonts — проверено запросом к API). Начертания 400, 500, 600. Моноширинные цифры: в столбце количеств граммы стоят друг под другом без выравнивания вручную.</p>
+      <p class="small">Courier Prime отклонён: в Google Fonts у него нет кириллицы (только latin, latin-ext). PT Mono — запасной вариант, кириллица есть, но одно начертание.</p>
+    </div>
+    <div class="paper">
+      <div class="note">ДЛЯ ТЕКСТА И ЗАГОЛОВКОВ</div>
+      <div style="font-size:40px;font-weight:700;line-height:1.1;margin:8px 0">PT Sans</div>
+      <div style="font-size:22px;line-height:1.4">Обжарьте лук до прозрачности, 5 минут.<br>Fry the onion until translucent.<br><b>Шакшука с брынзой</b> · <i>курсив для заметок</i></div>
+      <p class="small" style="margin-top:10px">SIL Open Font License 1.1, ParaType. Гуманистический гротеск, рисовался сразу для кириллицы — «ж», «ф», «д» не выглядят переделанной латиницей. Начертания 400, 700 и курсивы. Рукописных шрифтов в интерфейсе нет; «пометка от руки» в иллюстрациях — только линия-подчёркивание в SVG.</p>
+    </div>
+  </div>
+  <h3>Шкала (роли Material 3, sp)</h3>
+  <table class="typescale">
+    <tr><th>Роль</th><th>Шрифт</th><th>Размер / строка</th><th>Пример</th></tr>
+    <tr><td>headlineMedium</td><td>PT Sans 700</td><td class="mono">28 / 34</td><td style="font-size:28px;font-weight:700">Плов узбекский</td></tr>
+    <tr><td>headlineSmall</td><td>PT Sans 700</td><td class="mono">24 / 30</td><td style="font-size:24px;font-weight:700">Борщ с черносливом</td></tr>
+    <tr><td>titleLarge</td><td>PT Sans 700</td><td class="mono">22 / 28</td><td style="font-size:22px;font-weight:700">Моя книга рецептов</td></tr>
+    <tr><td>titleMedium</td><td>PT Sans 700</td><td class="mono">17 / 22</td><td style="font-size:17px;font-weight:700">Сырники на рисовой муке</td></tr>
+    <tr><td>bodyLarge</td><td>PT Sans 400</td><td class="mono">17 / 24</td><td style="font-size:17px">Залейте рис водой на два пальца выше уровня.</td></tr>
+    <tr><td>bodyMedium</td><td>PT Sans 400</td><td class="mono">15 / 21</td><td style="font-size:15px">Яйца лучше взять комнатной температуры.</td></tr>
+    <tr><td>labelLarge</td><td>Plex Mono 600</td><td class="mono">15 / 20</td><td class="mono" style="font-size:15px;font-weight:600">Форкнуть</td></tr>
+    <tr><td>labelMedium</td><td>Plex Mono 500</td><td class="mono">13 / 18</td><td class="mono" style="font-size:13px;font-weight:500">6 порц · 1 ч 40 мин · 9 ингредиентов</td></tr>
+    <tr><td>labelSmall</td><td>Plex Mono 600; статусы капсом</td><td class="mono">11 / 14, трекинг 0,07</td><td><span class="stamp">ФОРК · от quiet_amber_fox</span></td></tr>
+    <tr style="background:#ECE6D4"><td><b>Готовка: шаг</b> (headlineSmall)</td><td>PT Sans 400</td><td class="mono">24 / 32</td><td style="font-size:24px">Влейте 200 мл бульона и тушите</td></tr>
+    <tr style="background:#ECE6D4"><td><b>Готовка: строка</b> (titleLarge)</td><td>PT Sans 400 + Mono</td><td class="mono">18 / 24 · кол-во 17</td><td style="font-size:18px">Морковь <span class="mono" style="font-size:17px">2 шт</span></td></tr>
+    <tr style="background:#ECE6D4"><td><b>Готовка: таймер</b> (displaySmall)</td><td>Plex Mono 600</td><td class="mono">22–36</td><td class="mono" style="font-size:32px;font-weight:600">07:42</td></tr>
+  </table>
+  <p class="small">Всё в sp, чтобы системный масштаб текста (A11Y-004) увеличивал и шкалу Готовки. При 200 % строки количеств переносятся под название, а не обрезаются.</p>
+</section>
+
+<!-- 5. ICON -->
+<section id="icon">
+  <h2><span class="num">05</span>Иконка приложения</h2>
+  <div class="icon-block">
+    <div style="display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start">
+      <figure>
+        <svg width="256" height="256" viewBox="0 0 512 512" role="img" aria-label="Иконка магазина 512 на 512">
+          <rect width="512" height="512" fill="#FBF7EC"/>
+          <g stroke="#B9C8E3" stroke-width="5"><path d="M0 150H512M0 214H512M0 278H512M0 342H512M0 406H512M0 470H512"/></g>
+          <path d="M84 0V512" stroke="#A8322B" stroke-width="5"/>
+          <use href="#mk" x="96" y="96" width="320" height="320" style="color:#284B8F;--mk-copy:#A8322B"/>
+        </svg>
+        <figcaption class="note">512 × 512, квадратный холст для магазина</figcaption>
+      </figure>
+      <figure>
+        <svg width="256" height="256" viewBox="0 0 512 512" role="img" aria-label="Иконка в маске">
+          <defs><clipPath id="sq"><rect width="512" height="512" rx="150"/></clipPath></defs>
+          <g clip-path="url(#sq)">
+            <rect width="512" height="512" fill="#FBF7EC"/>
+            <g stroke="#B9C8E3" stroke-width="5"><path d="M0 150H512M0 214H512M0 278H512M0 342H512M0 406H512M0 470H512"/></g>
+            <path d="M84 0V512" stroke="#A8322B" stroke-width="5"/>
+            <use href="#mk" x="96" y="96" width="320" height="320" style="color:#284B8F;--mk-copy:#A8322B"/>
+          </g>
+          <rect x="1" y="1" width="510" height="510" rx="150" fill="none" stroke="#77725F" stroke-width="2"/>
+        </svg>
+        <figcaption class="note">как её покажет магазин (маска со скруглением)</figcaption>
+      </figure>
+      <figure>
+        <svg width="256" height="256" viewBox="0 0 108 108" role="img" aria-label="Адаптивная иконка 108 dp с безопасным кругом 66 dp">
+          <rect width="108" height="108" fill="#FBF7EC"/>
+          <g stroke="#B9C8E3" stroke-width="1"><path d="M0 34H108M0 46H108M0 58H108M0 70H108M0 82H108M0 94H108"/></g>
+          <path d="M20 0V108" stroke="#A8322B" stroke-width="1"/>
+          <use href="#mk" x="27" y="27" width="54" height="54" style="color:#284B8F;--mk-copy:#A8322B"/>
+          <circle cx="54" cy="54" r="33" fill="none" stroke="#1F2230" stroke-width=".5" stroke-dasharray="2 1.5"/>
+          <rect x="18" y="18" width="72" height="72" fill="none" stroke="#77725F" stroke-width=".4" stroke-dasharray="1 1"/>
+          <text x="54" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="4.2" fill="#1F2230">108 dp · круг 66 dp</text>
+        </svg>
+        <figcaption class="note">адаптивная: фон — бланк (линейка + поле), передний план — знак 54 dp внутри круга 66</figcaption>
+      </figure>
+      <figure>
+        <svg width="256" height="256" viewBox="0 0 108 108" role="img" aria-label="Монохромная тематическая иконка">
+          <rect width="108" height="108" fill="#DCE5F5"/>
+          <circle cx="54" cy="54" r="40" fill="#C6D3EC"/>
+          <use href="#mk" x="27" y="27" width="54" height="54" style="color:#142A55;--mk-paper:#C6D3EC"/>
+        </svg>
+        <figcaption class="note">монохромная (themed icon): один слой, система красит его в свой цвет</figcaption>
+      </figure>
+    </div>
+    <h3>На рабочем столе, 48 dp</h3>
+    <div style="display:flex;gap:28px;flex-wrap:wrap">
+      <div style="background:#3B4A5E;padding:22px 26px;border-radius:12px;display:flex;gap:26px;align-items:flex-start">
+        <div style="text-align:center;color:#fff;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#1A73E8"/><circle cx="24" cy="24" r="9" fill="none" stroke="#fff" stroke-width="3.5"/></svg><div>Камера</div></div>
+        <div style="text-align:center;color:#fff;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#E8EAED"/><path d="M24 12v12l8 5" stroke="#3C4043" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg><div>Часы</div></div>
+        <div style="text-align:center;color:#fff;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><defs><clipPath id="c48"><circle cx="24" cy="24" r="24"/></clipPath></defs><g clip-path="url(#c48)"><rect width="48" height="48" fill="#FBF7EC"/><path d="M0 16H48M0 22H48M0 28H48M0 34H48M0 40H48" stroke="#B9C8E3" stroke-width=".7"/><path d="M8 0V48" stroke="#A8322B" stroke-width=".8"/><use href="#mk" x="8" y="8" width="32" height="32" style="color:#284B8F;--mk-copy:#A8322B"/></g></svg><div>Recipe Fork</div></div>
+        <div style="text-align:center;color:#fff;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#34A853"/><path d="M14 16h20v14H22l-6 5v-5h-2z" fill="#fff"/></svg><div>Сообщения</div></div>
+        <div style="text-align:center;color:#fff;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#F9AB00"/><path d="M14 30l7-10 6 7 4-4 5 7z" fill="#fff"/></svg><div>Фото</div></div>
+      </div>
+      <div style="background:#1B1F27;padding:22px 26px;border-radius:12px;display:flex;gap:26px;align-items:flex-start">
+        <div style="text-align:center;color:#ddd;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#2B3A55"/><circle cx="24" cy="24" r="9" fill="none" stroke="#C6D3EC" stroke-width="3.5"/></svg><div>Камера</div></div>
+        <div style="text-align:center;color:#ddd;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#2B3A55"/><use href="#mk" x="8" y="8" width="32" height="32" style="color:#C6D3EC;--mk-paper:#2B3A55"/></svg><div>Recipe Fork</div></div>
+        <div style="text-align:center;color:#ddd;font-size:12px;width:64px"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#2B3A55"/><path d="M24 12v12l8 5" stroke="#C6D3EC" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg><div>Часы</div></div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:12px">Слева — обычные иконки, справа — тематические (монохромные) в тёмной теме. Среди круглых цветных иконок карточка выделяется светлым фоном с линейкой и узнаётся по силуэту: три зубца над прямоугольником. Линейку фона на 48 dp почти не видно — она и не должна нести смысл.</p>
+  </div>
+</section>
+
+<!-- 6. SIGNATURE -->
+<section id="signature">
+  <h2><span class="num">06</span>Фирменный элемент: «Штамп и копирка»</h2>
+  <p>Один приём во всех местах, где речь о происхождении рецепта и о сделанном. Форк — это копия под копирку: за карточкой форка лежит сдвинутый на 6 dp пунктирный край второго листа, на углу — штамп «ФОРК · от автора». Число форков — стопка краёв карточек и число. Сделанное в Готовке — напечатанный X в квадрате и зачёркнутая строка, как вычёркивают пункты на бланке.</p>
+  <div class="sig-grid">
+    <div class="grid3">
+      <div>
+        <div class="tag" style="color:#4A4D5C;margin-bottom:10px">1 · ФОРК В КАТАЛОГЕ</div>
+        <div class="entry copied" style="margin:0 6px 0 0">
+          <h4>Шакшука с брынзой и шпинатом</h4>
+          <div class="meta">2 порц · 25 мин · ★ 4,6</div>
+          <div class="row"><span class="stamp">ФОРК</span><span class="stack" aria-label="3 форка"><svg><use href="#i-stack"/></svg>3</span></div>
+        </div>
+        <p class="small" style="margin-top:16px">Красное поле слева есть у любой записи; у форка добавляются штамп и край копии.</p>
+      </div>
+      <div>
+        <div class="tag" style="color:#4A4D5C;margin-bottom:10px">2 · ПРОИСХОЖДЕНИЕ НА КАРТОЧКЕ</div>
+        <div class="copied" style="border-radius:4px;margin-right:6px">
+          <div style="background:#FBF7EC;border:1.5px solid #1F2230;border-radius:4px;padding:12px 14px">
+            <span class="stamp lg">ФОРК · от quiet_amber_fox</span>
+            <p style="font-size:14px;margin:12px 0 0">Форк рецепта <a href="#" style="color:#284B8F;font-weight:700">«Шакшука классическая»</a> от <span class="mono" style="font-size:13px">steady_brave_heron</span></p>
+          </div>
+        </div>
+        <p class="small" style="margin-top:16px">Штамп слегка повёрнут (−2°), двойная рамка. Ссылка на родителя — синяя, она ведёт к нему.</p>
+      </div>
+      <div>
+        <div class="tag" style="color:#4A4D5C;margin-bottom:10px">3 · СТОПКА ФОРКОВ</div>
+        <div style="display:flex;gap:26px;align-items:flex-end;padding:8px 0">
+          <div style="text-align:center"><svg width="64" height="58" viewBox="0 0 20 18" style="color:#4A4D5C"><use href="#i-stack"/></svg><div class="mono" style="font-weight:600;font-size:20px">12</div><div class="note">в книге</div></div>
+          <span class="stack" style="font-size:15px" aria-label="12 форков"><svg><use href="#i-stack"/></svg>12</span>
+          <span class="stack" aria-label="0 форков" style="opacity:1"><svg viewBox="0 0 20 18"><rect x="1" y="7" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>0</span>
+        </div>
+        <p class="small">Одна карточка — нет форков; три края — есть. Число всегда рядом, стопка не растёт с числом.</p>
+      </div>
+      <div>
+        <div class="tag" style="color:#4A4D5C;margin-bottom:10px">4 · СДЕЛАНО В ГОТОВКЕ</div>
+        <div style="border-top:1.5px solid #B9C8E3">
+          <div class="ck-line" style="--rule:#B9C8E3;padding:0 4px"><span class="tbox"><svg><use href="#i-x"/></svg></span><span class="struck">Рис девзира</span><span class="q struck">500 г</span></div>
+          <div class="ck-line" style="--rule:#B9C8E3;padding:0 4px"><span class="tbox"><svg><use href="#i-x"/></svg></span><span class="struck">Морковь</span><span class="q struck">500 г</span></div>
+          <div class="ck-line" style="--rule:#B9C8E3;padding:0 4px"><span class="tbox"></span><span>Баранина</span><span class="q">600 г</span></div>
+        </div>
+        <p class="small" style="margin-top:8px">Строка целиком — цель 56 dp. Цвет не меняется: смысл несут X и черта.</p>
+      </div>
+      <div>
+        <div class="tag" style="color:#4A4D5C;margin-bottom:10px">5 · ПЕРЕСЧИТАННОЕ КОЛИЧЕСТВО</div>
+        <div style="border-top:1.5px solid #B9C8E3">
+          <div class="line" style="--rule:#B9C8E3"><span>Свёкла</span><span class="q"><span class="der" title="пересчитано">≈</span>450 г</span></div>
+          <div class="line" style="--rule:#B9C8E3"><span>Чернослив</span><span class="q"><span class="der">≈</span>90 г</span></div>
+          <div class="line" style="--rule:#B9C8E3"><span>Лавровый лист <span class="stamp blue" style="font-size:9.5px;margin-left:4px">ЗАКРЕПЛЕНО</span></span><span class="q">2 шт</span></div>
+        </div>
+        <p class="small" style="margin-top:8px">Пересчитанное — маленькая машинописная плашка «≈» (диктор: «пересчитано»), закреплённое — синий штамп.</p>
+      </div>
+      <div>
+        <div class="tag" style="color:#4A4D5C;margin-bottom:10px">6 · ТЕКУЩИЙ ШАГ</div>
+        <div class="cur dark" style="margin:0;background:#1B2236;color:#F1EBDC">
+          <span class="stamp" style="--surface:#1B2236">СЕЙЧАС · ШАГ 3 ИЗ 7</span>
+          <div style="font-size:19px;line-height:1.35;margin-top:10px">Выложите морковь соломкой поверх мяса, не перемешивая.</div>
+        </div>
+        <p class="small" style="margin-top:10px">Текущий шаг — первый неотмеченный; его отмечает штамп «СЕЙЧАС», рамка толще остальных.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. SCREENS -->
+<section id="screens">
+  <h2><span class="num">07</span>Экраны</h2>
+  <p>Поведение — Material 3 (верхняя панель, вкладки, FAB, чипы, нижняя навигация), но в материалах картотеки: вкладки выглядят как язычки разделителей, чипы — как прямоугольные ярлыки, FAB — как печатная плашка с тенью-сдвигом, а не облако с размытием.</p>
+  <div class="phones">
+
+    <!-- 1 Catalogue -->
+    <figure class="phone-wrap">
+      <div class="phone">
+        <div class="sb"><span>9:41</span><span class="cam"></span><span class="ic"><svg><use href="#i-sig"/></svg><svg><use href="#i-wifi"/></svg><svg><use href="#i-bat"/></svg></span></div>
+        <div class="bar"><span class="t">Каталог</span><span class="ib"><svg style="width:30px;height:30px;color:var(--primary);--mk-copy:var(--tertiary)" viewBox="0 0 48 48"><use href="#mk"/></svg></span></div>
+        <div class="body">
+          <div class="search"><svg><use href="#i-search"/></svg>Найти: «плов», «без глютена»</div>
+          <div class="chips"><span class="chip on"><svg><use href="#i-check"/></svg>Новые</span><span class="chip">По оценке</span><span class="chip">Больше форков</span></div>
+          <div class="entry">
+            <h4>Борщ с черносливом</h4>
+            <div class="meta">6 порц · 2 ч 10 мин · ★ 4,8</div>
+            <div class="row"><span class="meta">steady_brave_heron</span><span class="stack" aria-label="12 форков"><svg><use href="#i-stack"/></svg>12</span></div>
+          </div>
+          <div class="entry copied" style="margin-right:20px">
+            <h4>Сырники на рисовой муке</h4>
+            <div class="meta">4 порц · 30 мин · ★ 4,6</div>
+            <div class="row"><span class="stamp">ФОРК</span><span class="stack" aria-label="3 форка"><svg><use href="#i-stack"/></svg>3</span></div>
+          </div>
+          <div class="entry">
+            <h4>Плов узбекский в казане</h4>
+            <div class="meta">8 порц · 2 ч 30 мин · ★ 4,9</div>
+            <div class="row"><span class="meta">calm_rusty_badger</span><span class="stack" aria-label="27 форков"><svg><use href="#i-stack"/></svg>27</span></div>
+          </div>
+          <div class="entry copied" style="margin-right:20px">
+            <h4>Шакшука с брынзой и шпинатом</h4>
+            <div class="meta">2 порц · 25 мин · ★ 4,5</div>
+            <div class="row"><span class="stamp">ФОРК</span><span class="stack" aria-label="нет форков"><svg viewBox="0 0 20 18"><rect x="1" y="7" width="13" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>0</span></div>
+          </div>
+        </div>
+        <div class="navb">
+          <div class="on"><span class="pill"><svg><use href="#i-cat"/></svg></span>Каталог</div>
+          <div><span class="pill"><svg><use href="#i-book"/></svg></span>Моя книга</div>
+          <div><span class="pill"><svg><use href="#i-pot"/></svg></span>Моя кухня</div>
+        </div>
+        <div class="gesture"></div>
+      </div>
+      <figcaption><b>КАТАЛОГ.</b> Каждая запись — карточка с красным полем. У форков — штамп «ФОРК» и край копии; у всех — стопка с числом прямых форков. Выбранная сортировка — крафтовый ярлык с галочкой.</figcaption>
+    </figure>
+
+    <!-- 2 View -->
+    <figure class="phone-wrap">
+      <div class="phone">
+        <div class="sb"><span>9:41</span><span class="cam"></span><span class="ic"><svg><use href="#i-sig"/></svg><svg><use href="#i-wifi"/></svg><svg><use href="#i-bat"/></svg></span></div>
+        <div class="bar"><span class="ib"><svg><use href="#i-back"/></svg></span><span class="t" style="padding-left:0;font-size:19px">Сырники на рисовой муке</span><span class="ib"><svg><use href="#i-edit"/></svg></span></div>
+        <div class="tabs"><div class="on">Чтение</div><div>Готовка</div></div>
+        <div class="body" style="top:134px">
+          <div class="copied" style="margin:12px 20px 4px 14px;border-radius:4px">
+            <div style="background:var(--surface);border:1.5px solid var(--onSurface);border-radius:4px;padding:10px 12px">
+              <span class="stamp">ФОРК · от quiet_amber_fox</span>
+              <div class="meta mono" style="font-size:12px;color:var(--onSurfaceVariant);margin-top:8px">4 порц · 7 ингредиентов · 5 шагов</div>
+              <div style="font-size:13.5px;margin-top:4px">Форк рецепта <span style="color:var(--primary);font-weight:700;text-decoration:underline">«Сырники классические»</span> от <span class="mono" style="font-size:12px">steady_brave_heron</span></div>
+            </div>
+          </div>
+          <div class="sec-h" style="padding-top:12px"><span>Порции</span></div>
+          <div class="scaler"><span class="b">−</span><span class="v">6 порций</span><span class="b">+</span></div>
+          <div class="sec-h"><span>Ингредиенты</span><span style="font-weight:500;letter-spacing:0;text-transform:none">≈ пересчитано</span></div>
+          <div class="lines">
+            <div class="line"><span>Творог 5 %</span><span class="q"><span class="der">≈</span>750 г</span></div>
+            <div class="line"><span>Мука рисовая</span><span class="q"><span class="der">≈</span>90 г</span></div>
+            <div class="line"><span>Яйцо</span><span class="q"><span class="der">≈</span>2 шт</span></div>
+            <div class="line"><span>Сахар</span><span class="q"><span class="der">≈</span>2¼ ст. л.</span></div>
+            <div class="line"><span>Соль</span><span class="q"><span class="der">≈</span>⅓ ч. л.</span></div>
+            <div class="line"><span>Масло для жарки</span><span class="q">по вкусу</span></div>
+          </div>
+          <div class="sec-h" style="padding-top:14px"><span>Шаги</span></div>
+          <div class="lines"><div class="line" style="align-items:flex-start;padding:6px 0"><span><span class="mono" style="font-size:13px">1.</span> Протрите творог через сито.</span></div></div>
+        </div>
+        <div class="fab" style="bottom:28px"><svg viewBox="0 0 48 48" style="color:var(--onPrimary);--mk-paper:var(--primary);--mk-copy:var(--onPrimary)"><use href="#mk"/></svg>Форкнуть</div>
+        <div class="gesture"></div>
+      </div>
+      <figcaption><b>КАРТОЧКА · ЧТЕНИЕ.</b> Вверху — блок происхождения со штампом и краем копии, ссылка на родителя. Порции меняются кнопками ±48 dp; пересчитанные количества помечены «≈». «Форкнуть» — всегда на экране, не в меню; правка — в панели.</figcaption>
+    </figure>
+
+    <!-- 3 Cooking dark -->
+    <figure class="phone-wrap">
+      <div class="phone dark">
+        <div class="sb"><span>9:41</span><span class="cam"></span><span class="ic"><svg><use href="#i-sig"/></svg><svg><use href="#i-wifi"/></svg><svg><use href="#i-bat"/></svg></span></div>
+        <div class="bar"><span class="ib"><svg><use href="#i-back"/></svg></span><span class="t" style="padding-left:0;font-size:19px">Плов узбекский в казане</span><span class="ib"><svg><use href="#i-more"/></svg></span></div>
+        <div class="tabs"><div>Чтение</div><div class="on">Готовка</div></div>
+        <div class="body" style="top:134px">
+          <div style="height:10px"></div>
+          <div class="fold"><span class="tbox" style="width:24px;height:24px"><svg style="width:15px;height:15px"><use href="#i-x"/></svg></span><span>Оборудование · 3 из 3</span><span style="margin-left:auto;color:var(--primary);font-weight:600">Открыть</span></div>
+          <div class="sec-h" style="padding-top:12px"><span>Ингредиенты · 2 из 6</span></div>
+          <div style="border-top:1px solid var(--rule)">
+            <div class="ck-line"><span class="tbox"><svg><use href="#i-x"/></svg></span><span class="struck">Рис девзира</span><span class="q struck">500 г</span></div>
+            <div class="ck-line"><span class="tbox"><svg><use href="#i-x"/></svg></span><span class="struck">Баранина</span><span class="q struck">600 г</span></div>
+            <div class="ck-line"><span class="tbox"></span><span>Морковь</span><span class="q">500 г</span></div>
+          </div>
+          <div class="cur">
+            <span class="stamp" style="--surface:var(--surfaceContainer)">СЕЙЧАС · ШАГ 3 ИЗ 7</span>
+            <div class="stp">Выложите морковь соломкой поверх мяса, не перемешивая. Жарьте на среднем огне.</div>
+            <div class="timer run"><svg><use href="#i-pause"/></svg>07:42<span class="lbl">идёт · из 10:00</span></div>
+            <div class="timer idle"><svg><use href="#i-play"/></svg>03:00<span class="lbl">зира</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;color:var(--onSurfaceVariant);font-size:17px"><span class="tbox" style="border-color:var(--onSurfaceVariant)"></span>4. Всыпьте зиру и барбарис…</div>
+        </div>
+        <div class="gesture"></div>
+      </div>
+      <figcaption><b>КАРТОЧКА · ГОТОВКА, ТЁМНАЯ ТЕМА.</b> Ни форка, ни правки. Свернутая строка оборудования, вычеркнутые ингредиенты, текущий шаг крупно со штампом «СЕЙЧАС». Таймер — плашка 56 dp: запущенный залит синькой, ждущий обведён.</figcaption>
+    </figure>
+
+    <!-- 4 Recipe book -->
+    <figure class="phone-wrap">
+      <div class="phone">
+        <div class="sb"><span>9:41</span><span class="cam"></span><span class="ic"><svg><use href="#i-sig"/></svg><svg><use href="#i-wifi"/></svg><svg><use href="#i-bat"/></svg></span></div>
+        <div class="bar"><span class="t">Моя книга</span><span class="ib"><svg><use href="#i-search"/></svg></span><span class="ib"><svg><use href="#i-sort"/></svg></span></div>
+        <div class="body">
+          <div class="chips" style="padding-top:4px"><span class="chip on"><svg><use href="#i-check"/></svg>Все · 14</span><span class="chip">Мои</span><span class="chip">Избранное</span></div>
+          <div class="sec-h"><span>Черновики</span><span>2</span></div>
+          <div class="entry copied" style="margin-right:20px">
+            <h4>Шакшука с брынзой и шпинатом</h4>
+            <div class="meta">изменено сегодня · 2 порц</div>
+            <div class="row"><span style="display:flex;gap:6px"><span class="stamp">ФОРК</span><span class="stamp ink">ЧЕРНОВИК</span></span></div>
+          </div>
+          <div class="entry">
+            <h4>Окрошка на квасе</h4>
+            <div class="meta">изменено вчера · 4 порц</div>
+            <div class="row"><span class="stamp ink">ЧЕРНОВИК</span></div>
+          </div>
+          <div class="sec-h"><span>Опубликованные</span><span>12</span></div>
+          <div class="entry copied" style="margin-right:20px">
+            <h4>Сырники на рисовой муке</h4>
+            <div class="meta">4 порц · 30 мин · ★ 4,6</div>
+            <div class="row"><span class="stamp">ФОРК</span><span class="stack" aria-label="3 форка"><svg><use href="#i-stack"/></svg>3</span></div>
+          </div>
+          <div class="entry">
+            <h4>Пельмени домашние</h4>
+            <div class="meta">6 порц · 1 ч 50 мин · ★ 4,7</div>
+            <div class="row"><span class="stamp blue">ОПУБЛИКОВАН</span><span class="stack" aria-label="5 форков"><svg><use href="#i-stack"/></svg>5</span></div>
+          </div>
+        </div>
+        <div class="fab"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><use href="#i-plus"/></svg>Новый рецепт</div>
+        <div class="navb">
+          <div><span class="pill"><svg><use href="#i-cat"/></svg></span>Каталог</div>
+          <div class="on"><span class="pill"><svg><use href="#i-book"/></svg></span>Моя книга</div>
+          <div><span class="pill"><svg><use href="#i-pot"/></svg></span>Моя кухня</div>
+        </div>
+        <div class="gesture"></div>
+      </div>
+      <figcaption><b>МОЯ КНИГА.</b> Состояния — тоже штампы: «ЧЕРНОВИК» чернилами, «ОПУБЛИКОВАН» синим, «ФОРК» красным. Слова, а не цвета, поэтому штампы можно ставить рядом.</figcaption>
+    </figure>
+
+    <!-- 5 Fork confirmation -->
+    <figure class="phone-wrap">
+      <div class="phone">
+        <div class="sb"><span>9:41</span><span class="cam"></span><span class="ic"><svg><use href="#i-sig"/></svg><svg><use href="#i-wifi"/></svg><svg><use href="#i-bat"/></svg></span></div>
+        <div class="bar"><span class="ib"><svg><use href="#i-back"/></svg></span><span class="t" style="padding-left:0;font-size:19px">Борщ с черносливом</span><span class="ib"><svg><use href="#i-edit"/></svg></span></div>
+        <div class="tabs"><div class="on">Чтение</div><div>Готовка</div></div>
+        <div class="body" style="top:134px">
+          <div style="padding:14px 16px">
+            <div class="mono" style="font-size:12px;color:var(--onSurfaceVariant)">6 порц · 11 ингредиентов · 8 шагов</div>
+            <div style="font-size:15px;margin-top:8px">Борщ на говяжьей грудинке, чернослив кладётся в самом конце.</div>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div style="font-size:21px;font-weight:700;line-height:1.25">Форкнуть «Борщ с черносливом»?</div>
+          <div style="display:flex;gap:16px;margin:18px 0 14px;align-items:flex-start">
+            <div style="position:relative;width:118px;height:96px;flex:none">
+              <div style="position:absolute;left:0;top:0;width:100px;height:78px;border:1.5px solid var(--onSurface);border-radius:3px;background:var(--surface);padding:8px">
+                <div style="height:2px;background:var(--rule);margin:10px 0 9px"></div><div style="height:2px;background:var(--rule);margin-bottom:9px"></div><div style="height:2px;background:var(--rule);width:60%"></div>
+              </div>
+              <div style="position:absolute;left:16px;top:16px;width:100px;height:78px;border:1.5px dashed var(--tertiary);border-radius:3px;background:var(--surface);display:grid;place-items:center">
+                <span class="stamp" style="font-size:10px">ФОРК</span>
+              </div>
+            </div>
+            <div style="font-size:14px;line-height:1.45">Появится ваша копия в «Моей книге», черновиком. Оригинал не меняется. Копия будет называть родителя: <span class="mono" style="font-size:12.5px">steady_brave_heron</span>.</div>
+          </div>
+          <div class="lines" style="margin:0 0 6px;border-top-color:var(--rule)">
+            <div class="line" style="font-size:14px"><span>Ингредиенты, шаги, таймеры</span><span class="q" style="font-size:12.5px">копируются</span></div>
+            <div class="line" style="font-size:14px"><span>Фото, описание, заметки автора</span><span class="q" style="font-size:12.5px">нет</span></div>
+            <div class="line" style="font-size:14px"><span>Оценки и форки родителя</span><span class="q" style="font-size:12.5px">нет</span></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><span class="btn text">Отмена</span><span class="btn fill">Форкнуть</span></div>
+        </div>
+        <div class="gesture" style="z-index:3"></div>
+      </div>
+      <figcaption><b>ПОДТВЕРЖДЕНИЕ ФОРКА.</b> Нижний лист показывает, что произойдёт: оригинал остаётся, поверх ложится копия со штампом. Таблица «что копируется» — по FORK-002, машинописью.</figcaption>
+    </figure>
+
+    <!-- 6 My kitchen -->
+    <figure class="phone-wrap">
+      <div class="phone">
+        <div class="sb"><span>9:41</span><span class="cam"></span><span class="ic"><svg><use href="#i-sig"/></svg><svg><use href="#i-wifi"/></svg><svg><use href="#i-bat"/></svg></span></div>
+        <div class="bar"><span class="t">Моя кухня</span><span class="ib"><svg><use href="#i-search"/></svg></span></div>
+        <div class="body">
+          <p style="font-size:14px;color:var(--onSurfaceVariant);margin:4px 16px 10px">Отметьте, что у вас есть. На карточке рецепта будет видно, чего не хватает.</p>
+          <div class="sec-h"><span>Есть · 4</span></div>
+          <div style="border-top:1px solid var(--rule)">
+            <div class="ck-line" style="font-size:16px;min-height:52px"><span class="tbox"><svg><use href="#i-x"/></svg></span>Казан 8 л</div>
+            <div class="ck-line" style="font-size:16px;min-height:52px"><span class="tbox"><svg><use href="#i-x"/></svg></span>Сковорода чугунная</div>
+            <div class="ck-line" style="font-size:16px;min-height:52px"><span class="tbox"><svg><use href="#i-x"/></svg></span>Кастрюля 5 л</div>
+            <div class="ck-line" style="font-size:16px;min-height:52px"><span class="tbox"><svg><use href="#i-x"/></svg></span>Сито</div>
+          </div>
+          <div class="sec-h" style="padding-top:14px"><span>Нет</span></div>
+          <div style="border-top:1px solid var(--rule)">
+            <div class="ck-line" style="font-size:16px;min-height:52px"><span class="tbox"></span>Блендер погружной</div>
+            <div class="ck-line" style="font-size:16px;min-height:52px"><span class="tbox"></span>Мясорубка</div>
+          </div>
+          <div style="margin:16px 14px;border:1.5px solid var(--outline);border-radius:4px;padding:10px 12px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start">
+            <span class="stamp ink" style="font-size:10px">НЕТ У ВАС</span><span>так это выглядит на карточке: «Мясорубка» в списке оборудования пельменей</span>
+          </div>
+        </div>
+        <div class="navb">
+          <div><span class="pill"><svg><use href="#i-cat"/></svg></span>Каталог</div>
+          <div><span class="pill"><svg><use href="#i-book"/></svg></span>Моя книга</div>
+          <div class="on"><span class="pill"><svg><use href="#i-pot"/></svg></span>Моя кухня</div>
+        </div>
+        <div class="gesture"></div>
+      </div>
+      <figcaption><b>МОЯ КУХНЯ.</b> Опись, как инвентарная карточка: тот же квадрат с X, но без зачёркивания — это «есть», а не «сделано». Недостающее на рецепте помечается штампом «НЕТ У ВАС».</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<!-- 8. STORE -->
+<section id="store">
+  <h2><span class="num">08</span>Магазин</h2>
+  <h3>Обложка 1024 × 500</h3>
+  <svg class="banner" viewBox="0 0 1024 500" role="img" aria-label="Обложка для магазина">
+    <rect width="1024" height="500" fill="#FBF7EC"/>
+    <g stroke="#B9C8E3" stroke-width="2"><path d="M0 112H1024M0 160H1024M0 208H1024M0 256H1024M0 304H1024M0 352H1024M0 400H1024M0 448H1024"/></g>
+    <path d="M64 0V500" stroke="#A8322B" stroke-width="2.5"/>
+    <use href="#mk" x="100" y="70" width="104" height="104" style="color:#284B8F;--mk-copy:#A8322B"/>
+    <text x="104" y="236" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="44" fill="#1F2230">recipe<tspan fill="#A8322B">·</tspan>fork</text>
+    <text x="104" y="300" font-family="PT Sans, sans-serif" font-size="34" fill="#1F2230">Рецепт можно скопировать</text>
+    <text x="104" y="344" font-family="PT Sans, sans-serif" font-size="34" fill="#1F2230">и поменять под себя.</text>
+    <text x="104" y="398" font-family="IBM Plex Mono, monospace" font-size="18" fill="#4A4D5C">Без аккаунта · без рекламы · работает офлайн</text>
+    <!-- cards -->
+    <g transform="translate(600 60) rotate(-3)">
+      <rect x="18" y="18" width="330" height="210" rx="6" fill="#FBF7EC" stroke="#A8322B" stroke-width="2.5" stroke-dasharray="9 6"/>
+      <rect width="330" height="210" rx="6" fill="#FBF7EC" stroke="#1F2230" stroke-width="2.5"/>
+      <path d="M26 0V210" stroke="#A8322B" stroke-width="2"/>
+      <g stroke="#B9C8E3" stroke-width="1.5"><path d="M30 92H322M30 128H322M30 164H322"/></g>
+      <text x="40" y="44" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="14" fill="#A8322B" letter-spacing=".5">ФОРК · от quiet_amber_fox</text>
+      <rect x="33" y="25" width="242" height="26" rx="3" fill="none" stroke="#A8322B" stroke-width="2"/>
+      <text x="40" y="82" font-family="PT Sans, sans-serif" font-weight="700" font-size="24" fill="#1F2230">Сырники на рисовой муке</text>
+      <text x="40" y="120" font-family="PT Sans, sans-serif" font-size="18" fill="#1F2230">Творог 5 %</text><text x="318" y="120" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="17" fill="#1F2230">750 г</text>
+      <text x="40" y="156" font-family="PT Sans, sans-serif" font-size="18" fill="#1F2230">Мука рисовая</text><text x="318" y="156" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="17" fill="#1F2230">90 г</text>
+      <text x="40" y="192" font-family="PT Sans, sans-serif" font-size="18" fill="#1F2230">Яйцо</text><text x="318" y="192" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="17" fill="#1F2230">2 шт</text>
+    </g>
+    <g transform="translate(690 330) rotate(2)">
+      <rect width="300" height="120" rx="6" fill="#141A2B"/>
+      <text x="20" y="38" font-family="IBM Plex Mono, monospace" font-size="15" fill="#FF9C8A" letter-spacing="1">СЕЙЧАС · ШАГ 3 ИЗ 7</text>
+      <rect x="20" y="58" width="180" height="46" rx="5" fill="#A9C1F0"/>
+      <text x="40" y="90" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="24" fill="#102650">❚❚ 07:42</text>
+    </g>
+  </svg>
+
+  <h3>Скриншоты 1080 × 1920</h3>
+  <div class="shots">
+    <svg viewBox="0 0 1080 1920" role="img" aria-label="Скриншот: порции пересчитываются">
+      <rect width="1080" height="1920" fill="#FBF7EC"/>
+      <path d="M90 0V1920" stroke="#A8322B" stroke-width="5"/>
+      <text x="140" y="190" font-family="PT Sans, sans-serif" font-weight="700" font-size="84" fill="#1F2230">Количества</text>
+      <text x="140" y="290" font-family="PT Sans, sans-serif" font-weight="700" font-size="84" fill="#1F2230">пересчитываются</text>
+      <text x="140" y="370" font-family="IBM Plex Mono, monospace" font-size="40" fill="#4A4D5C">по порциям или от одного продукта</text>
+      <g transform="translate(150 470)">
+        <rect width="780" height="1500" rx="60" fill="#22252F"/>
+        <rect x="24" y="24" width="732" height="1452" rx="40" fill="#FBF7EC"/>
+        <text x="80" y="150" font-family="PT Sans, sans-serif" font-weight="700" font-size="46" fill="#1F2230">Сырники на рисовой муке</text>
+        <rect x="80" y="210" width="620" height="100" rx="8" fill="none" stroke="#1F2230" stroke-width="4"/>
+        <text x="130" y="278" font-family="IBM Plex Mono, monospace" font-size="54" font-weight="600" fill="#284B8F">−</text>
+        <text x="390" y="275" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="40" font-weight="600" fill="#1F2230">6 порций</text>
+        <text x="630" y="278" font-family="IBM Plex Mono, monospace" font-size="54" font-weight="600" fill="#284B8F">+</text>
+        <g font-family="PT Sans, sans-serif" font-size="40" fill="#1F2230">
+          <path d="M80 360H700M80 450H700M80 540H700M80 630H700M80 720H700" stroke="#B9C8E3" stroke-width="3"/>
+          <text x="80" y="420">Творог 5 %</text><text x="80" y="510">Мука рисовая</text><text x="80" y="600">Яйцо</text><text x="80" y="690">Сахар</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="38" fill="#1F2230" text-anchor="end">
+          <text x="700" y="420">≈ 750 г</text><text x="700" y="510">≈ 90 г</text><text x="700" y="600">≈ 2 шт</text><text x="700" y="690">≈ 2¼ ст. л.</text>
+        </g>
+        <g font-family="PT Sans, sans-serif" font-size="40" fill="#1F2230"><path d="M80 810H700M80 900H700" stroke="#B9C8E3" stroke-width="3"/><text x="80" y="780">Соль</text><text x="80" y="870">Масло для жарки</text></g>
+        <g font-family="IBM Plex Mono, monospace" font-size="38" fill="#1F2230" text-anchor="end"><text x="700" y="780">≈ ⅓ ч. л.</text><text x="700" y="870">по вкусу</text></g>
+        <rect x="98" y="988" width="602" height="210" rx="8" fill="#FBF7EC" stroke="#A8322B" stroke-width="4" stroke-dasharray="14 9"/>
+        <rect x="80" y="970" width="602" height="210" rx="8" fill="#FBF7EC" stroke="#1F2230" stroke-width="4"/>
+        <g transform="rotate(-2 110 1030)"><rect x="110" y="1000" width="470" height="56" rx="5" fill="none" stroke="#A8322B" stroke-width="4"/><text x="130" y="1040" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="30" fill="#A8322B">ФОРК · от quiet_amber_fox</text></g>
+        <text x="110" y="1110" font-family="PT Sans, sans-serif" font-size="30" fill="#1F2230">Форк рецепта <tspan fill="#284B8F" font-weight="700">«Сырники классические»</tspan></text>
+        <text x="110" y="1155" font-family="IBM Plex Mono, monospace" font-size="30" fill="#4A4D5C">от steady_brave_heron</text>
+        <rect x="390" y="1300" width="320" height="120" rx="10" fill="#284B8F"/>
+        <text x="550" y="1376" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="38" fill="#FFFFFF">Форкнуть</text>
+      </g>
+    </svg>
+    <svg viewBox="0 0 1080 1920" role="img" aria-label="Скриншот: готовка крупно">
+      <rect width="1080" height="1920" fill="#141A2B"/>
+      <text x="140" y="190" font-family="PT Sans, sans-serif" font-weight="700" font-size="84" fill="#F1EBDC">Шаг крупно,</text>
+      <text x="140" y="290" font-family="PT Sans, sans-serif" font-weight="700" font-size="84" fill="#F1EBDC">таймер под рукой</text>
+      <text x="140" y="370" font-family="IBM Plex Mono, monospace" font-size="40" fill="#C3C0B4">сделанное зачёркивается касанием</text>
+      <g transform="translate(150 470)">
+        <rect width="780" height="1500" rx="60" fill="#05070C"/>
+        <rect x="24" y="24" width="732" height="1452" rx="40" fill="#141A2B"/>
+        <g font-family="PT Sans, sans-serif" font-size="44" fill="#F1EBDC">
+          <rect x="80" y="130" width="64" height="64" rx="6" fill="none" stroke="#F1EBDC" stroke-width="5"/><path d="M94 144l36 36M130 144l-36 36" stroke="#F1EBDC" stroke-width="7"/>
+          <text x="180" y="178">Рис девзира</text><path d="M180 165H410" stroke="#F1EBDC" stroke-width="4"/>
+          <rect x="80" y="250" width="64" height="64" rx="6" fill="none" stroke="#F1EBDC" stroke-width="5"/>
+          <text x="180" y="298">Морковь</text>
+        </g>
+        <rect x="64" y="380" width="652" height="760" rx="12" fill="#1B2236" stroke="#F1EBDC" stroke-width="5"/>
+        <rect x="104" y="420" width="470" height="62" rx="6" fill="none" stroke="#FF9C8A" stroke-width="4"/>
+        <text x="124" y="464" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="32" fill="#FF9C8A" letter-spacing="2">СЕЙЧАС · ШАГ 3 ИЗ 7</text>
+        <g font-family="PT Sans, sans-serif" font-size="54" fill="#F1EBDC"><text x="104" y="580">Выложите морковь</text><text x="104" y="650">соломкой поверх мяса,</text><text x="104" y="720">не перемешивая.</text></g>
+        <rect x="104" y="800" width="572" height="130" rx="10" fill="#A9C1F0"/>
+        <text x="150" y="888" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="64" fill="#102650">❚❚ 07:42</text>
+        <rect x="104" y="960" width="572" height="130" rx="10" fill="none" stroke="#F1EBDC" stroke-width="5"/>
+        <text x="150" y="1048" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="64" fill="#F1EBDC">▶ 03:00</text>
+        <rect x="80" y="1200" width="64" height="64" rx="6" fill="none" stroke="#C3C0B4" stroke-width="5"/>
+        <text x="180" y="1248" font-family="PT Sans, sans-serif" font-size="44" fill="#C3C0B4">4. Всыпьте зиру и барбарис</text>
+        <path d="M64 1320H716" stroke="#39425C" stroke-width="3"/>
+        <rect x="80" y="1350" width="64" height="64" rx="6" fill="none" stroke="#C3C0B4" stroke-width="5"/>
+        <text x="180" y="1398" font-family="PT Sans, sans-serif" font-size="44" fill="#C3C0B4">5. Уложите рис ровным слоем</text>
+      </g>
+    </svg>
+    <div style="max-width:340px">
+      <p><b>Правила подписей.</b></p>
+      <p class="small">Заголовок — один факт, до 3 слов на строку, PT Sans Bold. Ниже — уточнение машинописью, одна строка. Без «бесплатно», без «лучший», без восклицательных знаков, без обещаний про сообщество — его в продукте нет. Фон — бумага или копирка, одна сцена на кадр, на каждом кадре виден хотя бы один элемент «штамп и копирка». Красное поле слева — только на светлых кадрах.</p>
+      <p class="small">Примеры фактов: «Количества пересчитываются», «Форк называет родителя», «Работает без аккаунта», «Шаг крупно, таймер под рукой», «Видно, чего нет на кухне».</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9. PROS / RISKS -->
+<section id="risks">
+  <h2><span class="num">09</span>Сильные стороны, риски, цена в Compose</h2>
+  <div class="grid3">
+    <div class="paper">
+      <h3 style="margin-top:0">Сильные стороны</h3>
+      <p class="small">Метафора форка объясняет себя без слова «git»: копия под копирку понятна любому, кто видел бланк. Моноширинные цифры дают ровный столбец количеств — прямая польза для пересчёта. Все смыслы (форк, сделано, текущий шаг, черновик) несут слова и формы, а не цвет. Тёмная тема — не инверсия, а свой материал. Палитра без фиолетового и без «приложенческой» радуги, поэтому не похожа на линейку Just.</p>
+    </div>
+    <div class="paper">
+      <h3 style="margin-top:0">Риски</h3>
+      <p class="small">Ностальгия может съехать в китч, если кто-то добавит текстуру бумаги, скрепки-картинки или рукописный шрифт — правила это запрещают, но соблазн останется. Машинопись в метках шире обычного шрифта: на 320 dp и при масштабе 200 % длинные штампы («ФОРК · от длинного_ника») придётся сокращать до «ФОРК». Красный штамп и бордовая ошибка — соседние оттенки; держатся различимыми за счёт формы. Повёрнутый на −2° штамп в Compose нужно рисовать аккуратно, чтобы он не обрезался.</p>
+    </div>
+    <div class="paper">
+      <h3 style="margin-top:0">Цена в Compose</h3>
+      <p class="small"><b>Шрифты в APK:</b> IBM Plex Mono 400/500/600 + PT Sans 400/700 (+ курсив) с кириллицей и латиницей — около 0,9–1,1 МБ в TTF; можно подключить через downloadable fonts, но для офлайн-режима лучше вшить. <b>Свои компоненты:</b> <code>Stamp</code> (текст + двойная рамка + rotate) — малый; <code>CopyEdge</code> модификатор (drawBehind со сдвигом и пунктиром) — малый; <code>ForkStack</code> — иконка + число; <code>TypedCheckRow</code> (X в квадрате, зачёркивание, semantics «сделано») — малый; вкладки-язычки — своя отрисовка индикатора над TabRow, средний. Остальное — штатные M3 с формами 3–6 dp и цветами из app_theme.xml.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

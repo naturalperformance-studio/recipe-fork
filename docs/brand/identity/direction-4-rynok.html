@@ -1,0 +1,627 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recipe Fork — направление 4: Рынок</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html{background:#F6EFE4}
+body{margin:0;font-family:Onest,"Golos Text",Manrope,system-ui,sans-serif;color:var(--on);background:var(--bg);font-size:16px;line-height:1.5}
+main{max-width:1320px;margin:0 auto;padding:56px 40px 80px}
+.num{font-variant-numeric:tabular-nums}
+code{font-family:ui-monospace,"JetBrains Mono",monospace;font-size:.86em;background:var(--c1);padding:1px 5px;border-radius:5px}
+h1{font-size:52px;line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:10px 0 18px}
+h2{font-size:34px;font-weight:800;letter-spacing:-.015em;margin:0 0 22px;display:flex;align-items:center;gap:14px}
+h2 span{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--pri);color:var(--onpri);font-size:20px}
+h3{font-size:22px;font-weight:700;margin:34px 0 14px}
+h4{font-size:17px;font-weight:700;margin:0 0 10px}
+section{padding:56px 0;border-top:2px solid var(--olv)}
+.small{font-size:13.5px;color:var(--onv);line-height:1.45}
+.cr{display:inline-block;font-size:12px;font-weight:600;padding:0 6px;border-radius:6px;background:var(--c2);color:var(--on);white-space:nowrap;font-variant-numeric:tabular-nums}
+.note{background:var(--c1);border-left:6px solid var(--sec);padding:16px 20px;border-radius:0 14px 14px 0;margin-top:26px;max-width:900px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1fr 420px;gap:48px;align-items:center;padding-bottom:40px}
+.kicker{font-weight:600;color:var(--pri);font-size:15px}
+.lead{font-size:18px;max-width:700px}
+.kw{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.kw span{background:var(--c2);padding:6px 14px;border-radius:999px;font-weight:600;font-size:14px}
+.refs,.forkline{font-size:15px;max-width:720px;color:var(--onv)}
+.forkline{color:var(--on);background:var(--sc);padding:12px 16px;border-radius:14px}
+
+/* logo */
+.logo-block{background:var(--bg);border:2px solid var(--olv);border-radius:24px;padding:32px}
+.lb-grid{display:grid;grid-template-columns:300px 1fr;gap:40px}
+.constr{position:relative}
+.cg-mark{position:absolute;left:0;top:0;width:288px;height:288px;opacity:.82}
+.cnote{font-size:13px;color:var(--onv);margin-top:10px}
+.wm{font-weight:800;letter-spacing:-.02em;font-size:56px;line-height:1;color:var(--on)}
+.wm.sm{font-size:26px;white-space:nowrap}
+.wm{white-space:nowrap}
+.wm.xs{font-size:14px}
+.lk-h{display:flex;align-items:center;gap:18px;padding:26px 30px;background:var(--c1);border-radius:20px}
+.lk-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+.lk{border-radius:20px}
+.lk-s,.lk-sym,.lk-dark,.lk-mono{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 10px;background:var(--c1);min-height:180px}
+.lk-mono{background:#fff;border:1px solid var(--olv)}
+.lk-cap{font-size:13px;color:var(--onv);margin-top:8px}
+.minsz{display:flex;gap:26px;align-items:flex-end;margin-top:22px;flex-wrap:wrap}
+.minsz>div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--onv)}
+.forbid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.fb{font-size:13px;color:var(--onv)}
+.fbx{position:relative;height:110px;display:grid;place-items:center;background:var(--c1);border-radius:16px;margin-bottom:8px;overflow:hidden}
+.fbx i{position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 1.5px),var(--err) calc(50% - 1.5px),var(--err) calc(50% + 1.5px),transparent calc(50% + 1.5px))}
+
+/* palette */
+.palette{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.sw{border-radius:18px;overflow:hidden;background:var(--c1)}
+.chip-c{height:110px;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;border-bottom:1px solid var(--olv)}
+.chip-c b{font-size:20px}
+.chip-c span{font-variant-numeric:tabular-nums;font-weight:600}
+.sw-t{padding:12px 16px 16px;font-size:13.5px}
+.sw-t .role{font-weight:700}
+.sw-t .use{color:var(--onv);margin:4px 0 8px}
+.rules{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.rules>div{background:var(--c1);padding:14px 18px;border-radius:16px;font-size:14.5px}
+table{border-collapse:collapse;width:100%}
+td,th{padding:6px 8px;text-align:left;border-bottom:1px solid var(--olv);font-size:13.5px;vertical-align:middle}
+th{font-size:12px;color:var(--onv);font-weight:600}
+.cats td.dk{background:var(--bg)}
+.toks{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.tok td{font-size:12.5px;padding:4px 6px}
+.tok code{font-size:11.5px;background:none;padding:0}
+.dot{display:inline-block;width:20px;height:20px;border-radius:6px;border:1px solid rgba(0,0,0,.15)}
+
+/* type */
+.type-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:40px}
+.sp-big{font-size:120px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.sp-cy{font-size:30px;font-weight:700;margin-top:10px}
+.sp-la{font-size:24px;font-weight:400;color:var(--onv)}
+.sp-txt{font-size:18px;margin-top:14px}
+.tnum-demo{display:flex;gap:30px;margin-top:18px}
+.tnum-demo>div{background:var(--c1);padding:12px 18px;border-radius:14px;text-align:right;font-size:26px;font-weight:700;line-height:1.25}
+.tnum-demo .lbl{display:block;font-size:12px;font-weight:600;color:var(--onv);text-align:left;margin-bottom:6px}
+.tnum-demo .pn{font-variant-numeric:proportional-nums}
+.spec-n p{font-size:15px}
+.scale td:first-child{width:250px}
+.scale td:nth-child(2){width:150px;color:var(--onv)}
+
+/* icon */
+.icon-block{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.ib{background:var(--c1);border-radius:22px;padding:24px;display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.ib.wide{grid-column:1/-1;flex-direction:column}
+.art512{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--onv)}
+.art512 .sq{width:256px;height:256px;display:grid;place-items:center;outline:1px dashed var(--ol);outline-offset:6px}
+.masks,.themed{display:flex;flex-direction:column;gap:14px}
+.themed{flex-direction:row}
+.masks>div,.themed>div{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--onv)}
+.icn{width:128px;height:128px;display:grid;place-items:center;flex:none}
+.masks .icn{width:110px;height:110px}
+.masks .icn svg{width:68px;height:68px}
+.themed>div{flex-direction:column}
+.adapt{display:flex;gap:16px;align-items:flex-start}
+.adapt .small{max-width:260px}
+.launch{display:flex;gap:30px;padding:22px 30px;border-radius:18px;justify-content:center}
+.li{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:#fff;width:64px;text-align:center;line-height:1.2}
+.launch[style*="E9DCE3"] .li{color:#3B2030}
+.lic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center}
+
+/* signature */
+.lead2{font-size:17px;max-width:860px}
+.sig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.sg{background:var(--bg);color:var(--on);border:2px solid var(--olv);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.sg.dk{border-color:var(--olv)}
+.sg-h{font-weight:700;font-size:15px}
+.anat{display:flex;gap:10px;align-items:center}
+.anat ul{margin:0;padding-left:16px;font-size:12.5px}
+.anat2{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--onv)}
+.phone-snip{background:var(--bg);border-radius:14px}
+.prov.big{font-size:15px}
+.fabs{display:flex;gap:14px;align-items:center}
+.catleg{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;font-size:12.5px}
+.cl{display:flex;align-items:center;gap:7px}
+.donedemo .st{padding:8px 0}
+.donedemo .sx{font-size:16px}
+.ing-demo .ing{padding:6px 0}
+
+/* phones */
+.phones{display:flex;flex-wrap:wrap;gap:36px 32px;justify-content:center}
+.phone-wrap{margin:0;width:384px;display:flex;flex-direction:column;align-items:center}
+.phone-wrap figcaption{font-size:13.5px;color:var(--onv);margin-top:12px;width:360px}
+.phone{width:384px;height:804px;border-radius:48px;background:#141114;padding:12px;box-shadow:0 18px 40px rgba(60,30,20,.18)}
+.scr{position:relative;width:360px;height:780px;border-radius:38px;overflow:hidden;background:var(--bg);color:var(--on);font-size:14px;line-height:20px}
+.sb{height:32px;display:flex;justify-content:space-between;align-items:center;padding:0 22px 0 26px;font-size:13px;font-weight:600}
+.sbi{display:flex;gap:4px}
+.si{width:14px;height:14px}
+.ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fi{flex:none}
+.gl{flex:none}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;gap:8px}
+.topbar .ttl{font-size:22px;font-weight:700;letter-spacing:-.01em;flex:1}
+.topbar .ttl.sm{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .act{display:flex;gap:4px;color:var(--onv)}
+.topbar .act .ic{width:48px;height:48px;padding:12px}
+.search{margin:2px 16px 10px;height:52px;border-radius:26px;background:var(--c2);display:flex;align-items:center;gap:12px;padding:0 18px;color:var(--onv);font-size:15px}
+.chips{display:flex;gap:8px;padding:0 16px 10px;overflow:hidden;white-space:nowrap}
+.chip{height:34px;border:1px solid var(--ol);border-radius:10px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px;color:var(--onv)}
+.chip.sel{background:var(--pc);color:var(--onpc);border-color:var(--pc)}
+.chip .ic{width:18px;height:18px}
+.list{padding:0 12px}
+.ce{display:flex;gap:12px;padding:10px 4px;border-bottom:1px solid var(--olv)}
+.ce:last-child{border-bottom:0}
+.thumb{width:76px;height:76px;flex:none;border-radius:18px;background:var(--c2);display:flex;align-items:center;justify-content:center;position:relative}
+.thumb .gl+.gl{margin-left:-12px;margin-top:22px}
+.thumb.sm{width:52px;height:52px;border-radius:14px}
+.cb{flex:1;min-width:0}
+.ct{font-weight:700;font-size:16px;line-height:21px}
+.ca{font-size:12.5px;color:var(--onv);line-height:17px}
+.par{display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--sec);font-weight:600;line-height:17px;--stem:var(--ol);--spr:var(--sec)}
+.cm{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:2px 6px;font-size:12.5px;color:var(--onv);margin-top:4px}
+.fcount{display:inline-flex;align-items:center;gap:3px;color:var(--sec);font-weight:600;--stem:var(--ol);--spr:var(--sec);white-space:nowrap}
+.fcount.none{color:var(--onv);font-weight:400}
+.ftag{display:inline-flex;align-items:center;gap:3px;border:1.5px solid var(--sec);color:var(--sec);border-radius:8px;padding:0 6px 0 3px;font-size:12px;font-weight:600;line-height:18px;--stem:var(--ol);--spr:var(--sec)}
+.stt{font-weight:600;color:var(--ter)}
+.nav{position:absolute;bottom:20px;left:0;right:0;height:72px;background:var(--c1);display:flex;justify-content:space-around;align-items:center}
+.ni{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--onv);width:80px}
+.ni .pill{width:60px;height:32px;border-radius:16px;display:grid;place-items:center}
+.ni.on{color:var(--on)}
+.ni.on .pill{background:var(--pc);color:var(--onpc)}
+.gest{position:absolute;bottom:0;left:0;right:0;height:20px;background:var(--c1);display:grid;place-items:center}
+.gest i{width:108px;height:4px;border-radius:2px;background:var(--on);opacity:.5}
+.gest.in{background:transparent}
+.fab{position:absolute;right:16px;bottom:40px;height:56px;border-radius:18px;background:var(--pri);color:var(--onpri);display:flex;align-items:center;gap:10px;padding:0 20px 0 16px;font-weight:700;font-size:15px;box-shadow:0 4px 10px rgba(80,20,10,.25)}
+.fab.sq{width:56px;padding:0;justify-content:center;bottom:112px}
+.fab.stat{position:static}
+.fab.ext{--stem:currentColor;--spr:currentColor}
+.fab.sq{--stem:currentColor;--spr:currentColor}
+.tabs{display:flex;border-bottom:1px solid var(--olv)}
+.tb{flex:1;text-align:center;height:48px;line-height:48px;font-weight:600;color:var(--onv);font-size:15px}
+.tb.on{color:var(--pri);box-shadow:inset 0 -3px 0 var(--pri)}
+.body{padding:12px 16px 90px}
+.rt{font-size:24px;line-height:30px;font-weight:800;letter-spacing:-.015em;margin:0 0 4px}
+.sum{font-size:13px;color:var(--onv)}
+.auth{font-size:13px;color:var(--onv)}
+.prov{display:flex;align-items:center;gap:6px;font-size:13px;line-height:18px;margin:8px 0 10px}
+.prov a{color:var(--sec);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.provg{flex:none}
+.scaler{display:flex;justify-content:space-between;align-items:center;background:var(--c1);border-radius:16px;padding:8px 8px 8px 14px}
+.sl{font-weight:700}
+.sh{font-size:12px;color:var(--onv);line-height:16px}
+.stp{display:flex;align-items:center;gap:6px}
+.stp b{font-size:22px;width:30px;text-align:center}
+.sbtn{width:48px;height:48px;border-radius:50%;background:var(--c2);display:grid;place-items:center}
+.sec-h{font-weight:700;font-size:15px;margin:12px 0 2px;display:flex;justify-content:space-between;align-items:baseline}
+.leg{font-size:11.5px;font-weight:400;color:var(--onv)}
+.dvs{border-bottom:1.5px dashed var(--onv)}
+.eq{font-size:14px;line-height:30px;display:flex;align-items:center;gap:6px}
+.eq.miss{color:var(--on)}
+.eq.miss .ic{color:var(--err)}
+.mt{color:var(--onv);font-size:12.5px}
+.ing{display:flex;align-items:center;gap:10px;height:34px;border-bottom:1px solid var(--olv)}
+.ing .in{flex:1}
+.ing .q{font-weight:700;font-size:15px}
+.ing .q.dv{border-bottom:1.5px dashed var(--onv);line-height:18px}
+.ing .u{color:var(--onv);font-size:13px;width:40px;white-space:nowrap}
+/* cooking */
+.ck{padding:8px 14px 40px}
+.fold{height:56px;display:flex;align-items:center;gap:12px;padding:0 10px;background:var(--c1);border-radius:16px;margin-bottom:8px;font-weight:600;font-size:15px}
+.fold span{flex:1}
+.fold .ic{color:var(--onv)}
+.st{display:flex;gap:12px;padding:12px 6px;align-items:flex-start;border-radius:16px}
+.st .mk{flex:none;margin-top:2px}
+.st>div{flex:1;min-width:0}
+.sn{font-size:12.5px;font-weight:600;color:var(--onv);line-height:16px}
+.sn.now{color:var(--pri);font-weight:700}
+.sx{font-size:16px;line-height:22px}
+.st.done .sx{text-decoration:line-through;color:var(--onv)}
+.st.cur{background:var(--c1);box-shadow:inset 5px 0 0 var(--pri);padding:14px 10px 14px 14px;margin:6px 0}
+.st.cur .sx{font-size:26px;line-height:34px;font-weight:600}
+.st.nxt .sx{color:var(--onv)}
+.tms{display:flex;gap:8px;margin-top:12px}
+.tm{height:56px;border-radius:18px;background:var(--c2);display:grid;grid-template-columns:26px 1fr;grid-template-rows:auto auto;column-gap:6px;align-content:center;padding:0 10px;flex:1;min-width:0}
+.tm .ic{grid-row:1/3;align-self:center}
+.tm.run{background:var(--pri);color:var(--onpri)}
+.tv{font-size:20px;font-weight:700;line-height:22px}
+.tl{font-size:11.5px;line-height:14px;opacity:.9}
+.tm .ic{width:26px;height:26px}
+/* sheet */
+.scrim{position:absolute;inset:0;background:rgba(30,15,10,.42)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:28px 28px 0 0;padding:10px 20px 34px}
+.handle{width:32px;height:4px;border-radius:2px;background:var(--ol);margin:0 auto 10px}
+.sh-ill{display:flex;justify-content:center}
+.svt{font-family:Onest,sans-serif;font-size:12px;fill:var(--onv)}
+.svt.b{fill:var(--sec);font-weight:700;font-size:13px}
+.sheet h4{font-size:21px;line-height:27px;font-weight:800;margin:6px 0 8px}
+.sheet p{font-size:14px;margin:0 0 10px}
+.carry{list-style:none;padding:0;margin:0 0 16px;font-size:13.5px}
+.carry li{display:flex;gap:8px;align-items:flex-start;padding:4px 0}
+.carry li .ic{color:var(--sec)}
+.carry li.no .ic{color:var(--onv)}
+.btns{display:flex;justify-content:flex-end;gap:10px}
+.tbtn,.fbtn{height:48px;border-radius:24px;display:inline-flex;align-items:center;padding:0 20px;font-weight:700}
+.tbtn{color:var(--pri)}
+.fbtn{background:var(--pri);color:var(--onpri);gap:8px;--stem:currentColor;--spr:currentColor}
+.gest.in{position:absolute}
+/* kitchen */
+.hint{margin:0 16px 8px;font-size:13.5px;color:var(--onv)}
+.kr{display:flex;align-items:center;gap:14px;height:56px;border-bottom:1px solid var(--olv);padding:0 6px;font-size:15px}
+.kr span:nth-child(2){flex:1}
+.cbx{width:24px;height:24px;border-radius:6px;border:2px solid var(--ol);display:grid;place-items:center}
+.cbx.on{background:var(--on);border-color:var(--on);color:var(--bg)}
+.cbx .ic{width:18px;height:18px;stroke-width:3}
+.kst{font-size:12.5px;color:var(--onv)}
+.bk .cm{justify-content:flex-start;gap:8px}
+/* store */
+.banner-wrap{border-radius:18px;overflow:hidden;border:1px solid var(--olv);width:1024px;max-width:100%}
+.banner{display:block;width:100%;height:auto}
+.bn-w{font-family:Onest,sans-serif;font-weight:800;font-size:58px;letter-spacing:-1.2px;fill:#2A211C}
+.bn-h{font-family:Onest,sans-serif;font-weight:800;font-size:40px;letter-spacing:-.8px;fill:#2A211C}
+.bn-s{font-family:Onest,sans-serif;font-weight:500;font-size:26px;fill:#5D5047}
+.shots{display:flex;gap:28px;margin:24px 0}
+.shots svg{border-radius:14px;box-shadow:0 10px 26px rgba(60,30,20,.16)}
+.sh-c{font-family:Onest,sans-serif;font-weight:800;font-size:78px;letter-spacing:-1.5px;fill:#fff}
+.sh-t{font-family:Onest,sans-serif;font-weight:800;font-size:60px;fill:#2A211C}
+.sh-b{font-family:Onest,sans-serif;font-weight:500;font-size:44px;fill:#2A211C}
+.sh-n{font-family:Onest,sans-serif;font-weight:800;font-size:60px;fill:#2A211C}
+.sh-n2{font-family:Onest,sans-serif;font-weight:700;font-size:44px;fill:#2A211C;font-variant-numeric:tabular-nums}
+.sh-btn{font-family:Onest,sans-serif;font-weight:700;font-size:44px;fill:#fff}
+/* strengths */
+.sr{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.sr>div{background:var(--c1);border-radius:18px;padding:18px 20px}
+.sr ul{padding-left:18px;margin:0;font-size:14.5px}
+.sr li{margin-bottom:6px}
+footer{font-size:13px;color:var(--onv);padding-top:30px;border-top:2px solid var(--olv)}
+@media (max-width:1180px){
+ .hero{grid-template-columns:1fr}
+ .lb-grid{grid-template-columns:1fr}
+ .palette,.sig-grid{grid-template-columns:repeat(2,1fr)}
+ .toks,.icon-block,.type-grid{grid-template-columns:1fr}
+ .forbid{grid-template-columns:repeat(3,1fr)}
+ .lk-row{grid-template-columns:repeat(2,1fr)}
+ .sr{grid-template-columns:1fr}
+}
+.prov.big .provg{width:51px;height:60px}
+</style></head><body style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="mark" viewBox="0 0 48 48">
+ <g fill="none" stroke="var(--mk-fork,#B8361F)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 43 V26"/>
+  <path d="M12 7 V17.5 C12 22.5 15.5 26 20 26 C24.5 26 28 22.5 28 17.5 V7"/>
+  <path d="M20 26 V7"/>
+  <path d="M20 36.5 C20 31 26 30.5 32.5 28"/>
+ </g>
+ <path d="M31 28.8 C32.5 22.2 37 19 43.5 19.5 C42.5 26 38 29.6 31 28.8Z" fill="var(--mk-leaf,#3A6F33)"/>
+</symbol>
+<symbol id="sprout" viewBox="0 0 24 24">
+ <path d="M8 21.5 V3" fill="none" stroke="var(--stem,currentColor)" stroke-width="2.4" stroke-linecap="round"/>
+ <path d="M8 16 C8 12 10.5 10.8 14 9.8" fill="none" stroke="var(--spr,currentColor)" stroke-width="2.4" stroke-linecap="round"/>
+ <path d="M12.6 10.8 C12.8 5.4 16.2 2.4 22 2.4 C21.8 8 18.2 11.2 12.6 10.8Z" fill="var(--spr,currentColor)"/>
+</symbol>
+<symbol id="sprouts" viewBox="0 0 24 24">
+ <path d="M7 21.5 V3" fill="none" stroke="var(--stem,currentColor)" stroke-width="2.4" stroke-linecap="round"/>
+ <path d="M7 17.5 C7 14.5 9 13.6 12 13" fill="none" stroke="var(--spr,currentColor)" stroke-width="2.2" stroke-linecap="round"/>
+ <path d="M11.3 13.4 C11.8 10.2 14 8.4 17.5 8.4 C17.1 11.8 14.8 13.7 11.3 13.4Z" fill="var(--spr,currentColor)"/>
+ <path d="M7 10 C7 7.5 9 6.6 12.5 6" fill="none" stroke="var(--spr,currentColor)" stroke-width="2.2" stroke-linecap="round"/>
+ <path d="M11.8 6.4 C12.3 3.2 14.6 1.5 18.4 1.5 C18 5 15.6 6.8 11.8 6.4Z" fill="var(--spr,currentColor)"/>
+</symbol>
+<symbol id="g-tomato" viewBox="0 0 24 24">
+ <circle cx="12" cy="13.6" r="8.6" fill="var(--p-tomato)"/>
+ <polygon points="12.00,1.80 13.00,5.02 16.37,4.98 13.62,6.93 14.70,10.12 12.00,8.10 9.30,10.12 10.38,6.93 7.63,4.98 11.00,5.02" fill="var(--p-herb)"/>
+</symbol>
+<symbol id="g-lemon" viewBox="0 0 24 24">
+ <g transform="rotate(-24 12 12)">
+  <path d="M1.6 12 C3.6 7.4 7.6 5.4 12 5.4 C16.4 5.4 20.4 7.4 22.4 12 C20.4 16.6 16.4 18.6 12 18.6 C7.6 18.6 3.6 16.6 1.6 12Z" fill="var(--p-lemon)" stroke="var(--p-lemonink)" stroke-width="1.3" stroke-linejoin="round"/>
+ </g>
+</symbol>
+<symbol id="g-beet" viewBox="0 0 24 24">
+ <path d="M12 9 C10 6 8 4.5 5.5 4.5 C6 7 8.5 8.8 11.4 9.2Z" fill="var(--p-herb)"/>
+ <path d="M12 9 C14 6 16 4.5 18.5 4.5 C18 7 15.5 8.8 12.6 9.2Z" fill="var(--p-herb)"/>
+ <circle cx="12" cy="14.6" r="6.6" fill="var(--p-beet)"/>
+ <path d="M12 20.6 L12.6 23.2" stroke="var(--p-beet)" stroke-width="2" stroke-linecap="round"/>
+</symbol>
+<symbol id="g-leaf" viewBox="0 0 24 24">
+ <path d="M4 20.5 C4 10.5 10.5 3.6 20.5 3.6 C20.5 13.6 13.6 20.5 4 20.5Z" fill="var(--p-herb)"/>
+ <path d="M5.6 18.9 L15.6 8.9" stroke="var(--bg,#fff)" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>
+</symbol>
+<symbol id="g-egg" viewBox="0 0 24 24">
+ <path d="M12 2.8 C16.6 2.8 19.4 10 19.4 14.2 C19.4 18.6 16.2 21.4 12 21.4 C7.8 21.4 4.6 18.6 4.6 14.2 C4.6 10 7.4 2.8 12 2.8Z" fill="var(--p-egg)" stroke="var(--p-eggink)" stroke-width="1.4"/>
+</symbol>
+<symbol id="g-onion" viewBox="0 0 24 24">
+ <path d="M12 2.6 C12.4 5.8 14 7.6 16.4 9.4 C18.6 11 19.6 13.2 19.6 15.4 C19.6 19.4 16.4 21.6 12 21.6 C7.6 21.6 4.4 19.4 4.4 15.4 C4.4 13.2 5.4 11 7.6 9.4 C10 7.6 11.6 5.8 12 2.6Z" fill="var(--p-aub)"/>
+ <path d="M9.4 11.2 C8 13.4 8 17.6 9.8 20.4 M14.6 11.2 C16 13.4 16 17.6 14.2 20.4" fill="none" stroke="var(--bg,#fff)" stroke-width="1.2" stroke-linecap="round" opacity=".6"/>
+</symbol>
+<symbol id="g-meat" viewBox="0 0 24 24">
+ <path d="M4.5 9.5 C5.5 5 11 3.4 15.6 4.6 C20.2 5.8 21.4 10.4 20 14.4 C18.4 19 13 21 8.6 19.4 C4.6 18 3.6 13.4 4.5 9.5Z" fill="var(--p-neutral)"/>
+ <circle cx="15" cy="10" r="2.6" fill="var(--bg,#fff)"/>
+</symbol>
+<symbol id="g-grain" viewBox="0 0 24 24">
+ <path d="M12 22 V6" stroke="var(--p-grain)" stroke-width="1.8" stroke-linecap="round"/>
+ <ellipse cx="12" cy="4.6" rx="2" ry="3" fill="var(--p-grain)"/>
+ <g fill="var(--p-grain)">
+  <ellipse cx="8.6" cy="9.6" rx="1.9" ry="3" transform="rotate(-35 8.6 9.6)"/>
+  <ellipse cx="15.4" cy="9.6" rx="1.9" ry="3" transform="rotate(35 15.4 9.6)"/>
+  <ellipse cx="8.6" cy="15" rx="1.9" ry="3" transform="rotate(-35 8.6 15)"/>
+  <ellipse cx="15.4" cy="15" rx="1.9" ry="3" transform="rotate(35 15.4 15)"/>
+ </g>
+</symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none"/><path d="M15.5 15.5 L20.5 20.5" fill="none"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5 M11 6 L5 12 L11 18" fill="none"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20 H8 L19 9 L15 5 L4 16Z M13 7 L17 11" fill="none"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></g></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><g fill="none"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></g></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M5 18 V6 A3 3 0 0 1 8 3 H19 V17 H8 A3 3 0 0 0 5 20 A3 3 0 0 0 8 21 H19" fill="none"/></symbol>
+<symbol id="i-pot" viewBox="0 0 24 24"><path d="M4 10 H20 V16 A4 4 0 0 1 16 20 H8 A4 4 0 0 1 4 16Z M2 10 H22 M9 5.5 V7.5 M15 5.5 V7.5" fill="none"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7 H13 M18 7 H20 M4 17 H6 M11 17 H20" fill="none"/><circle cx="15.5" cy="7" r="2.3" fill="none"/><circle cx="8.5" cy="17" r="2.3" fill="none"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5 V19 M5 12 H19" fill="none"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12 H19" fill="none"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5 V18.5 L18.5 12Z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><rect x="6.5" y="5.5" width="4" height="13" rx="1"/><rect x="13.5" y="5.5" width="4" height="13" rx="1"/></g></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5" fill="none"/><path d="M12 13.5 V9.5 M9.5 2.8 H14.5" fill="none"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 L9.5 17 L19 7.5" fill="none"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9 L12 15 L18 9" fill="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 L21.5 20 H2.5Z M12 10 V14 M12 17 V17.2" fill="none"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6 L18 18 M18 6 L6 18" fill="none"/></symbol>
+<symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7 H20 M7 12 H17 M10 17 H14" fill="none"/></symbol>
+<symbol id="done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="var(--sec)" stroke="none"/><path d="M6.8 12.4 L10.4 16 L17.4 8.8" fill="none" stroke="var(--onsec)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="undone" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.8" fill="none" stroke="var(--ol)" stroke-width="2"/></symbol>
+<symbol id="st-signal" viewBox="0 0 24 24"><path d="M3 20 H20 V3Z" fill="currentColor"/></symbol>
+<symbol id="st-wifi" viewBox="0 0 24 24"><path d="M12 20 L1.5 8.5 A15 15 0 0 1 22.5 8.5Z" fill="currentColor"/></symbol>
+<symbol id="st-bat" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2" fill="currentColor"/><rect x="10" y="1.5" width="4" height="2" fill="currentColor"/></symbol>
+</defs></svg>
+
+<main>
+<header class="hero">
+<div class="hero-l">
+<div class="kicker">Фирменный стиль · направление 4 из 5</div>
+<h1>Recipe Fork — направление 4: Рынок</h1>
+<p class="lead">Крытый рынок в субботу утром: помидоры горкой, лимоны, свёкла с ботвой, пучки зелени. Всё плоское,
+собранное из кругов и листьев, тёплое и щедрое, но без мультяшности — как хорошая вывеска овощной лавки или упаковка
+современного магазина продуктов. Цвета продуктов работают как метки категорий, а интерфейс остаётся спокойным:
+тёплый молочный фон, крупный жирный шрифт, один главный цвет — томатный.</p>
+<div class="kw"><span>тёплый</span><span>аппетитный</span><span>щедрый</span><span>плоская геометрия</span><span>взрослый</span><span>рыночный</span></div>
+<p class="refs"><b>Опоры:</b> вывески и ценники крытых рынков (Даниловский в Москве, Бокерия в Барселоне); упаковка
+современных магазинов овощей и бакалеи; майолика и азулежу — цвет плоскими кусками; плоские геометрические плакаты
+середины XX века, где фрукт собран из круга и листа.</p>
+<p class="forkline"><b>Как здесь показан форк:</b> вилка, у которой из черенка вырос побег. Рецепт-родитель — стебель,
+форк — росток, который отходит от него и живёт сам; это видно на знаке, в каталоге, в строке происхождения и на кнопке.</p>
+</div>
+<div class="hero-r">
+<svg width="420" height="360" viewBox="0 0 420 360" aria-hidden="true" style="--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-grain:#B08419;--p-neutral:#7A6A5E;--bg:#ECE3D6">
+<rect x="0" y="0" width="420" height="360" rx="28" fill="#ECE3D6"/>
+<use href="#g-tomato" x="24" y="30" width="120" height="120"/>
+<use href="#g-lemon" x="150" y="20" width="110" height="110"/>
+<use href="#g-beet" x="275" y="30" width="120" height="120"/>
+<use href="#g-leaf" x="30" y="190" width="100" height="100"/>
+<g transform="translate(150 150)"><svg width="140" height="140" style="--mk-fork:#B8361F;--mk-leaf:#3A6F33"><use href="#mark"/></svg></g>
+<use href="#g-egg" x="300" y="180" width="90" height="90"/>
+<use href="#g-onion" x="60" y="285" width="66" height="66"/>
+<use href="#g-grain" x="300" y="280" width="66" height="66"/>
+</svg>
+</div>
+</header>
+<section><h2><span>2</span>Знак и логотип</h2>
+<div class="logo-block">
+<div class="lb-grid">
+ <div class="constr">
+  <svg width="288" height="288" viewBox="0 0 288 288" class="cg"><g stroke="#DACDBD" stroke-width="1"><line x1="0" y1="0" x2="0" y2="288" /><line x1="12" y1="0" x2="12" y2="288" /><line x1="24" y1="0" x2="24" y2="288" /><line x1="36" y1="0" x2="36" y2="288" /><line x1="48" y1="0" x2="48" y2="288" /><line x1="60" y1="0" x2="60" y2="288" /><line x1="72" y1="0" x2="72" y2="288" /><line x1="84" y1="0" x2="84" y2="288" /><line x1="96" y1="0" x2="96" y2="288" /><line x1="108" y1="0" x2="108" y2="288" /><line x1="120" y1="0" x2="120" y2="288" /><line x1="132" y1="0" x2="132" y2="288" /><line x1="144" y1="0" x2="144" y2="288" /><line x1="156" y1="0" x2="156" y2="288" /><line x1="168" y1="0" x2="168" y2="288" /><line x1="180" y1="0" x2="180" y2="288" /><line x1="192" y1="0" x2="192" y2="288" /><line x1="204" y1="0" x2="204" y2="288" /><line x1="216" y1="0" x2="216" y2="288" /><line x1="228" y1="0" x2="228" y2="288" /><line x1="240" y1="0" x2="240" y2="288" /><line x1="252" y1="0" x2="252" y2="288" /><line x1="264" y1="0" x2="264" y2="288" /><line x1="276" y1="0" x2="276" y2="288" /><line x1="288" y1="0" x2="288" y2="288" /><line x1="0" y1="0" x2="288" y2="0" /><line x1="0" y1="12" x2="288" y2="12" /><line x1="0" y1="24" x2="288" y2="24" /><line x1="0" y1="36" x2="288" y2="36" /><line x1="0" y1="48" x2="288" y2="48" /><line x1="0" y1="60" x2="288" y2="60" /><line x1="0" y1="72" x2="288" y2="72" /><line x1="0" y1="84" x2="288" y2="84" /><line x1="0" y1="96" x2="288" y2="96" /><line x1="0" y1="108" x2="288" y2="108" /><line x1="0" y1="120" x2="288" y2="120" /><line x1="0" y1="132" x2="288" y2="132" /><line x1="0" y1="144" x2="288" y2="144" /><line x1="0" y1="156" x2="288" y2="156" /><line x1="0" y1="168" x2="288" y2="168" /><line x1="0" y1="180" x2="288" y2="180" /><line x1="0" y1="192" x2="288" y2="192" /><line x1="0" y1="204" x2="288" y2="204" /><line x1="0" y1="216" x2="288" y2="216" /><line x1="0" y1="228" x2="288" y2="228" /><line x1="0" y1="240" x2="288" y2="240" /><line x1="0" y1="252" x2="288" y2="252" /><line x1="0" y1="264" x2="288" y2="264" /><line x1="0" y1="276" x2="288" y2="276" /><line x1="0" y1="288" x2="288" y2="288" /></g>
+   <rect x="24" y="24" width="240" height="240" fill="none" stroke="#887A6E" stroke-dasharray="4 4"/>
+   <line x1="120" y1="0" x2="120" y2="288" stroke="#6A3A6E" stroke-width="1"/>
+   <circle cx="120" cy="105" r="48" fill="none" stroke="#6A3A6E" stroke-dasharray="3 3"/>
+   <circle cx="225" cy="141" r="36" fill="none" stroke="#6A3A6E" stroke-dasharray="3 3"/>
+  </svg>
+  <div class="cg-mark"><svg width="288" height="288" style="" role="img" aria-label="знак"><use href="#mark"/></svg></div>
+  <div class="cnote">Сетка 48 × 48, поле 4. Штрих — 5 единиц, концы круглые. Зубцы на 12/20/28,
+  черенок на оси 20. Побег отходит от черенка на высоте 36,5 и заканчивается листом, вписанным в круг Ø 12.
+  Знак строится из трёх штрихов и одного листа — так же, как продуктовые иллюстрации.</div>
+ </div>
+ <div class="lockups">
+  <div class="lk lk-h"><svg width="96" height="96" style="" role="img" aria-label="знак"><use href="#mark"/></svg><span class="wm">Recipe Fork</span></div>
+  <div class="lk-row">
+   <div class="lk lk-s"><svg width="84" height="84" style="" role="img" aria-label="знак"><use href="#mark"/></svg><span class="wm sm">Recipe Fork</span></div>
+   <div class="lk lk-sym"><svg width="96" height="96" style="" role="img" aria-label="знак"><use href="#mark"/></svg></div>
+   <div class="lk lk-dark" style="background:#1B151C"><svg width="72" height="72" style="--mk-fork:#FFB4A1;--mk-leaf:#A5D695;" role="img" aria-label="знак"><use href="#mark"/></svg><span class="wm sm" style="color:#F2E9EE">Recipe Fork</span></div>
+   <div class="lk lk-mono"><svg width="72" height="72" style="--mk-fork:#2A211C;--mk-leaf:#2A211C;" role="img" aria-label="знак"><use href="#mark"/></svg><span class="wm sm">Recipe Fork</span></div>
+  </div>
+  <div class="lk-cap">Горизонтальный · вертикальный · только знак · на тёмном · одноцветный</div>
+  <div class="minsz">
+   <div><svg width="48" height="48" style="" role="img" aria-label="знак"><use href="#mark"/></svg><span>48 dp</span></div><div><svg width="32" height="32" style="" role="img" aria-label="знак"><use href="#mark"/></svg><span>32 dp</span></div><div><svg width="24" height="24" style="" role="img" aria-label="знак"><use href="#mark"/></svg><span>24 dp — минимум в цвете</span></div>
+   <div><svg width="16" height="16" style="--mk-fork:#2A211C;--mk-leaf:#2A211C;" role="img" aria-label="знак"><use href="#mark"/></svg><span>16 dp — только одноцветный</span></div>
+   <div><span class="wm xs">Recipe Fork</span><span>надпись не мельче 14 sp</span></div>
+  </div>
+ </div>
+</div>
+</div>
+<h3>Нельзя</h3><div class="forbid"><div class="fb"><div class="fbx"><svg width="64" height="64" style="--mk-fork:#B8361F;--mk-leaf:#F2C230;" role="img" aria-label="знак"><use href="#mark"/></svg><i></i></div><div>Лист другого цвета, кроме зелёного или цвета знака</div></div><div class="fb"><div class="fbx"><svg width="64" height="64" style="--mk-fork:#B8361F;--mk-leaf:#3A6F33;transform:scaleX(-1)" role="img" aria-label="знак"><use href="#mark"/></svg><i></i></div><div>Побег на другой стороне или на зубце</div></div><div class="fb"><div class="fbx"><svg width="64" height="64" style="--mk-fork:#B8361F;--mk-leaf:#3A6F33;transform:rotate(-25deg)" role="img" aria-label="знак"><use href="#mark"/></svg><i></i></div><div>Повороты и наклоны</div></div><div class="fb"><div class="fbx"><svg width="64" height="64" style="--mk-fork:#B8361F;--mk-leaf:#3A6F33;transform:scaleX(1.5)" role="img" aria-label="знак"><use href="#mark"/></svg><i></i></div><div>Растягивание</div></div><div class="fb"><div class="fbx"><span style="display:inline-grid;place-items:center;width:64px;height:64px;border-radius:16px;background:#8E2350"><svg width="46" height="46" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883;" role="img" aria-label="знак"><use href="#mark"/></svg></span><i></i></div><div>Плашка из второго продуктового цвета</div></div></div>
+<div class="note"><b>Если название сменится.</b> В знаке нет букв: вилка с побегом остаётся при любом имени. Надпись — это
+просто новое имя, набранное Onest ExtraBold с трекингом −2 % в цвете onSurface; знак стоит слева на высоте 1,6 прописной
+и отбит на ширину одного зубца. Перерисовывать нужно только надпись, иконка и все экраны остаются как есть.
+Если новое имя не про вилку, побег всё равно читается: рецепт, от которого растёт новый.</div>
+</section>
+<section><h2><span>3</span>Палитра</h2>
+<div class="palette"><div class="sw"><div class="chip-c" style="background:#B8361F;color:#fff"><b>Томат</b><span>#B8361F</span></div><div class="sw-t"><div class="role">primary · главный цвет</div><div class="use">Главная кнопка, FAB «Форкнуть», выбранная вкладка, текущий шаг в Готовке, ссылки действий.</div>белый на нём <span class="cr">5,86:1 AA</span> · на фоне <span class="cr">5,44:1 AA</span></div></div><div class="sw"><div class="chip-c" style="background:#3A6F33;color:#fff"><b>Зелень</b><span>#3A6F33</span></div><div class="sw-t"><div class="role">secondary · росток</div><div class="use">Только форки и «готово»: метка форка, счётчик форков, строка происхождения, заполненная галочка.</div>на фоне <span class="cr">5,57:1 AA</span></div></div><div class="sw"><div class="chip-c" style="background:#6A3A6E;color:#fff"><b>Баклажан</b><span>#6A3A6E</span></div><div class="sw-t"><div class="role">tertiary · служебный</div><div class="use">Статусы в Моей книге (черновик, отправлен), подсказки, выделение поиска.</div>на фоне <span class="cr">7,99:1 AA</span></div></div><div class="sw"><div class="chip-c" style="background:#F2C230;color:#2A211C"><b>Лимон</b><span>#F2C230</span></div><div class="sw-t"><div class="role">только иллюстрация</div><div class="use">Фрукты в иллюстрациях и метках категорий; всегда с обводкой #8A6400, никогда не текст.</div>обводка на фоне <span class="cr">5,00:1 ≥3:1</span></div></div><div class="sw"><div class="chip-c" style="background:#8E2350;color:#fff"><b>Свёкла</b><span>#8E2350</span></div><div class="sw-t"><div class="role">только иллюстрация</div><div class="use">Корнеплоды в метках категорий и иллюстрациях.</div>на фоне <span class="cr">7,79:1 ≥3:1</span></div></div><div class="sw"><div class="chip-c" style="background:#FBF6EE;color:#2A211C"><b>Молоко</b><span>#FBF6EE</span></div><div class="sw-t"><div class="role">surface · фон</div><div class="use">Фон всех экранов в светлой теме. Чистый белый не используется.</div>текст на нём <span class="cr">14,65:1 AA</span></div></div><div class="sw"><div class="chip-c" style="background:#1B151C;color:#F2E9EE"><b>Ночь</b><span>#1B151C</span></div><div class="sw-t"><div class="role">surface тёмной темы</div><div class="use">Фон тёмной темы: баклажан почти до черноты, а не нейтральный серый.</div>текст на нём <span class="cr">15,09:1 AA</span></div></div><div class="sw"><div class="chip-c" style="background:#A0153E;color:#fff"><b>Свёкла-ошибка</b><span>#A0153E</span></div><div class="sw-t"><div class="role">error</div><div class="use">Ошибки и удаление. Всегда со значком треугольника и текстом: от томата отличается и формой.</div>на фоне <span class="cr">7,31:1 AA</span></div></div></div>
+<h3>Где какой цвет</h3>
+<div class="rules">
+<div><b>Один главный — томат.</b> Им окрашено не больше одного действия на экране: FAB или главная кнопка, выбранная вкладка, текущий шаг. Всё остальное — молочный фон и тёплый тёмный текст.</div>
+<div><b>Зелень значит «выросло».</b> Метка форка, счётчик форков, строка «Форк рецепта … от …», побег на кнопке и заполненная галочка «готово». Других зелёных элементов нет: ни зелёных кнопок, ни зелёных заголовков.</div>
+<div><b>Продуктовые цвета — только метки.</b> Лимон, свёкла, баклажан, яйцо и колос живут в значках категорий 20–28 dp и в иллюстрациях. Ими не красят фоны карточек, кнопки и текст. На одном экране — не больше 4 разных продуктовых значков подряд, обычно 1–2.</div>
+<div><b>Цвет не работает один.</b> Каждая категория — своя форма; форк — побег плюс слово «форк»; «готово» — заполненная галочка, зачёркивание и подпись «готово»; ошибка — треугольник и текст; пересчитанное количество — пунктир под числом.</div>
+<div><b>Готовка.</b> В тёмной теме фон баклажановый, текст светлый, продуктовые цвета только в точках-значках. Текущий шаг — томатная полоса слева и надпись «Сейчас». Сделанное — зелёная заполненная галочка, текст зачёркнут и приглушён до onSurfaceVariant.</div>
+</div>
+<h3>Категории ингредиентов: форма + цвет</h3>
+<table class="cats"><thead><tr><th>светлая</th><th>тёмная</th><th>семейство</th><th>форма</th><th>значок на фоне, светлая</th><th>тёмная</th></tr></thead><tbody><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-tomato"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-tomato"/></svg></td><td><b>Овощи</b></td><td>круг + звёздочка</td><td><span class="cr">4,26:1 ≥3:1</span></td><td><span class="cr">7,78:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-beet"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-beet"/></svg></td><td><b>Корнеплоды</b></td><td>круг + хвостик + ботва</td><td><span class="cr">7,79:1 ≥3:1</span></td><td><span class="cr">6,39:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-leaf"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-leaf"/></svg></td><td><b>Зелень и травы</b></td><td>лист</td><td><span class="cr">3,24:1 ≥3:1</span></td><td><span class="cr">9,40:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-lemon"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-lemon"/></svg></td><td><b>Фрукты и ягоды</b></td><td>овал с носиками</td><td><span class="cr">5,00:1 ≥3:1</span></td><td><span class="cr">11,89:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-onion"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-onion"/></svg></td><td><b>Лук, чеснок, специи</b></td><td>капля</td><td><span class="cr">9,76:1 ≥3:1</span></td><td><span class="cr">7,71:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-egg"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-egg"/></svg></td><td><b>Яйца и молочное</b></td><td>яйцо с обводкой</td><td><span class="cr">3,68:1 ≥3:1</span></td><td><span class="cr">14,68:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-meat"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-meat"/></svg></td><td><b>Мясо и рыба</b></td><td>кусок с косточкой</td><td><span class="cr">4,82:1 ≥3:1</span></td><td><span class="cr">7,71:1 ≥3:1</span></td></tr><tr><td><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-grain"/></svg></td><td class="dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-grain"/></svg></td><td><b>Крупы, мука, бакалея</b></td><td>колос</td><td><span class="cr">3,17:1 ≥3:1</span></td><td><span class="cr">9,35:1 ≥3:1</span></td></tr></tbody></table>
+<p class="small">Нетекстовые элементы мерятся против 3:1 (лимон и яйцо — по обводке). Значок всегда стоит рядом с названием ингредиента, поэтому категория — дополнительная подсказка, а не единственный носитель смысла.</p>
+<h3>Токены для <code>app_theme.xml</code></h3>
+<div class="toks"><div><h4>Светлая — <code>theme_light_*</code></h4><table class="tok"><thead><tr><th></th><th>ресурс</th><th>значение</th><th>контраст (WCAG, посчитано)</th></tr></thead><tbody><tr><td><span class="dot" style="background:#B8361F"></span></td><td><code>theme_light_primary</code></td><td><code>#FFB8361F</code></td><td>текст на surface <span class="cr">5,44:1 AA</span> · onPrimary на нём <span class="cr">5,86:1 AA</span></td></tr><tr><td><span class="dot" style="background:#FFFFFF"></span></td><td><code>theme_light_onPrimary</code></td><td><code>#FFFFFFFF</code></td><td></td></tr><tr><td><span class="dot" style="background:#FFDBD0"></span></td><td><code>theme_light_primaryContainer</code></td><td><code>#FFFFDBD0</code></td><td>onPrimaryContainer на нём <span class="cr">11,91:1 AA</span></td></tr><tr><td><span class="dot" style="background:#4A1006"></span></td><td><code>theme_light_onPrimaryContainer</code></td><td><code>#FF4A1006</code></td><td></td></tr><tr><td><span class="dot" style="background:#3A6F33"></span></td><td><code>theme_light_secondary</code></td><td><code>#FF3A6F33</code></td><td>текст на surface <span class="cr">5,57:1 AA</span> · onSecondary на нём <span class="cr">6,00:1 AA</span></td></tr><tr><td><span class="dot" style="background:#FFFFFF"></span></td><td><code>theme_light_onSecondary</code></td><td><code>#FFFFFFFF</code></td><td></td></tr><tr><td><span class="dot" style="background:#D3EBC6"></span></td><td><code>theme_light_secondaryContainer</code></td><td><code>#FFD3EBC6</code></td><td>onSecondaryContainer на нём <span class="cr">10,10:1 AA</span></td></tr><tr><td><span class="dot" style="background:#0F3A0C"></span></td><td><code>theme_light_onSecondaryContainer</code></td><td><code>#FF0F3A0C</code></td><td></td></tr><tr><td><span class="dot" style="background:#6A3A6E"></span></td><td><code>theme_light_tertiary</code></td><td><code>#FF6A3A6E</code></td><td>текст на surface <span class="cr">7,99:1 AA</span> · onTertiary на нём <span class="cr">8,60:1 AA</span></td></tr><tr><td><span class="dot" style="background:#FFFFFF"></span></td><td><code>theme_light_onTertiary</code></td><td><code>#FFFFFFFF</code></td><td></td></tr><tr><td><span class="dot" style="background:#F3DDF1"></span></td><td><code>theme_light_tertiaryContainer</code></td><td><code>#FFF3DDF1</code></td><td>onTertiaryContainer на нём <span class="cr">13,60:1 AA</span></td></tr><tr><td><span class="dot" style="background:#2E0A33"></span></td><td><code>theme_light_onTertiaryContainer</code></td><td><code>#FF2E0A33</code></td><td></td></tr><tr><td><span class="dot" style="background:#FBF6EE"></span></td><td><code>theme_light_surface</code></td><td><code>#FFFBF6EE</code></td><td></td></tr><tr><td><span class="dot" style="background:#F3ECE1"></span></td><td><code>theme_light_surfaceContainer</code></td><td><code>#FFF3ECE1</code></td><td></td></tr><tr><td><span class="dot" style="background:#ECE3D6"></span></td><td><code>theme_light_surfaceContainerHigh</code></td><td><code>#FFECE3D6</code></td><td></td></tr><tr><td><span class="dot" style="background:#2A211C"></span></td><td><code>theme_light_onSurface</code></td><td><code>#FF2A211C</code></td><td>на surface <span class="cr">14,65:1 AA</span> · на surfaceContainerHigh <span class="cr">12,40:1 AA</span></td></tr><tr><td><span class="dot" style="background:#5D5047"></span></td><td><code>theme_light_onSurfaceVariant</code></td><td><code>#FF5D5047</code></td><td>на surface <span class="cr">7,22:1 AA</span> · на surfaceContainerHigh <span class="cr">6,11:1 AA</span></td></tr><tr><td><span class="dot" style="background:#887A6E"></span></td><td><code>theme_light_outline</code></td><td><code>#FF887A6E</code></td><td>граница на surface <span class="cr">3,86:1 ≥3:1</span></td></tr><tr><td><span class="dot" style="background:#DACDBD"></span></td><td><code>theme_light_outlineVariant</code></td><td><code>#FFDACDBD</code></td><td></td></tr><tr><td><span class="dot" style="background:#A0153E"></span></td><td><code>theme_light_error</code></td><td><code>#FFA0153E</code></td><td>текст на surface <span class="cr">7,31:1 AA</span> · onError на нём <span class="cr">7,86:1 AA</span></td></tr><tr><td><span class="dot" style="background:#FFFFFF"></span></td><td><code>theme_light_onError</code></td><td><code>#FFFFFFFF</code></td><td></td></tr></tbody></table></div>
+<div><h4>Тёмная — <code>theme_dark_*</code></h4><table class="tok"><thead><tr><th></th><th>ресурс</th><th>значение</th><th>контраст (WCAG, посчитано)</th></tr></thead><tbody><tr><td><span class="dot" style="background:#FFB4A1"></span></td><td><code>theme_dark_primary</code></td><td><code>#FFFFB4A1</code></td><td>текст на surface <span class="cr">10,50:1 AA</span> · onPrimary на нём <span class="cr">7,89:1 AA</span></td></tr><tr><td><span class="dot" style="background:#5C1407"></span></td><td><code>theme_dark_onPrimary</code></td><td><code>#FF5C1407</code></td><td></td></tr><tr><td><span class="dot" style="background:#87261A"></span></td><td><code>theme_dark_primaryContainer</code></td><td><code>#FF87261A</code></td><td>onPrimaryContainer на нём <span class="cr">7,02:1 AA</span></td></tr><tr><td><span class="dot" style="background:#FFDBD0"></span></td><td><code>theme_dark_onPrimaryContainer</code></td><td><code>#FFFFDBD0</code></td><td></td></tr><tr><td><span class="dot" style="background:#A5D695"></span></td><td><code>theme_dark_secondary</code></td><td><code>#FFA5D695</code></td><td>текст на surface <span class="cr">10,81:1 AA</span> · onSecondary на нём <span class="cr">7,94:1 AA</span></td></tr><tr><td><span class="dot" style="background:#10380B"></span></td><td><code>theme_dark_onSecondary</code></td><td><code>#FF10380B</code></td><td></td></tr><tr><td><span class="dot" style="background:#285222"></span></td><td><code>theme_dark_secondaryContainer</code></td><td><code>#FF285222</code></td><td>onSecondaryContainer на нём <span class="cr">7,15:1 AA</span></td></tr><tr><td><span class="dot" style="background:#C1F2B0"></span></td><td><code>theme_dark_onSecondaryContainer</code></td><td><code>#FFC1F2B0</code></td><td></td></tr><tr><td><span class="dot" style="background:#E7B8E8"></span></td><td><code>theme_dark_tertiary</code></td><td><code>#FFE7B8E8</code></td><td>текст на surface <span class="cr">10,61:1 AA</span> · onTertiary на нём <span class="cr">8,41:1 AA</span></td></tr><tr><td><span class="dot" style="background:#45174B"></span></td><td><code>theme_dark_onTertiary</code></td><td><code>#FF45174B</code></td><td></td></tr><tr><td><span class="dot" style="background:#5E2D64"></span></td><td><code>theme_dark_tertiaryContainer</code></td><td><code>#FF5E2D64</code></td><td>onTertiaryContainer на нём <span class="cr">7,96:1 AA</span></td></tr><tr><td><span class="dot" style="background:#F9D8F7"></span></td><td><code>theme_dark_onTertiaryContainer</code></td><td><code>#FFF9D8F7</code></td><td></td></tr><tr><td><span class="dot" style="background:#1B151C"></span></td><td><code>theme_dark_surface</code></td><td><code>#FF1B151C</code></td><td></td></tr><tr><td><span class="dot" style="background:#261E28"></span></td><td><code>theme_dark_surfaceContainer</code></td><td><code>#FF261E28</code></td><td></td></tr><tr><td><span class="dot" style="background:#312833"></span></td><td><code>theme_dark_surfaceContainerHigh</code></td><td><code>#FF312833</code></td><td></td></tr><tr><td><span class="dot" style="background:#F2E9EE"></span></td><td><code>theme_dark_onSurface</code></td><td><code>#FFF2E9EE</code></td><td>на surface <span class="cr">15,09:1 AA</span> · на surfaceContainerHigh <span class="cr">11,92:1 AA</span></td></tr><tr><td><span class="dot" style="background:#CFC1CC"></span></td><td><code>theme_dark_onSurfaceVariant</code></td><td><code>#FFCFC1CC</code></td><td>на surface <span class="cr">10,38:1 AA</span> · на surfaceContainerHigh <span class="cr">8,20:1 AA</span></td></tr><tr><td><span class="dot" style="background:#988A97"></span></td><td><code>theme_dark_outline</code></td><td><code>#FF988A97</code></td><td>граница на surface <span class="cr">5,48:1 ≥3:1</span></td></tr><tr><td><span class="dot" style="background:#4B3F4D"></span></td><td><code>theme_dark_outlineVariant</code></td><td><code>#FF4B3F4D</code></td><td></td></tr><tr><td><span class="dot" style="background:#FFB2BF"></span></td><td><code>theme_dark_error</code></td><td><code>#FFFFB2BF</code></td><td>текст на surface <span class="cr">10,57:1 AA</span> · onError на нём <span class="cr">7,81:1 AA</span></td></tr><tr><td><span class="dot" style="background:#66001F"></span></td><td><code>theme_dark_onError</code></td><td><code>#FF66001F</code></td><td></td></tr></tbody></table></div></div>
+<p class="small">Остальные роли файла (background = surface, surfaceVariant = surfaceContainerHigh, surfaceContainerLow/Lowest/Highest, inverse*, fixed*) выводятся из этих же тонов; ContrastTest в сборке проверит их отдельно.</p>
+</section>
+<section><h2><span>4</span>Шрифт</h2>
+<div class="type-grid">
+<div class="spec">
+ <div class="sp-big">Onest</div>
+ <div class="sp-cy">Аа Бб Вв Гг Дд Жж Зз Йй Лл Фф Щщ Ыы Ээ Юю Яя</div>
+ <div class="sp-la">Aa Bb Ff Gg Kk Qq Rr Ss Yy · 0123456789 ½ ¼ ×</div>
+ <div class="sp-txt"><b>Щедрый борщ, сырники и плов.</b> Свёкла 600 г, сметана 150 г, лимонный сок 1 ст. л.
+ Shakshuka for two, plov for eight.</div>
+ <div class="tnum-demo"><div><span class="lbl">пропорциональные</span><span class="pn">111 г<br>480 г<br>1 750 г</span></div>
+ <div><span class="lbl">табличные (tnum) — для количеств</span><span class="num">111 г<br>480 г<br>1 750 г</span></div></div>
+</div>
+<div class="spec-n">
+<p><b>Onest</b> — гротеск с кириллицей, нарисованный кириллическим шрифтом с самого начала, а не дорисованный к латинице. Мягкие круглые формы,
+открытые апертуры, характерные «к», «ж», «д». Лицензия SIL Open Font License 1.1, есть в Google Fonts.
+Начертания: 400, 500, 600, 700, 800. Табличные цифры (<code>tnum</code>) есть и проверены рендером на этой странице.</p>
+<p><b>Правила.</b> Заголовки и названия рецептов — 700–800, плотно. Текст — 400. Количества и таймеры — всегда tnum,
+выравнивание по правому краю, единица отдельно и приглушена. Дроби — ½ ¼ ¾ как символы, как в правилах пересчёта.
+Капсом ничего не набирается.</p>
+<p><b>Запасной вариант:</b> Golos Text (тоже OFL, кириллица) — спокойнее, если Onest покажется слишком характерным.</p>
+</div>
+</div>
+<h3>Шкала (Material 3, sp)</h3>
+<table class="scale"><tr><td><code>displaySmall</code></td><td class="num">36/44 sp · 800</td><td><span style="font-size:36px;line-height:44px;font-weight:800" class="">Сырники</span></td></tr><tr><td><code>headlineMedium</code></td><td class="num">28/36 sp · 700</td><td><span style="font-size:28px;line-height:36px;font-weight:700" class="">Плов с айвой</span></td></tr><tr><td><code>headlineSmall</code></td><td class="num">24/32 sp · 700</td><td><span style="font-size:24px;line-height:32px;font-weight:700" class="">Борщ с копчёной грушей</span></td></tr><tr><td><code>titleLarge</code></td><td class="num">22/28 sp · 700</td><td><span style="font-size:22px;line-height:28px;font-weight:700" class="">Каталог</span></td></tr><tr><td><code>titleMedium</code></td><td class="num">16/24 sp · 600</td><td><span style="font-size:16px;line-height:24px;font-weight:600" class="">Шакшука с фетой</span></td></tr><tr><td><code>bodyLarge</code></td><td class="num">16/24 sp · 400</td><td><span style="font-size:16px;line-height:24px;font-weight:400" class="">Натереть свёклу на крупной тёрке.</span></td></tr><tr><td><code>bodyMedium</code></td><td class="num">14/20 sp · 400</td><td><span style="font-size:14px;line-height:20px;font-weight:400" class="">Форк рецепта «Борщ на грудинке» от Brisk Linen Fox</span></td></tr><tr><td><code>labelLarge</code></td><td class="num">14/20 sp · 600</td><td><span style="font-size:14px;line-height:20px;font-weight:600" class="">Форкнуть</span></td></tr><tr><td><code>labelMedium</code></td><td class="num">12/16 sp · 600</td><td><span style="font-size:12px;line-height:16px;font-weight:600" class="">27 форков · 25 мин</span></td></tr><tr><td><code>cookingStep (своя роль)</code></td><td class="num">26/36 sp · 600</td><td><span style="font-size:26px;line-height:36px;font-weight:600" class="">Потушить свёклу 15 минут.</span></td></tr><tr><td><code>cookingTimer (своя роль, tnum)</code></td><td class="num">32/36 sp · 700</td><td><span style="font-size:32px;line-height:36px;font-weight:700" class="num">08:42</span></td></tr></table>
+</section>
+<section><h2><span>5</span>Иконка приложения</h2>
+<div class="icon-block">
+ <div class="ib">
+  <div class="art512"><div class="sq" style="background:#D2432A"><svg width="160" height="160" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>512 × 512, квадрат для Google Play</span></div>
+  <div class="masks">
+   <div><div class="icn" style="background:#D2432A;border-radius:50%"><svg width="80" height="80" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>круг</span></div>
+   <div><div class="icn" style="background:#D2432A;border-radius:38%"><svg width="80" height="80" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>скруглённый</span></div>
+   <div><div class="icn" style="background:#D2432A;border-radius:24px"><svg width="80" height="80" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>маска Play</span></div>
+  </div>
+ </div>
+ <div class="ib">
+  <div class="adapt"><svg width="216" height="216" viewBox="0 0 108 108">
+    <rect width="108" height="108" fill="#D2432A"/>
+    <g transform="translate(27 27) scale(1.125)" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883"><use href="#mark" width="48" height="48"/></g>
+    <circle cx="54" cy="54" r="33" fill="none" stroke="#fff" stroke-width=".6" stroke-dasharray="2 2"/>
+    <circle cx="54" cy="54" r="36" fill="none" stroke="#2A211C" stroke-width=".4" stroke-dasharray="1 2"/>
+    <rect x=".3" y=".3" width="107.4" height="107.4" fill="none" stroke="#2A211C" stroke-width=".6"/>
+   </svg>
+   <div class="small">Адаптивная 108 dp: фон — сплошной томат <code>#D2432A</code>, передний слой — знак 54 dp
+   в круге 66 dp (белый пунктир). Тонкий пунктир — видимая область 72 dp. Лист выходит за ось вправо, но остаётся в круге.</div>
+  </div>
+  <div class="themed">
+   <div><div class="icn" style="background:#F1D9E4;border-radius:50%"><svg width="80" height="80" style="--mk-fork:#3B2030;--mk-leaf:#3B2030;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>тематическая, светлая</span></div>
+   <div><div class="icn" style="background:#3B2030;border-radius:50%"><svg width="80" height="80" style="--mk-fork:#F1D9E4;--mk-leaf:#F1D9E4;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>тематическая, тёмная</span></div>
+  </div>
+ </div>
+ <div class="ib wide">
+  <div class="launch" style="background:#56645A"><div class="li"><div class="lic" style="background:#3D4A5C"><svg width="30" height="30" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2" fill="#fff"/><circle cx="12" cy="13" r="3" fill="#3D4A5C"/></svg></div><span>Камера</span></div><div class="li"><div class="lic" style="background:#2E3B4E"><svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 8v4l3 2" stroke="#fff" stroke-width="2" fill="none"/></svg></div><span>Часы</span></div><div class="li"><div class="lic" style="background:#D2432A"><svg width="30" height="30" style="--mk-fork:#FFF4E6;--mk-leaf:#9BD883;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>Recipe Fork</span></div><div class="li"><div class="lic" style="background:#4C6B58"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M6 7l4-2 4 2 4-2v12l-4 2-4-2-4 2z" fill="#fff"/></svg></div><span>Карты</span></div><div class="li"><div class="lic" style="background:#B9A04A"><svg width="30" height="30" viewBox="0 0 24 24"><rect x="7" y="5" width="10" height="14" rx="1.5" fill="#fff"/><path d="M9 9h6M9 12h6M9 15h4" stroke="#B9A04A" stroke-width="1.5"/></svg></div><span>Заметки</span></div></div>
+  <div class="launch" style="background:#E9DCE3"><div class="li"><div class="lic" style="background:#F1D9E4"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#3B2030"/></svg></div><span>Камера</span></div><div class="li"><div class="lic" style="background:#F1D9E4"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#3B2030"/></svg></div><span>Часы</span></div><div class="li"><div class="lic" style="background:#F1D9E4"><svg width="30" height="30" style="--mk-fork:#3B2030;--mk-leaf:#3B2030;" role="img" aria-label="знак"><use href="#mark"/></svg></div><span>Recipe Fork</span></div><div class="li"><div class="lic" style="background:#F1D9E4"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#3B2030"/></svg></div><span>Карты</span></div><div class="li"><div class="lic" style="background:#F1D9E4"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#3B2030"/></svg></div><span>Заметки</span></div></div>
+  <div class="small">48 dp в ряду лаунчера: красный круг с белой вилкой отличим от синих и серых системных значков; в тематическом режиме знак
+  одноцветный и держится на форме — три зубца и лист.</div>
+ </div>
+</div>
+</section>
+<section><h2><span>6</span>Фирменный элемент: «Ростки»</h2>
+<p class="lead2">Форк нарисован как росток, который отделяется от стебля. Стебель — исходный рецепт, нейтральный цвет;
+росток с листом — новый, зелёный. Один и тот же рисунок, в 14–24 dp или крупно, повторяется везде, где речь о происхождении.</p>
+<div class="sig-grid">
+ <div class="sg" style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="sg-h">Анатомия</div>
+  <div class="anat"><svg width="150" height="150" style="--stem:#887A6E;--spr:#3A6F33"><use href="#sprout"/></svg>
+  <ul><li><b>Стебель</b> — родитель, цвет outline</li><li><b>Побег</b> — отходит на ⅔ высоты</li><li><b>Лист</b> — форк, цвет secondary</li><li><b>Число рядом</b> — сколько форков</li></ul></div>
+  <div class="anat2"><svg class="ic" width="24" height="24" style="--stem:#887A6E;--spr:#3A6F33"><use href="#sprout"/></svg><span>метка «форк»</span><b class="num" style="color:#3A6F33">12</b><span>счётчик форков</span></div>
+ </div>
+ <div class="sg" style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="sg-h">В каталоге</div><div class="phone-snip"><div class="ce"><div class="thumb"><svg class="gl" width="38" height="38" aria-hidden="true"><use href="#g-tomato"/></svg><svg class="gl" width="26" height="26" aria-hidden="true"><use href="#g-egg"/></svg></div><div class="cb"><div class="ct">Шакшука с фетой</div><div class="ca">Quiet Copper Otter</div><div class="par"><svg class="fi" width="14" height="14" ><use href="#sprout"/></svg>от «Шакшука классическая»</div><div class="cm"><span class="num">30 мин · 2 порц.</span><span class="fcount"><svg class="fi" width="16" height="16" ><use href="#sprout"/></svg><b class="num">4</b>&nbsp;форка</span></div></div></div></div>
+  <div class="small">Метка «форк» — побег и слово. Счётчик — побег, число в tnum и слово; при нуле — «форков нет», без значка.</div></div>
+ <div class="sg dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><div class="sg-h">В каталоге, тёмная</div><div class="phone-snip"><div class="ce"><div class="thumb"><svg class="gl" width="40" height="40" aria-hidden="true"><use href="#g-beet"/></svg><svg class="gl" width="26" height="26" aria-hidden="true"><use href="#g-leaf"/></svg></div><div class="cb"><div class="ct">Борщ с копчёной грушей</div><div class="ca">Calm Amber Heron</div><div class="par"><svg class="fi" width="14" height="14" ><use href="#sprout"/></svg>от «Борщ на грудинке»</div><div class="cm"><span class="num">2 ч 10 мин</span><span class="fcount"><svg class="fi" width="16" height="16" ><use href="#sprout"/></svg><b class="num">12</b>&nbsp;форков</span></div></div></div></div>
+  <div class="small">В тёмной теме побег светло-зелёный <code>#A5D695</code>, стебель — outline.</div></div>
+ <div class="sg" style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="sg-h">Строка происхождения</div>
+  <div class="prov big"><svg class="provg" width="34" height="40" viewBox="0 0 34 40" aria-hidden="true">
+<path d="M8 2 V38" stroke="var(--ol)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5"/>
+<circle cx="8" cy="8" r="4" fill="var(--bg)" stroke="var(--ol)" stroke-width="2.2"/>
+<path d="M8 12 C8 22 12 26 20 27" fill="none" stroke="var(--sec)" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M19 27.6 C19.8 21.6 23.6 18.4 30 18.6 C29.4 24.6 25.4 28 19 27.6Z" fill="var(--sec)"/>
+</svg><div>Форк рецепта <a>«Борщ на говяжьей грудинке»</a> от Brisk Linen Fox</div></div>
+  <div class="small">Пунктирный стебель уходит вверх — к родителю; кружок — сам родитель, нажатие ведёт к нему. Росток — этот рецепт. Показывается только прямой родитель.</div></div>
+ <div class="sg" style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="sg-h">Кнопка форка</div>
+  <div class="fabs"><div class="fab ext stat"><svg class="fi" width="24" height="24" ><use href="#sprout"/></svg>Форкнуть</div><div class="fab sq stat"><svg class="fi" width="26" height="26" ><use href="#sprout"/></svg></div></div>
+  <div class="small">Главное действие вкладки Просмотр — расширенный FAB томатного цвета с побегом. При прокрутке сворачивается в квадратный FAB 56 dp, побег остаётся.</div></div>
+ <div class="sg" style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="sg-h">Категории ингредиентов</div><div class="catleg"><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-tomato"/></svg><span>Овощи</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-beet"/></svg><span>Корнеплоды</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-leaf"/></svg><span>Зелень и травы</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-lemon"/></svg><span>Фрукты и ягоды</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-onion"/></svg><span>Лук, чеснок, специи</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-egg"/></svg><span>Яйца и молочное</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-meat"/></svg><span>Мясо и рыба</span></div><div class="cl"><svg class="gl" width="22" height="22" aria-hidden="true"><use href="#g-grain"/></svg><span>Крупы, мука, бакалея</span></div></div>
+  <div class="small">Точка-значок перед названием ингредиента: у каждого семейства своя форма, цвет — второй признак.</div></div>
+ <div class="sg dk" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><div class="sg-h">Готово в Готовке</div>
+  <div class="donedemo"><div class="st done"><svg class="mk" width="32" height="32"><use href="#done"/></svg><div><div class="sn">Шаг 2 · готово</div><div class="sx">Варить бульон на слабом огне.</div></div></div>
+  <div class="st cur"><svg class="mk" width="32" height="32"><use href="#undone"/></svg><div><div class="sn now">Сейчас · шаг 3</div><div class="sx">Потушить свёклу.</div></div></div></div>
+  <div class="small">Сделанное — заполненная зелёная галочка, зачёркивание, подпись «готово». Текущий — томатная полоса и «Сейчас».</div></div>
+ <div class="sg" style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="sg-h">Пересчитанные количества</div>
+  <div class="ing-demo"><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-beet"/></svg><span class="in">Свёкла</span><span class="q num dv">600</span><span class="u">г</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-egg"/></svg><span class="in">Сметана</span><span class="q num">150</span><span class="u">г</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-lemon"/></svg><span class="in">Лимонный сок</span><span class="q num dv">1½</span><span class="u">ст. л.</span></div></div>
+  <div class="small">Пересчитанное число подчёркнуто пунктиром: «выросло» из авторского. Авторское — без подчёркивания.</div></div>
+</div>
+</section>
+<section><h2><span>7</span>Экраны</h2><div class="phones">
+<figure class="phone-wrap"><div class="phone light " style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="scr"><div class="sb"><span>9:41</span><span class="sbi"><svg class="si" width="14" height="14" ><use href="#st-signal"/></svg><svg class="si" width="14" height="14" ><use href="#st-wifi"/></svg><svg class="si" width="14" height="14" ><use href="#st-bat"/></svg></span></div><div class="topbar"><span class="ttl">Каталог</span><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-sort"/></svg></span></div><div class="search"><svg class="ic" width="24" height="24" ><use href="#i-search"/></svg><span>Борщ, сырники, плов…</span></div><div class="chips"><span class="chip sel"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg>Новые</span><span class="chip">Популярные</span><span class="chip">Больше форков</span></div><div class="list"><div class="ce"><div class="thumb"><svg class="gl" width="40" height="40" aria-hidden="true"><use href="#g-beet"/></svg><svg class="gl" width="26" height="26" aria-hidden="true"><use href="#g-leaf"/></svg></div><div class="cb"><div class="ct">Борщ с копчёной грушей</div><div class="ca">Calm Amber Heron</div><div class="par"><svg class="fi" width="14" height="14" ><use href="#sprout"/></svg>от «Борщ на грудинке»</div><div class="cm"><span class="num">2 ч 10 мин · 6 порц.</span><span class="fcount"><svg class="fi" width="16" height="16" ><use href="#sprout"/></svg><b class="num">3</b>&nbsp;форка</span></div></div></div><div class="ce"><div class="thumb"><svg class="gl" width="36" height="36" aria-hidden="true"><use href="#g-egg"/></svg><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-lemon"/></svg></div><div class="cb"><div class="ct">Сырники на рикотте</div><div class="ca">Brisk Linen Fox</div><div class="cm"><span class="num">25 мин · 3 порц.</span><span class="fcount"><svg class="fi" width="16" height="16" ><use href="#sprout"/></svg><b class="num">27</b>&nbsp;форков</span></div></div></div><div class="ce"><div class="thumb"><svg class="gl" width="38" height="38" aria-hidden="true"><use href="#g-tomato"/></svg><svg class="gl" width="26" height="26" aria-hidden="true"><use href="#g-egg"/></svg></div><div class="cb"><div class="ct">Шакшука с фетой</div><div class="ca">Quiet Copper Otter</div><div class="par"><svg class="fi" width="14" height="14" ><use href="#sprout"/></svg>от «Шакшука классическая»</div><div class="cm"><span class="num">30 мин · 2 порц.</span><span class="fcount none">форков нет</span></div></div></div><div class="ce"><div class="thumb"><svg class="gl" width="36" height="36" aria-hidden="true"><use href="#g-grain"/></svg><svg class="gl" width="28" height="28" aria-hidden="true"><use href="#g-onion"/></svg></div><div class="cb"><div class="ct">Плов с айвой</div><div class="ca">Mellow Saffron Crane</div><div class="cm"><span class="num">2 ч · 8 порц.</span><span class="fcount"><svg class="fi" width="16" height="16" ><use href="#sprout"/></svg><b class="num">14</b>&nbsp;форков</span></div></div></div></div><div class="nav"><div class="ni on"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-grid"/></svg></span><span>Каталог</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-book"/></svg></span><span>Книга</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-pot"/></svg></span><span>Кухня</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-sliders"/></svg></span><span>Настройки</span></div></div><div class="gest"><i></i></div></div></div><figcaption><b>Каталог.</b> Сортировка чипами, у форка — метка с побегом и родитель, справа — счётчик форков.</figcaption></figure>
+<figure class="phone-wrap"><div class="phone light " style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="scr"><div class="sb"><span>9:41</span><span class="sbi"><svg class="si" width="14" height="14" ><use href="#st-signal"/></svg><svg class="si" width="14" height="14" ><use href="#st-wifi"/></svg><svg class="si" width="14" height="14" ><use href="#st-bat"/></svg></span></div><div class="topbar"><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-back"/></svg></span><span class="ttl sm"></span><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-edit"/></svg><svg class="ic" width="24" height="24" ><use href="#i-more"/></svg></span></div><div class="tabs"><span class="tb on">Просмотр</span><span class="tb">Готовка</span></div><div class="body"><h3 class="rt">Борщ с копчёной грушей</h3><div class="sum num">11 ингредиентов · 7 шагов · 3 таймера · 2 ч 10 мин</div><div class="auth">Автор: Calm Amber Heron</div><div class="prov"><svg class="provg" width="34" height="40" viewBox="0 0 34 40" aria-hidden="true">
+<path d="M8 2 V38" stroke="var(--ol)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5"/>
+<circle cx="8" cy="8" r="4" fill="var(--bg)" stroke="var(--ol)" stroke-width="2.2"/>
+<path d="M8 12 C8 22 12 26 20 27" fill="none" stroke="var(--sec)" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M19 27.6 C19.8 21.6 23.6 18.4 30 18.6 C29.4 24.6 25.4 28 19 27.6Z" fill="var(--sec)"/>
+</svg><div>Форк рецепта <a>«Борщ на говяжьей грудинке»</a> от Brisk Linen Fox</div></div><div class="scaler"><div><div class="sl">Порции</div><div class="sh">в рецепте — 4</div></div><div class="stp"><span class="sbtn"><svg class="ic" width="24" height="24" ><use href="#i-minus"/></svg></span><b class="num">6</b><span class="sbtn"><svg class="ic" width="24" height="24" ><use href="#i-plus"/></svg></span></div></div><div class="sec-h">Оборудование</div><div class="eq">Кастрюля 5 л</div><div class="eq">Сковорода</div><div class="eq miss"><svg class="ic" width="18" height="18" ><use href="#i-alert"/></svg>Тёрка <span class="mt">— нет в вашей кухне</span></div><div class="sec-h">Ингредиенты <span class="leg"><span class="dvs num">600</span> — пересчитано</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-meat"/></svg><span class="in">Говяжья грудинка</span><span class="q num dv">750</span><span class="u">г</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-beet"/></svg><span class="in">Свёкла</span><span class="q num dv">600</span><span class="u">г</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-tomato"/></svg><span class="in">Капуста белокочанная</span><span class="q num dv">450</span><span class="u">г</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-beet"/></svg><span class="in">Картофель</span><span class="q num dv">4½</span><span class="u">шт.</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-onion"/></svg><span class="in">Лук репчатый</span><span class="q num dv">1½</span><span class="u">шт.</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-lemon"/></svg><span class="in">Груша копчёная</span><span class="q num dv">1½</span><span class="u">шт.</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-leaf"/></svg><span class="in">Укроп</span><span class="q num dv">1½</span><span class="u">пучка</span></div><div class="ing"><svg class="gl" width="20" height="20" aria-hidden="true"><use href="#g-egg"/></svg><span class="in">Сметана</span><span class="q num dv">225</span><span class="u">г</span></div></div><div class="fab ext"><svg class="fi" width="24" height="24" ><use href="#sprout"/></svg>Форкнуть</div><div class="gest"><i></i></div></div></div><figcaption><b>Карточка — Просмотр.</b> Строка происхождения, порции, оборудование с пометкой «нет в кухне», ингредиенты со значками категорий; FAB «Форкнуть».</figcaption></figure>
+<figure class="phone-wrap"><div class="phone dark ckp" style="--bg:#1B151C;--c1:#261E28;--c2:#312833;--on:#F2E9EE;--onv:#CFC1CC;--ol:#988A97;--olv:#4B3F4D;--pri:#FFB4A1;--onpri:#5C1407;--pc:#87261A;--onpc:#FFDBD0;--sec:#A5D695;--onsec:#10380B;--sc:#285222;--onsc:#C1F2B0;--ter:#E7B8E8;--tc:#5E2D64;--ontc:#F9D8F7;--err:#FFB2BF;--p-tomato:#FF8A6E;--p-herb:#8FCB7C;--p-beet:#E07AA3;--p-lemon:#F5CF4E;--p-lemonink:#F5CF4E;--p-aub:#C79BD0;--p-egg:#F6E7C8;--p-eggink:#F6E7C8;--p-neutral:#B7A79C;--p-grain:#E2B54A"><div class="scr"><div class="sb"><span>9:41</span><span class="sbi"><svg class="si" width="14" height="14" ><use href="#st-signal"/></svg><svg class="si" width="14" height="14" ><use href="#st-wifi"/></svg><svg class="si" width="14" height="14" ><use href="#st-bat"/></svg></span></div><div class="topbar"><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-back"/></svg></span><span class="ttl sm">Борщ с копчёной грушей</span><span class="act"></span></div><div class="tabs"><span class="tb">Просмотр</span><span class="tb on">Готовка</span></div><div class="body ck"><div class="fold"><svg width="28" height="28"><use href="#done"/></svg><span>Оборудование · всё отмечено</span><svg class="ic" width="24" height="24" ><use href="#i-chev"/></svg></div><div class="fold"><svg width="28" height="28"><use href="#done"/></svg><span>Ингредиенты · <b class="num">11</b> из <b class="num">11</b></span><svg class="ic" width="24" height="24" ><use href="#i-chev"/></svg></div><div class="st done"><svg class="mk" width="32" height="32"><use href="#done"/></svg><div><div class="sn">Шаг 1 · готово</div><div class="sx">Залить грудинку 3 л холодной воды, довести до кипения, снять пену.</div></div></div><div class="st done"><svg class="mk" width="32" height="32"><use href="#done"/></svg><div><div class="sn">Шаг 2 · готово</div><div class="sx">Варить бульон на слабом огне.</div></div></div><div class="st cur"><svg class="mk" width="32" height="32"><use href="#undone"/></svg><div><div class="sn now">Сейчас · шаг 3 из 7</div><div class="sx">Натереть свёклу и потушить с томатной пастой 15 минут.</div><div class="tms"><div class="tm run"><svg class="ic" width="26" height="26" ><use href="#i-pause"/></svg><span class="tv num">08:42</span><span class="tl">Свёкла</span></div><div class="tm"><svg class="ic" width="26" height="26" ><use href="#i-play"/></svg><span class="tv num">20:00</span><span class="tl">Картофель</span></div></div></div></div><div class="st nxt"><svg class="mk" width="32" height="32"><use href="#undone"/></svg><div><div class="sn">Шаг 4</div><div class="sx">Положить в бульон картофель и капусту, варить 20 минут.</div></div></div></div><div class="gest"><i></i></div></div></div><figcaption><b>Карточка — Готовка, тёмная.</b> Списки свёрнуты, сделанные шаги зачёркнуты, текущий шаг крупно; таймеры 56 dp.</figcaption></figure>
+<figure class="phone-wrap"><div class="phone light " style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="scr"><div class="sb"><span>9:41</span><span class="sbi"><svg class="si" width="14" height="14" ><use href="#st-signal"/></svg><svg class="si" width="14" height="14" ><use href="#st-wifi"/></svg><svg class="si" width="14" height="14" ><use href="#st-bat"/></svg></span></div><div class="topbar"><span class="ttl">Моя книга</span><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-search"/></svg></span></div><div class="chips"><span class="chip sel"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg>Все</span><span class="chip">Мои</span><span class="chip">Форки</span><span class="chip">Черновики</span></div><div class="list"><div class="ce bk"><div class="thumb sm"><svg class="gl" width="30" height="30" aria-hidden="true"><use href="#g-beet"/></svg></div><div class="cb"><div class="ct">Борщ с копчёной грушей</div><div class="cm"><span class="stt">Опубликован</span><span class="ftag"><svg class="fi" width="14" height="14" ><use href="#sprout"/></svg>форк</span></div><div class="ca">в каталоге с 12 октября</div></div></div><div class="ce bk"><div class="thumb sm"><svg class="gl" width="30" height="30" aria-hidden="true"><use href="#g-tomato"/></svg></div><div class="cb"><div class="ct">Шакшука с фетой, мой вариант</div><div class="cm"><span class="stt">Черновик</span><span class="ftag"><svg class="fi" width="14" height="14" ><use href="#sprout"/></svg>форк</span></div><div class="ca">изменён сегодня, 8:15</div></div></div><div class="ce bk"><div class="thumb sm"><svg class="gl" width="30" height="30" aria-hidden="true"><use href="#g-egg"/></svg></div><div class="cb"><div class="ct">Сырники на рикотте</div><div class="cm"><span class="stt">Сохранён</span></div><div class="ca">автор Brisk Linen Fox</div></div></div><div class="ce bk"><div class="thumb sm"><svg class="gl" width="30" height="30" aria-hidden="true"><use href="#g-leaf"/></svg></div><div class="cb"><div class="ct">Окрошка на кефире</div><div class="cm"><span class="stt">Черновик</span></div><div class="ca">изменён 9 октября</div></div></div><div class="ce bk"><div class="thumb sm"><svg class="gl" width="30" height="30" aria-hidden="true"><use href="#g-lemon"/></svg></div><div class="cb"><div class="ct">Лимонный кекс</div><div class="cm"><span class="stt">Отправлен</span></div><div class="ca">ждёт проверки</div></div></div></div><div class="fab sq"><svg class="ic" width="26" height="26" ><use href="#i-plus"/></svg></div><div class="nav"><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-grid"/></svg></span><span>Каталог</span></div><div class="ni on"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-book"/></svg></span><span>Книга</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-pot"/></svg></span><span>Кухня</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-sliders"/></svg></span><span>Настройки</span></div></div><div class="gest"><i></i></div></div></div><figcaption><b>Моя книга.</b> Статусы словом, форки — меткой; FAB нового рецепта.</figcaption></figure>
+<figure class="phone-wrap"><div class="phone light " style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="scr"><div class="sb"><span>9:41</span><span class="sbi"><svg class="si" width="14" height="14" ><use href="#st-signal"/></svg><svg class="si" width="14" height="14" ><use href="#st-wifi"/></svg><svg class="si" width="14" height="14" ><use href="#st-bat"/></svg></span></div><div class="topbar"><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-back"/></svg></span><span class="ttl sm"></span><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-edit"/></svg><svg class="ic" width="24" height="24" ><use href="#i-more"/></svg></span></div><div class="tabs"><span class="tb on">Просмотр</span><span class="tb">Готовка</span></div><div class="body"><h3 class="rt">Шакшука с фетой</h3><div class="sum num">8 ингредиентов · 5 шагов · 2 таймера</div></div><div class="scrim"></div><div class="sheet"><div class="handle"></div><div class="sh-ill"><svg width="300" height="96" viewBox="0 0 300 96" aria-hidden="true">
+<path d="M20 70 H280" stroke="var(--ol)" stroke-width="3" stroke-linecap="round"/>
+<circle cx="70" cy="70" r="9" fill="var(--bg)" stroke="var(--onv)" stroke-width="3"/>
+<path d="M70 61 C70 34 92 26 132 24" fill="none" stroke="var(--sec)" stroke-width="3.5" stroke-linecap="round"/>
+<path d="M130 25 C133 10 145 2 162 3 C160 18 149 27 130 25Z" fill="var(--sec)"/>
+<text x="70" y="92" text-anchor="middle" class="svt">исходный</text>
+<text x="176" y="20" class="svt b">ваш форк</text>
+<circle cx="220" cy="70" r="6" fill="var(--olv)"/>
+</svg></div><h4>Форкнуть «Шакшука с фетой»</h4><p>В вашей книге появится новый рецепт. Он будет вашим, его можно менять. Исходный рецепт не изменится, а новый будет называть его своим родителем.</p><ul class="carry"><li><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg>Ингредиенты, оборудование, шаги и таймеры</li><li class="no"><svg class="ic" width="18" height="18" ><use href="#i-close"/></svg>Фото, описание и заметки к шагам — у другого автора они остаются в исходном</li></ul><div class="btns"><span class="tbtn">Отмена</span><span class="fbtn"><svg class="fi" width="20" height="20" ><use href="#sprout"/></svg>Форкнуть</span></div><div class="gest in"><i></i></div></div></div></div><figcaption><b>Подтверждение форка.</b> Нижний лист: росток от исходного, что переносится и что нет.</figcaption></figure>
+<figure class="phone-wrap"><div class="phone light " style="--bg:#FBF6EE;--c1:#F3ECE1;--c2:#ECE3D6;--on:#2A211C;--onv:#5D5047;--ol:#887A6E;--olv:#DACDBD;--pri:#B8361F;--onpri:#FFFFFF;--pc:#FFDBD0;--onpc:#4A1006;--sec:#3A6F33;--onsec:#FFFFFF;--sc:#D3EBC6;--onsc:#0F3A0C;--ter:#6A3A6E;--tc:#F3DDF1;--ontc:#2E0A33;--err:#A0153E;--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-neutral:#7A6A5E;--p-grain:#B08419"><div class="scr"><div class="sb"><span>9:41</span><span class="sbi"><svg class="si" width="14" height="14" ><use href="#st-signal"/></svg><svg class="si" width="14" height="14" ><use href="#st-wifi"/></svg><svg class="si" width="14" height="14" ><use href="#st-bat"/></svg></span></div><div class="topbar"><span class="ttl">Моя кухня</span><span class="act"><svg class="ic" width="24" height="24" ><use href="#i-plus"/></svg></span></div><p class="hint">Отметьте, что у вас есть. В карточке рецепта будет видно, чего не хватает.</p><div class="list kit"><div class="kr"><span class="cbx on"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg></span><span>Кастрюля 5 л</span><span class="kst">есть</span></div><div class="kr"><span class="cbx on"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg></span><span>Сковорода чугунная</span><span class="kst">есть</span></div><div class="kr"><span class="cbx on"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg></span><span>Духовка</span><span class="kst">есть</span></div><div class="kr"><span class="cbx"></span><span>Тёрка</span><span class="kst">нет</span></div><div class="kr"><span class="cbx"></span><span>Казан</span><span class="kst">нет</span></div><div class="kr"><span class="cbx on"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg></span><span>Блендер погружной</span><span class="kst">есть</span></div><div class="kr"><span class="cbx on"><svg class="ic" width="18" height="18" ><use href="#i-check"/></svg></span><span>Венчик</span><span class="kst">есть</span></div><div class="kr"><span class="cbx"></span><span>Весы кухонные</span><span class="kst">нет</span></div></div><div class="nav"><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-grid"/></svg></span><span>Каталог</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-book"/></svg></span><span>Книга</span></div><div class="ni on"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-pot"/></svg></span><span>Кухня</span></div><div class="ni"><span class="pill"><svg class="ic" width="24" height="24" ><use href="#i-sliders"/></svg></span><span>Настройки</span></div></div><div class="gest"><i></i></div></div></div><figcaption><b>Моя кухня.</b> Отметки «есть» — флажок и слово; карточка рецепта сверяется с этим списком.</figcaption></figure>
+</div></section>
+<section><h2><span>8</span>Магазин</h2>
+<div class="banner-wrap"><svg class="banner" viewBox="0 0 1024 500" width="1024" height="500" role="img" aria-label="Графика для магазина">
+<rect width="1024" height="500" fill="#FBF6EE"/>
+<rect x="640" y="0" width="384" height="500" fill="#ECE3D6"/>
+<g style="--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-grain:#B08419;--p-neutral:#7A6A5E;--bg:#ECE3D6">
+ <use href="#g-tomato" x="670" y="60" width="140" height="140"/>
+ <use href="#g-lemon" x="840" y="50" width="130" height="130"/>
+ <use href="#g-beet" x="870" y="200" width="130" height="130"/>
+ <use href="#g-leaf" x="670" y="220" width="100" height="100"/>
+ <use href="#g-egg" x="780" y="200" width="90" height="90"/>
+ <use href="#g-onion" x="690" y="345" width="110" height="110"/>
+ <use href="#g-grain" x="840" y="345" width="110" height="110"/>
+</g>
+<g transform="translate(70 92)"><svg width="116" height="116" style="--mk-fork:#B8361F;--mk-leaf:#3A6F33"><use href="#mark"/></svg></g>
+<text x="210" y="168" class="bn-w">Recipe Fork</text>
+<text x="72" y="282" class="bn-h">Рецепт пересчитывается</text>
+<text x="72" y="334" class="bn-h">на ваши порции.</text>
+<text x="72" y="404" class="bn-s">Меняете рецепт — получается форк</text>
+<text x="72" y="440" class="bn-s">со ссылкой на исходный.</text>
+</svg></div>
+<div class="shots"><svg viewBox="0 0 1080 1920" width="270" height="480" role="img" aria-label="Снимок экрана для магазина" style="--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-grain:#B08419;--p-neutral:#7A6A5E;--bg:#FBF6EE;--ol:#887A6E;--sec:#3A6F33"><rect width="1080" height="1920" fill="#B8361F"/><text x="80" y="200" class="sh-c">Порции поменяли —</text><text x="80" y="290" class="sh-c">количества пересчитаны</text><rect x="120" y="420" width="840" height="1560" rx="70" fill="#FBF6EE"/><text x="190" y="560" class="sh-t">Сырники на рикотте</text><rect x="190" y="610" width="700" height="150" rx="34" fill="#F3ECE1"/><text x="230" y="700" class="sh-b">Порции</text><circle cx="650" cy="685" r="44" fill="#ECE3D6"/><text x="650" y="700" text-anchor="middle" class="sh-b">−</text><text x="740" y="705" text-anchor="middle" class="sh-n">6</text><circle cx="830" cy="685" r="44" fill="#ECE3D6"/><text x="830" y="700" text-anchor="middle" class="sh-b">+</text><use href="#g-egg" x="190" y="808" width="64" height="64"/><text x="290" y="860" class="sh-b">Рикотта</text><text x="890" y="860" text-anchor="end" class="sh-n2">900 г</text><path d="M190 902 H890" stroke="#DACDBD" stroke-width="3"/><use href="#g-egg" x="190" y="938" width="64" height="64"/><text x="290" y="990" class="sh-b">Яйца</text><text x="890" y="990" text-anchor="end" class="sh-n2">3 шт.</text><path d="M190 1032 H890" stroke="#DACDBD" stroke-width="3"/><use href="#g-grain" x="190" y="1068" width="64" height="64"/><text x="290" y="1120" class="sh-b">Мука</text><text x="890" y="1120" text-anchor="end" class="sh-n2">120 г</text><path d="M190 1162 H890" stroke="#DACDBD" stroke-width="3"/><use href="#g-lemon" x="190" y="1198" width="64" height="64"/><text x="290" y="1250" class="sh-b">Цедра лимона</text><text x="890" y="1250" text-anchor="end" class="sh-n2">1 ч. л.</text><path d="M190 1292 H890" stroke="#DACDBD" stroke-width="3"/><use href="#g-grain" x="190" y="1328" width="64" height="64"/><text x="290" y="1380" class="sh-b">Сахар</text><text x="890" y="1380" text-anchor="end" class="sh-n2">60 г</text><path d="M190 1422 H890" stroke="#DACDBD" stroke-width="3"/><use href="#g-egg" x="190" y="1458" width="64" height="64"/><text x="290" y="1510" class="sh-b">Сметана</text><text x="890" y="1510" text-anchor="end" class="sh-n2">200 г</text><path d="M190 1552 H890" stroke="#DACDBD" stroke-width="3"/></svg><svg viewBox="0 0 1080 1920" width="270" height="480" role="img" aria-label="Снимок экрана для магазина" style="--p-tomato:#D2432A;--p-herb:#4E9A3F;--p-beet:#8E2350;--p-lemon:#F2C230;--p-lemonink:#8A6400;--p-aub:#5B2D63;--p-egg:#FFF1D6;--p-eggink:#9C7A4C;--p-grain:#B08419;--p-neutral:#7A6A5E;--bg:#FBF6EE;--ol:#887A6E;--sec:#3A6F33"><rect width="1080" height="1920" fill="#B8361F"/><text x="80" y="200" class="sh-c">Меняете рецепт —</text><text x="80" y="290" class="sh-c">получается ваш форк</text><rect x="120" y="420" width="840" height="1560" rx="70" fill="#FBF6EE"/><text x="190" y="560" class="sh-t">Шакшука с фетой,</text><text x="190" y="630" class="sh-t">мой вариант</text><g transform="translate(190 700) scale(2.6)"><svg class="provg" width="34" height="40" viewBox="0 0 34 40" aria-hidden="true">
+<path d="M8 2 V38" stroke="#887A6E" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5"/>
+<circle cx="8" cy="8" r="4" fill="#FBF6EE" stroke="#887A6E" stroke-width="2.2"/>
+<path d="M8 12 C8 22 12 26 20 27" fill="none" stroke="#3A6F33" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M19 27.6 C19.8 21.6 23.6 18.4 30 18.6 C29.4 24.6 25.4 28 19 27.6Z" fill="#3A6F33"/>
+</svg></g><text x="300" y="770" class="sh-b">Форк рецепта</text><text x="300" y="830" class="sh-b" fill="#3A6F33">«Шакшука классическая»</text><use href="#g-tomato" x="190" y="948" width="64" height="64"/><text x="290" y="1000" class="sh-b">Томаты</text><text x="890" y="1000" text-anchor="end" class="sh-n2">800 г</text><use href="#g-egg" x="190" y="1078" width="64" height="64"/><text x="290" y="1130" class="sh-b">Яйца</text><text x="890" y="1130" text-anchor="end" class="sh-n2">4 шт.</text><use href="#g-egg" x="190" y="1208" width="64" height="64"/><text x="290" y="1260" class="sh-b">Фета</text><text x="890" y="1260" text-anchor="end" class="sh-n2">120 г</text><use href="#g-onion" x="190" y="1338" width="64" height="64"/><text x="290" y="1390" class="sh-b">Лук красный</text><text x="890" y="1390" text-anchor="end" class="sh-n2">1 шт.</text><use href="#g-leaf" x="190" y="1468" width="64" height="64"/><text x="290" y="1520" class="sh-b">Кинза</text><text x="890" y="1520" text-anchor="end" class="sh-n2">½ пучка</text><rect x="500" y="1700" width="400" height="140" rx="44" fill="#B8361F"/><g transform="translate(540 1738) scale(2.6)" style="color:#fff"><use href="#sprout" width="24" height="24"/></g><text x="620" y="1790" class="sh-btn">Форкнуть</text></svg></div>
+<div class="rules"><div><b>Подписи к снимкам.</b> Одна мысль, один факт: что делает приложение. Две строки, до 30 знаков в строке, Onest 800 на томатном поле.</div>
+<div><b>Нельзя:</b> «бесплатно», «лучший», «самый», «№1», восклицательные знаки, обещания, которые нельзя проверить на экране.</div>
+<div><b>Можно:</b> «Рецепт работает без аккаунта», «Таймеры у каждого шага», «Видно, от какого рецепта форк», «Видно, чего нет на вашей кухне».</div>
+<div><b>Фон снимков</b> — томат, телефон — молочный, продуктовые значки только внутри экрана. Графика 1024 × 500: слева знак и текст, справа рыночная раскладка на surfaceContainerHigh.</div></div>
+</section>
+<section><h2><span>9</span>Сильные стороны, риски, цена</h2>
+<div class="sr">
+<div><h4>Сильные стороны</h4><ul>
+<li>Сразу читается как еда и рынок; тёплое и массовое, но не детское.</li>
+<li>Продуктовые значки-категории полезны сами по себе: ускоряют чтение списка ингредиентов и закупку.</li>
+<li>Одна метафора на всё: росток = форк, от знака до кнопки и строки происхождения.</li>
+<li>Знак держится на 16 dp в одном цвете, без букв — переживёт смену имени.</li>
+<li>Интерфейс спокойный: один главный цвет, продуктовые — только в мелких метках.</li></ul></div>
+<div><h4>Риски</h4><ul>
+<li>Томатный primary и красная ошибка близки по тону: ошибка уведена в свёкольный и всегда со значком, но это нужно держать в ревью.</li>
+<li>Зелёный значит и «форк», и «готово». На Готовке форка нет, а «готово» всегда с галочкой — но это правило, которое легко нарушить.</li>
+<li>Восемь категорий требуют, чтобы у словаря ингредиентов было поле «семейство»; без него значки не появятся.</li>
+<li>Продуктовая иллюстрация легко съезжает в мультяшность, если добавить лица, блики и обводки — запрещено.</li>
+<li>Лимон на светлом фоне без обводки не виден: обводка обязательна.</li></ul></div>
+<div><h4>Цена в Compose</h4><ul>
+<li>Шрифт: Onest 400/600/700/800 как ресурсы <code>res/font</code>, около 4 × 90 КБ (кириллица и латиница); можно взять вариативный файл, ~200 КБ.</li>
+<li>Цвета: вставить токены в <code>app_theme.xml</code>, ContrastTest уже есть.</li>
+<li>Значки: 8 категорий + побег + двойной побег как ImageVector, ~1 день.</li>
+<li>Свои компоненты: строка происхождения (Canvas + текст), строка шага Готовки с галочкой и полосой, строка ингредиента с пунктиром под пересчитанным — по полдня-дню каждая.</li>
+<li>Иконка: адаптивная из двух слоёв + монохромный слой, вектором.</li>
+<li>Итого порядка 4–5 дней работы одного разработчика.</li></ul></div>
+</div>
+</section>
+<footer>Recipe Fork — рабочее название. Направление 4 «Рынок». Страница собрана без скриптов; контрасты посчитаны по формуле WCAG 2.x.</footer>
+</main></body></html>
