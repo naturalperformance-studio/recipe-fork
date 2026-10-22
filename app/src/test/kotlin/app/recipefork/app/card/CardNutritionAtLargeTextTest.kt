@@ -199,6 +199,7 @@ class CardNutritionAtLargeTextTest {
             val segment = compose.onNodeWithTag(tag).fetchSemanticsNode()
             val density = segment.layoutInfo.density.density
             val padding = ButtonDefaults.TextButtonContentPadding
+            // The content padding is the same on both sides, so either direction measures it.
             val start = segment.boundsInRoot.left + padding.calculateStartPadding(LayoutDirection.Ltr).value * density
             val end = segment.boundsInRoot.right - padding.calculateEndPadding(LayoutDirection.Ltr).value * density
             val label = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
@@ -213,6 +214,27 @@ class CardNutritionAtLargeTextTest {
         }
     }
 
+    /** How many lines the label of the segment tagged [tag] takes. */
+    private fun labelLines(tag: String): Int {
+        val label = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes().single()
+        val layouts = mutableListOf<TextLayoutResult>().also { label.config[SemanticsActions.GetTextLayoutResult].action!!(it) }
+        return layouts.single().lineCount
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun atTheUsualWidthTheOpeningSwitchIsOneLineAndDrawn40DpTall() {
+        open(withNames("Sour cream", "Spice", weight = 560))
+        compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).assertIsSelected()
+        listOf(NutritionTags.SWITCH_PER_100_G, NutritionTags.SWITCH_PER_SERVING, NutritionTags.SWITCH_WHOLE).forEach { tag ->
+            assertEquals(tag, 1, labelLines(tag))
+            val segment = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            assertEquals(tag, 40f, dp(segment, segment.size.height.toFloat()), 0.5f)
+        }
+        assertLabelsWithinTheirSegments()
+    }
+
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp")
     fun onANarrowScreenTheChosenWholeDishWrapsWithinItsSegment() {
@@ -222,6 +244,8 @@ class CardNutritionAtLargeTextTest {
         compose.waitForIdle()
         compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).assertIsSelected()
         assertLabelsWithinTheirSegments()
+        // A segment not chosen has no check, and its label keeps the whole content: «Порция» stays one line.
+        assertEquals(1, labelLines(NutritionTags.SWITCH_PER_SERVING))
         assertNotCut(NutritionTags.SWITCH)
         assertThreeEqualSegments()
         val (above, below) = switchGaps("Пищевая ценность, примерно")

@@ -209,7 +209,7 @@ private fun NutritionSwitch(offered: List<NutritionShown>, shown: NutritionShown
                     shape = SegmentedButtonDefaults.itemShape(index, offered.size),
                     modifier = Modifier.fillMaxHeight().padding(vertical = SWITCH_GAP).testTag(NutritionTags.segment(choice)),
                     label = {
-                        Text(stringResource(labelOf(choice)), style = MaterialTheme.typography.labelLarge, modifier = Modifier.besideTheCheck())
+                        Text(stringResource(labelOf(choice)), style = MaterialTheme.typography.labelLarge, modifier = Modifier.besideTheCheck(shown == choice))
                     },
                 )
             }
@@ -218,12 +218,13 @@ private fun NutritionSwitch(offered: List<NutritionShown>, shown: NutritionShown
 }
 
 /**
- * A segment's label within the room its content leaves it: Material places the label after the check's room — the
- * icon's size and its gap, kept whether the segment is chosen or not — yet measures it as wide as the whole content, so
- * that a label wide enough to fill it would run under the segment's end. Measured in what remains, it wraps instead.
+ * A segment's label within the room its content leaves it: in a [chosen] segment Material places the label after the
+ * check — the icon's size and its gap — yet measures it as wide as the whole content, so that a label wide enough to fill
+ * it would run under the segment's end. Measured in what remains, it wraps instead. A segment not chosen has no check,
+ * and its label keeps the whole content's width.
  */
-private fun Modifier.besideTheCheck(): Modifier = layout { measurable, constraints ->
-    val room = (SegmentedButtonDefaults.IconSize + ButtonDefaults.IconSpacing).roundToPx()
+private fun Modifier.besideTheCheck(chosen: Boolean): Modifier = layout { measurable, constraints ->
+    val room = if (chosen) (SegmentedButtonDefaults.IconSize + ButtonDefaults.IconSpacing).roundToPx() else 0
     val narrowed = if (constraints.hasBoundedWidth) {
         val width = (constraints.maxWidth - room).coerceAtLeast(0)
         constraints.copy(minWidth = minOf(constraints.minWidth, width), maxWidth = width)
