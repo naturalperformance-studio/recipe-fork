@@ -22,6 +22,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.MainActivity
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.NutritionTags
+import app.recipefork.app.card.ShownText
+import app.recipefork.app.card.TILES_SHOWN_APART
 import app.recipefork.app.data.AppLanguage
 import app.recipefork.app.data.LanguageChoice
 import app.recipefork.app.dictionary.DictionarySnapshot
@@ -160,6 +163,10 @@ class InterfaceLanguageTest {
      * Every text shown is written in [activity]'s language, but the reader's own [content]; and is that language's own
      * resource, but [content] and the [computed] texts — dictionary labels and quantities, checked by the caller.
      */
+    /** The card's nutrition tiles' values as shown — "8 062 500 810", "1 234 г" — each without its tile's word. */
+    private fun nutritionValues(): List<String> =
+        compose.onNodeWithTag(NutritionTags.TILES).fetchSemanticsNode().config[ShownText].split(TILES_SHOWN_APART).map { it.substringBeforeLast(' ') }
+
     private fun assertTheScreenReadsInItsLanguage(content: Set<String>, computed: Collection<String> = emptySet()) {
         LocalizationChecks.assertScreenTextFromResources(compose, activity(), content + computed)
         LocalizationChecks.assertScreenTextWrittenInItsLanguage(compose, activity(), content)
@@ -234,7 +241,11 @@ class InterfaceLanguageTest {
         val card = cardTexts.map { it.joinToString(" ") }
         assertTrue(card.toString(), card[0].contains("говядина") && card[0].contains("1,5 кг"))
         assertTrue(card.toString(), card[1].contains("курица") && card[1].contains("10\u00A0000\u00A0000"))
-        assertTheScreenReadsInItsLanguage(setOf("Борщ", "Варить.", "1."), cardTexts.flatten())
+        // Its nutrition, worked out from the dictionary: numbers grouped the Russian way too.
+        val nutrition = nutritionValues()
+        assertTrue(nutrition.toString(), nutrition.first().contains("\u00A0"))
+        // The kcal tile's number stands over its word, a number alone in no script.
+        assertTheScreenReadsInItsLanguage(setOf("Борщ", "Варить.", "1.", nutrition.first()), cardTexts.flatten() + nutrition)
 
         // The editor: its words and its tag's label in Russian.
         compose.onNodeWithTag(CardTags.EDIT).performClick()
@@ -272,7 +283,9 @@ class InterfaceLanguageTest {
         val english = englishTexts.map { it.joinToString(" ") }
         assertTrue(english.toString(), english[0].contains("beef") && english[0].contains("1.5 kg"))
         assertTrue(english.toString(), english[1].contains("chicken") && english[1].contains("10,000,000"))
-        assertTheScreenReadsInItsLanguage(setOf("Борщ", "Варить.", "1."), englishTexts.flatten())
+        val englishNutrition = nutritionValues()
+        assertTrue(englishNutrition.toString(), englishNutrition.first().contains(","))
+        assertTheScreenReadsInItsLanguage(setOf("Борщ", "Варить.", "1.", englishNutrition.first()), englishTexts.flatten() + englishNutrition)
     }
 
     // On a Russian device: English overrides the device's language at once; "As on the device" gives Russian back.

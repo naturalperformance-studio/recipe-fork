@@ -70,6 +70,7 @@ import app.recipefork.core.nutrition.NutritionEntry
 import app.recipefork.core.nutrition.NutritionValues
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.scaling.InterfaceLanguage
+import app.recipefork.core.scaling.QuantityText
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.RequestedServings
 import app.recipefork.core.scaling.ServingCount
@@ -126,6 +127,7 @@ internal fun NutritionSection(
             spoken = remember(values, showsWhole, servings, perServing, language, resources) {
                 spokenNutrition(resources, values, perServing = !showsWhole, servings?.takeIf { perServing != null }, language)
             },
+            language = language,
         )
         if (dish.leftOut.isNotEmpty()) {
             Text(
@@ -194,12 +196,12 @@ private fun NutritionSwitch(whole: MutableState<Boolean>) {
  * line, in two rows of two otherwise. Display only: one node to the screen reader, read as [spoken].
  */
 @Composable
-private fun NutritionTiles(values: NutritionValues, spoken: String) {
+private fun NutritionTiles(values: NutritionValues, spoken: String, language: InterfaceLanguage) {
     val tiles = listOf(
-        values.kcal.toString() to stringResource(R.string.card_nutrition_kcal_label),
-        grams(values.protein) to stringResource(R.string.card_nutrition_protein),
-        grams(values.fat) to stringResource(R.string.card_nutrition_fat),
-        grams(values.carbs) to stringResource(R.string.card_nutrition_carbs),
+        QuantityText.whole(values.kcal, language) to stringResource(R.string.card_nutrition_kcal_label),
+        grams(values.protein, language) to stringResource(R.string.card_nutrition_protein),
+        grams(values.fat, language) to stringResource(R.string.card_nutrition_fat),
+        grams(values.carbs, language) to stringResource(R.string.card_nutrition_carbs),
     )
     val valueStyle = MaterialTheme.typography.titleLarge.copy(fontSize = TILE_VALUE_SIZE, lineHeight = TILE_VALUE_LINE, fontWeight = FontWeight.Medium)
     val labelStyle = MaterialTheme.typography.bodySmall
@@ -245,9 +247,10 @@ private fun NutritionTiles(values: NutritionValues, spoken: String) {
     }
 }
 
-/** [amount] grams as a tile shows it: «37 г», "37 g". */
+/** [amount] grams as a tile shows it, grouped by three digits: «37 г», «1 250 г», "37 g". */
 @Composable
-private fun grams(amount: BigInteger): String = stringResource(R.string.card_nutrition_grams, amount.toString())
+private fun grams(amount: BigInteger, language: InterfaceLanguage): String =
+    stringResource(R.string.card_nutrition_grams, QuantityText.whole(amount, language))
 
 /**
  * "Details": the kcal each counted row gives the whole dish, the rows left out with their reasons, and how it is
@@ -292,7 +295,7 @@ private fun NutritionSheet(
                 NutritionTags.COUNTED,
             )
             dish.counted.forEach { row ->
-                SheetRow(names.getValue(row.position), stringResource(R.string.card_nutrition_row_kcal, row.kcal.toString()), muted = false, NutritionTags.counted(row.position))
+                SheetRow(names.getValue(row.position), stringResource(R.string.card_nutrition_row_kcal, QuantityText.whole(row.kcal, language)), muted = false, NutritionTags.counted(row.position))
             }
             if (dish.leftOut.isNotEmpty()) {
                 Caption(stringResource(R.string.card_nutrition_not_counted), NutritionTags.NOT_COUNTED, Modifier.padding(top = SHEET_SECTION_GAP))
