@@ -63,10 +63,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * The cover on the book's entries: an own and a found recipe's entry, each a card, show the recipe's cover across the
- * card's width in the 4:3 frame above the title, decoded off the main thread at the size it is shown and once per
- * screen; an entry without one — or whose cover file is missing — shows no image area and its text keeps the whole
- * width; one whose file cannot be read keeps its tinted frame. The picture is decorative, and the entry stays readable.
+ * The cover on the book's entries: an own and a found recipe's row show the recipe's cover as a 60 dp thumbnail at the
+ * row's start, beside the title (v0.42, T-301), decoded off the main thread at the size it is shown and once per
+ * screen; an entry without one — or whose cover file is missing — shows a drop cap in its place, no picture; one whose
+ * file cannot be read keeps its tinted frame. The picture is decorative, and the entry stays readable.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -162,18 +162,17 @@ class BookEntryCoverTest {
 
     private fun dp(value: Float) = with(compose.density) { value.dp.toPx() }
 
-    /** The cover spans the card at its top in the 4:3 frame, above the title, inside the entry's touch target. */
-    private fun assertCoverOnTop(recipe: Recipe) {
+    /** The cover is a 60 dp square at the row's start, the title beside it, inside the entry's touch target. */
+    private fun assertCoverAtStart(recipe: Recipe) {
         val id = recipe.id.value
         val cover = bounds(LibraryTags.cover(id))
         val entry = bounds(LibraryTags.entry(id))
         val title = bounds(LibraryTags.entryTitle(id))
-        assertEquals("the card's whole width", entry.width, cover.width, 1f)
-        assertEquals("in the 4:3 frame", cover.width * 3 / 4, cover.height, 1f)
-        assertEquals("at the card's top", entry.top, cover.top, 1f)
-        assertEquals(entry.left, cover.left, 1f)
-        assertEquals("the title beneath it, past the padding", cover.bottom + dp(12f), title.top, 1f)
-        assertEquals(entry.left + dp(16f), title.left, 1f)
+        assertEquals("60 dp wide", dp(60f), cover.width, 1f)
+        assertEquals("and as high", dp(60f), cover.height, 1f)
+        assertEquals("at the row's start, past the padding", entry.left + dp(16f), cover.left, 1f)
+        assertEquals(entry.top + dp(12f), cover.top, 1f)
+        assertEquals("the title beside it", cover.right + dp(12f), title.left, 1f)
     }
 
     /** The picture says nothing to the screen reader: the entry reads as it did, by its title. */
@@ -198,11 +197,11 @@ class BookEntryCoverTest {
     }
 
     @Test
-    fun anOwnEntryShowsItsCoverAcrossTheCard() {
+    fun anOwnEntryShowsItsCoverAtItsStart() {
         val recipe = own("Borscht", photo("c1", width = 900, height = 1600))
         show(LibraryView.OWN)
         awaitCover(recipe)
-        assertCoverOnTop(recipe)
+        assertCoverAtStart(recipe)
         assertDecorative(recipe)
         // The entry still opens the card, and its offers keep their size and names.
         AccessibilityChecks.assertTouchTargets(compose, expectAtLeast = 2)
@@ -212,11 +211,11 @@ class BookEntryCoverTest {
     }
 
     @Test
-    fun aFoundEntryShowsItsCoverAcrossTheCard() {
+    fun aFoundEntryShowsItsCoverAtItsStart() {
         val recipe = found("Shakshuka", photo("c2"))
         show(LibraryView.MARKED, Mode.Serverless)
         awaitCover(recipe)
-        assertCoverOnTop(recipe)
+        assertCoverAtStart(recipe)
         assertDecorative(recipe)
         compose.openEntryMenu(recipe.id.value)
         assertTrue(exists(LibraryTags.remove(recipe.id.value)))
@@ -224,7 +223,7 @@ class BookEntryCoverTest {
     }
 
     @Test
-    fun anEntryWithoutACoverOrWithItsFileMissingShowsNoImageAreaAndKeepsTheWholeWidth() {
+    fun anEntryWithoutACoverOrWithItsFileMissingShowsADropCapInItsPlace() {
         val bare = own("Borscht")
         val gone = own("Shchi", Media("gone", null, MediaKind.PHOTO, MediaAttachment.Cover, MediaVisibility.PRIVATE), minutesAgo = 1)
         val pictured = own("Okroshka", photo("c3"), minutesAgo = 2)
@@ -234,13 +233,15 @@ class BookEntryCoverTest {
             val id = recipe.id.value
             compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(LibraryTags.entry(id)))
             assertFalse(exists(LibraryTags.cover(id)))
-            assertFalse("no place is held for it", exists(LibraryTags.coverSlot(LibraryTags.cover(id))))
+            assertFalse("no frame is held for a picture", exists(LibraryTags.coverSlot(LibraryTags.cover(id))))
             val entry = bounds(LibraryTags.entry(id))
+            val cap = bounds(BookEntryRowTags.dropCap(id))
+            assertEquals("a drop cap at the row's start", entry.left + dp(16f), cap.left, 1f)
+            assertEquals(dp(60f), cap.width, 1f)
             val title = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
-            assertEquals("the text starts at the entry's padding", entry.left + dp(16f), bounds(LibraryTags.entryTitle(id)).left, 1f)
-            assertEquals("no image area above it", entry.top + dp(12f), bounds(LibraryTags.entryTitle(id)).top, 1f)
-            // The title keeps the card's width less its padding and the ⋮ of its deletion.
-            assertTrue(layoutOf(title.config).layoutInput.constraints.maxWidth + 1f >= entry.width - dp(16f + 52f))
+            assertEquals("the text beside it", cap.right + dp(12f), bounds(LibraryTags.entryTitle(id)).left, 1f)
+            // The title keeps the row's width less its padding, the drop cap and the ⋮ of its deletion.
+            assertTrue(layoutOf(title.config).layoutInput.constraints.maxWidth + 1f >= entry.width - dp(16f + 60f + 12f + 60f))
         }
     }
 
@@ -256,10 +257,10 @@ class BookEntryCoverTest {
         compose.waitForIdle()
         assertFalse("no picture is shown", exists(LibraryTags.cover(id)))
         val frame = bounds(slot)
-        val entry = bounds(LibraryTags.entry(id))
-        assertEquals("the frame keeps the card's width", entry.width, frame.width, 1f)
-        assertEquals("in the 4:3 frame", frame.width * 3 / 4, frame.height, 1f)
-        assertEquals(frame.bottom + dp(12f), bounds(LibraryTags.entryTitle(id)).top, 1f)
+        assertEquals("the frame keeps its 60 dp", dp(60f), frame.width, 1f)
+        assertEquals(dp(60f), frame.height, 1f)
+        assertFalse("and no drop cap stands for it", exists(BookEntryRowTags.dropCap(id)))
+        assertEquals(frame.right + dp(12f), bounds(LibraryTags.entryTitle(id)).left, 1f)
         assertFalse(exists(LibraryTags.coverSlot(LibraryTags.cover(recipe.id.value))))
     }
 
@@ -285,7 +286,7 @@ class BookEntryCoverTest {
 
     // A cover whose file is there holds its frame before its picture is read: the title stands where it will stay.
     @Test
-    fun theTitleStandsBelowTheCoversFrameBeforeThePictureIsRead() {
+    fun theTitleStandsBesideTheCoversFrameBeforeThePictureIsRead() {
         gate = CountDownLatch(1)
         val recipe = own("Borscht", photo("c1"))
         show(LibraryView.OWN)
@@ -293,11 +294,12 @@ class BookEntryCoverTest {
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entryTitle(id)) && decodes.isNotEmpty() }
         assertFalse("the picture is not read yet", exists(LibraryTags.cover(id)))
         val entry = bounds(LibraryTags.entry(id))
-        val before = bounds(LibraryTags.entryTitle(id)).top - entry.top
-        assertEquals("the title starts below the cover's frame", entry.width * 3 / 4 + dp(12f), before, 1f)
+        val before = bounds(LibraryTags.entryTitle(id)).left - entry.left
+        assertEquals("the title starts beside the cover's frame", dp(16f + 60f + 12f), before, 1f)
+        assertFalse("no drop cap stands for it meanwhile", exists(BookEntryRowTags.dropCap(id)))
         gate.countDown()
         awaitCover(recipe)
-        val after = bounds(LibraryTags.entryTitle(id)).top - bounds(LibraryTags.entry(id)).top
+        val after = bounds(LibraryTags.entryTitle(id)).left - bounds(LibraryTags.entry(id)).left
         assertEquals("and does not move within its card once it is read", before, after, 0.5f)
     }
 
@@ -317,7 +319,7 @@ class BookEntryCoverTest {
         }
     }
 
-    // At 360 dp and font scale 2.0 the title keeps the card's width less its padding and the ⋮ at the end of its line,
+    // At 360 dp and font scale 2.0 the title keeps the row's width less its padding, the cover and the ⋮ at the end of its line,
     // and the items of the entry's menu each keep their size.
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
@@ -329,16 +331,16 @@ class BookEntryCoverTest {
         val list = compose.onNodeWithTag(LibraryTags.OWN_LIST).fetchSemanticsNode().boundsInRoot
         val entry = bounds(LibraryTags.entry(id))
         val menu = bounds(LibraryTags.actions(id))
-        assertEquals("the card takes the list's width less its margins", list.width - dp(32f), entry.width, 1f)
-        assertEquals("the ⋮ stands at the card's end", entry.right - dp(4f), menu.right, 1f)
+        assertEquals("the row takes the list's width", list.width, entry.width, 1f)
+        assertEquals("the ⋮ stands at the row's end", entry.right, menu.right, 1f)
         val title = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
         val layout = layoutOf(title.config)
         val room = layout.layoutInput.constraints.maxWidth
-        assertTrue("the title has the card's width less its padding and the ⋮ ($room px of ${entry.width} px)",
-            room + 1f >= entry.width - dp(16f + 52f))
+        assertTrue("the title has the row's width less its padding, the cover and the ⋮ ($room px of ${entry.width} px)",
+            room + 1f >= entry.width - dp(16f + 60f + 12f + 60f))
         assertTrue("the title is not cut short", !layout.hasVisualOverflow)
         assertTrue("each word of the title fits its line", layout.lineCount <= 3)
-        assertTrue(bounds(LibraryTags.entryTitle(id)).top >= bounds(LibraryTags.cover(id)).bottom)
+        assertTrue(bounds(LibraryTags.entryTitle(id)).left >= bounds(LibraryTags.cover(id)).right)
         assertTrue("the title does not reach under the ⋮", bounds(LibraryTags.entryTitle(id)).right <= menu.left)
         val firstLine = bounds(LibraryTags.entryTitle(id)).top + (layout.getLineTop(0) + layout.getLineBottom(0)) / 2
         assertEquals("the ⋮ stands level with the title's first line", firstLine, menu.center.y, dp(2f))

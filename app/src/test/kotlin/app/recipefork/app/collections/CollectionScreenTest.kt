@@ -23,6 +23,11 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import app.recipefork.app.library.BookEntryRowTags
+import app.recipefork.app.ui.ReadingFamily
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -231,6 +236,47 @@ class CollectionScreenTest {
     private fun systemBack() =compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
 
     // The tests.
+
+    private fun unmerged(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+
+    private fun styleOf(tag: String): TextStyle {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        return layouts.single().layoutInput.style
+    }
+
+    /** A recipe in a collection's screen is the book's row (v0.42, T-301): drop cap, Literata title, author in italics. */
+    private fun assertBookRow(recipe: RecipeId) {
+        val id = recipe.value
+        await(LibraryTags.entry(id))
+        val entry = bounds(LibraryTags.entry(id))
+        val density = compose.density.density
+        assertTrue("at least 84 dp high", entry.height >= 84 * density - 0.5f)
+        assertTrue("a drop cap in place of the missing cover", unmerged(BookEntryRowTags.dropCap(id)))
+        val cap = bounds(BookEntryRowTags.dropCap(id), unmerged = true)
+        assertEquals(60 * density, cap.width, 1f)
+        assertEquals(60 * density, cap.height, 1f)
+        assertEquals("the title in Literata", ReadingFamily, styleOf(LibraryTags.entryTitle(id)).fontFamily)
+    }
+
+    @Test
+    fun aCollectionsRecipesShowTheBooksRow() {
+        val soup = own("Soup")
+        val menu = collection("Menu", soup.value)
+        val borscht = found("Borscht")
+        val annas = imported("Anna's dinners", null, borscht.value)
+        show(LibraryView.OWN)
+        open(menu)
+        assertBookRow(soup)
+        systemBack()
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.PAGER) }
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        open(annas, LibraryView.MARKED)
+        assertBookRow(borscht)
+        val author = LibraryTags.statedAuthor(borscht.value)
+        assertTrue(unmerged(author))
+        assertEquals("the stated author in italics", FontStyle.Italic, styleOf(author).fontStyle)
+    }
 
     @Test
     fun eachViewShowsItsCollectionsAboveItsRecipesTheLastMadeFirstWithTheirCounts() {
