@@ -50,6 +50,22 @@ class FitWordsTest {
         assertTrue("${px(together)} px where $fits px fit", px(together) >= fits * 0.95f)
     }
 
+    // A hyphenated word may break after its hyphen: with hyphenParts its parts are measured, not the whole (T-301).
+    @Test
+    fun aHyphenatedWordCountsAsItsParts() {
+        assertEquals(listOf("Картофельно-", "грибная"), hyphenPartsOf("Картофельно-грибная"))
+        assertEquals(listOf("a-", "b-", "c"), hyphenPartsOf("a-b-c"))
+        assertEquals(listOf("plain"), hyphenPartsOf("plain"))
+        val title = "Strawberry-rhubarb crumble"
+        val partsWidth = maxOf(widestAtFull("Strawberry-"), widestAtFull("rhubarb"), widestAtFull("crumble"))
+        val width = partsWidth + 2
+        assertTrue("the whole word is wider than the room", widestAtFull("Strawberry-rhubarb") > width)
+        val parts = fitWords(title, style, width, measurer, density, hyphenParts = true)
+        assertEquals("its parts fit as they are", px(style), px(parts.style), 0.01f)
+        assertTrue(!parts.overflows)
+        assertTrue("taken whole, it would be made smaller", px(fitWords(title, style, width, measurer, density).style) < px(style))
+    }
+
     @Test
     fun theTextsAreNeverDrawnBelowTheSizeAtAFontScaleOfOne() {
         val width = (widestAtFull(wide) * 0.3f).toInt()
@@ -62,5 +78,28 @@ class FitWordsTest {
     fun textsThatFitKeepTheirStyle() {
         val width = widestAtFull(wide) + 1
         assertEquals(style, fitWordsTogether(listOf(narrow, wide), style, width, measurer, density))
+    }
+
+    // T-297, a bar's title ([fitLine]): one line where it fits drawn smaller; else two lines at the least size, the line
+    // height 28/22 of it; one line again where a word by itself is wider than the line.
+    @Test
+    fun aTitleTakesTwoLinesOnlyWhereOneDoesNotFitEvenAtTheLeastSize() {
+        val least = with(density) { style.fontSize.value.dp.toSp() }
+        val atLeast = style.copy(fontSize = least)
+        fun lineAtLeast(text: String) = measurer.measure(text, atLeast, softWrap = false, maxLines = 1).size.width
+
+        val fitsSmaller = fitLine(wide, style, lineAtLeast(wide) + 2, measurer, density)
+        assertEquals(1, fitsSmaller.lines)
+        assertTrue(px(fitsSmaller.style) < px(style))
+
+        val title = "$narrow $wide"
+        val two = fitLine(title, style, widestWord(listOf(title), atLeast, measurer) + 2, measurer, density)
+        assertEquals(2, two.lines)
+        assertEquals(px(atLeast), px(two.style), 0.01f)
+        assertEquals(two.style.fontSize.value * 28f / 22f, two.style.lineHeight.value, 0.01f)
+
+        val word = fitLine(title, style, widestWord(listOf(title), atLeast, measurer) / 2, measurer, density)
+        assertEquals(1, word.lines)
+        assertEquals(px(atLeast), px(word.style), 0.01f)
     }
 }

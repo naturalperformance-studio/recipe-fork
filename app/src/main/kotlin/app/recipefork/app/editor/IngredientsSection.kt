@@ -132,8 +132,7 @@ internal fun ServingCount(recipe: Recipe, editor: RecipeEditor, requester: Focus
             },
             isError = refused,
             singleLine = true,
-            // Next goes on to the first item of equipment or, with none, the ingredient list's first item, a row or a
-            // group's heading ([onNext]); with neither, Done closes the keyboard and adds nothing.
+            // Next goes on to the finished weight ([onNext]); without one to go to, Done closes the keyboard.
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = if (onNext == null) ImeAction.Done else ImeAction.Next,

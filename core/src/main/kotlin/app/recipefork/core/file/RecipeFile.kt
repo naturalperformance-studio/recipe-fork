@@ -50,12 +50,18 @@ object RecipeFile {
      * reading at most format 6 still opens it, and refuses one with US units as later rather than damaged (FLOW-064).
      * Format 8 adds the recipe's `source_text`, the text it was made from, exactly as pasted, and is written only by a
      * document holding one; any other is written as format 7 or 6, as before. A document of formats 1 to 7 reads as one
-     * with none. A source text longer than [RecipeBounds.MAX_SOURCE_TEXT] is read cut at that length.
+     * with none. A source text longer than [RecipeBounds.MAX_SOURCE_TEXT] is read cut at that length. Format 9 adds the
+     * recipe's `finished_weight_grams`, what the finished dish weighs in whole grams at its servings, and is written only
+     * by a document holding one; any other is written as format 8, 7 or 6, as before. A document of formats 1 to 8 reads
+     * as one with none.
      */
-    const val FORMAT_VERSION = 8
+    const val FORMAT_VERSION = 9
 
     /** The last format that wrote no `source_text`. */
     private const val LAST_FORMAT_WITHOUT_SOURCE_TEXT = 7
+
+    /** The last format that wrote no `finished_weight_grams`. */
+    private const val LAST_FORMAT_WITHOUT_FINISHED_WEIGHT = 8
 
     /** The format written for a document holding no US unit: the last format before them. */
     const val LAST_FORMAT_WITHOUT_US_UNITS = 6
@@ -106,6 +112,7 @@ object RecipeFile {
                 .also { it.checkEquipmentShape() }
                 .also { it.checkStepNoteShape() }
                 .also { it.checkSourceTextShape() }
+                .also { it.checkFinishedWeightShape() }
                 .toContent(entryOf)
         } catch (e: UnreadableRecipeFile) {
             throw e
@@ -124,7 +131,8 @@ object RecipeFile {
 
     private fun RecipeFileContent.toDocument() = RecipeDocument(
         formatVersion = when {
-            sourceText != null -> FORMAT_VERSION
+            finishedWeightGrams != null -> FORMAT_VERSION
+            sourceText != null -> LAST_FORMAT_WITHOUT_FINISHED_WEIGHT
             holdsUsUnit() -> LAST_FORMAT_WITHOUT_SOURCE_TEXT
             else -> LAST_FORMAT_WITHOUT_US_UNITS
         },
@@ -146,6 +154,7 @@ object RecipeFile {
             ingredientGroups = ingredientGroups.map { DocumentGroup(it.name, it.firstPosition) },
             steps = steps.map { it.toDocument() },
             sourceText = sourceText,
+            finishedWeightGrams = finishedWeightGrams,
         ),
         author = author?.let(::DocumentAuthor),
         parent = parent?.let { DocumentParent(it.id.value, it.title, it.nickname) },
@@ -215,6 +224,13 @@ object RecipeFile {
         }
     }
 
+    /** A format before 9 wrote no finished weight: a document of it that holds one is no document of its format. */
+    private fun RecipeDocument.checkFinishedWeightShape() {
+        if (formatVersion <= LAST_FORMAT_WITHOUT_FINISHED_WEIGHT && recipe.finishedWeightGrams != null) {
+            throw UnreadableRecipeFile("format $formatVersion holds a finished weight, which it does not write")
+        }
+    }
+
     /** The document's equipment as its format writes it, with the labels format 5 gives its entries. */
     private fun RecipeDocument.equipmentOf(entryOf: (String) -> Long?): Pair<List<EquipmentItem>, Map<Long, EntryLabels>> {
         if (formatVersion <= LAST_TEXT_EQUIPMENT_FORMAT) {
@@ -253,6 +269,7 @@ object RecipeFile {
         steps = recipe.steps.map { it.toStep() },
         // Kept exactly as written, cut at its limit where it is longer; an empty one is none.
         sourceText = Recipe.sourceTextOf(recipe.sourceText),
+        finishedWeightGrams = recipe.finishedWeightGrams,
         author = author?.nickname,
         parent = parent?.let { FileParent(RecipeId(it.id), it.title, it.nickname) },
         media = media.map {

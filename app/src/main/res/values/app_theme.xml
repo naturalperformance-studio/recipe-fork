@@ -3,115 +3,122 @@
     The application's theme: every colour, the corners and the main type sizes, in one file (ADR 20261004).
     Change a value here and rebuild; nothing in Kotlin needs touching. Every Material 3 colour role has a light and a
     dark value, theme_light_<role> and theme_dark_<role>; the app picks the scheme itself, not through values-night.
+    The few colours beyond Material 3's roles are named the same way, in their own block after the dark scheme.
     Each pair a screen draws text or an icon in is measured by ContrastTest (text 4.5:1, icons and boundaries 3:1)
     in both schemes, so a change that makes something unreadable fails the build's tests, not the phone.
     Colours are #AARRGGBB or #RRGGBB.
 -->
 <resources>
-    <!-- Light scheme: Material 3's baseline light colours. -->
-    <color name="theme_light_primary">#FF6750A4</color>
+    <!-- Light scheme: direction 1, paper and ink. -->
+    <color name="theme_light_primary">#FF4C5F23</color>
     <color name="theme_light_onPrimary">#FFFFFFFF</color>
-    <color name="theme_light_primaryContainer">#FFEADDFF</color>
-    <color name="theme_light_onPrimaryContainer">#FF21005D</color>
-    <color name="theme_light_inversePrimary">#FFD0BCFF</color>
-    <color name="theme_light_secondary">#FF625B71</color>
+    <color name="theme_light_primaryContainer">#FFDCE5BE</color>
+    <color name="theme_light_onPrimaryContainer">#FF1B2408</color>
+    <color name="theme_light_inversePrimary">#FFB7C98A</color>
+    <color name="theme_light_secondary">#FF6A5B48</color>
     <color name="theme_light_onSecondary">#FFFFFFFF</color>
-    <color name="theme_light_secondaryContainer">#FFE8DEF8</color>
-    <color name="theme_light_onSecondaryContainer">#FF1D192B</color>
-    <color name="theme_light_tertiary">#FF7D5260</color>
+    <color name="theme_light_secondaryContainer">#FFEDE0CC</color>
+    <color name="theme_light_onSecondaryContainer">#FF2A2014</color>
+    <color name="theme_light_tertiary">#FF8E3B46</color>
     <color name="theme_light_onTertiary">#FFFFFFFF</color>
-    <color name="theme_light_tertiaryContainer">#FFFFD8E4</color>
-    <color name="theme_light_onTertiaryContainer">#FF31111D</color>
-    <color name="theme_light_background">#FFFEF7FF</color>
-    <color name="theme_light_onBackground">#FF1D1B20</color>
-    <color name="theme_light_surface">#FFFEF7FF</color>
-    <color name="theme_light_onSurface">#FF1D1B20</color>
-    <color name="theme_light_surfaceVariant">#FFE7E0EC</color>
-    <color name="theme_light_onSurfaceVariant">#FF49454F</color>
-    <color name="theme_light_surfaceTint">#FF6750A4</color>
-    <color name="theme_light_inverseSurface">#FF322F35</color>
-    <color name="theme_light_inverseOnSurface">#FFF5EFF7</color>
-    <color name="theme_light_error">#FFB3261E</color>
+    <color name="theme_light_tertiaryContainer">#FFF6D9DA</color>
+    <color name="theme_light_onTertiaryContainer">#FF3A0A12</color>
+    <color name="theme_light_background">#FFF6F0E4</color>
+    <color name="theme_light_onBackground">#FF2B241E</color>
+    <color name="theme_light_surface">#FFF6F0E4</color>
+    <color name="theme_light_onSurface">#FF2B241E</color>
+    <color name="theme_light_surfaceVariant">#FFE9E0CF</color>
+    <color name="theme_light_onSurfaceVariant">#FF5E564C</color>
+    <color name="theme_light_surfaceTint">#FF4C5F23</color>
+    <color name="theme_light_inverseSurface">#FF332C25</color>
+    <color name="theme_light_inverseOnSurface">#FFF4ECDF</color>
+    <color name="theme_light_error">#FF9F2A20</color>
     <color name="theme_light_onError">#FFFFFFFF</color>
-    <color name="theme_light_errorContainer">#FFF9DEDC</color>
-    <color name="theme_light_onErrorContainer">#FF410E0B</color>
-    <color name="theme_light_outline">#FF79747E</color>
-    <color name="theme_light_outlineVariant">#FFCAC4D0</color>
+    <color name="theme_light_errorContainer">#FFFADAD4</color>
+    <color name="theme_light_onErrorContainer">#FF410000</color>
+    <color name="theme_light_outline">#FF857B6E</color>
+    <color name="theme_light_outlineVariant">#FFD3C8B6</color>
     <color name="theme_light_scrim">#FF000000</color>
-    <color name="theme_light_surfaceBright">#FFFEF7FF</color>
-    <color name="theme_light_surfaceDim">#FFDED8E1</color>
-    <color name="theme_light_surfaceContainer">#FFF3EDF7</color>
-    <color name="theme_light_surfaceContainerHigh">#FFECE6F0</color>
-    <color name="theme_light_surfaceContainerHighest">#FFE6E0E9</color>
-    <color name="theme_light_surfaceContainerLow">#FFF7F2FA</color>
-    <color name="theme_light_surfaceContainerLowest">#FFFFFFFF</color>
-    <color name="theme_light_primaryFixed">#FFEADDFF</color>
-    <color name="theme_light_primaryFixedDim">#FFD0BCFF</color>
-    <color name="theme_light_onPrimaryFixed">#FF21005D</color>
-    <color name="theme_light_onPrimaryFixedVariant">#FF4F378B</color>
-    <color name="theme_light_secondaryFixed">#FFE8DEF8</color>
-    <color name="theme_light_secondaryFixedDim">#FFCCC2DC</color>
-    <color name="theme_light_onSecondaryFixed">#FF1D192B</color>
-    <color name="theme_light_onSecondaryFixedVariant">#FF4A4458</color>
-    <color name="theme_light_tertiaryFixed">#FFFFD8E4</color>
-    <color name="theme_light_tertiaryFixedDim">#FFEFB8C8</color>
-    <color name="theme_light_onTertiaryFixed">#FF31111D</color>
-    <color name="theme_light_onTertiaryFixedVariant">#FF633B48</color>
+    <color name="theme_light_surfaceBright">#FFF6F0E4</color>
+    <color name="theme_light_surfaceDim">#FFDDD3C1</color>
+    <color name="theme_light_surfaceContainer">#FFEEE6D7</color>
+    <color name="theme_light_surfaceContainerHigh">#FFE9E0CF</color>
+    <color name="theme_light_surfaceContainerHighest">#FFE3D9C6</color>
+    <color name="theme_light_surfaceContainerLow">#FFF2EBDE</color>
+    <color name="theme_light_surfaceContainerLowest">#FFFCF8F0</color>
+    <color name="theme_light_primaryFixed">#FFDCE5BE</color>
+    <color name="theme_light_primaryFixedDim">#FFB7C98A</color>
+    <color name="theme_light_onPrimaryFixed">#FF1B2408</color>
+    <color name="theme_light_onPrimaryFixedVariant">#FF3A4818</color>
+    <color name="theme_light_secondaryFixed">#FFEDE0CC</color>
+    <color name="theme_light_secondaryFixedDim">#FFD9C3A5</color>
+    <color name="theme_light_onSecondaryFixed">#FF2A2014</color>
+    <color name="theme_light_onSecondaryFixedVariant">#FF524433</color>
+    <color name="theme_light_tertiaryFixed">#FFF6D9DA</color>
+    <color name="theme_light_tertiaryFixedDim">#FFE6A3A8</color>
+    <color name="theme_light_onTertiaryFixed">#FF3A0A12</color>
+    <color name="theme_light_onTertiaryFixedVariant">#FF72303A</color>
 
-    <!-- Dark scheme: Material 3's baseline dark colours. -->
-    <color name="theme_dark_primary">#FFD0BCFF</color>
-    <color name="theme_dark_onPrimary">#FF381E72</color>
-    <color name="theme_dark_primaryContainer">#FF4F378B</color>
-    <color name="theme_dark_onPrimaryContainer">#FFEADDFF</color>
-    <color name="theme_dark_inversePrimary">#FF6750A4</color>
-    <color name="theme_dark_secondary">#FFCCC2DC</color>
-    <color name="theme_dark_onSecondary">#FF332D41</color>
-    <color name="theme_dark_secondaryContainer">#FF4A4458</color>
-    <color name="theme_dark_onSecondaryContainer">#FFE8DEF8</color>
-    <color name="theme_dark_tertiary">#FFEFB8C8</color>
-    <color name="theme_dark_onTertiary">#FF492532</color>
-    <color name="theme_dark_tertiaryContainer">#FF633B48</color>
-    <color name="theme_dark_onTertiaryContainer">#FFFFD8E4</color>
-    <color name="theme_dark_background">#FF141218</color>
-    <color name="theme_dark_onBackground">#FFE6E0E9</color>
-    <color name="theme_dark_surface">#FF141218</color>
-    <color name="theme_dark_onSurface">#FFE6E0E9</color>
-    <color name="theme_dark_surfaceVariant">#FF49454F</color>
-    <color name="theme_dark_onSurfaceVariant">#FFCAC4D0</color>
-    <color name="theme_dark_surfaceTint">#FFD0BCFF</color>
-    <color name="theme_dark_inverseSurface">#FFE6E0E9</color>
-    <color name="theme_dark_inverseOnSurface">#FF322F35</color>
-    <color name="theme_dark_error">#FFF2B8B5</color>
-    <color name="theme_dark_onError">#FF601410</color>
-    <color name="theme_dark_errorContainer">#FF8C1D18</color>
-    <color name="theme_dark_onErrorContainer">#FFF9DEDC</color>
-    <color name="theme_dark_outline">#FF938F99</color>
-    <color name="theme_dark_outlineVariant">#FF49454F</color>
+    <!-- Dark scheme: direction 1, warm night. The *Fixed roles keep the light values, as M3 defines them. -->
+    <color name="theme_dark_primary">#FFB7C98A</color>
+    <color name="theme_dark_onPrimary">#FF24300C</color>
+    <color name="theme_dark_primaryContainer">#FF3A4818</color>
+    <color name="theme_dark_onPrimaryContainer">#FFD8E6AE</color>
+    <color name="theme_dark_inversePrimary">#FF4C5F23</color>
+    <color name="theme_dark_secondary">#FFD9C3A5</color>
+    <color name="theme_dark_onSecondary">#FF3A2E1E</color>
+    <color name="theme_dark_secondaryContainer">#FF524433</color>
+    <color name="theme_dark_onSecondaryContainer">#FFF2E0C6</color>
+    <color name="theme_dark_tertiary">#FFE6A3A8</color>
+    <color name="theme_dark_onTertiary">#FF561D26</color>
+    <color name="theme_dark_tertiaryContainer">#FF72303A</color>
+    <color name="theme_dark_onTertiaryContainer">#FFFFD9DB</color>
+    <color name="theme_dark_background">#FF1D1915</color>
+    <color name="theme_dark_onBackground">#FFECE3D2</color>
+    <color name="theme_dark_surface">#FF1D1915</color>
+    <color name="theme_dark_onSurface">#FFECE3D2</color>
+    <color name="theme_dark_surfaceVariant">#FF4A4238</color>
+    <color name="theme_dark_onSurfaceVariant">#FFC2B7A6</color>
+    <color name="theme_dark_surfaceTint">#FFB7C98A</color>
+    <color name="theme_dark_inverseSurface">#FFECE3D2</color>
+    <color name="theme_dark_inverseOnSurface">#FF332C25</color>
+    <color name="theme_dark_error">#FFFFB4A9</color>
+    <color name="theme_dark_onError">#FF690004</color>
+    <color name="theme_dark_errorContainer">#FF8C1D14</color>
+    <color name="theme_dark_onErrorContainer">#FFFFDAD4</color>
+    <color name="theme_dark_outline">#FF8D8274</color>
+    <color name="theme_dark_outlineVariant">#FF4A4238</color>
     <color name="theme_dark_scrim">#FF000000</color>
-    <color name="theme_dark_surfaceBright">#FF3B383E</color>
-    <color name="theme_dark_surfaceDim">#FF141218</color>
-    <color name="theme_dark_surfaceContainer">#FF211F26</color>
-    <color name="theme_dark_surfaceContainerHigh">#FF2B2930</color>
-    <color name="theme_dark_surfaceContainerHighest">#FF36343B</color>
-    <color name="theme_dark_surfaceContainerLow">#FF1D1B20</color>
-    <color name="theme_dark_surfaceContainerLowest">#FF0F0D13</color>
-    <color name="theme_dark_primaryFixed">#FFEADDFF</color>
-    <color name="theme_dark_primaryFixedDim">#FFD0BCFF</color>
-    <color name="theme_dark_onPrimaryFixed">#FF21005D</color>
-    <color name="theme_dark_onPrimaryFixedVariant">#FF4F378B</color>
-    <color name="theme_dark_secondaryFixed">#FFE8DEF8</color>
-    <color name="theme_dark_secondaryFixedDim">#FFCCC2DC</color>
-    <color name="theme_dark_onSecondaryFixed">#FF1D192B</color>
-    <color name="theme_dark_onSecondaryFixedVariant">#FF4A4458</color>
-    <color name="theme_dark_tertiaryFixed">#FFFFD8E4</color>
-    <color name="theme_dark_tertiaryFixedDim">#FFEFB8C8</color>
-    <color name="theme_dark_onTertiaryFixed">#FF31111D</color>
-    <color name="theme_dark_onTertiaryFixedVariant">#FF633B48</color>
+    <color name="theme_dark_surfaceBright">#FF443C33</color>
+    <color name="theme_dark_surfaceDim">#FF1D1915</color>
+    <color name="theme_dark_surfaceContainer">#FF28231D</color>
+    <color name="theme_dark_surfaceContainerHigh">#FF322C25</color>
+    <color name="theme_dark_surfaceContainerHighest">#FF3D362E</color>
+    <color name="theme_dark_surfaceContainerLow">#FF24201B</color>
+    <color name="theme_dark_surfaceContainerLowest">#FF171410</color>
+    <color name="theme_dark_primaryFixed">#FFDCE5BE</color>
+    <color name="theme_dark_primaryFixedDim">#FFB7C98A</color>
+    <color name="theme_dark_onPrimaryFixed">#FF1B2408</color>
+    <color name="theme_dark_onPrimaryFixedVariant">#FF3A4818</color>
+    <color name="theme_dark_secondaryFixed">#FFEDE0CC</color>
+    <color name="theme_dark_secondaryFixedDim">#FFD9C3A5</color>
+    <color name="theme_dark_onSecondaryFixed">#FF2A2014</color>
+    <color name="theme_dark_onSecondaryFixedVariant">#FF524433</color>
+    <color name="theme_dark_tertiaryFixed">#FFF6D9DA</color>
+    <color name="theme_dark_tertiaryFixedDim">#FFE6A3A8</color>
+    <color name="theme_dark_onTertiaryFixed">#FF3A0A12</color>
+    <color name="theme_dark_onTertiaryFixedVariant">#FF72303A</color>
+
+    <!-- Beyond Material 3's roles, light and dark: read through the theme as MaterialTheme.appColors, never in a screen.
+         Raised paper: a sheet lighter than the page in both schemes — the book's collection spines (the redesign's
+         s0). -->
+    <color name="theme_light_raisedPaper">#FFFCF8F0</color>
+    <color name="theme_dark_raisedPaper">#FF2A251F</color>
 
     <!-- Corners: Material 3's shape scale, from the smallest (chips, menus) to the largest (sheets, dialogs). -->
     <dimen name="theme_shape_extraSmall">4dp</dimen>
     <dimen name="theme_shape_small">8dp</dimen>
-    <dimen name="theme_shape_medium">12dp</dimen>
+    <dimen name="theme_shape_medium">10dp</dimen>
     <dimen name="theme_shape_large">16dp</dimen>
     <dimen name="theme_shape_extraLarge">28dp</dimen>
 

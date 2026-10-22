@@ -31,6 +31,18 @@
     <string name="editor_servings">Порций</string>
     <string name="editor_servings_accepts">Целое число, от 1</string>
     <string name="editor_servings_none">Не указано</string>
+    <string name="editor_finished_weight">Вес готового блюда</string>
+    <string name="editor_finished_weight_suffix">г</string>
+    <string name="editor_finished_weight_hint">Сколько весит всё блюдо на %1$s — для КБЖУ на 100\u00A0г</string>
+    <string name="editor_finished_weight_hint_no_servings">Сколько весит всё блюдо — для КБЖУ на 100\u00A0г</string>
+    <plurals name="editor_finished_weight_servings">
+        <item quantity="one">%1$d порцию</item>
+        <item quantity="few">%1$d порции</item>
+        <item quantity="many">%1$d порций</item>
+        <item quantity="other">%1$d порции</item>
+    </plurals>
+    <string name="editor_finished_weight_value">%1$d\u00A0г</string>
+    <string name="editor_finished_weight_none">Не указано</string>
     <string name="editor_ingredients">Ингредиенты</string>
     <string name="editor_ingredient_add">Добавить ингредиент</string>
     <string name="editor_ingredient_add_action">Добавить строку ингредиента</string>

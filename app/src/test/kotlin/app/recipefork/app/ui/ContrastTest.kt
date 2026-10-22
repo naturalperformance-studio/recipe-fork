@@ -14,8 +14,9 @@ import kotlin.math.pow
 
 /**
  * A11Y-002: the contrast of every pair of the theme's colours the screens draw text, icons and control boundaries in,
- * computed in both schemes AppTheme builds from `app_theme.xml` — the light one and the dark one — by the formula of
- * WCAG 2.2. A disabled control (drawn at 38 % opacity) is left out, as WCAG leaves out inactive controls.
+ * computed in both schemes AppTheme builds from `app_theme.xml` — the light one and the dark one, each with its colours
+ * beyond Material 3's roles (raised paper) — by the formula of WCAG 2.2. A disabled control (drawn at 38 % opacity) is
+ * left out, as WCAG leaves out inactive controls.
  */
 @RunWith(AndroidJUnit4::class)
 class ContrastTest {
@@ -25,12 +26,12 @@ class ContrastTest {
     private fun text(where: String, foreground: Color, background: Color) = Pair(where, foreground, background, TEXT)
     private fun graphic(where: String, foreground: Color, background: Color) = Pair(where, foreground, background, GRAPHIC)
 
-    private fun pairs(c: ColorScheme) = listOf(
+    private fun pairs(c: ColorScheme, a: AppColors) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
         text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", a heading's \"Unnamed group\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
-        text("a filled button's label, a step's number in its circle on the card", c.onPrimary, c.primary),
+        text("a filled button's label, a step's number in its circle on the card, the book's floating action", c.onPrimary, c.primary),
         text("a problem said under a field — the title's and the description's marks and counters among them — an ingredient row's mark of an amount its field does not hold", c.error, c.surface),
         text("a reference in a step, on its tint", c.onSurface, c.secondaryContainer),
         text("a reference that exceeds its ingredient, on the warning tint", c.onSurface, c.errorContainer),
@@ -78,10 +79,13 @@ class ContrastTest {
         text("a view's floating action — its words and icon; the card's current step on Cooking, on its container", c.onPrimaryContainer, c.primaryContainer),
         text("the arrow after a rounded reference in the card's current step, and the step's author's note, on its container", c.onSurfaceVariant, c.primaryContainer),
         text("My kitchen opened from a recipe — the row of its item, its name and \"Needed for the recipe\", on the primary container", c.onPrimaryContainer, c.primaryContainer),
-        text("a book's entry, a card — its title and state", c.onSurface, c.surfaceContainerHighest),
-        text("a book's entry, a card — its tags and sending mark", c.onSurfaceVariant, c.surfaceContainerHighest),
-        text("a collection's card in the book's row of collections — its name", c.onSurface, c.surfaceContainerHighest),
-        text("a collection's card in the book's row of collections — its count of recipes", c.onSurfaceVariant, c.surfaceContainerHighest),
+        text("a book's entry, a row of its contents — its title and state", c.onSurface, c.surface),
+        text("a book's entry, a row of its contents — its tags, stated author and sending mark", c.onSurfaceVariant, c.surface),
+        text("a book's entry chosen in the selection, on its tint — its title and state", c.onSurface, c.secondaryContainer),
+        text("a book's entry chosen in the selection, on its tint — its tags, stated author and sending mark", c.onSurfaceVariant, c.secondaryContainer),
+        text("a book's entry's drop cap — the title's first letter on its square", c.onSurfaceVariant, c.surfaceContainer),
+        text("a collection's spine on the book's shelf, on raised paper — its name", c.onSurface, a.raisedPaper),
+        text("a collection's spine on the book's shelf, on raised paper — its count of recipes", c.onSurfaceVariant, a.raisedPaper),
         text("the heading of the book's row of collections, and an imported collection's stated author", c.onSurfaceVariant, c.surface),
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
         text("a photo source sheet's removal — the cover, a step's photo or clip", c.error, c.surfaceContainerLow),
@@ -97,6 +101,8 @@ class ContrastTest {
         graphic("the restore question's ways — the icon of \"Replace the book\"", c.error, c.surfaceContainerHigh),
         graphic("a step's sheet — the icons of \"Insert ingredient\", \"Add timer\" and \"Add photo or clip\"", c.primary, c.surfaceContainerLow),
         graphic("an empty view's picture — the book with nothing in it, a search that found nothing, a card whose recipe is gone", c.onSurfaceVariant, c.surface),
+        graphic("the engraved mark of an empty section of the book, in ink", c.onSurface, c.background),
+        graphic("the engraved cart of the empty shopping list", c.onSurfaceVariant, c.background),
         graphic("an outlined field's and a fixing option's boundary", c.outline, c.surface),
         graphic("a focused field's and a chosen option's boundary, the chosen view's bar", c.primary, c.surface),
         graphic("a checkbox's and a radio button's boundary, the free-text warning's icon", c.onSurfaceVariant, c.surface),
@@ -115,11 +121,13 @@ class ContrastTest {
         graphic("a step's row — its timer line's clock", c.onSurfaceVariant, c.surface),
         graphic("a step's row — a clip's mark on its picture, before the frame is read", c.onSurfaceVariant, c.surfaceVariant),
         graphic("a suggestion chip's and the language switch's boundary", c.outline, c.surface),
-        graphic("an entry's ⋮, on its card", c.onSurface, c.surfaceContainerHighest),
-        graphic("an entry's mark of being chosen in the book's selection — the filled circle with its check — on its card", c.primary, c.surfaceContainerHighest),
-        graphic("an entry's mark of not being chosen in the book's selection — the empty circle — on its card", c.onSurfaceVariant, c.surfaceContainerHighest),
-        graphic("the edge of an entry chosen in the book's selection, against the book behind it", c.primary, c.surface),
-        text("the book's selection bar — its count, its ✕, its icons and its ⋮ — on its tint (v0.38)", c.onSecondaryContainer, c.secondaryContainer),
+        graphic("an entry's ⋮, on the page", c.onSurface, c.surface),
+        graphic("an entry's mark of being chosen in the book's selection — the filled circle with its check — on the chosen row's tint", c.primary, c.secondaryContainer),
+        graphic("the check in an entry's mark of being chosen, on its primary fill", c.onPrimary, c.primary),
+        graphic("an entry's mark of not being chosen in the book's selection — the empty circle — on the page", c.onSurfaceVariant, c.surface),
+        text("the book's selection bar — its count, its ✕ and \"Select all\" — and its actions at the bottom, words and icons, on their tint (v0.38, v0.42)", c.onSecondaryContainer, c.secondaryContainer),
+        text("the selection's Delete or Remove at the bottom, its word, on its tint (v0.42)", c.error, c.secondaryContainer),
+        graphic("the selection's Delete or Remove at the bottom, its bin, on its tint (v0.42)", c.error, c.secondaryContainer),
         graphic("the indicator of a list being read", c.primary, c.surface),
         graphic("a removal's icon in the editor — an ingredient row, a step, a timer", c.error, c.surface),
         graphic("the progress of a file being imported or exported, on its track", c.primary, c.surfaceContainerHighest),
@@ -144,21 +152,27 @@ class ContrastTest {
         graphic("the card's nutrition — the switch's boundary", c.outline, c.surface),
         text("the nutrition sheet — its title, captions and counted rows", c.onSurface, c.surfaceContainerLow),
         text("the nutrition sheet — the rows not counted and how it is counted", c.onSurfaceVariant, c.surfaceContainerLow),
+        // Beet: the tertiary colour marks provenance and nothing else (the redesign, T-296).
+        text("a fork's provenance line on the card — \"Forked from …\"", c.tertiary, c.surface),
+        text("a fork's provenance line on the container tint", c.tertiary, c.surfaceContainer),
+        text("a version's provenance line on a chosen row's tint", c.tertiary, c.secondaryContainer),
+        graphic("the provenance glyph heading the held-fork dialog", c.tertiary, c.surfaceContainerHigh),
+        graphic("the engraved mark's bent tine in an empty section of the book", c.tertiary, c.background),
     )
 
-    private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }
+    private fun failing(c: ColorScheme, a: AppColors) = pairs(c, a).filter { ratio(it.foreground, it.background) < it.least }
         .map { "${it.where}: %.2f:1, less than %.1f:1".format(ratio(it.foreground, it.background), it.least) }
 
     private val resources = ApplicationProvider.getApplicationContext<Context>().resources
 
     @Test
     fun everyPairTheScreensUseMeetsItsThresholdInTheLightScheme() {
-        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = false)))
+        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = false), appColors(resources, dark = false)))
     }
 
     @Test
     fun everyPairTheScreensUseMeetsItsThresholdInTheDarkScheme() {
-        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = true)))
+        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = true), appColors(resources, dark = true)))
     }
 
     // The formula itself, on the pairs whose ratios are known.

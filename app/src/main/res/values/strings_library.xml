@@ -42,6 +42,10 @@
     <!-- The menu at the end of an entry's title line, holding the entry's actions; it names the recipe. -->
     <string name="library_entry_actions">Actions for “%1$s”</string>
     <string name="library_entry_actions_action">Show the recipe\'s actions</string>
+    <!-- FORK-010: a version's entry names its parent under its title, by the title the version recorded or the parent
+         the book holds; a version whose parent is gone and whose title it never recorded says only that. -->
+    <string name="library_entry_parent">after “%1$s”</string>
+    <string name="library_entry_parent_unavailable">after a recipe not in this book</string>
     <!-- FLOW-053: deleting an own recipe from its entry. -->
     <string name="library_entry_delete">Delete</string>
     <!-- FLOW-042: the view of marked recipes when nothing is marked in the book: its one-line headline and its
@@ -84,7 +88,6 @@
     <string name="library_search_clear">Clear the search</string>
     <string name="library_nothing_found">Nothing found for “%1$s”</string>
     <!-- FLOW-035 (3): the order of each view, and its three choices. -->
-    <string name="library_order">Order: %1$s</string>
     <string name="library_order_action">Choose the order of the list</string>
     <string name="library_order_newest">Newest first</string>
     <string name="library_order_oldest">Oldest first</string>
@@ -146,8 +149,12 @@
     </plurals>
     <string name="library_selection_close">Close selection</string>
     <string name="library_selection_close_action">Leave the selection</string>
-    <string name="library_selection_more">More actions on the selection</string>
-    <string name="library_selection_more_action">Show the selection\'s actions</string>
+    <!-- The selection's actions at the bottom (v0.42): the word under each icon; the screen reader hears the action. -->
+    <string name="library_selection_to_collection">To collection</string>
+    <string name="library_selection_to_shopping">To shopping</string>
+    <string name="library_selection_print">Print</string>
+    <string name="library_selection_print_action">Print</string>
+    <string name="library_selection_pdf">PDF</string>
     <string name="library_selection_all">Select all</string>
     <!-- FLOW-053: several recipes gone from the book at once, said with the action that brings them all back. -->
     <plurals name="library_recipes_deleted">

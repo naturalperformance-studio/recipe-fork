@@ -38,6 +38,8 @@ data class RecipeEntity(
     @ColumnInfo(name = "content_changed_at") val contentChangedAt: Instant,
     /** The text the recipe was made from, exactly as pasted; null for none (version 10). */
     @ColumnInfo(name = "source_text") val sourceText: String? = null,
+    /** What the finished dish weighs at its servings, in whole grams; null for none (version 11). */
+    @ColumnInfo(name = "finished_weight_grams") val finishedWeightGrams: Int? = null,
 )
 
 private const val CASCADE = ForeignKey.CASCADE
@@ -236,6 +238,13 @@ data class CollectionRecipeRow(
     @ColumnInfo(name = "stated_author") val statedAuthor: String? = null,
     /** Whether it is a found recipe — marked in the book — rather than one written in it. */
     val found: Boolean = false,
+    /** Whether the recipe is a version of another one: it has a parent (FORK-010). */
+    val forked: Boolean = false,
+    /**
+     * The title of the recipe's parent as its entry names it (FORK-010): the one the version recorded, else the title of
+     * the parent the book holds; null for a recipe without a parent, or one whose parent is gone and recorded none.
+     */
+    @ColumnInfo(name = "parent_title") val parentTitle: String? = null,
 )
 
 /** What an entry of the view of marked recipes shows. */
@@ -252,6 +261,13 @@ data class MarkedRecipeRow(
     val language: RecipeLanguage? = null,
     /** The description of the content the book holds, searched as the title is (L10N-006); empty for none. */
     val description: String = "",
+    /** Whether the recipe is a version of another one: it has a parent (FORK-010). */
+    val forked: Boolean = false,
+    /**
+     * The title of the recipe's parent as its entry names it (FORK-010): the one the version recorded, else the title of
+     * the parent the book holds; null for a recipe without a parent, or one whose parent is gone and recorded none.
+     */
+    @ColumnInfo(name = "parent_title") val parentTitle: String? = null,
 )
 
 /** What an entry of the own-recipes view shows. */
@@ -266,6 +282,13 @@ data class OwnRecipeRow(
     val language: RecipeLanguage? = null,
     /** The recipe's description, searched as the title is (L10N-006). */
     val description: String = "",
+    /** Whether the recipe is a version of another one: it has a parent (FORK-010). */
+    val forked: Boolean = false,
+    /**
+     * The title of the recipe's parent as its entry names it (FORK-010): the one the version recorded, else the title of
+     * the parent the book holds; null for a recipe without a parent, or one whose parent is gone and recorded none.
+     */
+    @ColumnInfo(name = "parent_title") val parentTitle: String? = null,
 )
 
 /**

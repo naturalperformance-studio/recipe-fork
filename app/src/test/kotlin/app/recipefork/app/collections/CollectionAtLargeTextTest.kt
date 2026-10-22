@@ -66,7 +66,7 @@ import java.time.Instant
 
 /**
  * A collection and its sheets at large text (v0.38, T-268, scenarios 1 and 3), on a 320 dp phone: the collection's
- * name keeps to one line inside the bar — whole where it fits, drawn smaller as far as it may, ending with an ellipsis
+ * name stands inside the bar — on one line drawn smaller as far as it may, else on two (T-297), ending with an ellipsis
  * where it is longer still — over nothing of the list; a notice puts its action on a line of its own at large text; the
  * card's "Add to collection" sheet and the selection's have Material's drag handle, and the selection's is titled with
  * how many recipes it adds, its words whole. In English and Russian.
@@ -148,8 +148,9 @@ class CollectionAtLargeTextTest {
     // --- The bar's name ---------------------------------------------------------------------------------------------
 
     /**
-     * The collection's name reads [name] on one line inside the bar, beside its actions — whole where [whole], else
-     * ending with an ellipsis — and the list starts below the bar.
+     * The collection's name reads [name] inside the bar, beside its actions: on one line drawn smaller, or else on two
+     * (T-297), broken between words — whole where [whole], else on two lines ending with an ellipsis — and the bar keeps
+     * its 64 dp, the list starting below it.
      */
     private fun assertNameFits(name: String, whole: Boolean) {
         val soup = own("Soup")
@@ -157,34 +158,48 @@ class CollectionAtLargeTextTest {
         assertEquals(listOf(name), compose.textsOf(CollectionScreenTags.TITLE))
         val node = compose.onNodeWithTag(CollectionScreenTags.TITLE, useUnmergedTree = true).fetchSemanticsNode()
         val layout = layoutOf(node)
-        assertEquals("$name takes ${layout.lineCount} lines", 1, layout.lineCount)
-        assertEquals("$name is cut, or not", !whole, layout.isLineEllipsized(0))
+        val ellipsized = (0 until layout.lineCount).filter(layout::isLineEllipsized)
+        if (whole) {
+            assertTrue("$name takes ${layout.lineCount} lines", layout.lineCount <= 2)
+            assertEquals("$name is cut at lines $ellipsized", emptyList<Int>(), ellipsized)
+            assertEquals("$name is shown to its end", name.length, layout.getLineEnd(layout.lineCount - 1))
+        } else {
+            assertEquals("$name takes ${layout.lineCount} lines", 2, layout.lineCount)
+            assertEquals("$name ends with an ellipsis at the end of the second line", listOf(1), ellipsized)
+        }
+        if (layout.lineCount == 2) {
+            val end = layout.getLineEnd(0)
+            assertTrue("$name breaks between words (“${name.substring(0, end)}|”)", name[end - 1].isWhitespace() || name[end].isWhitespace())
+            // Two lines at the least size, their line height 28/22 of it.
+            assertEquals(layout.layoutInput.style.fontSize.value * 28f / 22f, layout.layoutInput.style.lineHeight.value, 0.01f)
+        }
         // Made smaller where it must, but never below its size at a font scale of 1 (22 sp).
         val drawn = layout.layoutInput.style.fontSize.value * context.resources.configuration.fontScale
         assertTrue("$name is drawn at $drawn dp", drawn >= 22f - 0.5f)
         val bar = bounds(CollectionScreenTags.BAR)
         val shown = node.boundsInRoot
         assertTrue("$name ($shown) spills out of the bar ($bar)", shown.top >= bar.top - 0.5f && shown.bottom <= bar.bottom + 0.5f)
+        assertEquals("the bar's height", 64f, dp(bar.height), 0.5f)
         listOf(CollectionScreenTags.BACK, CollectionScreenTags.MENU).forEach { assertFalse("$name overlaps $it", shown.overlaps(bounds(it))) }
         assertTrue("the list starts under the bar", bounds(CollectionScreenTags.LIST).top >= bar.bottom - 0.5f)
     }
 
     @Test
     @Config(fontScale = 2f)
-    fun atTwiceTheFontScaleAShortNameStandsWholeOnOneLine() = assertNameFits("Weeknight dinners", whole = true)
+    fun atTwiceTheFontScaleAShortNameStandsWhole() = assertNameFits("Weeknight dinners", whole = true)
 
     @Test
     @Config(fontScale = 2f)
-    fun atTwiceTheFontScaleALongNameKeepsToOneLineWithAnEllipsis() =
+    fun atTwiceTheFontScaleALongNameTakesTwoLinesEndingWithAnEllipsis() =
         assertNameFits("A long New Year's Eve dinner menu for the family", whole = false)
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
-    fun inRussianAtTwiceTheFontScaleAShortNameStandsWholeOnOneLine() = assertNameFits("Ужины в будни", whole = true)
+    fun inRussianAtTwiceTheFontScaleAShortNameStandsWhole() = assertNameFits("Ужины в будни", whole = true)
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
-    fun inRussianAtTwiceTheFontScaleALongNameKeepsToOneLineWithAnEllipsis() =
+    fun inRussianAtTwiceTheFontScaleALongNameTakesTwoLinesEndingWithAnEllipsis() =
         assertNameFits("Новогодний ужин для всей большой семьи", whole = false)
 
     // --- A notice's action ------------------------------------------------------------------------------------------

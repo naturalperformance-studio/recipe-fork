@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -80,8 +81,8 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * The book's selection (v0.37, T-261): a long press on an entry of either view starts it with that entry chosen; taps
- * then choose and take off entries without opening them; the bar shows ✕, "N selected" and the actions, its ⋮ "Select
- * all", which chooses every entry the view lists under its search and filters; ✕, Back or an action taken ends it,
+ * then choose and take off entries without opening them; the bar shows ✕, "N selected" and "Select all", which chooses
+ * every entry the view lists under its search and filters, and the actions stand at the bottom (v0.42, T-305); ✕, Back or an action taken ends it,
  * and while it lasts the other view is not shown (v0.38). Delete (own) and Remove (imported) take every chosen recipe they apply to out of the book at once,
  * asking nothing, with one notice and one Undo, which brings them all back with their places in collections.
  */
@@ -222,22 +223,13 @@ class BookSelectionTest {
         assertFalse(exists(LibraryTags.selectionMark(recipe.id.value)))
     }
 
-    private fun openSelectionMenu() {
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECT_ALL) }
-    }
-
-    private fun closeSelectionMenu() {
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { !exists(LibraryTags.SELECT_ALL) }
-    }
-
-    private fun chooseInSelectionMenu(tag: String) {
-        openSelectionMenu()
+    /** Takes the selection's action tagged [tag]: "Select all" in its bar, or one of its actions at the bottom. */
+    private fun take(tag: String) {
+        compose.waitUntil(PATIENCE_MS) { exists(tag) }
         compose.onNodeWithTag(tag).performClick()
     }
 
-    /** What the item tagged [tag] of the open menu reads. */
+    /** What the action tagged [tag] reads. */
     private fun itemText(tag: String): String = compose.textsOf(tag).joinToString("")
 
     private fun stored(recipe: Recipe) = runBlocking { recipes.get(recipe.id) }
@@ -349,7 +341,7 @@ class BookSelectionTest {
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.entry(english.first().id.value)) && !exists(LibraryTags.entry(russian.id.value)) }
 
         longPress(english.first())
-        chooseInSelectionMenu(LibraryTags.SELECT_ALL)
+        take(LibraryTags.SELECT_ALL)
 
         awaitCount("4 selected")
         assertEquals(english.map { it.id.value }.toSet(), session.selection.value!!.ids)
@@ -400,7 +392,6 @@ class BookSelectionTest {
         longPress(soup)
         listOf(pie, bread, salad).forEach { tap(it) }
         awaitCount("4 selected")
-        openSelectionMenu()
         assertEquals("Delete", itemText(LibraryTags.SELECTION_DELETE))
         assertFalse("Remove among the own", exists(LibraryTags.SELECTION_REMOVE))
         compose.onNodeWithTag(LibraryTags.SELECTION_DELETE).performClick()
@@ -443,7 +434,7 @@ class BookSelectionTest {
         show(LibraryView.OWN)
         longPress(soup)
         tap(pie)
-        chooseInSelectionMenu(LibraryTags.SELECTION_DELETE)
+        take(LibraryTags.SELECTION_DELETE)
         compose.awaitRemovalNotice("2 recipes deleted", "Undo")
         compose.waitUntil(PATIENCE_MS) { stored(soup) == null && stored(pie) == null }
         assertEquals(listOf("kept-cover", "pie-cover", "soup-cover"), files())
@@ -469,9 +460,8 @@ class BookSelectionTest {
         show(LibraryView.MARKED, Mode.Serverless)
 
         longPress(borscht, LibraryView.MARKED)
-        chooseInSelectionMenu(LibraryTags.SELECT_ALL)
+        take(LibraryTags.SELECT_ALL)
         awaitCount("3 selected")
-        openSelectionMenu()
         assertFalse("Delete among the imported", exists(LibraryTags.SELECTION_DELETE))
         assertEquals("Remove", itemText(LibraryTags.SELECTION_REMOVE))
         compose.onNodeWithTag(LibraryTags.SELECTION_REMOVE).performClick()
@@ -498,7 +488,7 @@ class BookSelectionTest {
         longPress(published)
         tap(soup)
         awaitCount("2 selected")
-        chooseInSelectionMenu(LibraryTags.SELECTION_DELETE)
+        take(LibraryTags.SELECTION_DELETE)
 
         compose.awaitRemovalNotice("“Soup” deleted", "Undo")
         // The published recipe is still listed, and was chosen: the action itself ended the selection.
@@ -508,8 +498,8 @@ class BookSelectionTest {
         assertChosenNot(published)
     }
 
-    // A selection none of which may be deleted is offered no Delete; nor one of imported entries whose content the book
-    // does not hold, Remove.
+    // A selection none of which may be deleted shows Delete not responding; one of imported entries whose content the
+    // book does not hold, Remove — and every other action, none of which applies to them (T-305).
     @Test
     fun aSelectionNoneOfWhichMayLeaveIsOfferedNoRemoval() {
         val published = own("Published pie", minutesAgo = 1, state = RecipeState.PUBLISHED)
@@ -520,18 +510,26 @@ class BookSelectionTest {
         longPress(published)
         tap(pending)
         awaitCount("2 selected")
-        openSelectionMenu()
         assertTrue(exists(LibraryTags.SELECT_ALL))
-        assertFalse(exists(LibraryTags.SELECTION_DELETE))
-        closeSelectionMenu()
+        compose.onNodeWithTag(LibraryTags.SELECTION_DELETE).assertIsNotEnabled()
+        // Not responding, it is offered no action to the screen reader, and a tap takes nothing out.
+        assertNull(compose.onNodeWithTag(LibraryTags.SELECTION_DELETE).fetchSemanticsNode().config.getOrNull(SemanticsActions.OnClick)?.label)
+        compose.onNodeWithTag(LibraryTags.SELECTION_DELETE).performClick()
+        compose.waitForIdle()
+        awaitCount("2 selected")
+        assertEquals(published, stored(published))
+        compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).assertIsEnabled()
 
         // The other view is shown once the selection ends (v0.38).
         compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
         awaitNoSelection()
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
         longPress("server-1", LibraryView.MARKED)
-        openSelectionMenu()
-        assertFalse(exists(LibraryTags.SELECTION_REMOVE))
+        listOf(
+            LibraryTags.SELECTION_ADD_TO_COLLECTION, LibraryTags.SELECTION_ADD_TO_SHOPPING, LibraryTags.SELECTION_PRINT,
+            LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_REMOVE,
+        ).forEach { compose.onNodeWithTag(it).assertIsNotEnabled() }
+        assertTrue(exists(LibraryTags.SELECT_ALL))
     }
 
     // While selecting, a long press chooses or takes off an entry as a tap does, opening nothing.
@@ -590,7 +588,7 @@ class BookSelectionTest {
         longPress(pie)
         tap(bread)
         tap(soup)
-        chooseInSelectionMenu(LibraryTags.SELECTION_DELETE)
+        take(LibraryTags.SELECTION_DELETE)
         compose.awaitRemovalNotice("3 recipes deleted", "Undo")
         listOf(soup, bread, pie).forEach { compose.waitUntil(PATIENCE_MS) { stored(it) == null } }
         val other = Recipe.create(now, owner = null).copy(title = "Pie again", media = pie.media)
@@ -631,11 +629,9 @@ class BookSelectionTest {
         assertChosen(dishes[1], false, "Выбран", "Не выбран")
         tap(dishes[1])
         awaitCount("Выбрано 2")
-        openSelectionMenu()
-        compose.waitUntil(PATIENCE_MS) { compose.textsOf(LibraryTags.SELECT_ALL).joinToString("") == "Выбрать все" }
+        compose.waitUntil(PATIENCE_MS) { compose.textsOf(LibraryTags.SELECT_ALL).joinToString("").replace('\u00A0', ' ') == "Выбрать все" }
         compose.onNodeWithTag(LibraryTags.SELECT_ALL).performClick()
         awaitCount("Выбрано 5")
-        openSelectionMenu()
         assertEquals("Удалить", itemText(LibraryTags.SELECTION_DELETE))
         compose.onNodeWithTag(LibraryTags.SELECTION_DELETE).performClick()
         compose.awaitRemovalNotice("5 рецептов удалено", "Вернуть")
@@ -651,7 +647,6 @@ class BookSelectionTest {
         longPress(dishes[0], LibraryView.MARKED)
         tap(dishes[1], LibraryView.MARKED)
         awaitCount("Выбрано 2")
-        openSelectionMenu()
         assertEquals("Убрать", itemText(LibraryTags.SELECTION_REMOVE))
         compose.onNodeWithTag(LibraryTags.SELECTION_REMOVE).performClick()
         compose.awaitRemovalNotice("2 рецепта убраны", "Вернуть")

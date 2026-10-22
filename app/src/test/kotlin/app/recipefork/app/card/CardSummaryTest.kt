@@ -46,7 +46,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * The card's summary line under the title (the view of the card): "N ingredients · M steps · timers ≈ X", muted, read
  * by the screen reader as one sentence, its counts in the plural forms of English and Russian; and, for a fork, the
- * provenance under it, opening the parent.
+ * provenance under it, in the tertiary colour (beet), opening the parent.
  */
 @RunWith(AndroidJUnit4::class)
 class CardSummaryTest {
@@ -60,6 +60,7 @@ class CardSummaryTest {
     private val now = Instant.parse("2026-10-09T12:00:00Z")
     private val opened = mutableListOf<RecipeId>()
     private var muted = Color.Unspecified
+    private var beet = Color.Unspecified
 
     @Before
     fun setUp() = compose.registerIdlingResource(book.idling)
@@ -80,6 +81,7 @@ class CardSummaryTest {
             compose.setContent {
                 MaterialTheme {
                     muted = MaterialTheme.colorScheme.onSurfaceVariant
+                    beet = MaterialTheme.colorScheme.tertiary
                     shown?.let {
                         key(it) {
                             CardScreen(it, recipes, environment, onBack = {}, onEdit = {}, onOpenParent = { parent -> opened += parent })
@@ -194,7 +196,7 @@ class CardSummaryTest {
         compose.onNodeWithTag(CardTags.SUMMARY).assertDoesNotExist()
     }
 
-    // For a fork, where it came from stands under the summary — the card's one provenance — and opens the parent.
+    // For a fork, where it came from stands under the summary — the card's one provenance, in beet — and opens the parent.
     @Test
     fun aForksProvenanceStandsUnderTheSummaryAndOpensTheParent() {
         val parent = recipe("Borscht", ingredients = 3, steps = 2)
@@ -205,7 +207,18 @@ class CardSummaryTest {
         assertEquals(listOf("Forked from “Borscht”"), compose.textsOf(CardTags.PROVENANCE))
         assertTrue(top(CardTags.TITLE) < top(CardTags.SUMMARY))
         assertTrue(top(CardTags.SUMMARY) < top(CardTags.PROVENANCE))
+        assertEquals(listOf(beet), compose.textLayoutsWithin(CardTags.PROVENANCE).map { it.layoutInput.style.color })
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         assertEquals(listOf(parent.id), opened)
+    }
+
+    // A fork whose parent the book does not hold says so in the same beet: it is still the recipe's provenance.
+    @Test
+    fun aForksProvenanceIsBeetAlsoWhenTheBookDoesNotHoldTheParent() {
+        val parent = recipe("Borscht", ingredients = 3, steps = 2)
+        show(parent.fork(now, owner = null).copy(title = "Green borscht"))
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
+        assertEquals(listOf("Forked from a recipe that is not in this recipe book"), compose.textsOf(CardTags.PROVENANCE))
+        assertEquals(listOf(beet), compose.textLayoutsWithin(CardTags.PROVENANCE).map { it.layoutInput.style.color })
     }
 }

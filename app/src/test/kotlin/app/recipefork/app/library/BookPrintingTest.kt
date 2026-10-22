@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -244,21 +245,10 @@ class BookPrintingTest {
         !exists(LibraryTags.SELECTION_BAR) && exists(LibraryTags.TITLE) && session.selection.value == null
     }
 
-    private fun openSelectionMenu() {
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        await(LibraryTags.SELECT_ALL)
-    }
-
-    private fun closeSelectionMenu() {
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        awaitGone(LibraryTags.SELECT_ALL)
-    }
-
-    /** Takes the item tagged [tag] of the selection's ⋮. */
+    /** Takes the selection's action tagged [tag], at the bottom (v0.42). */
     private fun takeFromSelection(tag: String) {
-        openSelectionMenu()
+        await(tag)
         compose.onNodeWithTag(tag).performClick()
-        awaitGone(LibraryTags.SELECT_ALL)
     }
 
     /** The recipes of [shown], by their identities, in the order [view] lists them, top to bottom. */
@@ -296,15 +286,14 @@ class BookPrintingTest {
         assertNotEquals(order, chosen)
 
         choose(*chosen.toTypedArray())
-        // In the ⋮, after the removal's place is still the removal's: Print and Share as PDF stand before Delete.
-        openSelectionMenu()
-        val items = setOf(LibraryTags.SELECT_ALL, LibraryTags.SELECTION_PRINT, LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE)
-        assertEquals(
-            listOf(LibraryTags.SELECT_ALL, LibraryTags.SELECTION_PRINT, LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE),
-            compose.tagsTopToBottom(items),
-        )
+        // At the bottom (v0.42), Print and Share as PDF stand before Delete, named by their words.
+        await(LibraryTags.SELECTION_DELETE)
+        val lefts = listOf(LibraryTags.SELECTION_PRINT, LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE)
+            .map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot.left }
+        assertEquals(lefts.sorted(), lefts)
         assertEquals(listOf("Print"), compose.textsOf(LibraryTags.SELECTION_PRINT))
-        assertEquals(listOf("Share as PDF"), compose.textsOf(LibraryTags.SELECTION_SHARE_PDF))
+        assertEquals(listOf("PDF"), compose.textsOf(LibraryTags.SELECTION_SHARE_PDF))
+        assertEquals("Share as PDF", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_SHARE_PDF).fetchSemanticsNode()))
         AccessibilityChecks.assertTouchTargets(compose)
         compose.onNodeWithTag(LibraryTags.SELECTION_PRINT).performClick()
 
@@ -330,7 +319,7 @@ class BookPrintingTest {
     }
 
     // Among the imported, in the build with the server: a marked recipe whose content the book does not hold is chosen
-    // all the same and left out; chosen alone, neither item is offered.
+    // all the same and left out; chosen alone, neither action responds.
     @Test
     fun onlyRecipesTheBookHoldsArePrintedAndNoneHeldOffersNeither() {
         val borscht = found("Borscht", servings = 6, minutesAgo = 1)
@@ -339,10 +328,9 @@ class BookPrintingTest {
         show(LibraryView.MARKED, Mode.Standard)
 
         longPress("server-1", LibraryView.MARKED)
-        openSelectionMenu()
-        assertFalse(exists(LibraryTags.SELECTION_PRINT))
-        assertFalse(exists(LibraryTags.SELECTION_SHARE_PDF))
-        closeSelectionMenu()
+        await(LibraryTags.SELECTION_PRINT)
+        compose.onNodeWithTag(LibraryTags.SELECTION_PRINT).assertIsNotEnabled()
+        compose.onNodeWithTag(LibraryTags.SELECTION_SHARE_PDF).assertIsNotEnabled()
 
         tap(pelmeni.id.value, LibraryView.MARKED)
         tap(borscht.id.value, LibraryView.MARKED)
@@ -537,9 +525,11 @@ class BookPrintingTest {
         val order = listOrder(LibraryView.OWN, soup, bread)
 
         choose(soup, bread)
-        openSelectionMenu()
+        await(LibraryTags.SELECTION_PRINT)
         assertEquals(listOf("Печать"), compose.textsOf(LibraryTags.SELECTION_PRINT))
-        assertEquals(listOf("Поделиться PDF"), compose.textsOf(LibraryTags.SELECTION_SHARE_PDF))
+        assertEquals(listOf("PDF"), compose.textsOf(LibraryTags.SELECTION_SHARE_PDF))
+        assertEquals("Распечатать", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_PRINT).fetchSemanticsNode()))
+        assertEquals("Поделиться PDF", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_SHARE_PDF).fetchSemanticsNode()))
         val waiting = CompletableDeferred<Unit>()
         gate = waiting
         compose.onNodeWithTag(LibraryTags.SELECTION_SHARE_PDF).performClick()

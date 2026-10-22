@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -172,6 +173,8 @@ private fun CropContent(
                     },
                     enabled = ready != null,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                    // 16 dp at the sides, not Material's 24, so that the three keep to one line at 320 dp (T-297).
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     modifier = Modifier.heightIn(min = 48.dp).testTag(CropTags.DONE),
                 ) { Text(stringResource(R.string.media_crop_done)) }
             }

@@ -46,11 +46,14 @@ enum class LeftOutReason {
 /**
  * The nutrition of a dish at the scale in force: the [whole] dish, one serving of it ([perServing], null where no
  * serving count is shown), the kcal each [counted] row gives the whole dish and the rows [leftOut] of the count, both in
- * recipe order.
+ * recipe order. Where the recipe gives its finished weight: 100 g of the finished dish ([per100g]) and what the dish
+ * weighs at the scale ([finishedWeight], in whole grams); both null otherwise.
  */
 data class DishNutrition(
     val whole: NutritionValues,
     val perServing: NutritionValues?,
     val counted: List<CountedRow>,
     val leftOut: List<LeftOutRow>,
+    val per100g: NutritionValues? = null,
+    val finishedWeight: BigInteger? = null,
 )

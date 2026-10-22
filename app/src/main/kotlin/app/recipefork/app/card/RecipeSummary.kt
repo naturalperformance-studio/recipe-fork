@@ -60,7 +60,7 @@ internal fun RecipeSummaryLine(summary: RecipeSummary, modifier: Modifier = Modi
     val spoken = summary.text(resources, spoken = true)
     Text(
         shown,
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.semantics { spoken?.let { contentDescription = it } }.testTag(CardTags.SUMMARY),
     )

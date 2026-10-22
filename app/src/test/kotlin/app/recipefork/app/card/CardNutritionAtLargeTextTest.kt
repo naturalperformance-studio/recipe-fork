@@ -2,7 +2,11 @@ package app.recipefork.app.card
 
 import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -14,6 +18,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -44,7 +50,8 @@ import java.time.Instant
 
 /**
  * v0.40, T-293, the card's nutrition as text grows (at 200 % on 320 dp unless a test says otherwise) (decisions-recipe-fork.md, 2026-10-22, decisions 2, 3 and 5), with
- * real text measured: the switch keeps 8 dp from the heading and from the tiles at any size; the tiles stand 2 × 2 at
+ * real text measured: the switch keeps 8 dp from the heading and from the tiles at any size, and its two or three
+ * segments (v0.44, T-320) stay equal, a label that does not fit breaking rather than being cut; the tiles stand 2 × 2 at
  * 200 % on 320 dp; a row of the sheet never breaks its name inside a word to make room for its value, which stands
  * under the name where the two do not fit side by side.
  */
@@ -69,9 +76,10 @@ class CardNutritionAtLargeTextTest {
         Ingredient(position, entry, freeTextName = free, unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = amount?.let { Rational.of(it) })
 
     /** A counted row of one long word, and rows left out named in several words and in one long one. */
-    private fun withNames(sauce: String, spice: String) = Recipe.create(now, null).copy(
+    private fun withNames(sauce: String, spice: String, weight: Int? = null) = Recipe.create(now, null).copy(
         title = "Syrniki",
         servings = 4,
+        finishedWeightGrams = weight,
         ingredients = listOf(grams(0, 1, 360), grams(1, 7, 10), grams(2, null, null, free = sauce), grams(3, null, null, free = spice)),
         steps = listOf(Step(0, "Mix and fry.")),
     )
@@ -110,8 +118,8 @@ class CardNutritionAtLargeTextTest {
     private fun dp(node: SemanticsNode, px: Float) = px / node.layoutInfo.density.density
 
     /** The gaps above and below the switch's drawing, in dp: from the heading, and to the tiles. */
-    private fun switchGaps(): Pair<Float, Float> {
-        val heading = compose.onNode(hasText("Nutrition, approximate") and hasAnyAncestor(hasTestTag(NutritionTags.SECTION)), useUnmergedTree = true)
+    private fun switchGaps(title: String = "Nutrition, approximate"): Pair<Float, Float> {
+        val heading = compose.onNode(hasText(title) and hasAnyAncestor(hasTestTag(NutritionTags.SECTION)), useUnmergedTree = true)
             .fetchSemanticsNode()
         val segment = compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).fetchSemanticsNode()
         val tiles = compose.onNodeWithTag(NutritionTags.TILES).fetchSemanticsNode()
@@ -151,11 +159,131 @@ class CardNutritionAtLargeTextTest {
     fun atLargeTextTheSwitchGrowsAndKeepsItsEightDpAboveAndBelow() {
         open()
         val segment = compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).fetchSemanticsNode()
-        assertTrue("the segment is ${dp(segment, segment.size.height.toFloat())} dp", dp(segment, segment.size.height.toFloat()) > CardTarget.value)
+        assertTrue("the segment is ${dp(segment, segment.size.height.toFloat())} dp", dp(segment, segment.size.height.toFloat()) > 40f + 0.5f)
         val (above, below) = switchGaps()
         assertEquals(8f, above, 0.5f)
         assertEquals(8f, below, 0.5f)
-        compose.assertWhole(NutritionTags.SWITCH)
+        assertNotCut(NutritionTags.SWITCH)
+    }
+
+    /**
+     * Every label of the switch shows all of itself, on as many lines as it takes: one that does not fit whole breaks
+     * inside its word, as its text breaks (decisions-recipe-fork.md, T-319 / T-320, decision 2, F-2); none is cut.
+     */
+    private fun assertNotCut(tag: String) {
+        val layouts = compose.textLayoutsWithin(tag)
+        assertTrue("$tag shows text", layouts.isNotEmpty())
+        layouts.forEach { layout ->
+            val text = layout.layoutInput.text.text
+            assertTrue("\"$text\" in $tag is not cut off",
+                !layout.didOverflowHeight && !layout.multiParagraph.didExceedMaxLines &&
+                    layout.getLineEnd(layout.lineCount - 1) == text.length &&
+                    (0 until layout.lineCount).none(layout::isLineEllipsized))
+        }
+    }
+
+    /** The switch's three segments are equally wide, as decided, and as tall as one another, whichever label wraps most. */
+    private fun assertThreeEqualSegments() {
+        val sizes = listOf(NutritionTags.SWITCH_PER_100_G, NutritionTags.SWITCH_PER_SERVING, NutritionTags.SWITCH_WHOLE)
+            .map { compose.onNodeWithTag(it).fetchSemanticsNode().size }
+        assertTrue("equal segments: $sizes", sizes.maxOf { it.width } - sizes.minOf { it.width } <= 1)
+        assertTrue("segments as tall: $sizes", sizes.all { it.height == sizes[0].height })
+    }
+
+    /**
+     * Each segment's label lies within its segment's content — inside the content padding at both ends, so never under
+     * the rounded end of the first or last segment nor against a divider — and its lines within the label.
+     */
+    private fun assertLabelsWithinTheirSegments() {
+        listOf(NutritionTags.SWITCH_PER_100_G, NutritionTags.SWITCH_PER_SERVING, NutritionTags.SWITCH_WHOLE).forEach { tag ->
+            val segment = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            val density = segment.layoutInfo.density.density
+            val padding = ButtonDefaults.TextButtonContentPadding
+            // The content padding is the same on both sides, so either direction measures it.
+            val start = segment.boundsInRoot.left + padding.calculateStartPadding(LayoutDirection.Ltr).value * density
+            val end = segment.boundsInRoot.right - padding.calculateEndPadding(LayoutDirection.Ltr).value * density
+            val label = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().single()
+            val bounds = label.boundsInRoot
+            assertTrue("$tag: the label ends at ${bounds.right}, past the content's end at $end", bounds.right <= end + 0.5f)
+            assertTrue("$tag: the label starts at ${bounds.left}, before the content's start at $start", bounds.left >= start - 0.5f)
+            val layouts = mutableListOf<TextLayoutResult>().also { label.config[SemanticsActions.GetTextLayoutResult].action!!(it) }
+            layouts.forEach { layout ->
+                assertTrue("$tag: a line runs past its label", (0 until layout.lineCount).all { layout.getLineRight(it) <= layout.size.width + 0.5f })
+            }
+        }
+    }
+
+    /** How many lines the label of the segment tagged [tag] takes. */
+    private fun labelLines(tag: String): Int {
+        val label = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes().single()
+        val layouts = mutableListOf<TextLayoutResult>().also { label.config[SemanticsActions.GetTextLayoutResult].action!!(it) }
+        return layouts.single().lineCount
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun atTheUsualWidthTheOpeningSwitchIsOneLineAndDrawn40DpTall() {
+        open(withNames("Sour cream", "Spice", weight = 560))
+        compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).assertIsSelected()
+        listOf(NutritionTags.SWITCH_PER_100_G, NutritionTags.SWITCH_PER_SERVING, NutritionTags.SWITCH_WHOLE).forEach { tag ->
+            assertEquals(tag, 1, labelLines(tag))
+            val segment = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            assertEquals(tag, 40f, dp(segment, segment.size.height.toFloat()), 0.5f)
+        }
+        assertLabelsWithinTheirSegments()
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp")
+    fun onANarrowScreenTheChosenWholeDishWrapsWithinItsSegment() {
+        open(withNames("Sour cream", "Spice", weight = 560))
+        compose.scrollClearOfFork(NutritionTags.SWITCH)
+        compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).assertIsSelected()
+        assertLabelsWithinTheirSegments()
+        // A segment not chosen has no check, and its label keeps the whole content: «Порция» stays one line.
+        assertEquals(1, labelLines(NutritionTags.SWITCH_PER_SERVING))
+        assertNotCut(NutritionTags.SWITCH)
+        assertThreeEqualSegments()
+        val (above, below) = switchGaps("Пищевая ценность, примерно")
+        assertEquals(8f, above, 0.5f)
+        assertEquals(8f, below, 0.5f)
+        val whole = compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).fetchSemanticsNode()
+        assertEquals(CardTarget.value, dp(whole, whole.touchBoundsInRoot.height), 0.5f)
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp")
+    fun onANarrowScreenTheThreeSegmentsStayEqualAndTheirLabelsBreakRatherThanBeCut() {
+        open(withNames("Sour cream", "Spice", weight = 560))
+        compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).assertIsSelected()
+        assertThreeEqualSegments()
+        assertNotCut(NutritionTags.SWITCH)
+        assertLabelsWithinTheirSegments()
+        val (above, below) = switchGaps("Пищевая ценность, примерно")
+        assertEquals(8f, above, 0.5f)
+        assertEquals(8f, below, 0.5f)
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun atLargeTextTheThreeSegmentsGrowStayEqualAndTheirLabelsBreakRatherThanBeCut() {
+        open(withNames("Sour cream", "Spice", weight = 560))
+        val segment = compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).fetchSemanticsNode()
+        assertTrue("the segment is ${dp(segment, segment.size.height.toFloat())} dp", dp(segment, segment.size.height.toFloat()) > 40f + 0.5f)
+        assertThreeEqualSegments()
+        assertNotCut(NutritionTags.SWITCH)
+        val (above, below) = switchGaps("Пищевая ценность, примерно")
+        assertEquals(8f, above, 0.5f)
+        assertEquals(8f, below, 0.5f)
+        compose.scrollClearOfFork(NutritionTags.SWITCH)
+        compose.onNodeWithTag(NutritionTags.SWITCH_PER_100_G).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(NutritionTags.SWITCH_PER_100_G).assertIsSelected()
+        assertNotCut(NutritionTags.SWITCH)
     }
 
     @Test

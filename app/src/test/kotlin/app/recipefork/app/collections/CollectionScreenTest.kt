@@ -11,9 +11,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -23,6 +21,11 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import app.recipefork.app.library.BookEntryRowTags
+import app.recipefork.app.ui.ReadingFamily
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -78,7 +81,7 @@ import java.time.Instant
 
 /**
  * Collections in the book and a collection's screen (v0.36, T-254): the own view shows the reader's collections and the
- * Imported view the imported ones, each as a row of cards above the recipes; a collection opens on its recipes in
+ * Imported view the imported ones, each as a row of spines above the recipes; a collection opens on its recipes in
  * order, each opening its card, back from which returns to it. An own collection is renamed, deleted with Undo, has a
  * recipe removed with Undo and is reordered; an imported one is frozen and names its stated author. An empty own
  * collection says how recipes are added.
@@ -232,6 +235,47 @@ class CollectionScreenTest {
 
     // The tests.
 
+    private fun unmerged(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+
+    private fun styleOf(tag: String): TextStyle {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        return layouts.single().layoutInput.style
+    }
+
+    /** A recipe in a collection's screen is the book's row (v0.42, T-301): drop cap, Literata title, author in italics. */
+    private fun assertBookRow(recipe: RecipeId) {
+        val id = recipe.value
+        await(LibraryTags.entry(id))
+        val entry = bounds(LibraryTags.entry(id))
+        val density = compose.density.density
+        assertTrue("at least 84 dp high", entry.height >= 84 * density - 0.5f)
+        assertTrue("a drop cap in place of the missing cover", unmerged(BookEntryRowTags.dropCap(id)))
+        val cap = bounds(BookEntryRowTags.dropCap(id), unmerged = true)
+        assertEquals(60 * density, cap.width, 1f)
+        assertEquals(60 * density, cap.height, 1f)
+        assertEquals("the title in Literata", ReadingFamily, styleOf(LibraryTags.entryTitle(id)).fontFamily)
+    }
+
+    @Test
+    fun aCollectionsRecipesShowTheBooksRow() {
+        val soup = own("Soup")
+        val menu = collection("Menu", soup.value)
+        val borscht = found("Borscht")
+        val annas = imported("Anna's dinners", null, borscht.value)
+        show(LibraryView.OWN)
+        open(menu)
+        assertBookRow(soup)
+        systemBack()
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.PAGER) }
+        compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).performClick()
+        open(annas, LibraryView.MARKED)
+        assertBookRow(borscht)
+        val author = LibraryTags.statedAuthor(borscht.value)
+        assertTrue(unmerged(author))
+        assertEquals("the stated author in italics", FontStyle.Italic, styleOf(author).fontStyle)
+    }
+
     @Test
     fun eachViewShowsItsCollectionsAboveItsRecipesTheLastMadeFirstWithTheirCounts() {
         val soup = own("Soup")
@@ -260,6 +304,35 @@ class CollectionScreenTest {
         await(LibraryTags.entry(borscht.value))
         assertTrue(bounds(CollectionScreenTags.card(annas.value)).bottom <= bounds(LibraryTags.entry(borscht.value)).top)
         compose.waitUntil(PATIENCE_MS) { !exists(CollectionScreenTags.card(menu.value)) }
+    }
+
+    @Test
+    fun aRowThatComesAfterTheRecipesStandsInSightAboveTheFirstOfThemInEachView() {
+        // The recipes are listed before the book holds any collection; the row then comes to stand above them. A list
+        // at its top shows it there, not scrolled out above the first recipe (T-307). Nothing here scrolls the list.
+        val soup = own("Soup")
+        val borscht = found("Borscht")
+        show(LibraryView.OWN)
+        await(LibraryTags.entry(soup.value))
+        assertFalse(exists(CollectionScreenTags.ROW))
+        collection("Menu", soup.value)
+        awaitRowInSightAbove(LibraryTags.entry(soup.value), LibraryView.OWN)
+
+        // The own view's row leaves with its page; the imported view holds no imported collection yet.
+        compose.runOnIdle { session.choose(LibraryView.MARKED) }
+        await(LibraryTags.entry(borscht.value))
+        awaitGone(CollectionScreenTags.ROW)
+        imported("Anna's pies", "anna", borscht.value)
+        awaitRowInSightAbove(LibraryTags.entry(borscht.value), LibraryView.MARKED)
+    }
+
+    /** Waits until the view's row of collections stands wholly in the list's sight, above the entry tagged [entry]. */
+    private fun awaitRowInSightAbove(entry: String, view: LibraryView) {
+        compose.waitUntil(PATIENCE_MS) {
+            exists(CollectionScreenTags.ROW) && exists(entry) &&
+                bounds(CollectionScreenTags.ROW).top >= bounds(list(view)).top &&
+                bounds(CollectionScreenTags.ROW).bottom <= bounds(entry).top
+        }
     }
 
     @Test
@@ -648,7 +721,7 @@ class CollectionScreenTest {
         val empty = collection("Салаты")
         show(LibraryView.OWN)
         awaitCollectionCard(menu)
-        compose.onNode(hasText("Коллекции") and hasAnyAncestor(hasTestTag(CollectionScreenTags.ROW)), useUnmergedTree = true).assertExists()
+        assertEquals("Новогоднее меню", text(CollectionScreenTags.cardName(menu.value)))
         assertEquals("2 рецепта", text(CollectionScreenTags.cardCount(menu.value)))
         assertEquals("0 рецептов", text(CollectionScreenTags.cardCount(empty.value)))
 

@@ -543,6 +543,19 @@ class RecipeEditor(
     }
 
     /**
+     * What the author typed into the finished weight field: whole grams within [RecipeBounds.holdsFinishedWeight] are
+     * held, and an empty field holds no weight; anything else — zero, a fraction, more than the bound — is not held and
+     * changes nothing, as the serving count refuses. Returns whether it was held.
+     */
+    fun setFinishedWeight(typed: String): Boolean {
+        val digits = typed.trim()
+        if (digits.isEmpty()) return edit { it.copy(finishedWeightGrams = null) }
+        if (digits.any { it !in '0'..'9' }) return false
+        val grams = digits.toIntOrNull()?.takeIf(RecipeBounds::holdsFinishedWeight) ?: return false
+        return edit { it.copy(finishedWeightGrams = grams) }
+    }
+
+    /**
      * Appends an empty row, named in the author's own words (FLOW-022) until the dictionary offers entries. Its unit
      * starts as grams, so the row always has a unit and so a unit type (DOM-016); its quantity starts empty.
      */

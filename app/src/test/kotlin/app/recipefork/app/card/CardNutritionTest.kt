@@ -53,8 +53,8 @@ import java.time.Instant
 /**
  * v0.40, T-293 — nutrition on the recipe card (scenarios 1–3, 5–7; decisions-recipe-fork.md, 2026-10-22):
  *
- * - On View, between the ingredients and the steps, «Пищевая ценность, примерно» with the per serving / whole dish switch
- *   opening on one serving, four tiles and "Details"; not on Cooking.
+ * - On View, between the ingredients and the steps, «Пищевая ценность, примерно» with the «Порция | Всё блюдо» switch
+ *   opening on one serving (v0.44, T-320, relabelled), four tiles and "Details"; not on Cooking.
  * - One serving stays as the servings change; the whole dish follows them and a fixed amount.
  * - The rows left out are named on the card, and with their reasons in the sheet, free text and an entry the
  *   dictionary does not hold both as «нет в словаре»; the sheet gives each counted row's kcal for the whole dish and how
@@ -185,7 +185,7 @@ class CardNutritionTest {
             listOf(NutritionTags.SWITCH, NutritionTags.TILES, NutritionTags.LEFT_OUT, NutritionTags.DETAILS),
             inOrder(setOf(NutritionTags.SWITCH, NutritionTags.TILES, NutritionTags.LEFT_OUT, NutritionTags.DETAILS)),
         )
-        assertEquals(listOf("Per serving"), compose.textsOf(NutritionTags.SWITCH_PER_SERVING))
+        assertEquals(listOf("Serving"), compose.textsOf(NutritionTags.SWITCH_PER_SERVING))
         assertEquals(listOf("Whole dish"), compose.textsOf(NutritionTags.SWITCH_WHOLE))
         assertEquals(listOf("Details"), compose.textsOf(NutritionTags.DETAILS))
     }
@@ -378,7 +378,7 @@ class CardNutritionTest {
     fun inRussianEverythingIsSaidAsDecided() {
         open()
         compose.onNode(hasText("Пищевая ценность, примерно") and hasAnyAncestor(hasTestTag(NutritionTags.SECTION)), useUnmergedTree = true).assertExists()
-        assertEquals(listOf("На порцию"), compose.textsOf(NutritionTags.SWITCH_PER_SERVING))
+        assertEquals(listOf("Порция"), compose.textsOf(NutritionTags.SWITCH_PER_SERVING))
         assertEquals(listOf("Всё блюдо"), compose.textsOf(NutritionTags.SWITCH_WHOLE))
         assertEquals(listOf("200 ккал", "17 г белки", "8 г жиры", "13 г углеводы"), shown())
         assertEquals("На порцию: примерно 200 килокалорий, белки 17 граммов, жиры 8 граммов, углеводы 13 граммов", spoken())

@@ -334,7 +334,9 @@ class CardTopBarTest {
         assertTrue("the long title is longer than its two lines", layout.multiParagraph.didExceedMaxLines)
         assertEquals(TextOverflow.Ellipsis, layout.layoutInput.overflow)
         assertTrue("ellipsized at the end of its second line", layout.isLineEllipsized(1))
-        assertEquals("the smaller title style on two lines", 16f, layout.layoutInput.style.fontSize.value, 0.01f)
+        // T-297: 15 sp on 22 sp lines, so that some thirty characters keep to two lines in Literata.
+        assertEquals("the smaller title style on two lines", 15f, layout.layoutInput.style.fontSize.value, 0.01f)
+        assertEquals("its line height", 22f, layout.layoutInput.style.lineHeight.value, 0.01f)
         assertEquals(listOf(long), compose.textsOf(CardTags.BAR_TITLE))
         // Back at the top, the bar loses the title again.
         repeat(6) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeDown() } }

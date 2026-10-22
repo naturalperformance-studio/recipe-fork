@@ -173,7 +173,7 @@ private fun MergedLine(
                     open -> pluralStringResource(R.plurals.timer_bar_running, count, count)
                     else -> barName(group.first(), number)
                 },
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.testTag(if (finished) TimerTags.BAR_FINISHED_NAME else TimerTags.BAR_RUNNING_NAME),
             )
         },
@@ -189,12 +189,12 @@ private fun MergedLine(
                 } else if (!open) {
                     Text(
                         remainingText(group.first().remaining(timers.now)),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.testTag(TimerTags.BAR_RUNNING_STATUS),
                     )
                     Text(
                         stringResource(R.string.timer_bar_more, count - 1),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.testTag(TimerTags.BAR_MORE),
                     )
                 }
@@ -243,7 +243,7 @@ private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers,
         main = {
             Text(
                 barName(timer, number),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.testTag(TimerTags.barName(position, index)),
             )
         },
@@ -251,7 +251,7 @@ private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers,
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     if (ringing) stringResource(R.string.timer_bar_ringing) else remainingText(timer.remaining(timers.now)),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.testTag(TimerTags.barStatus(position, index)),
                 )
                 if (ringing) {

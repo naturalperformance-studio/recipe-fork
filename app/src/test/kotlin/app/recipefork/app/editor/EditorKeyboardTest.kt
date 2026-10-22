@@ -87,7 +87,7 @@ class EditorKeyboardTest {
         compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.WRITE).performScrollTo().performClick()
         compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.FORM), PATIENCE_MS)
         return RecipeId(requireNotNull(session.editing.value))
@@ -207,18 +207,20 @@ class EditorKeyboardTest {
         }
     }
 
-    // Next goes title → serving count → the first row, whose sheet opens with its name focused → quantity → the unit's
-    // menu; a unit picked there goes on to the note (T-218), the last field, whose Done closes the sheet. With no rows, the serving count says Done, which closes the
-    // keyboard and adds no row. From the title it passes over the tags and the description between it and the serving
+    // Next goes title → serving count → finished weight (v0.44) → the first row, whose sheet opens with its name focused →
+    // quantity → the unit's menu; a unit picked there goes on to the note (T-218), the last field, whose Done closes the
+    // sheet. With no rows, the finished weight says Done, which closes the keyboard and adds no row. From the title it passes over the tags and the description between it and the serving
     // count (T-208): each keeps a key of its own — the tags' Done, the description's new line.
     @Test
     fun nextGoesThroughTheFirstRowsSheetAndTheNoteEndsIt() {
         val id = writeANewRecipe()
-        // With no rows, the serving count is the last field: Done.
+        // With no rows, the finished weight is the last field: Done; the serving count goes on to it.
         enter(EditorTags.SERVINGS)
+        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
+        enter(EditorTags.FINISHED_WEIGHT)
         assertEquals(EditorInfo.IME_ACTION_DONE, action(keyboardAskedFor()))
-        compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
-        compose.waitUntil(PATIENCE_MS) { !isFocused(EditorTags.SERVINGS) }
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { !isFocused(EditorTags.FINISHED_WEIGHT) }
         assertEquals(0, stored(id).ingredients.size)
         addIngredient()
         addIngredient()
@@ -229,8 +231,11 @@ class EditorKeyboardTest {
         compose.onNodeWithTag(EditorTags.TITLE).performImeAction()
         awaitFocused(EditorTags.SERVINGS)
         assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
-        hideKeyboard()
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
+        awaitFocused(EditorTags.FINISHED_WEIGHT)
+        assertEquals(EditorInfo.IME_ACTION_NEXT, action(keyboardAskedFor()))
+        hideKeyboard()
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performImeAction()
         awaitFocused(EditorTags.ingredientName(0))
         compose.waitUntil(PATIENCE_MS) { keyboardUp() }
         assertTrue(compose.ingredientSheetOpen())

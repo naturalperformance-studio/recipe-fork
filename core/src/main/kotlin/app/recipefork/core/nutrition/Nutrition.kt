@@ -24,15 +24,26 @@ import java.math.BigInteger
  * - Totals are summed from exact values and rounded once, half up: kcal to the nearest 10, grams to whole grams. One
  *   serving is the exact whole divided by the serving count shown, rounded once the same way, so it stays the same as
  *   the count changes. Each counted row's kcal is rounded on its own, and the rows may not add up to the total.
+ * - 100 g of the finished dish (v0.44, T-320), where the recipe gives what it weighs at its own servings: the exact whole
+ *   × 100 ÷ (that weight × the factor), rounded once the same way, so it stays the same as the scale changes. The
+ *   weight at the scale is that weight × the factor, to the nearest whole gram, half up.
  */
 object Nutrition {
 
     /**
      * The nutrition of a dish of [ingredients] at [factor], reading entries from [entries]; one serving of [servings]
-     * where a count is shown. Null where no row can be counted.
+     * where a count is shown; 100 g of the finished dish where the recipe gives its [finishedWeight] in grams, for the
+     * dish at its own servings. Null where no row can be counted.
      */
-    fun of(ingredients: List<Ingredient>, factor: ScaleFactor, entries: NutritionEntries, servings: Rational? = null): DishNutrition? {
+    fun of(
+        ingredients: List<Ingredient>,
+        factor: ScaleFactor,
+        entries: NutritionEntries,
+        servings: Rational? = null,
+        finishedWeight: Int? = null,
+    ): DishNutrition? {
         require(servings == null || servings.signum() > 0) { "a serving count is above zero: $servings" }
+        require(finishedWeight == null || finishedWeight > 0) { "a finished weight is above zero: $finishedWeight" }
         val counted = mutableListOf<Pair<Int, Exact>>()
         val leftOut = mutableListOf<LeftOutRow>()
         for (row in ingredients) {
@@ -43,11 +54,14 @@ object Nutrition {
         }
         if (counted.isEmpty()) return null
         val whole = counted.map { it.second }.reduce(Exact::plus)
+        val weight = finishedWeight?.let { Rational.of(it.toLong()) * factor.value }
         return DishNutrition(
             whole = whole.rounded(),
             perServing = servings?.let { (whole / it).rounded() },
             counted = counted.map { (position, values) -> CountedRow(position, kcalOf(values.kcal)) },
             leftOut = leftOut,
+            per100g = weight?.let { (whole * HUNDRED / it).rounded() },
+            finishedWeight = weight?.let(::gramsOf),
         )
     }
 

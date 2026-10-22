@@ -150,7 +150,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.ui.Haptic
 import app.recipefork.app.ui.rememberHaptics
 import app.recipefork.app.R
@@ -351,9 +354,9 @@ fun CardScreen(
     // The same of the equipment, which folds on its own.
     val equipmentShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
     val shownAgain = remember(ingredientsShownAgain, equipmentShownAgain) { ShownAgain(equipmentShownAgain, ingredientsShownAgain) }
-    // Whether View's nutrition shows the whole dish rather than one serving: the card's, kept while it is open, as the
-    // reader turns to Cooking and back or the activity is recreated, and one serving each time a card opens.
-    val nutritionWhole = rememberSaveable(recipeId) { mutableStateOf(false) }
+    // What View's nutrition shows — 100 g, one serving or the whole dish: the card's, kept while it is open, as the reader
+    // turns to Cooking and back or the activity is recreated, and the one it opens on (null) each time a card opens.
+    val nutritionShown = rememberSaveable(recipeId) { mutableStateOf<NutritionShown?>(null) }
     // The recipe's timers running, or ringing, while their step is out of sight on the tab shown: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
     val timing = timersBar?.timers?.let { timers -> timers.held.values.any { !it.hasEnded(timers.now) || timers.rings(it.key) } } == true
@@ -544,7 +547,7 @@ fun CardScreen(
                             RecipeContent(
                                 recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                                 shownAgain, units,
-                                nutritionWhole = nutritionWhole,
+                                nutritionShown = nutritionShown,
                                 equipmentEntries = equipmentEntries,
                                 kitchen = kitchen,
                                 onOpenKitchen = onOpenKitchen,
@@ -932,9 +935,13 @@ private val PART_GAP = 8.dp
 /** The most lines the bar gives the recipe's title. */
 private const val BAR_TITLE_LINES = 2
 
+/** The size and line height of the bar's title where it takes two lines: some thirty characters fit in Literata (T-297). */
+private val BAR_TITLE_SIZE = 15.sp
+private val BAR_TITLE_LINE = 22.sp
+
 /**
- * The recipe's [title] in the bar: in the bar's own large title style where it fits on one line; otherwise smaller, on
- * up to [BAR_TITLE_LINES] lines, ellipsized at the end of the last.
+ * The recipe's [title] in the bar: in the bar's own large title style where it fits on one line; otherwise smaller
+ * ([BAR_TITLE_SIZE]), on up to [BAR_TITLE_LINES] lines, ellipsized at the end of the last.
  */
 @Composable
 private fun BarTitle(title: String) {
@@ -945,9 +952,10 @@ private fun BarTitle(title: String) {
         val fits = remember(title, large, width, measurer) {
             !measurer.measure(title, large, maxLines = 1, softWrap = false, constraints = Constraints(maxWidth = width)).hasVisualOverflow
         }
+        val two = MaterialTheme.typography.titleMedium.copy(fontSize = BAR_TITLE_SIZE, lineHeight = BAR_TITLE_LINE)
         Text(
             title,
-            style = if (fits) large else MaterialTheme.typography.titleMedium,
+            style = if (fits) large else two,
             maxLines = if (fits) 1 else BAR_TITLE_LINES,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.testTag(CardTags.BAR_TITLE),
@@ -972,7 +980,7 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit, modifier: Modifier
     val action = stringResource(R.string.card_fork_action)
     ExtendedFloatingActionButton(
         text = { Text(word) },
-        icon = { Icon(painterResource(R.drawable.ic_fork), contentDescription = null) },
+        icon = { ProvenanceGlyph() },
         onClick = onFork,
         expanded = expanded,
         modifier = modifier
@@ -1003,7 +1011,7 @@ private fun RecipeContent(
     places: CardPlaces,
     shownAgain: ShownAgain,
     units: UnitSystem,
-    nutritionWhole: MutableState<Boolean>,
+    nutritionShown: MutableState<NutritionShown?>,
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
     onOpenKitchen: ((Long) -> Unit)?,
@@ -1119,8 +1127,9 @@ private fun RecipeContent(
             }
             // On View, roughly what the dish holds, at the scale in force; nothing where no row can be counted.
             if (viewing) {
-                val nutrition = remember(ordered, entries, list) { dishNutrition(ordered, entries, list) }
-                nutrition?.let { NutritionSection(it, ordered, list.lines, list.servingCount, language, nutritionWhole) }
+                val weight = recipe.finishedWeightGrams
+                val nutrition = remember(ordered, entries, list, weight) { dishNutrition(ordered, entries, list, weight) }
+                nutrition?.let { NutritionSection(it, ordered, list.lines, list.servingCount, language, nutritionShown, recipe.state.editable) }
             }
             // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(
@@ -1187,6 +1196,9 @@ private sealed interface ParentContent {
  *
  * A parent the recipe names in text, [stated] — the one a found recipe's file states, or the found recipe a fork was
  * made from — is named by that title, and by that author marked as not verified (FLOW-065 (4, 5)), held or not.
+ *
+ * The line is drawn in the scheme's tertiary colour, beet in the redesign: provenance is the one thing in the app
+ * that colour marks, held or not.
  */
 @Composable
 private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeRepository, onOpenParent: (RecipeId) -> Unit) {
@@ -1198,6 +1210,7 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
         ParentContent.Loading -> Unit
         ParentContent.Unavailable -> Text(
             provenanceText(resources, stated, held = null),
+            color = MaterialTheme.colorScheme.tertiary,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.testTag(CardTags.PROVENANCE),
         )
@@ -1215,7 +1228,7 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
         ) {
             Text(
                 provenanceText(resources, stated, shown.title),
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.tertiary,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -1558,6 +1571,9 @@ fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> U
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(CardTags.FORK_HELD),
+        icon = { ProvenanceGlyph(Modifier.size(HELD_GLYPH)) },
+        // The glyph marks provenance, so it is beet here, as the redesign draws the dialog.
+        iconContentColor = MaterialTheme.colorScheme.tertiary,
         text = { Text(stringResource(R.string.card_fork_held)) },
         confirmButton = {
             TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_OPEN)) {
@@ -1571,6 +1587,27 @@ fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> U
         },
     )
 }
+
+/** The provenance glyph at the size the held-fork dialog heads with it. */
+private val HELD_GLYPH = 32.dp
+
+/**
+ * The provenance glyph (hollow node, a line with one knee, filled node), in the content colour of where it stands and
+ * read by nothing: the words beside it say what it marks. It names its drawing in [DrawnIcon] for tests.
+ */
+@Composable
+private fun ProvenanceGlyph(modifier: Modifier = Modifier) {
+    Icon(
+        painterResource(R.drawable.ic_provenance),
+        contentDescription = null,
+        modifier = modifier.semantics { drawnIcon = R.drawable.ic_provenance },
+    )
+}
+
+/** The drawable an icon draws, kept in the semantics tree for tests, never read aloud. */
+internal val DrawnIcon = SemanticsPropertyKey<Int>(DRAWN_ICON_KEY)
+private const val DRAWN_ICON_KEY = "card.drawn-icon"
+internal var SemanticsPropertyReceiver.drawnIcon by DrawnIcon
 
 object CardTags {
     const val FORK_HELD = "card-fork-held"

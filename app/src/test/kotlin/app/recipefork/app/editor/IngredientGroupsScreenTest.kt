@@ -299,16 +299,16 @@ class IngredientGroupsScreenTest {
         assertTrue(!exists(EditorTags.ingredientHandle(2)) && exists(EditorTags.ingredientHandle(3)))
     }
 
-    // The keyboard's Next follows the list as shown: from the serving count into the first heading's sheet, and from a
+    // The keyboard's Next follows the list as shown: from the finished weight into the first heading's sheet, and from a
     // heading to its group's first row, whose sheet opens with its name focused. A row's sheet ends the chain: its unit,
     // picked by Next, goes on to its note (T-218), whose Done closes it. The heading's name is settled on the way — trimmed — and the field left gives up its focus.
     @Test
     fun nextGoesThroughTheHeadingsInTheOrderShown() {
         val recipe = open(recipe(IngredientGroup("Dough", 0), IngredientGroup("Glaze", 3)))
-        compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performScrollTo().performClick()
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performImeAction()
         compose.waitUntil(PATIENCE_MS) { compose.groupSheetOpen() && focused(EditorTags.groupName(0)) }
-        assertTrue(!focused(EditorTags.SERVINGS))
+        assertTrue(!focused(EditorTags.FINISHED_WEIGHT))
         compose.onNodeWithTag(EditorTags.groupName(0)).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
         assertTrue(!compose.groupSheetOpen())
@@ -327,7 +327,7 @@ class IngredientGroupsScreenTest {
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(3)) }
         assertEquals("Icing", stored(recipe).ingredientGroups[1].name)
         compose.closeIngredient()
-        assertTrue(!focused(EditorTags.SERVINGS) && !focused(EditorTags.groupName(1)))
+        assertTrue(!focused(EditorTags.FINISHED_WEIGHT) && !focused(EditorTags.groupName(1)))
         assertEquals("Icing", compose.groupLine(1))
     }
 

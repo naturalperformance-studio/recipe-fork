@@ -64,6 +64,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import java.time.Instant
 import kotlin.math.abs
 
@@ -155,7 +156,8 @@ class BookHeaderTest {
         compose.waitForIdle()
     }
 
-    // Scenario 1: swiping moves between the views, the tabs following; tapping a tab moves too.
+    // Scenario 1: swiping moves between the views, the tabs following; tapping a tab moves too. The own recipes are the
+    // first page (v0.42): the marked ones are to their right.
     @Test
     fun swipingMovesBetweenTheViewsAndTheTabsFollow() {
         val own = recipesOf(LibraryView.OWN, 1).single()
@@ -163,13 +165,13 @@ class BookHeaderTest {
         show(LibraryView.MARKED)
         assertOn(LibraryView.MARKED)
         awaitShown(marked)
-        swipePager(left = true)
+        swipePager(left = false)
         assertOn(LibraryView.OWN)
         awaitShown(own)
-        swipePager(left = false)
+        swipePager(left = true)
         assertOn(LibraryView.MARKED)
         // Past the first view and the last, a swipe goes nowhere.
-        swipePager(left = false)
+        swipePager(left = true)
         assertOn(LibraryView.MARKED)
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitForIdle()
@@ -178,7 +180,7 @@ class BookHeaderTest {
         compose.waitForIdle()
         assertOn(LibraryView.MARKED)
         // Every view shown is kept as the one last left.
-        swipePager(left = true)
+        swipePager(left = false)
         assertOn(LibraryView.OWN)
         assertEquals(LibraryView.OWN, lastView.read())
     }
@@ -193,14 +195,14 @@ class BookHeaderTest {
         awaitShown(marked[0])
         compose.onNodeWithTag(LibraryTags.MARKED_LIST).performScrollToIndex(25)
         awaitShown(marked[25])
-        swipePager(left = true)
+        swipePager(left = false)
         assertOn(LibraryView.OWN)
         awaitShown(own[0])
         compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToIndex(12)
         awaitShown(own[12])
         assertFalse(shown(own[0]))
 
-        swipePager(left = false)
+        swipePager(left = true)
         assertOn(LibraryView.MARKED)
         awaitShown(marked[25])
         assertFalse("the marked list lost its place", shown(marked[0]))
@@ -222,7 +224,7 @@ class BookHeaderTest {
         assertOn(LibraryView.OWN)
         awaitShown(own[12])
         assertFalse("the own list lost its place across the change", shown(own[0]))
-        swipePager(left = false)
+        swipePager(left = true)
         assertOn(LibraryView.MARKED)
         awaitShown(marked[25])
         assertFalse("the marked list lost its place across the change", shown(marked[0]))
@@ -230,7 +232,7 @@ class BookHeaderTest {
 
     private fun scrollOwnList(down: Boolean, long: Boolean) {
         compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput {
-            val span = if (long) height * 0.8f else height * 0.2f
+            val span = if (long) height * 0.8f else height * 0.35f
             if (down) {
                 swipeUp(startY = centerY + span / 2, endY = centerY - span / 2, durationMillis = 600)
             } else {
@@ -322,7 +324,10 @@ class BookHeaderTest {
 
     // The marked view's import, in serverless mode, is its action at the bottom right once anything is marked; with
     // nothing marked the empty state offers it. In standard mode the marked view has no action.
+    // On a phone of the usual height: the book's title on its own row (v0.42) leaves a 470 dp window too little room to
+    // show the empty state's offer whole.
     @Test
+    @Config(qualifiers = "w360dp-h640dp")
     fun theMarkedViewImportsFromItsActionInServerlessModeOnly() {
         show(LibraryView.MARKED, Mode.Serverless)
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.MARKED_EMPTY) && exists(LibraryTags.IMPORT) }

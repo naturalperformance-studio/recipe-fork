@@ -33,10 +33,18 @@ internal data class FittedWords(val style: TextStyle, val overflows: Boolean)
 /**
  * [style], made smaller just as far as the widest word of [text] needs to fit in [width] pixels; unchanged if it fits.
  * It is never made smaller than the style's own size at a font scale of 1 in [density] — smaller would undo the reader's
- * larger text, and on a narrow window make it unreadable — and where a word is too wide even then, it says so.
+ * larger text, and on a narrow window make it unreadable — and where a word is too wide even then, it says so. With
+ * [hyphenParts], a hyphenated word counts as its parts, the hyphen kept on the first — the line may break after it.
  */
-internal fun fitWords(text: String, style: TextStyle, width: Int, measurer: TextMeasurer, density: Density): FittedWords {
-    val words = wordsOf(text)
+internal fun fitWords(
+    text: String,
+    style: TextStyle,
+    width: Int,
+    measurer: TextMeasurer,
+    density: Density,
+    hyphenParts: Boolean = false,
+): FittedWords {
+    val words = if (hyphenParts) wordsOf(text).flatMap(::hyphenPartsOf) else wordsOf(text)
     if (words.isEmpty() || width <= 0 || !style.fontSize.isSp) return FittedWords(style, false)
     val least = leastSize(style.fontSize, density).value
     var fitted = style
@@ -153,19 +161,39 @@ internal fun FittedText(text: String, fitted: FittedWords, modifier: Modifier = 
     }
 }
 
+/** [style] as [fitLine] gives it, and on how many [lines] the text is drawn: one, or two where it must. */
+internal data class FittedLine(val style: TextStyle, val lines: Int)
+
 /**
- * [text] in [style] on one line within [width] pixels — a top bar's title (v0.38) — the whole of it made smaller as far
- * as it needs to fit ([fitWords], the text taken as one word); never smaller than the style's size at a font scale of 1.
- * Longer than its room even then, it ends with an ellipsis: at a large font scale it neither wraps nor spills out of
- * the bar.
+ * [text] in [style] within [width] pixels, a top bar's title: on one line, the whole of it made smaller as far as it
+ * needs to fit ([fitWords], the text taken as one word), never smaller than the style's size at a font scale of 1. Longer
+ * than its room even then (T-297), it takes two lines at that size, the line height [TWO_LINE_HEIGHT] times the size —
+ * unless a word of it is wider than the line by itself, when it keeps to one line.
+ */
+internal fun fitLine(text: String, style: TextStyle, width: Int, measurer: TextMeasurer, density: Density): FittedLine {
+    val line = fitWords(text.replace(' ', NO_BREAK), style, width, measurer, density)
+    if (!line.overflows || widestWord(listOf(text), line.style, measurer) > width) return FittedLine(line.style, 1)
+    return FittedLine(line.style.copy(lineHeight = line.style.fontSize * TWO_LINE_HEIGHT), 2)
+}
+
+/**
+ * [text] in [style] within [width] pixels as [fitLine] lays it out — a top bar's title (v0.38, T-297): on one line,
+ * made smaller as far as its size at a font scale of 1; else on two lines, broken between words; ending with an
+ * ellipsis where it is longer still. At a large font scale it never spills out of the bar.
  */
 @Composable
 internal fun LineFitText(text: String, style: TextStyle, width: Int, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val fitted = remember(text, style, width, measurer, density) { fitWords(text.replace(' ', NO_BREAK), style, width, measurer, density) }
-    Text(text, style = fitted.style, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = modifier)
+    val fitted = remember(text, style, width, measurer, density) { fitLine(text, style, width, measurer, density) }
+    Text(
+        text, style = fitted.style, maxLines = fitted.lines, softWrap = fitted.lines > 1, overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }
+
+/** A two-line title's line height, by its size: 28 to 22, as Material's large title at its own size. */
+private const val TWO_LINE_HEIGHT = 28f / 22f
 
 /** The space that keeps the words beside it together, so that [fitWords] measures a whole line as one word. */
 private const val NO_BREAK = '\u00A0'
@@ -183,6 +211,9 @@ internal fun widestWord(texts: List<String>, style: TextStyle, measurer: TextMea
     texts.flatMap(::wordsOf).maxOfOrNull { measurer.measure(it, style, softWrap = false, maxLines = 1).size.width } ?: 0
 
 private fun wordsOf(text: String): List<String> = text.split(' ').filter { it.isNotEmpty() }
+
+/** The parts of [word] a line may break between: after each hyphen, which stays on the part before it. */
+internal fun hyphenPartsOf(word: String): List<String> = Regex("""[^-]*-+|[^-]+""").findAll(word).map { it.value }.toList()
 
 /** How many times the words are made smaller at most, and how much below the exact ratio each time. */
 private const val FIT_STEPS = 8

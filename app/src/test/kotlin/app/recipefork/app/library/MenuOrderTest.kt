@@ -4,8 +4,6 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -13,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -58,7 +55,6 @@ import app.recipefork.core.recipe.Recipe
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -68,11 +64,10 @@ import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 
 /**
- * v0.38, T-269 (scenario 5): every ⋮ of a recipe or of recipes — an entry's, the card's, a collection's and the book's
- * selection's — lists its items in one order, an item a place lacks skipped: Add to collection, Add to shopping list,
- * Print, Share as PDF, Export, then what only that place has, then Delete / Remove. The file action is "Export" /
- * «Экспорт» on a recipe and a collection alike. The selection's ⋮ draws its items by their words alone, so that their
- * labels line up whichever actions went to the bar.
+ * v0.38, T-269 (scenario 5): every ⋮ of a recipe or of recipes — an entry's, the card's, a collection's — and the book's
+ * selection's actions at the bottom (v0.42, T-305), start to end, list their items in one order, an item a place lacks
+ * skipped: Add to collection, Add to shopping list, Print, Share as PDF, Export, then what only that place has, then
+ * Delete / Remove. The file action is "Export" / «Экспорт» on a recipe and a collection alike.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -166,16 +161,17 @@ class MenuOrderTest {
         val rename: String,
         val delete: String,
         val deleteCollection: String,
+        val selection: List<String>,
     )
 
     private val english = Words(
         "Add to collection", "Add to shopping list", "Add all to shopping list", "Print", "Share as PDF", "Export", "Rename",
-        "Delete", "Delete collection",
+        "Delete", "Delete collection", listOf("To collection", "To shopping", "Print", "PDF", "Delete"),
     )
 
     private val russian = Words(
         "Добавить в коллекцию", "Добавить в список покупок", "Добавить все в список покупок", "Печать", "Поделиться PDF",
-        "Экспорт", "Переименовать", "Удалить", "Удалить коллекцию",
+        "Экспорт", "Переименовать", "Удалить", "Удалить коллекцию", listOf("В коллекцию", "В покупки", "Печать", "PDF", "Удалить"),
     )
 
     private fun assertEveryMenuInOneOrder(words: Words) {
@@ -195,19 +191,17 @@ class MenuOrderTest {
         assertEquals(listOf(words.addToCollection, words.addToShopping, words.print, words.sharePdf, words.export, words.delete), words(entry))
         compose.closeEntryMenu(id)
 
-        // The selection's: its actions in the bar, as far as there is room, stand above its ⋮'s, in the same order.
+        // The selection's: its actions at the bottom, start to end, in the same order.
         compose.onNodeWithTag(LibraryTags.entry(id)).performTouchInput { longClick(centerLeft + Offset(24f, 0f)) }
         await(LibraryTags.SELECTION_BAR)
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        await(LibraryTags.SELECT_ALL)
+        await(LibraryTags.SELECTION_DELETE)
         val selection = listOf(
             LibraryTags.SELECTION_ADD_TO_COLLECTION, LibraryTags.SELECTION_ADD_TO_SHOPPING, LibraryTags.SELECTION_PRINT,
             LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE,
         )
-        assertEquals(selection, compose.tagsTopToBottom(selection.toSet()))
-        assertEquals(listOf(words.print, words.sharePdf, words.delete), words(selection.drop(2)))
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        awaitGone(LibraryTags.SELECT_ALL)
+        val lefts = selection.map { compose.onNodeWithTag(it).fetchSemanticsNode().boundsInRoot.left }
+        assertEquals("start to end", lefts.sorted(), lefts)
+        assertEquals(words.selection, words(selection))
         compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
         awaitGone(LibraryTags.SELECTION_BAR)
 
@@ -240,45 +234,13 @@ class MenuOrderTest {
         )
     }
 
+    // On a phone of the usual height: under the book's title on its own row (v0.42), a 470 dp window leaves an entry's
+    // menu no room beside its ⋮.
     @Test
+    @Config(qualifiers = "w360dp-h640dp")
     fun everyMenuListsItsItemsInOneOrder() = assertEveryMenuInOneOrder(english)
 
     @Test
-    @Config(qualifiers = "ru")
+    @Config(qualifiers = "ru-w360dp-h640dp")
     fun inRussianEveryMenuListsItsItemsInOneOrder() = assertEveryMenuInOneOrder(russian)
-
-    /**
-     * On a narrow phone at large text the selection's actions go to its ⋮ — those with an icon in the bar among them —
-     * and every item there is drawn by its words alone: their words start at one line, as the other ⋮s' do.
-     */
-    private fun assertSelectionMenuLinesUp() {
-        val soup = own("Soup")
-        show()
-        awaitEntry(soup.id.value)
-        compose.onNodeWithTag(LibraryTags.entry(soup.id.value)).performTouchInput { longClick(centerLeft + Offset(24f, 0f)) }
-        await(LibraryTags.SELECTION_BAR)
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        await(LibraryTags.SELECT_ALL)
-        val items = listOf(
-            LibraryTags.SELECT_ALL, LibraryTags.SELECTION_ADD_TO_COLLECTION, LibraryTags.SELECTION_ADD_TO_SHOPPING,
-            LibraryTags.SELECTION_PRINT, LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE,
-        )
-        val inBar = hasTestTag(LibraryTags.SELECTION_BAR)
-        val inMenu = items.filter { tag -> compose.onAllNodes(hasTestTag(tag) and !hasAnyAncestor(inBar)).fetchSemanticsNodes().isNotEmpty() }
-        assertTrue("no action with an icon went to the ⋮: $inMenu", LibraryTags.SELECTION_ADD_TO_SHOPPING in inMenu)
-        val starts = inMenu.associateWith { tag ->
-            val text = SemanticsMatcher.keyIsDefined(SemanticsProperties.Text) and hasAnyAncestor(hasTestTag(tag))
-            compose.onNode(text, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
-        }
-        val first = starts.getValue(LibraryTags.SELECT_ALL)
-        starts.forEach { (tag, left) -> assertEquals("the words of $tag start at $left, Select all's at $first", first, left, 0.5f) }
-    }
-
-    @Test
-    @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
-    fun atTwiceTheFontScaleTheSelectionsMenuItemsLineUp() = assertSelectionMenuLinesUp()
-
-    @Test
-    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
-    fun inRussianAtTwiceTheFontScaleTheSelectionsMenuItemsLineUp() = assertSelectionMenuLinesUp()
 }

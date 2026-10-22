@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The engraved mark of an empty book section, its ink layer: the fork of mark 2b (docs/brand/identity/mark-2.html,
+     symbol m2bb, first path) with the symbol's group transform flattened into its 48-unit box, drawn at 112 dp. The
+     screen tints it in ink; the bent tine (engraving_mark_beet) and the hairline cuts (engraving_mark_cuts) lie over it
+     (EngravingsFromDesignTest). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="112dp"
+    android:height="112dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FF000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.47"
+        android:strokeLineJoin="round"
+        android:pathData="M36.39,5.294Q36.589,5.493 36.191,6.025Q32.468,10.811 27.816,15.729C26.619,16.926 26.686,18.587 27.749,19.651C28.813,20.714 30.474,20.781 31.671,19.584L34.064,21.977C31.272,24.902 28.214,24.902 25.689,24.503L23.096,26.431C19.108,30.685 15.851,35.404 10.8,40.455C7.875,43.38 5.748,43.912 4.618,42.782C3.488,41.652 4.02,39.525 6.945,36.6C11.996,31.549 16.715,28.292 20.969,24.304L22.897,21.711C22.498,19.186 22.498,16.128 25.423,13.336Q30.341,8.684 35.659,5.493Q36.191,5.094 36.39,5.294Z" />
+</vector>

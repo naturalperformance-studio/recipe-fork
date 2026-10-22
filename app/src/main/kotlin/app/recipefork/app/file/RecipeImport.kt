@@ -242,6 +242,7 @@ class RecipeImport(
                 steps = content.steps,
                 media = media,
                 sourceText = content.sourceText,
+                finishedWeightGrams = content.finishedWeightGrams,
             ).inState(FOUND_STATE)
 
         /** The state a found recipe is held in: not editable. */

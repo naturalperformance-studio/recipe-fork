@@ -39,6 +39,15 @@ class RecipeFromTextTest {
         assertEquals(emptyList(), RecipeFileCheck.problems(RecipeFile.decode(RecipeFile.encode(content))), recipe.title)
     }
 
+    // v0.44, T-318: a pasted text never gives a recipe a finished weight, even where it states a yield in grams; reading
+    // one is out of the increment's scope, and the author weighs the dish.
+    @Test
+    fun aPastedTextGivesNoFinishedWeight() {
+        val recipe = assertNotNull(read("Плов\n\nВыход: 800 г\nПорций: 2\n\nРис — 300 г\nМорковь — 200 г\n\nОбжарить морковь. Добавить рис."))
+        assertEquals(2, recipe.servings)
+        assertNull(recipe.finishedWeightGrams)
+    }
+
     // Scenario 1.
     @Test
     fun theOwnersBurgerSauceIsANewRecipeOfTheirs() {

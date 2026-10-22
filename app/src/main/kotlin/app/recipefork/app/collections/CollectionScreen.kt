@@ -1,6 +1,5 @@
 package app.recipefork.app.collections
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -80,8 +78,10 @@ import app.recipefork.app.library.CoverThumbnails
 import app.recipefork.app.library.ENTRY_GAP
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.library.EntryAction
-import app.recipefork.app.library.EntryCard
+import app.recipefork.app.library.BookEntryRow
+import app.recipefork.app.library.EntryAuthor
 import app.recipefork.app.library.EntryCover
+import app.recipefork.app.library.EntryProvenance
 import app.recipefork.app.library.EntryTitle
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.LibrarySnackbarHost
@@ -124,8 +124,9 @@ import kotlinx.coroutines.launch
  *
  * Once the book holds the collection no more — deleted here, or its book replaced — the screen closes.
  *
- * At large text (v0.38) the bar's name keeps to one line, ending with an ellipsis where it is too long even drawn
- * smaller ([LineFitText]), and a notice's action stands on a line of its own ([LibrarySnackbarHost], the book's).
+ * At large text (v0.38) the bar's name keeps to one line drawn smaller, or else two (T-297), ending with an ellipsis
+ * where it is too long even so ([LineFitText]), and a notice's action stands on a line of its own ([LibrarySnackbarHost],
+ * the book's).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,7 +193,7 @@ fun CollectionScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // On one line, never under the bar's actions nor spilling below it at a large font scale (v0.38).
+                    // On one line or two, never under the bar's actions nor spilling below it at a large font scale (v0.38, T-297).
                     BoxWithConstraints(Modifier.padding(end = TITLE_CLEARANCE)) {
                         LineFitText(
                             collection?.name.orEmpty(),
@@ -252,9 +253,9 @@ fun CollectionScreen(
                 .verticalScroll(scroll.state)
                 .padding(vertical = ENTRY_GAP)
                 .testTag(CollectionScreenTags.LIST),
-            verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
         ) {
-            author?.let { StatedAuthor(it) }
+            // The recipes' rows meet at their hairlines, as in the book; the stated author keeps a gap above them.
+            author?.let { StatedAuthor(it, Modifier.padding(bottom = ENTRY_GAP)) }
             val editable = collection.origin.editable
             val move: (Int, Int) -> Unit = { from, to ->
                 val now = rows.orEmpty()
@@ -267,7 +268,7 @@ fun CollectionScreen(
                     }
                 }
             }
-            val drag = if (editable) rememberRowDrag(scroll, ENTRY_GAP, move) else null
+            val drag = if (editable) rememberRowDrag(scroll, 0.dp, move) else null
             val cover = coverOf(recipes, thumbnails)
             CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                 shown.forEachIndexed { position, row ->
@@ -293,12 +294,12 @@ fun CollectionScreen(
 
 /** The line naming the author an imported collection's file states, marked as stated and not verified. */
 @Composable
-private fun StatedAuthor(author: String) {
+private fun StatedAuthor(author: String, modifier: Modifier = Modifier) {
     Text(
         stringResource(R.string.file_stated_author, author),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp).testTag(CollectionScreenTags.STATED_AUTHOR),
+        modifier = modifier.padding(horizontal = 16.dp).testTag(CollectionScreenTags.STATED_AUTHOR),
     )
 }
 
@@ -334,11 +335,11 @@ private fun CollectionEntry(
         }
         add(EntryAction(R.string.collection_remove, CollectionScreenTags.remove(row.recipeId), destructive = true, onClick = onRemove))
     }
-    val lifted = CardDefaults.cardColors().containerColor
-    EntryCard(
+    BookEntryRow(
         row.recipeId, row.title, row.coverId, cover, actions, onOpen,
         modifier = Modifier,
-        inner = drag?.row(position, lifted, CardDefaults.shape) ?: Modifier,
+        // Lifted while dragged, on the page's own colour: the row has no card of its own.
+        inner = drag?.row(position, MaterialTheme.colorScheme.surface) ?: Modifier,
         wrap = { content ->
             DragColumnBlock(drag, position, count, CollectionScreenTags.handle(row.recipeId), CollectionScreenTags.handleIcon(row.recipeId)) {
                 content()
@@ -346,9 +347,8 @@ private fun CollectionEntry(
         },
     ) {
         EntryTitle(row.recipeId, row.title)
-        row.statedAuthor?.let {
-            Text(stringResource(R.string.file_stated_author, it), style = MaterialTheme.typography.bodySmall)
-        }
+        if (row.forked) EntryProvenance(row.recipeId, row.parentTitle)
+        row.statedAuthor?.let { EntryAuthor(row.recipeId, it) }
     }
 }
 
@@ -591,9 +591,10 @@ object CollectionScreenTags {
     fun moveDown(recipeId: String) = "collection-move-down-$recipeId"
     fun remove(recipeId: String) = "collection-remove-$recipeId"
 
-    /** The book's row of collections, and a collection's card in it with its name and count. */
+    /** The book's row of collections, and a collection's spine in it with its stripe, name and count. */
     const val ROW = "collections-row"
     fun card(collectionId: String) = "collections-card-$collectionId"
+    fun spineStripe(collectionId: String) = "collections-card-stripe-$collectionId"
     fun cardName(collectionId: String) = "collections-card-name-$collectionId"
     fun cardCount(collectionId: String) = "collections-card-count-$collectionId"
 }
