@@ -350,12 +350,12 @@ fun StepTimer(
                 ) {
                     Text(
                         name,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.align(Alignment.CenterVertically),
                     )
                     Text(
                         status,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.align(Alignment.CenterVertically)
                             .testTag(TimerTags.status(step.position, index)),
                     )
