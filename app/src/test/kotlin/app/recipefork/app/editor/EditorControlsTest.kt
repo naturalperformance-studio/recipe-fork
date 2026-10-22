@@ -40,6 +40,7 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.AppTheme
+import app.recipefork.app.ui.appColorScheme
 import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.Recipe
@@ -201,7 +202,8 @@ class EditorControlsTest {
                 }
             }
         }
-        val fill = scheme.secondaryContainer
+        // The fill of AppTheme's light scheme, which the button is drawn in here.
+        val fill = appColorScheme(base.resources, dark = false).secondaryContainer
         // The button's own top left corner: its fill's first line down its middle, a couple of pixels in from its left.
         fun corner(): Color {
             compose.waitForIdle()
