@@ -11,7 +11,8 @@ import kotlin.test.assertEquals
  * One departure, approved by the owner for the shopping list alone (v0.32): the list counts one entry's parts in other
  * units by its factors, as an approximate line (`shopping/`). A second, planned in v0.35: the conversion into the
  * reader's unit system reads an entry's measures for an approximate ("≈") amount (`scaling/UnitConversion.kt`).
- * Scaling itself still reads none.
+ * A third, planned in v0.40: the nutrition of a dish weighs a row by its entry's measures, for a rough count
+ * (`nutrition/`). Scaling itself still reads none.
  */
 class FactorsNeverScaleTest {
     /** Unit tests of `:core` run with the module directory as the working directory. */
@@ -30,6 +31,8 @@ class FactorsNeverScaleTest {
             setOf(
                 "api/DictionaryContract.kt",
                 "recipe/EntryDivisibility.kt",
+                "nutrition/Nutrition.kt",
+                "nutrition/NutritionEntries.kt",
                 "scaling/QuantityPerServing.kt",
                 "scaling/UnitConversion.kt",
                 "shopping/ShoppingInput.kt",
