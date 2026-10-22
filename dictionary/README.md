@@ -67,8 +67,8 @@ declare only its family's ranges from the table. A `*.tsv` whose name begins wit
 UTF-8 text, one entry per line, columns separated by a single **tab**. A line starting with `#` is a comment; blank
 lines are ignored. Entries may stand in any order; the asset lists them by id.
 
-Ingredient files — `id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn`; empty
-trailing columns may be left out:
+Ingredient files — `id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition,
+nutritionSource`; empty trailing columns may be left out:
 
 | Column      | Value                                                                                                 |
 |-------------|-------------------------------------------------------------------------------------------------------|
@@ -81,6 +81,8 @@ trailing columns may be left out:
 | `removed`   | empty, or `removed` for an entry no longer offered (it keeps naming the recipes that hold it)          |
 | `synonymsRu`| empty, or the other Russian words cooks write for the entry, separated by `;` (`картошка;картоха`)      |
 | `synonymsEn`| likewise in English (`confectioners' sugar;icing sugar`)                                               |
+| `nutrition` | empty, or what 100 g of the raw product holds: `kcal=<n> protein=<n> fat=<n> carbs=<n>`, all four, space-separated |
+| `nutritionSource` | where `nutrition` comes from: `fdc:<FoodData Central id>` or `skurikhin:<the table's product name>`; required with `nutrition`, refused without it |
 
 ```
 @range 3000-4999
@@ -95,6 +97,29 @@ trailing columns may be left out:
 A synonym is a word an author types for the entry when it is not the label: the ingredient field and the book's search
 may find the entry by it, while the entry is still shown under its label. An entry without synonyms is written into
 the asset exactly as before they existed, so its digest does not change.
+
+### Nutrition
+
+`nutrition` gives the energy in kcal and the protein, fat and carbohydrates in grams of **100 g of the raw product**, as
+its source states them — each a finite number of at least zero, kcal at most 900, each gram value at most 100 and the
+three together at most 100. The values are copied from a source, never estimated, and `nutritionSource` cites it; the
+citation stays in these sources and is not written into the asset, which carries the four values alone
+(`IngredientEntryDto.nutrition`). Two sources are used:
+
+- **USDA FoodData Central** (https://fdc.nal.usda.gov/), public domain, cited as `fdc:<id>` — the food's FDC id
+  (SR Legacy where it has the product: energy is nutrient 208, protein 203, total lipid 204, carbohydrate by
+  difference 205);
+- **I. M. Skurikhin's tables of the composition of Russian food products**, for what FoodData Central does not hold as
+  Russian cooks buy it, cited as `skurikhin:<the product's name in the table>`, the name exactly as the table prints
+  it.
+
+```
+4400	яйцо	egg		false	g=1 pc=55				kcal=143 protein=12.56 fat=9.51 carbs=0.72	fdc:171287
+```
+
+An entry without nutrition is written into the asset exactly as before the column existed, so its digest does not
+change. A line may give nutrition to a parent as well as to its leaves: the generic entry when cooks mean one product by
+it (сахар — white sugar, масло сливочное — unsalted butter).
 
 The tags file — `id, labelRu, labelEn`:
 
@@ -140,7 +165,12 @@ never counts (the application's My kitchen). The equipment is maintained here al
 - a `parentId` that names no entry, names the entry itself, or names an entry that has a parent;
 - a removed entry that is still the parent of a live entry;
 - an unknown factor unit, a factor that is not a finite number above zero, a unit given twice;
-- a `pc` factor without the `divisible` flag.
+- a `pc` factor without the `divisible` flag;
+- a malformed `nutrition`: a value that is not `name=number`, an unknown name, a name given twice, not all four given, a
+  value that is not a finite number of at least zero, kcal above 900, a gram value above 100, protein, fat and carbs
+  together above 100;
+- a `nutrition` without a `nutritionSource`, a `nutritionSource` without a `nutrition`, or one that is neither
+  `fdc:<a positive whole number>` nor `skurikhin:<a product name>`.
 
 ## Content rules
 

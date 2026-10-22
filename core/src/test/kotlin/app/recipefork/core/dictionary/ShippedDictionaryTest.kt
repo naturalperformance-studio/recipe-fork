@@ -1,6 +1,7 @@
 package app.recipefork.core.dictionary
 
 import app.recipefork.core.api.IngredientEntryDto
+import app.recipefork.core.api.NutritionDto
 import app.recipefork.core.api.TagDto
 import java.io.File
 import kotlin.test.Test
@@ -53,6 +54,29 @@ class ShippedDictionaryTest {
         // T-131: the duplicate пармиджано реджано is removed; the word leads to the Parmesan.
         assertEquals(listOf("пармиджано реджано") to listOf("Parmigiano Reggiano"), synonyms("пармезан"))
         assertTrue(built().dictionaries.ingredients.single { it.id == 4792L }.removed)
+    }
+
+    // T-287: the format's first data, copied from USDA FoodData Central SR Legacy (cited in the sources, not the asset).
+    @Test
+    fun theFirstEntriesCarryTheirNutritionFromFoodDataCentral() {
+        val dictionaries = built().dictionaries
+        val sugar = NutritionDto(387.0, 0.0, 0.0, 99.98)
+        val butter = NutritionDto(717.0, 0.85, 81.11, 0.06)
+        val flour = NutritionDto(364.0, 10.33, 0.98, 76.31)
+        assertEquals(
+            mapOf(
+                4400L to NutritionDto(143.0, 12.56, 9.51, 0.72),
+                4600L to butter, 4601L to butter, 4602L to butter,
+                5001L to flour, 5002L to flour,
+                6100L to sugar, 6101L to sugar,
+                8800L to NutritionDto(0.0, 0.0, 0.0, 0.0),
+            ),
+            dictionaries.ingredients.filter { it.nutrition != null }.associate { it.id to it.nutrition },
+        )
+        val dairy = File(sources, "animal-dairy.tsv").readText(Charsets.UTF_8)
+        assertTrue("fdc:171287" in dairy && "fdc:173430" in dairy && "fdc:173410" in dairy)
+        val shipped = asset.readText(Charsets.UTF_8)
+        assertTrue("fdc:" !in shipped && "nutritionSource" !in shipped)
     }
 
     @Test
@@ -108,6 +132,8 @@ class ShippedDictionaryTest {
             "**Labels.**", "**Families, two levels.**", "**What a piece is.**", "**Divisibility.**",
             "**Factors, one scale.**", "**Ids.**", "**No brands**",
             "### The baseline", "merge base", "--first-build", "### Merging", "./gradlew testAll",
+            "`nutrition`", "`nutritionSource`", "### Nutrition", "USDA FoodData Central", "public domain", "`fdc:<id>`",
+            "Skurikhin", "`skurikhin:<the product's name in the table>`", "100 g of the raw product",
         ).forEach { assertTrue(it in readme, "README.md lacks $it") }
         assertTrue("$ASSET merge=binary" in File(root, ".gitattributes").readText(), ".gitattributes")
     }

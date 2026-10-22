@@ -1,5 +1,5 @@
 {
-  "version": "f53db1710536de42168b8f5807058f87dce4788eee84b389049f03e975c0c124",
+  "version": "1f13fd4c06fbef1e77d8197640c82208a82d86967491ea53fac9fb9467f3a1f1",
   "ingredients": [
     {
       "id": 1,
@@ -10742,6 +10742,12 @@
       "factors": {
         "g": 1.0,
         "pc": 55.0
+      },
+      "nutrition": {
+        "kcal": 143.0,
+        "protein": 12.56,
+        "fat": 9.51,
+        "carbs": 0.72
       }
     },
     {
@@ -11832,7 +11838,13 @@
       },
       "synonymsRu": [
         "масло"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 717.0,
+        "protein": 0.85,
+        "fat": 81.11,
+        "carbs": 0.06
+      }
     },
     {
       "id": 4601,
@@ -11844,6 +11856,12 @@
         "tsp": 5.0,
         "tbsp": 14.0,
         "cup": 227.0
+      },
+      "nutrition": {
+        "kcal": 717.0,
+        "protein": 0.85,
+        "fat": 81.11,
+        "carbs": 0.06
       }
     },
     {
@@ -11856,6 +11874,12 @@
         "tsp": 5.0,
         "tbsp": 14.0,
         "cup": 227.0
+      },
+      "nutrition": {
+        "kcal": 717.0,
+        "protein": 0.85,
+        "fat": 81.11,
+        "carbs": 0.06
       }
     },
     {
@@ -12820,6 +12844,12 @@
         "tsp": 3.0,
         "tbsp": 10.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 364.0,
+        "protein": 10.33,
+        "fat": 0.98,
+        "carbs": 76.31
       }
     },
     {
@@ -12832,6 +12862,12 @@
         "tsp": 3.0,
         "tbsp": 10.0,
         "cup": 130.0
+      },
+      "nutrition": {
+        "kcal": 364.0,
+        "protein": 10.33,
+        "fat": 0.98,
+        "carbs": 76.31
       }
     },
     {
@@ -17505,6 +17541,12 @@
         "tbsp": 12.0,
         "cup": 200.0,
         "pinch": 0.5
+      },
+      "nutrition": {
+        "kcal": 387.0,
+        "protein": 0.0,
+        "fat": 0.0,
+        "carbs": 99.98
       }
     },
     {
@@ -17521,7 +17563,13 @@
       },
       "synonymsEn": [
         "white sugar"
-      ]
+      ],
+      "nutrition": {
+        "kcal": 387.0,
+        "protein": 0.0,
+        "fat": 0.0,
+        "carbs": 99.98
+      }
     },
     {
       "id": 6102,
@@ -26135,6 +26183,12 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 250.0
+      },
+      "nutrition": {
+        "kcal": 0.0,
+        "protein": 0.0,
+        "fat": 0.0,
+        "carbs": 0.0
       }
     },
     {

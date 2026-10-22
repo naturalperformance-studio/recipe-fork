@@ -3,6 +3,7 @@ package app.recipefork.core.dictionary
 import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
+import app.recipefork.core.api.NutritionDto
 import app.recipefork.core.api.TagDto
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -243,7 +244,7 @@ class DictionaryBuildTest {
         refused(build(ingredients("лук\tлук\tonion")), "produce.tsv:3", "is not a positive whole number")
         refused(build(ingredients("1000\tлук\tonion\t\tmaybe")), "produce.tsv:3", "divisible 'maybe'")
         refused(build(ingredients("1000\tлук\tonion\t\t\t\tgone")), "produce.tsv:3", "removed column")
-        refused(build(ingredients("1000\tлук\tonion\t\t\t\t\t\t\textra")), "produce.tsv:3", "10 columns")
+        refused(build(ingredients("1000\tлук\tonion\t\t\t\t\t\t\t\t\textra")), "produce.tsv:3", "12 columns")
         refused(build(ingredients("@rnage 1000-2999")), "produce.tsv:3", "unknown directive")
         refused(build(ingredients(" 1000\tлук\tonion")), "produce.tsv:3", "is not a positive whole number")
         refused(build(ingredients("1000\t лук\tonion")), "produce.tsv:3", "has spaces around it")
@@ -433,5 +434,91 @@ class DictionaryBuildTest {
         )
         built(equipment("10000\tНож\tKnife", "10001\tДоска\tBoard\t\tremoved"), previous = previous)
         built(equipment("10000\tНож\tKnife", "10001\tРазделочная доска\tBoard"), previous = previous)
+    }
+
+    // T-287: the nutrition of 100 g of the raw product, in two trailing columns: the values and where they come from.
+    private val egg = "1000\tяйцо\tegg\t\tfalse\tg=1 pc=55\t\t\t"
+
+    @Test
+    fun nutritionIsReadWrittenIntoTheAssetWithoutItsSourceAndCoveredByTheVersion() {
+        val plain = built(ingredients(egg))
+        val result = built(
+            ingredients(
+                "$egg\tkcal=143 protein=12.56 fat=9.51 carbs=0.72\tfdc:171287",
+                "1001\tтворог\tquark\t\t\tg=1\t\t\t\tcarbs=3 fat=9 protein=16.7 kcal=159\tskurikhin:Творог полужирный",
+                "1002\tвода\twater\t\t\tg=1 ml=1\t\t\t\tkcal=0 protein=0 fat=0 carbs=0\tfdc:173647",
+            ),
+        )
+        val (eggEntry, quark, water) = result.dictionaries.ingredients
+        assertEquals(NutritionDto(143.0, 12.56, 9.51, 0.72), eggEntry.nutrition)
+        assertEquals(NutritionDto(kcal = 159.0, protein = 16.7, fat = 9.0, carbs = 3.0), quark.nutrition)
+        assertEquals(NutritionDto(0.0, 0.0, 0.0, 0.0), water.nutrition)
+        assertTrue(result.text.contains("\"nutrition\": {"), result.text)
+        assertTrue(listOf("fdc", "skurikhin", "171287", "nutritionSource").none { it in result.text }, result.text)
+        assertEquals(result.dictionaries, DictionaryBuild.parseSnapshot(result.text))
+        assertEquals(result.dictionaries.digest(), result.dictionaries.version)
+        // The version covers the nutrition: the same entry without it has another digest.
+        val eggAlone = built(ingredients("$egg\tkcal=143 protein=12.56 fat=9.51 carbs=0.72\tfdc:171287"))
+        assertTrue(eggAlone.dictionaries.version != plain.dictionaries.version)
+        // Values at the bounds are taken.
+        built(ingredients("$egg\tkcal=900 protein=0 fat=100 carbs=0\tfdc:1", "1001\tсахар\tsugar\t\t\t\t\t\t\tkcal=387 protein=0 fat=0.02 carbs=99.98\tfdc:169655"))
+    }
+
+    @Test
+    fun anEntryWithoutNutritionEncodesAndDigestsAsBefore() {
+        val result = built(ingredients("1000\tкартофель\tpotato\t\ttrue\tg=1 pc=150\t\t\t\t\t"))
+        assertTrue("nutrition" !in result.text, result.text)
+        assertEquals(null, result.dictionaries.ingredients.single().nutrition)
+        val before = """{"version":"","ingredients":[{"id":1000,"labelRu":"картофель","labelEn":"potato","divisible":true,""" +
+            """"factors":{"g":1.0,"pc":150.0}}],"tags":[{"id":10,"labelRu":"итальянская","labelEn":"Italian"}]}"""
+        val digest = java.security.MessageDigest.getInstance("SHA-256").digest(before.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals(digest, result.dictionaries.version)
+        // An asset written before nutrition existed reads with none.
+        assertEquals(null, DictionaryBuild.parseSnapshot(before).ingredients.single().nutrition)
+    }
+
+    @Test
+    fun refusesAMalformedNutrition() {
+        fun nutrition(cell: String) = build(ingredients("$egg\t$cell\tfdc:171287"))
+        refused(nutrition("kcal=143 protein=12.56 fat=9.51"), "produce.tsv:3", "nutrition lacks carbs (all four or none")
+        refused(nutrition("kcal=143"), "produce.tsv:3", "nutrition lacks protein fat carbs")
+        refused(nutrition(" "), "produce.tsv:3", "nutrition lacks kcal protein fat carbs")
+        refused(nutrition("kcal=143 protein=12.56 fat=9.51 carbs"), "produce.tsv:3", "nutrition 'carbs' is not 'name=number'")
+        refused(nutrition("kcal=143 protein=12,56 fat=9.51 carbs=0.72"), "produce.tsv:3", "nutrition 'protein=12,56' is not 'name=number'")
+        refused(nutrition("kcal=143 protein=12.56 fat=9.51 sugar=0.72"), "produce.tsv:3", "unknown nutrition value 'sugar'")
+        refused(nutrition("kcal=143 kcal=143 protein=12.56 fat=9.51 carbs=0.72"), "produce.tsv:3", "nutrition value 'kcal' given twice")
+        refused(nutrition("kcal=143 protein=-1 fat=9.51 carbs=0.72"), "produce.tsv:3", "nutrition protein=-1.0 is not a finite number of at least zero")
+        refused(nutrition("kcal=NaN protein=12.56 fat=9.51 carbs=0.72"), "produce.tsv:3", "is not a finite number of at least zero")
+        refused(nutrition("kcal=Infinity protein=12.56 fat=9.51 carbs=0.72"), "produce.tsv:3", "is not a finite number of at least zero")
+        refused(nutrition("kcal=901 protein=0 fat=99 carbs=0"), "produce.tsv:3", "nutrition kcal=901.0 is above 900 per 100 g")
+        refused(nutrition("kcal=400 protein=0 fat=100.5 carbs=0"), "produce.tsv:3", "nutrition fat=100.5 is above 100 g per 100 g")
+        refused(nutrition("kcal=400 protein=10 fat=50 carbs=40.5"), "produce.tsv:3", "protein, fat and carbs together are 100.5 g, above 100 g")
+        // In another file, the refusal names that file and line.
+        refused(
+            build(ingredients(egg), SourceFile("pantry.tsv", "@range 5000-6999\n# мука\n5000\tмука\tflour\t\t\tg=1\t\t\t\tkcal=364\tfdc:169761\n")),
+            "pantry.tsv:3",
+            "nutrition lacks",
+        )
+    }
+
+    @Test
+    fun refusesANutritionWithoutItsSourceAndASourceWithoutANutrition() {
+        refused(build(ingredients("$egg\tkcal=143 protein=12.56 fat=9.51 carbs=0.72")), "produce.tsv:3", "nutrition needs its nutritionSource")
+        refused(build(ingredients("$egg\tkcal=143 protein=12.56 fat=9.51 carbs=0.72\t")), "produce.tsv:3", "nutrition needs its nutritionSource")
+        refused(build(ingredients("$egg\t\tfdc:171287")), "produce.tsv:3", "nutritionSource 'fdc:171287' without a nutrition")
+    }
+
+    @Test
+    fun refusesAMalformedNutritionSource() {
+        fun source(cell: String) = build(ingredients("$egg\tkcal=143 protein=12.56 fat=9.51 carbs=0.72\t$cell"))
+        listOf("fdc:", "fdc:0", "fdc:-5", "fdc:+5", "fdc:17a", "fdc: 171287", "fdc:99999999999999999999").forEach {
+            refused(source(it), "produce.tsv:3", "nutritionSource '$it': a FoodData Central id is a positive whole number")
+        }
+        refused(source("skurikhin:"), "produce.tsv:3", "nutritionSource 'skurikhin:' names no product")
+        refused(source("skurikhin: - "), "produce.tsv:3", "names no product")
+        refused(source("skurikhin: Яйцо куриное"), "produce.tsv:3", "the product name has spaces around it")
+        refused(source("usda:171287"), "produce.tsv:3", "nutritionSource 'usda:171287' is neither 'fdc:<id>' nor 'skurikhin:<product name>'")
+        refused(source("FDC:171287"), "produce.tsv:3", "is neither")
     }
 }
