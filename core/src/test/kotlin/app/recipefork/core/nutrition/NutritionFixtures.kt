@@ -31,6 +31,7 @@ internal const val THIGHS = 12L
 internal const val NO_DATA_CHILD = 13L
 internal const val ORPHAN = 14L
 internal const val PIECELESS_CHILD = 15L
+internal const val NO_OWN_DATA = 16L
 internal const val UNKNOWN = 99L
 
 /**
@@ -56,6 +57,7 @@ internal val ENTRIES: Map<Long, NutritionEntry> = mapOf(
     NO_DATA_CHILD to NutritionEntry(parentId = NO_DATA, factors = mapOf("g" to 1.0)),
     ORPHAN to NutritionEntry(parentId = UNKNOWN, factors = mapOf("g" to 1.0)),
     PIECELESS_CHILD to NutritionEntry(parentId = CHICKEN, factors = mapOf("g" to 1.0)),
+    NO_OWN_DATA to NutritionEntry(parentId = CHICKEN, factors = mapOf("g" to 1.0), noNutrition = true),
 )
 
 internal fun values(kcal: Double, protein: Double, fat: Double, carbs: Double) = NutritionDto(kcal, protein, fat, carbs)

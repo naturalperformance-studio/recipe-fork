@@ -19,7 +19,8 @@ typealias DictionaryEntry = app.recipefork.core.search.DictionaryEntry
  * factors (DOM-011, CAT-009 — never shown) and whether it is [removed] upstream: a removed entry is held so that the
  * recipes naming it keep its name (DOM-009), and is offered to nobody. [synonymsRu] and [synonymsEn] are the other
  * words the entry may be found by in each language. [nutrition] is what 100 g of the raw product holds, null when the
- * dictionary does not say.
+ * dictionary does not say; [noNutrition] marks a child known to have no values of its own, which does not take its
+ * parent's.
  */
 @Entity(tableName = "ingredient_entry")
 data class IngredientEntryEntity(
@@ -33,15 +34,16 @@ data class IngredientEntryEntity(
     override val synonymsRu: List<String> = emptyList(),
     override val synonymsEn: List<String> = emptyList(),
     val nutrition: NutritionDto? = null,
+    val noNutrition: Boolean = false,
 ) : DictionaryEntry {
     fun toDto(): IngredientEntryDto =
-        IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition)
+        IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, noNutrition)
 
     companion object {
         fun of(dto: IngredientEntryDto): IngredientEntryEntity =
             IngredientEntryEntity(
                 dto.id, dto.labelRu, dto.labelEn, dto.parentId, dto.divisible, dto.factors, dto.removed,
-                dto.synonymsRu, dto.synonymsEn, dto.nutrition,
+                dto.synonymsRu, dto.synonymsEn, dto.nutrition, dto.noNutrition,
             )
     }
 }
