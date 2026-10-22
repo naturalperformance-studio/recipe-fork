@@ -99,6 +99,7 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
@@ -724,10 +725,20 @@ private fun BookTitleBar(
     }
 }
 
-/** The book's title: Literata, Medium, 28 sp, its lines 1.1 apart (redesign-1 § 4.1 «Книга · «Мои рецепты»»). */
+/**
+ * The book's title: Literata, Medium, 28 sp, its lines 1.1 apart (redesign-1 § 4.1 «Книга · «Мои рецепты»»). Each line
+ * takes its line height and no more, as the design's `.h` does: the font's own ascent and descent, taller than that, are
+ * neither kept at the first line's top and the last line's bottom (trimmed) nor allowed to stretch a line (tight — the
+ * platform's fallback line spacing otherwise keeps a line as tall as the font, 42 dp in place of 30.8).
+ */
 @Composable
 private fun bookTitleStyle(): TextStyle =
-    MaterialTheme.typography.headlineSmall.copy(fontSize = BOOK_TITLE_SIZE, lineHeight = BOOK_TITLE_SIZE * 1.1f, fontWeight = FontWeight.Medium)
+    MaterialTheme.typography.headlineSmall.copy(
+        fontSize = BOOK_TITLE_SIZE,
+        lineHeight = BOOK_TITLE_SIZE * 1.1f,
+        fontWeight = FontWeight.Medium,
+        lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both, LineHeightStyle.Mode.Tight),
+    )
 
 /**
  * The mark under the tab of the view shown (redesign-1 § 5 «Разделы-закладки»): a 2.5 dp bar in `primary`, its top

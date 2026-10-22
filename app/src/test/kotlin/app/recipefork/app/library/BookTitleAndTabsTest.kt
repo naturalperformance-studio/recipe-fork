@@ -181,6 +181,10 @@ class BookTitleAndTabsTest {
         assertEquals("28 sp", 28.sp, layout.layoutInput.style.fontSize)
         assertEquals(FontWeight.Medium, layout.layoutInput.style.fontWeight)
         assertTrue("a heading", SemanticsProperties.Heading in compose.onNodeWithTag(LibraryTags.TITLE).fetchSemanticsNode().config)
+        // One line is as tall as its line height, 28 × 1.1; the bar is the row of actions, the line and 8 dp under it.
+        assertEquals("one line", 1, layout.lineCount)
+        assertEquals("the line 30.8 dp", dp(30.8f), title.height, dp(1f))
+        assertEquals("the bar 86.8 dp", dp(48f + 30.8f + 8f), bar.height, dp(1f))
     }
 
     @Test
@@ -196,12 +200,13 @@ class BookTitleAndTabsTest {
 
     // At twice the font scale the title wraps rather than being cut: the bar grows to hold it.
     @Test
-    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    @Config(qualifiers = "ru-w320dp-h711dp", fontScale = 2f)
     fun atTwiceTheFontScaleTheTitleIsWhole() {
         show(LibraryView.OWN)
         await(LibraryTags.TITLE)
         val layout = layoutOf(hasTestTag(LibraryTags.TITLE))
         assertTrue("not cut", !layout.hasVisualOverflow)
+        assertEquals("every line laid out", layout.layoutInput.text.text.length, layout.getLineEnd(layout.lineCount - 1))
         val title = bounds(LibraryTags.TITLE)
         val bar = bounds(LibraryTags.TOP_BAR)
         assertTrue("inside the bar ($title, $bar)", title.top >= bar.top && title.bottom <= bar.bottom + 0.5f && title.right <= bar.right + 0.5f)
