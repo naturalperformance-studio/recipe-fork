@@ -15,7 +15,6 @@ import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.editor.PATIENCE_MS
-import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
 import app.recipefork.app.recipe.BookLanguage
 import app.recipefork.core.recipe.EquipmentItem
@@ -176,7 +175,7 @@ class LibrarySessionTest {
     private fun assertOwnSearch(query: String, order: String) {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.SEARCH)).fetchSemanticsNodes().size == 1 }
         assertEquals(listOf(query), compose.textsOf(LibraryTags.SEARCH).drop(1))
-        assertEquals(listOf("Order: $order"), compose.descriptionOf(LibraryTags.ORDER))
+        assertEquals(listOf(order), compose.textsOf(LibraryTags.ORDER))
     }
 
     // FLOW-035 (3, 4), FLOW-058 (2): the query and the order of a view survive the end of the process.
