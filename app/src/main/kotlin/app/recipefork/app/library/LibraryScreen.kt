@@ -339,7 +339,8 @@ fun LibraryScreen(
                         .padding(horizontal = TAB_ROW_MARGIN)
                         .onSizeChanged { rowWidth = it.width }
                         .testTag(LibraryTags.SWITCH),
-                    indicator = { ViewIndicator(Modifier.tabIndicatorOffset(page, matchContentSize = false)) },
+                    // While entries are chosen the tabs do not respond, and read as muted, indicator and all.
+                    indicator = { ViewIndicator(Modifier.tabIndicatorOffset(page, matchContentSize = false).muted(selecting)) },
                 ) {
                     val markedAction =
                         if (mode == Mode.Serverless) R.string.library_view_marked_action_serverless else R.string.library_view_marked_action
@@ -381,7 +382,9 @@ fun LibraryScreen(
     ) { padding ->
         // The lists run under the navigation bar, their last entry kept clear of it and of the view's action — taller
         // than its usual height where its words take two lines at a large font scale.
-        val room = maxOf(ACTION_ROOM, with(LocalDensity.current) { actionHeight.toDp() } + ACTION_MARGINS)
+        // While entries are chosen the view's action is hidden: the lists keep no room for it, only a margin above the
+        // selection's actions.
+        val room = if (selecting) SELECTING_ROOM else maxOf(ACTION_ROOM, with(LocalDensity.current) { actionHeight.toDp() } + ACTION_MARGINS)
         // While the selection's actions stand at the bottom, the lists end above them: an entry brought into view is
         // never one under them.
         val actionsBelow = if (selecting) padding.calculateBottomPadding() else 0.dp
@@ -688,6 +691,9 @@ private fun pageOf(view: LibraryView): Int = VIEWS.indexOf(view)
 /** The room kept under a list's last entry for the view's action: the action's usual height and its margins. */
 private val ACTION_ROOM = 88.dp
 
+/** The room at a list's end while entries are chosen: a margin above the selection's actions. */
+private val SELECTING_ROOM = 8.dp
+
 /** The margins of the view's action: below it, to the bottom of the screen, and above it, to what it must not cover. */
 private val ACTION_MARGINS = 32.dp
 
@@ -820,6 +826,8 @@ private fun ViewTab(
         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .heightIn(min = 48.dp)
+            // Not responding — while entries are chosen — it reads as muted (redesign-1 § 4.1, `.tabs.mute`).
+            .muted(!enabled)
             // The tab announces what choosing it does: which recipes it shows (A11Y-005).
             .semantics {
                 if (enabled) {
@@ -1027,7 +1035,7 @@ private fun OwnList(
     if (shown != null && shown.viewIsEmpty && !shown.narrowed) {
         // A book with no recipe written in it may still hold collections of found ones: they stand above.
         Column(Modifier.fillMaxSize()) {
-            CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP), enabled = !selecting)
+            CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP).muted(selecting), enabled = !selecting)
             NothingWritten(onWrite, Modifier.padding(bottom = bottom))
         }
         return
@@ -1065,7 +1073,7 @@ private fun OwnList(
             ) {
                 // The entries' rows meet at their hairlines; the collections keep the gap above them.
                 if (above > 0) item(key = COLLECTIONS_KEY) {
-                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP), enabled = !selecting)
+                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP).muted(selecting), enabled = !selecting)
                 }
                 items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                     OwnEntry(
@@ -1350,7 +1358,7 @@ private fun MarkedList(
             // in [Mode.Standard] the view has no action, and its empty state none.
             if (empty) {
                 // Imported collections whose recipes were all removed still stand above, to be opened or deleted.
-                CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP), enabled = !selecting)
+                CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP).muted(selecting), enabled = !selecting)
                 val serverless = mode == Mode.Serverless
                 EmptyState(
                     engraving = Engraving.MARK,
@@ -1399,7 +1407,7 @@ private fun MarkedList(
             ) {
                 // The entries' rows meet at their hairlines; the collections keep the gap above them.
                 if (above > 0) item(key = COLLECTIONS_KEY) {
-                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP), enabled = !selecting)
+                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP).muted(selecting), enabled = !selecting)
                 }
                 items(marked.orEmpty(), key = { it.recipeId }) { row ->
                     MarkedEntry(

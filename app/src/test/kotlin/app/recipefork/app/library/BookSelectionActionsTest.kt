@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.SavedStateHandle
@@ -109,9 +110,9 @@ class BookSelectionActionsTest {
 
     private fun clickLabel(tag: String) = AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(tag).fetchSemanticsNode())
 
-    /** Three own recipes in the book, shown; the first chosen by a long press. */
-    private fun selectOne(): String {
-        val made = (1..3).map { n ->
+    /** [count] own recipes in the book, shown; the first chosen by a long press. Returns them, newest first. */
+    private fun selectOne(count: Int = 3): List<String> {
+        val made = (1..count).map { n ->
             Recipe.create(now.minusSeconds(n * 60L), owner = null).copy(title = "Dish $n").also { runBlocking { recipes.save(it) } }
         }
         session.choose(LibraryView.OWN)
@@ -130,7 +131,7 @@ class BookSelectionActionsTest {
         compose.onNodeWithTag(LibraryTags.entry(first)).performTouchInput { longClick() }
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECTION_ACTIONS) && exists(LibraryTags.SELECT_ALL) }
         compose.waitForIdle()
-        return first
+        return made.map { it.id.value }
     }
 
     private fun assertTheBars(count: String, selectAll: String, words: List<String>, said: List<String>) {
@@ -212,5 +213,45 @@ class BookSelectionActionsTest {
         compose.onNodeWithTag(LibraryTags.SELECT_ALL).performClick()
         compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 3 }
         compose.waitUntil(PATIENCE_MS) { words(LibraryTags.SELECTION_COUNT) == "3 selected" }
+    }
+
+    // While choosing, the list keeps no room for the hidden floating action: at the end of a long list, the last row
+    // stands just above the selection's actions, 16 dp at most.
+    @Test
+    @Config(qualifiers = "w360dp-h780dp")
+    fun theLastRowStandsJustAboveTheActions() {
+        val ids = selectOne(count = 20)
+        val last = ids.last()
+        compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(LibraryTags.entry(last)))
+        repeat(3) { compose.onNodeWithTag(LibraryTags.OWN_LIST).performTouchInput { swipeUp() } }
+        compose.waitForIdle()
+        val row = bounds(LibraryTags.entry(last))
+        val bar = bounds(LibraryTags.SELECTION_ACTIONS)
+        val gap = bar.top - row.bottom
+        assertTrue("the last row ($row) clear of the actions ($bar)", gap >= -0.5f)
+        assertTrue("the last row $gap dp above the actions, no room for the hidden action", gap <= 16.5f)
+    }
+
+    // At twice the font scale the five words share one size — the least any of them needs — so that the bar reads
+    // even; every word stands whole.
+    @Test
+    @Config(qualifiers = "w360dp-h780dp", fontScale = 2f)
+    fun atTwiceTheFontScaleTheWordsShareOneSize() = assertEvenWords()
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp", fontScale = 2f)
+    fun inRussianAtTwiceTheFontScaleTheWordsShareOneSize() = assertEvenWords()
+
+    private fun assertEvenWords() {
+        selectOne()
+        val layouts = actions.map { layoutWithin(it) }
+        val sizes = layouts.map { it.layoutInput.style.fontSize }
+        assertEquals("one size: $sizes", 1, sizes.distinct().size)
+        actions.zip(layouts).forEach { (tag, layout) ->
+            assertFalse("$tag's word cut short", layout.didOverflowWidth || layout.didOverflowHeight)
+            val words = textBoundsWithin(tag)
+            val box = bounds(tag)
+            assertTrue("$tag's word ($words) within it ($box)", words.left >= box.left - 0.5f && words.right <= box.right + 0.5f)
+        }
     }
 }

@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -47,9 +48,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
@@ -177,7 +180,8 @@ private val ACTION_TOP = 10.dp
  * The selection's actions, at the bottom of the book under the thumb (decisions.md #5; redesign-1 § 4.1, § 5): each an
  * icon over its word in Golos 12 ([SelectionAction]), [SELECTION_ACTION_WIDTH] wide — narrower, sharing the width
  * equally, on a phone too narrow for them all — on the secondary container, a hairline above. A word too wide for its
- * action is made smaller, never cut ([ActionLabel]), and wraps only between words. It stands above the navigation bar.
+ * action is made smaller, never cut ([fitLabel]), and wraps only between words; every word takes the size the one most
+ * made smaller needs, so that the bar reads even. It stands above the navigation bar.
  */
 @Composable
 internal fun SelectionActionBar(actions: List<SelectionAction>, modifier: Modifier = Modifier) {
@@ -192,8 +196,18 @@ internal fun SelectionActionBar(actions: List<SelectionAction>, modifier: Modifi
                     .padding(top = 6.dp),
             ) {
                 val width = minOf(SELECTION_ACTION_WIDTH, maxWidth / actions.size.coerceAtLeast(1))
+                val labels = actions.map { stringResource(it.label) }
+                // Set close, as the redesign draws it, so that «коллекцию» stands whole in its 72 dp.
+                val base = MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Center, letterSpacing = 0.sp)
+                val measurer = rememberTextMeasurer()
+                val density = LocalDensity.current
+                val room = with(density) { width.roundToPx() }
+                // Every word at one size, the least any of them needs, so that the bar reads even.
+                val style = remember(labels, base, room, measurer, density) {
+                    labels.map { fitLabel(it, base, room, measurer, density) }.minBy { it.fontSize.value }
+                }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    actions.forEach { SelectionActionButton(it, Modifier.width(width)) }
+                    actions.zip(labels).forEach { (action, label) -> SelectionActionButton(action, label, style, Modifier.width(width)) }
                 }
             }
         }
@@ -205,7 +219,7 @@ internal fun SelectionActionBar(actions: List<SelectionAction>, modifier: Modifi
  * what it does. Not applying to any recipe chosen, it is drawn and announced as not responding.
  */
 @Composable
-private fun SelectionActionButton(action: SelectionAction, modifier: Modifier = Modifier) {
+private fun SelectionActionButton(action: SelectionAction, label: String, style: TextStyle, modifier: Modifier = Modifier) {
     val said = stringResource(action.action)
     val colour = if (action.destructive) MaterialTheme.colorScheme.error else LocalContentColor.current
     TextButton(
@@ -223,34 +237,26 @@ private fun SelectionActionButton(action: SelectionAction, modifier: Modifier = 
     ) {
         Column(Modifier.align(Alignment.Top), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Icon(painterResource(action.icon), contentDescription = null, modifier = Modifier.size(24.dp))
-            // Set close, as the redesign draws it, so that «коллекцию» stands whole in its 72 dp.
-            ActionLabel(stringResource(action.label), MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Center, letterSpacing = 0.sp))
+            // As wide as the action, the word centred in it.
+            Text(label, style = style, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 /**
- * An action's word under its icon, in [style], centred, wrapping only between words: made smaller as far as its widest
- * word needs to stand whole in the action's width ([fitWords]) — and, on a phone so narrow that the actions are less
- * than [SELECTION_ACTION_WIDTH] wide, below its size at a font scale of 1 as far as that word needs, never cut.
+ * [style] for an action's word [text] in [width] pixels, centred, wrapping only between words: made smaller as far as
+ * its widest word needs to stand whole ([fitWords]) — and, on a phone so narrow that the actions are less than
+ * [SELECTION_ACTION_WIDTH] wide, below its size at a font scale of 1 as far as that word needs, never cut.
  */
-@Composable
-private fun ActionLabel(text: String, style: TextStyle) = BoxWithConstraints(contentAlignment = Alignment.TopCenter) {
-    val measurer = rememberTextMeasurer()
-    val density = LocalDensity.current
-    val width = constraints.maxWidth
-    val fitted = remember(text, style, width, measurer, density) {
-        val words = fitWords(text, style, width, measurer, density)
-        if (!words.overflows) return@remember words.style
-        val widest = text.split(' ').maxOf { measurer.measure(it, words.style, softWrap = false, maxLines = 1).size.width }
-        val ratio = width.toFloat() / widest * LABEL_MARGIN
-        words.style.copy(
-            fontSize = words.style.fontSize * ratio,
-            lineHeight = if (words.style.lineHeight.isSp) words.style.lineHeight * ratio else words.style.lineHeight,
-        )
-    }
-    // As wide as the action, the word centred in it.
-    Text(text, style = fitted, modifier = Modifier.fillMaxWidth())
+private fun fitLabel(text: String, style: TextStyle, width: Int, measurer: TextMeasurer, density: Density): TextStyle {
+    val words = fitWords(text, style, width, measurer, density)
+    if (!words.overflows) return words.style
+    val widest = text.split(' ').maxOf { measurer.measure(it, words.style, softWrap = false, maxLines = 1).size.width }
+    val ratio = width.toFloat() / widest * LABEL_MARGIN
+    return words.style.copy(
+        fontSize = words.style.fontSize * ratio,
+        lineHeight = if (words.style.lineHeight.isSp) words.style.lineHeight * ratio else words.style.lineHeight,
+    )
 }
 
 /** How much of the width a word made smaller to fit takes, so that rounding never leaves it a pixel short. */
@@ -270,6 +276,15 @@ internal fun SelectionStartFeedback(session: LibrarySession) {
         }
     }
 }
+
+/** How opaque a control of the book that does not respond while entries are chosen is drawn: the redesign's `.mute`. */
+internal const val MUTED_ALPHA = 0.5f
+
+/**
+ * A control of the book — a tab, its indicator, the shelf of collections — that does not respond while entries are
+ * chosen, drawn muted when [muted] (redesign-1 § 4.1 «выбрано несколько рецептов»: `.tabs.mute div{opacity:.5}`).
+ */
+internal fun Modifier.muted(muted: Boolean): Modifier = alpha(if (muted) MUTED_ALPHA else 1f)
 
 /**
  * The book's bar while it fades out, the other bar fading in in its place ([leaving]): it takes no touch — a press

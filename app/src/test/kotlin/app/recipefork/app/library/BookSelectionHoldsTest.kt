@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
@@ -17,6 +18,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -76,6 +78,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
+import kotlin.math.abs
 
 /**
  * While recipes are chosen, the selection holds (v0.38, T-267): the pages are not swiped, and the tabs, the search,
@@ -305,6 +308,82 @@ class BookSelectionHoldsTest {
         assertNotEquals("the selection's bar is drawn as the book's", plain, tinted)
         assertNotEquals(colours.surface, tinted)
         assertNotEquals(colours.surfaceContainer, tinted)
+    }
+
+    /** The node tagged [tag] — or, with [within], the one tagged [tag] inside the node tagged [within] — as drawn. */
+    private fun drawn(tag: String, within: String? = null) = compose.onNode(
+        if (within == null) hasTestTag(tag) else hasTestTag(tag) and hasAnyAncestor(hasTestTag(within)),
+        useUnmergedTree = true,
+    ).captureToImage().toPixelMap()
+
+    /** Where [pixels] are darkest: the ink of the words they hold. */
+    private fun darkest(pixels: PixelMap): Pair<Int, Int> {
+        var at = 0 to 0
+        var least = Float.MAX_VALUE
+        for (x in 0 until pixels.width) for (y in 0 until pixels.height) {
+            val c = pixels[x, y]
+            val sum = c.red + c.green + c.blue
+            if (sum < least) {
+                least = sum
+                at = x to y
+            }
+        }
+        return at
+    }
+
+    /** [colour] drawn at half its opacity over [page], as the redesign's `.mute` draws it. */
+    private fun assertMuted(what: String, colour: Color, page: Color, muted: Color) {
+        val expected = Color(
+            (colour.red + page.red) / 2, (colour.green + page.green) / 2, (colour.blue + page.blue) / 2,
+        )
+        val off = maxOf(abs(expected.red - muted.red), abs(expected.green - muted.green), abs(expected.blue - muted.blue))
+        assertTrue("$what: $colour over $page drawn $muted, not at half its opacity ($expected)", off < 0.06f)
+    }
+
+    /** [colour] drawn over [page] at half its opacity or fainter: never nearer its full colour than half-way. */
+    private fun assertMutedAtLeast(what: String, colour: Color, page: Color, muted: Color) {
+        val half = (colour.red + page.red + colour.green + page.green + colour.blue + page.blue) / 2
+        val drawn = muted.red + muted.green + muted.blue
+        val full = colour.red + colour.green + colour.blue
+        assertTrue("$what: $colour over $page drawn $muted, stronger than at half its opacity", if (full < half) drawn >= half - 0.15f else drawn <= half + 0.15f)
+    }
+
+    // While entries are chosen, the controls that do not respond read as muted, at half their opacity (redesign-1
+    // § 4.1, `.tabs.mute`): the tabs' words and indicator, and the shelf of collections; once it ends, they read whole.
+    @Test
+    fun theTabsAndTheShelfReadMutedWhileSelecting() {
+        val soup = own("Soup")
+        val dinner = collection("Dinner", soup)
+        show(LibraryView.OWN)
+        val spine = CollectionScreenTags.card(dinner.value)
+        await(spine)
+        awaitEntry(soup)
+        compose.waitForIdle()
+        val label = drawn(LibraryTags.TAB_LABEL, within = LibraryTags.tab(LibraryView.OWN))
+        val ink = darkest(label)
+        val labelPage = label[0, 0]
+        val indicator = drawn(LibraryTags.TAB_INDICATOR)
+        val accent = indicator[indicator.width / 2, indicator.height / 2]
+        val shelf = drawn(spine)
+        val name = darkest(shelf)
+        val spineBounds = compose.onNodeWithTag(spine).getBoundsInRoot()
+        val root = compose.onRoot().captureToImage().toPixelMap()
+        val shelfPage = with(compose.density) {
+            root[(spineBounds.left - 8.dp).roundToPx(), ((spineBounds.top + spineBounds.bottom) / 2).roundToPx()]
+        }
+
+        longPress(soup)
+        compose.waitForIdle()
+        assertMuted("a tab's words", label[ink.first, ink.second], labelPage, drawn(LibraryTags.TAB_LABEL, within = LibraryTags.tab(LibraryView.OWN))[ink.first, ink.second])
+        assertMuted("the tabs' indicator", accent, labelPage, drawn(LibraryTags.TAB_INDICATOR).let { it[it.width / 2, it.height / 2] })
+        // A spine not responding may be drawn fainter still by its own disabled colours; at half its opacity at least.
+        assertMutedAtLeast("a collection's spine", shelf[name.first, name.second], shelfPage, drawn(spine)[name.first, name.second])
+
+        compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
+        compose.waitUntil(PATIENCE_MS) { session.selection.value == null }
+        compose.waitForIdle()
+        assertEquals("the tab's words whole again", label[ink.first, ink.second], drawn(LibraryTags.TAB_LABEL, within = LibraryTags.tab(LibraryView.OWN))[ink.first, ink.second])
+        assertEquals("the spine whole again", shelf[name.first, name.second], drawn(spine)[name.first, name.second])
     }
 
     // The one bar fades into the other: midway, both are drawn; then only the one shown.
