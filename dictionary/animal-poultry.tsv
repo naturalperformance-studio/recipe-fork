@@ -1,98 +1,118 @@
 # Animal: poultry and its parts (3500-3699), offal (3700-3799). Kinds of курица (legacy id 1) live here too.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 3000-4999
 
 # курица — parts and kinds
-3501	куриное филе	chicken breast fillet	1	true	g=1 pc=200
-3502	куриная грудка	chicken breast	1	true	g=1 pc=350			chicken cutlet
-3503	куриные бёдра	chicken thighs	1	false	g=1 pc=150
-3504	филе куриного бедра	boneless chicken thighs	1	true	g=1 pc=100
-3505	куриные голени	chicken drumsticks	1	false	g=1 pc=110
-3506	куриные окорочка	chicken leg quarters	1	false	g=1 pc=300
-3507	малое куриное филе	chicken tenders	1	false	g=1 pc=40
-3508	цыплёнок	spring chicken	1	true	g=1 pc=700
-3509	цыплёнок-корнишон	poussin	1	true	g=1 pc=450
-3510	курица суповая	stewing hen	1	true	g=1 pc=1800
+3501	куриное филе	chicken breast fillet	1	true	g=1 pc=200				kcal=120 protein=22.5 fat=2.62 carbs=0	fdc:171077
+3502	куриная грудка	chicken breast	1	true	g=1 pc=350			chicken cutlet	kcal=172 protein=20.85 fat=9.25 carbs=0	fdc:171474
+3503	куриные бёдра	chicken thighs	1	false	g=1 pc=150				kcal=221 protein=16.52 fat=16.61 carbs=0.25	fdc:172385
+3504	филе куриного бедра	boneless chicken thighs	1	true	g=1 pc=100				kcal=121 protein=19.66 fat=4.12 carbs=0	fdc:173627
+3505	куриные голени	chicken drumsticks	1	false	g=1 pc=110				kcal=161 protein=18.08 fat=9.2 carbs=0.11	fdc:172373
+3506	куриные окорочка	chicken leg quarters	1	false	g=1 pc=300				kcal=214 protein=16.37 fat=15.95 carbs=0.17	fdc:172378
+# малое куриное филе → fdc:171077 skinless breast: tenders are breast meat
+3507	малое куриное филе	chicken tenders	1	false	g=1 pc=40				kcal=120 protein=22.5 fat=2.62 carbs=0	fdc:171077
+# цыплёнок → fdc:171507 Cornish game hen, meat and skin
+3508	цыплёнок	spring chicken	1	true	g=1 pc=700				kcal=200 protein=17.15 fat=14.02 carbs=0	fdc:171507
+# цыплёнок-корнишон → fdc:171507 Cornish game hen, meat and skin
+3509	цыплёнок-корнишон	poussin	1	true	g=1 pc=450				kcal=200 protein=17.15 fat=14.02 carbs=0	fdc:171507
+3510	курица суповая	stewing hen	1	true	g=1 pc=1800				kcal=258 protein=17.55 fat=20.33 carbs=0	fdc:172400
 3511	курица копчёная	smoked chicken	1	true	g=1 pc=1200
-3512	курица гриль	rotisserie chicken	1	true	g=1 pc=1200
+# курица гриль → fdc:171450 broiler meat and skin, roasted
+3512	курица гриль	rotisserie chicken	1	true	g=1 pc=1200				kcal=239 protein=27.3 fat=13.6 carbs=0	fdc:171450
 3513	куриная грудка копчёная	smoked chicken breast	1	true	g=1 pc=300
-3514	куриные шейки	chicken necks	1	false	g=1 pc=40
-3515	куриные спинки	chicken backs	1	false	g=1 pc=150
+3514	куриные шейки	chicken necks	1	false	g=1 pc=40				kcal=297 protein=14.07 fat=26.24 carbs=0	fdc:172382
+3515	куриные спинки	chicken backs	1	false	g=1 pc=150				kcal=319 protein=14.05 fat=28.74 carbs=0	fdc:171469
 3516	куриные лапки	chicken feet	1	false	g=1 pc=40
-3517	куриная кожа	chicken skin	1		g=1
+3517	куриная кожа	chicken skin	1		g=1				kcal=349 protein=13.33 fat=32.35 carbs=0	fdc:171452
 3518	курица домашняя	free-range chicken	1	true	g=1 pc=1800
 
 # индейка
-3600	индейка	turkey		true	g=1 pc=5000
-3601	филе индейки	turkey breast fillet	3600		g=1
-3602	грудка индейки	turkey breast	3600		g=1
-3603	бедро индейки	turkey thigh	3600	true	g=1 pc=800
-3604	филе бедра индейки	boneless turkey thigh	3600		g=1
-3605	голень индейки	turkey drumstick	3600	true	g=1 pc=900
-3606	крыло индейки	turkey wing	3600	false	g=1 pc=400
+3600	индейка	turkey		true	g=1 pc=5000				kcal=144 protein=21.64 fat=5.64 carbs=0.14	fdc:171081
+3601	филе индейки	turkey breast fillet	3600		g=1				kcal=114 protein=23.66 fat=1.48 carbs=0.14	fdc:171098
+3602	грудка индейки	turkey breast	3600		g=1				kcal=157 protein=21.89 fat=7.02 carbs=0	fdc:171093
+3603	бедро индейки	turkey thigh	3600	true	g=1 pc=800				kcal=161 protein=19.54 fat=9.16 carbs=0	fdc:171533
+3604	филе бедра индейки	boneless turkey thigh	3600		g=1				kcal=116 protein=20.6 fat=3.69 carbs=0	fdc:174518
+3605	голень индейки	turkey drumstick	3600	true	g=1 pc=900				kcal=141 protein=19.96 fat=6.84 carbs=0	fdc:171134
+3606	крыло индейки	turkey wing	3600	false	g=1 pc=400				kcal=202 protein=19.53 fat=13.79 carbs=0.05	fdc:171132
 3607	стейк индейки	turkey steak	3600	true	g=1 pc=200
-3608	шея индейки	turkey neck	3600		g=1
+3608	шея индейки	turkey neck	3600		g=1				kcal=125 protein=16.51 fat=6.04 carbs=0	fdc:171086
 3609	индейка копчёная	smoked turkey	3600		g=1
 
 # утка, гусь, other birds
-3620	утка	duck		true	g=1 pc=2000
-3621	утиная грудка	duck breast	3620	true	g=1 pc=350
-3622	утиные ножки	duck legs	3620	false	g=1 pc=300
+3620	утка	duck		true	g=1 pc=2000				kcal=404 protein=11.49 fat=39.34 carbs=0	fdc:172408
+# утиная грудка → none: a cut sold with its skin, not the whole bird's meat and skin; no source holds it
+3621	утиная грудка	duck breast	3620	true	g=1 pc=350					none
+# утиные ножки → none: a cut sold with its skin and bone, not the whole bird's meat and skin; no source holds it
+3622	утиные ножки	duck legs	3620	false	g=1 pc=300					none
 3623	утиные крылья	duck wings	3620	false	g=1 pc=100
 3624	утка копчёная	smoked duck	3620		g=1
 3625	мускусная утка	Muscovy duck	3620	true	g=1 pc=2500
-3640	гусь	goose		true	g=1 pc=4000
-3641	гусиная грудка	goose breast	3640	true	g=1 pc=500
-3642	гусиные ножки	goose legs	3640	false	g=1 pc=500
-3660	перепёлка	quail		true	g=1 pc=180
-3670	цесарка	guinea fowl		true	g=1 pc=1200
-3680	голубь	pigeon		true	g=1 pc=400
-3690	страусятина	ostrich meat			g=1
+3640	гусь	goose		true	g=1 pc=4000				kcal=371 protein=15.86 fat=33.62 carbs=0	fdc:174470
+# гусиная грудка → none: a cut sold with its skin, not the whole bird's meat and skin; no source holds it
+3641	гусиная грудка	goose breast	3640	true	g=1 pc=500					none
+# гусиные ножки → none: a cut sold with its skin and bone, not the whole bird's meat and skin; no source holds it
+3642	гусиные ножки	goose legs	3640	false	g=1 pc=500					none
+3660	перепёлка	quail		true	g=1 pc=180				kcal=192 protein=19.63 fat=12.05 carbs=0	fdc:172418
+3670	цесарка	guinea fowl		true	g=1 pc=1200				kcal=158 protein=23.4 fat=6.45 carbs=0	fdc:172416
+3680	голубь	pigeon		true	g=1 pc=400				kcal=294 protein=18.47 fat=23.8 carbs=0	fdc:174475
+3690	страусятина	ostrich meat			g=1				kcal=111 protein=22.39 fat=1.72 carbs=0	fdc:172839
 
 # печень
-3700	печень	liver			g=1
-3701	говяжья печень	beef liver	3700		g=1
-3702	телячья печень	calf liver	3700		g=1
-3703	свиная печень	pork liver	3700		g=1
-3704	куриная печень	chicken liver	3700		g=1
-3705	печень индейки	turkey liver	3700		g=1
-3706	утиная печень	duck liver	3700		g=1
-3707	гусиная печень	goose liver	3700		g=1
-3708	фуа-гра	foie gras	3700		g=1
-3709	печень трески	cod liver	3700		g=1
+# печень → fdc:169451 beef liver
+3700	печень	liver			g=1				kcal=135 protein=20.36 fat=3.63 carbs=3.89	fdc:169451
+3701	говяжья печень	beef liver	3700		g=1				kcal=135 protein=20.36 fat=3.63 carbs=3.89	fdc:169451
+3702	телячья печень	calf liver	3700		g=1				kcal=140 protein=19.93 fat=4.85 carbs=2.91	fdc:172534
+3703	свиная печень	pork liver	3700		g=1				kcal=134 protein=21.39 fat=3.65 carbs=2.47	fdc:167862
+3704	куриная печень	chicken liver	3700		g=1				kcal=119 protein=16.92 fat=4.83 carbs=0.73	fdc:171060
+3705	печень индейки	turkey liver	3700		g=1				kcal=128 protein=18.26 fat=5.5 carbs=0	fdc:171486
+3706	утиная печень	duck liver	3700		g=1				kcal=136 protein=18.74 fat=4.64 carbs=3.53	fdc:174467
+3707	гусиная печень	goose liver	3700		g=1				kcal=133 protein=16.37 fat=4.28 carbs=6.32	fdc:172415
+# фуа-гра → fdc:171100 pâté de foie gras: no raw fattened liver listed
+3708	фуа-гра	foie gras	3700		g=1				kcal=462 protein=11.4 fat=43.84 carbs=4.67	fdc:171100
+# Skurikhin 4.2.1, p. 98
+3709	печень трески	cod liver	3700		g=1				kcal=613 protein=4.2 fat=65.7 carbs=1.2	skurikhin:Печень трески. Консервы
 3710	кроличья печень	rabbit liver	3700		g=1
-3711	баранья печень	lamb liver	3700		g=1
+3711	баранья печень	lamb liver	3700		g=1				kcal=139 protein=20.38 fat=5.02 carbs=1.78	fdc:172531
 
 # other offal
-3720	сердце	heart			g=1
+# сердце → fdc:168625 beef heart
+3720	сердце	heart			g=1				kcal=112 protein=17.72 fat=3.94 carbs=0.14	fdc:168625
 3721	говяжье сердце	beef heart	3720		g=1
 3722	свиное сердце	pork heart	3720		g=1
-3723	куриные сердечки	chicken hearts	3720		g=1
-3724	сердечки индейки	turkey hearts	3720		g=1
+3723	куриные сердечки	chicken hearts	3720		g=1				kcal=153 protein=15.55 fat=9.33 carbs=0.71	fdc:171458
+3724	сердечки индейки	turkey hearts	3720		g=1				kcal=140 protein=16.7 fat=7.44 carbs=0.4	fdc:171484
 3725	баранье сердце	lamb heart	3720		g=1
-3730	язык	tongue			g=1
-3731	говяжий язык	beef tongue	3730	true	g=1 pc=1200
-3732	свиной язык	pork tongue	3730	true	g=1 pc=300
-3733	телячий язык	veal tongue	3730	true	g=1 pc=600
-3734	бараний язык	lamb tongue	3730	false	g=1 pc=150
-3740	почки	kidneys			g=1
+# язык → fdc:170196 beef tongue
+3730	язык	tongue			g=1				kcal=224 protein=14.9 fat=16.09 carbs=3.68	fdc:170196
+3731	говяжий язык	beef tongue	3730	true	g=1 pc=1200				kcal=224 protein=14.9 fat=16.09 carbs=3.68	fdc:170196
+3732	свиной язык	pork tongue	3730	true	g=1 pc=300				kcal=225 protein=16.3 fat=17.2 carbs=0	fdc:168275
+3733	телячий язык	veal tongue	3730	true	g=1 pc=600				kcal=131 protein=17.18 fat=5.48 carbs=1.91	fdc:174368
+3734	бараний язык	lamb tongue	3730	false	g=1 pc=150				kcal=222 protein=15.7 fat=17.17 carbs=0	fdc:174366
+# почки → fdc:169449 beef kidneys
+3740	почки	kidneys			g=1				kcal=99 protein=17.4 fat=3.09 carbs=0.29	fdc:169449
 3741	говяжьи почки	beef kidneys	3740		g=1
 3742	свиные почки	pork kidneys	3740		g=1
 3743	бараньи почки	lamb kidneys	3740		g=1
 3744	телячьи почки	veal kidneys	3740		g=1
-3750	желудки	stomachs			g=1
-3751	куриные желудки	chicken gizzards	3750		g=1
-3752	желудки индейки	turkey gizzards	3750		g=1
+# желудки → fdc:171456 chicken gizzards, what is sold as желудки
+3750	желудки	stomachs			g=1				kcal=94 protein=17.66 fat=2.06 carbs=0	fdc:171456
+3751	куриные желудки	chicken gizzards	3750		g=1				kcal=94 protein=17.66 fat=2.06 carbs=0	fdc:171456
+3752	желудки индейки	turkey gizzards	3750		g=1				kcal=111 protein=18.8 fat=3.37 carbs=0	fdc:171085
 3753	утиные желудки	duck gizzards	3750		g=1
-3754	рубец	tripe	3750		g=1
-3755	свиной желудок	pork stomach	3750		g=1
-3760	лёгкие	lungs			g=1
-3761	мозги	brains			g=1
+3754	рубец	tripe	3750		g=1				kcal=85 protein=12.07 fat=3.69 carbs=0	fdc:170599
+3755	свиной желудок	pork stomach	3750		g=1				kcal=159 protein=16.85 fat=10.14 carbs=0	fdc:167867
+# лёгкие → fdc:168628 beef lungs
+3760	лёгкие	lungs			g=1				kcal=92 protein=16.2 fat=2.5 carbs=0	fdc:168628
+# мозги → fdc:168622 beef brain
+3761	мозги	brains			g=1				kcal=143 protein=10.86 fat=10.3 carbs=1.05	fdc:168622
 3762	вымя	udder			g=1
-3763	костный мозг	bone marrow			g=1
-3764	потроха	giblets			g=1
+# костный мозг → fdc:169800 caribou bone marrow, raw: the only raw marrow listed
+3763	костный мозг	bone marrow			g=1				kcal=786 protein=6.7 fat=84.4 carbs=0	fdc:169800
+# потроха → fdc:171057 chicken giblets
+3764	потроха	giblets			g=1				kcal=124 protein=17.88 fat=4.47 carbs=1.8	fdc:171057
 3765	куриные потроха	chicken giblets	3764		g=1
 3766	гусиные потроха	goose giblets	3764		g=1
-3767	кишки свиные	hog casings			g=1
+# кишки свиные → fdc:168266 pork chitterlings, raw: the cleaned small intestine
+3767	кишки свиные	hog casings			g=1				kcal=182 protein=7.64 fat=16.61 carbs=0	fdc:168266
 3769	куриные хрящи	chicken cartilage			g=1
 3712	печёнка	liver (colloquial)	3700		g=1

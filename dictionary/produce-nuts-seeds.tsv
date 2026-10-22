@@ -1,56 +1,59 @@
 # Produce: nuts and seeds.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Nuts (2500-2599)
-2500	орехи	nuts			g=1 tbsp=9 cup=140
-2501	грецкие орехи	walnuts	2500		g=1 tbsp=8 cup=100		грецкий орех
-2502	фундук	hazelnuts	2500		g=1 tbsp=9 cup=135
-2503	фундук жареный	roasted hazelnuts	2500		g=1 tbsp=9 cup=135
-2504	фундук молотый	ground hazelnuts	2500		g=1 tbsp=6 cup=90
-2505	кешью	cashews	2500		g=1 tbsp=9 cup=140
+# орехи → fdc:170585 Nuts, mixed nuts, dry roasted, with peanuts, without salt added
+2500	орехи	nuts			g=1 tbsp=9 cup=140				kcal=607 protein=19.5 fat=53.5 carbs=22.42	fdc:170585
+2501	грецкие орехи	walnuts	2500		g=1 tbsp=8 cup=100		грецкий орех		kcal=654 protein=15.23 fat=65.21 carbs=13.71	fdc:170187
+2502	фундук	hazelnuts	2500		g=1 tbsp=9 cup=135				kcal=628 protein=14.95 fat=60.75 carbs=16.7	fdc:170581
+2503	фундук жареный	roasted hazelnuts	2500		g=1 tbsp=9 cup=135				kcal=646 protein=15.03 fat=62.4 carbs=17.6	fdc:170583
+2504	фундук молотый	ground hazelnuts	2500		g=1 tbsp=6 cup=90				kcal=628 protein=14.95 fat=60.75 carbs=16.7	fdc:170581
+2505	кешью	cashews	2500		g=1 tbsp=9 cup=140				kcal=553 protein=18.22 fat=43.85 carbs=30.19	fdc:170162
+# фисташки → inherits орехи: fdc:170184 Nuts, pistachio nuts, raw (kcal=560 protein=20.16 fat=45.32 carbs=27.17) differs from the mixed nuts by less than the child rule (kcal 47, 8 %; fat 8.18 g, 15 %; carbs 4.75 g, 21 %); so do the other pistachios
 2506	фисташки	pistachios	2500		g=1 tbsp=8 cup=125
 2507	фисташки очищенные	shelled pistachios	2500		g=1 tbsp=8 cup=125
-2508	кедровые орехи	pine nuts	2500		g=1 tsp=3 tbsp=9 cup=135
-2509	пекан	pecans	2500		g=1 tbsp=7 cup=100
-2510	макадамия	macadamia nuts	2500		g=1 tbsp=9 cup=135
-2511	бразильский орех	Brazil nuts	2500	false	g=1 pc=5 cup=135
-2512	каштаны	chestnuts	2500	false	g=1 pc=10
+2508	кедровые орехи	pine nuts	2500		g=1 tsp=3 tbsp=9 cup=135				kcal=673 protein=13.69 fat=68.37 carbs=13.08	fdc:170591
+2509	пекан	pecans	2500		g=1 tbsp=7 cup=100				kcal=691 protein=9.17 fat=71.97 carbs=13.86	fdc:170182
+2510	макадамия	macadamia nuts	2500		g=1 tbsp=9 cup=135				kcal=718 protein=7.91 fat=75.77 carbs=13.82	fdc:170178
+2511	бразильский орех	Brazil nuts	2500	false	g=1 pc=5 cup=135				kcal=659 protein=14.32 fat=67.1 carbs=11.74	fdc:170569
+2512	каштаны	chestnuts	2500	false	g=1 pc=10				kcal=196 protein=1.63 fat=1.25 carbs=44.17	fdc:170575
 2513	ореховая смесь	mixed nuts	2500		g=1 cup=140
-2520	миндаль	almonds			g=1 tbsp=9 cup=145
+2520	миндаль	almonds			g=1 tbsp=9 cup=145				kcal=579 protein=21.15 fat=49.93 carbs=21.55	fdc:170567
 2521	миндаль бланшированный	blanched almonds	2520		g=1 tbsp=9 cup=145
 2522	миндальные лепестки	sliced almonds	2520		g=1 tbsp=6 cup=90
 2523	миндаль молотый	almond meal	2520		g=1 tbsp=7 cup=100
 2524	миндаль жареный	roasted almonds	2520		g=1 tbsp=9 cup=145
-2530	арахис	peanuts			g=1 tbsp=9 cup=145
+2530	арахис	peanuts			g=1 tbsp=9 cup=145				kcal=567 protein=25.8 fat=49.24 carbs=16.13	fdc:172430
 2531	арахис жареный	roasted peanuts	2530		g=1 tbsp=9 cup=145
 2532	арахис солёный	salted peanuts	2530		g=1 tbsp=9 cup=145
 2533	арахис сырой	raw peanuts	2530		g=1 tbsp=9 cup=145
 # Seeds (2600-2699)
 2600	семена	seeds			g=1 tsp=3 tbsp=9 cup=140
-2601	семечки подсолнечника	sunflower seeds	2600		g=1 tsp=3 tbsp=9 cup=140
-2602	семечки подсолнечника жареные	roasted sunflower seeds	2600		g=1 tsp=3 tbsp=9 cup=140
-2603	тыквенные семечки	pumpkin seeds	2600		g=1 tsp=3 tbsp=9 cup=130
-2604	тыквенные семечки жареные	roasted pumpkin seeds	2600		g=1 tsp=3 tbsp=9 cup=130
-2605	семена льна	flaxseeds	2600		g=1 tsp=3 tbsp=10 cup=170
-2606	семена льна молотые	ground flaxseed	2600		g=1 tsp=2 tbsp=7 cup=110
-2607	семена чиа	chia seeds	2600		g=1 tsp=4 tbsp=12 cup=170
-2608	мак	poppy seeds	2600		g=1 tsp=3 tbsp=9 cup=140
-2609	семена конопли	hemp seeds	2600		g=1 tsp=3 tbsp=10 cup=160
-2610	кунжут	sesame seeds			g=1 tsp=3 tbsp=9 cup=145
+2601	семечки подсолнечника	sunflower seeds	2600		g=1 tsp=3 tbsp=9 cup=140				kcal=584 protein=20.78 fat=51.46 carbs=20	fdc:170562
+2602	семечки подсолнечника жареные	roasted sunflower seeds	2600		g=1 tsp=3 tbsp=9 cup=140				kcal=582 protein=19.33 fat=49.8 carbs=24.07	fdc:170563
+2603	тыквенные семечки	pumpkin seeds	2600		g=1 tsp=3 tbsp=9 cup=130				kcal=559 protein=30.23 fat=49.05 carbs=10.71	fdc:170556
+2604	тыквенные семечки жареные	roasted pumpkin seeds	2600		g=1 tsp=3 tbsp=9 cup=130				kcal=574 protein=29.84 fat=49.05 carbs=14.71	fdc:170557
+2605	семена льна	flaxseeds	2600		g=1 tsp=3 tbsp=10 cup=170				kcal=534 protein=18.29 fat=42.16 carbs=28.88	fdc:169414
+2606	семена льна молотые	ground flaxseed	2600		g=1 tsp=2 tbsp=7 cup=110				kcal=534 protein=18.29 fat=42.16 carbs=28.88	fdc:169414
+2607	семена чиа	chia seeds	2600		g=1 tsp=4 tbsp=12 cup=170				kcal=486 protein=16.54 fat=30.74 carbs=42.12	fdc:170554
+2608	мак	poppy seeds	2600		g=1 tsp=3 tbsp=9 cup=140				kcal=525 protein=17.99 fat=41.56 carbs=28.13	fdc:171330
+2609	семена конопли	hemp seeds	2600		g=1 tsp=3 tbsp=10 cup=160				kcal=553 protein=31.56 fat=48.75 carbs=8.67	fdc:170148
+2610	кунжут	sesame seeds			g=1 tsp=3 tbsp=9 cup=145				kcal=573 protein=17.73 fat=49.67 carbs=23.45	fdc:170150
 2611	кунжут белый	white sesame seeds	2610		g=1 tsp=3 tbsp=9 cup=145
 2612	кунжут чёрный	black sesame seeds	2610		g=1 tsp=3 tbsp=9 cup=145
 2613	кунжут жареный	toasted sesame seeds	2610		g=1 tsp=3 tbsp=9 cup=145
-2514	кешью жареный	roasted cashews	2500		g=1 tbsp=9 cup=140
+2514	кешью жареный	roasted cashews	2500		g=1 tbsp=9 cup=140				kcal=574 protein=15.31 fat=46.35 carbs=32.69	fdc:170571
 2515	фисташки солёные	salted pistachios	2500		g=1 tbsp=8 cup=125
-2516	каштаны жареные	roasted chestnuts	2500	false	g=1 pc=8
+2516	каштаны жареные	roasted chestnuts	2500	false	g=1 pc=8				kcal=245 protein=3.17 fat=2.2 carbs=52.96	fdc:170190
 2525	миндаль рубленый	chopped almonds	2520		g=1 tbsp=8 cup=120
-2614	лён золотой	golden flaxseed	2600		g=1 tsp=3 tbsp=10 cup=170
+2614	лён золотой	golden flaxseed	2600		g=1 tsp=3 tbsp=10 cup=170				kcal=534 protein=18.29 fat=42.16 carbs=28.88	fdc:169414
 2615	семена базилика	basil seeds	2600		g=1 tsp=3 tbsp=10
-2517	грецкие орехи жареные	toasted walnuts	2500		g=1 tbsp=8 cup=100
-2518	грецкие орехи молотые	ground walnuts	2500		g=1 tbsp=6 cup=80
-2519	кешью сырой	raw cashews	2500		g=1 tbsp=9 cup=140
+# грецкие орехи жареные → the raw nut: FoodData Central has no roasted English walnut
+2517	грецкие орехи жареные	toasted walnuts	2500		g=1 tbsp=8 cup=100				kcal=654 protein=15.23 fat=65.21 carbs=13.71	fdc:170187
+2518	грецкие орехи молотые	ground walnuts	2500		g=1 tbsp=6 cup=80				kcal=654 protein=15.23 fat=65.21 carbs=13.71	fdc:170187
+2519	кешью сырой	raw cashews	2500		g=1 tbsp=9 cup=140				kcal=553 protein=18.22 fat=43.85 carbs=30.19	fdc:170162
 2526	фисташки молотые	ground pistachios	2500		g=1 tbsp=7 cup=100
-2616	лён коричневый	brown flaxseed	2600		g=1 tsp=3 tbsp=10 cup=170
+2616	лён коричневый	brown flaxseed	2600		g=1 tsp=3 tbsp=10 cup=170				kcal=534 protein=18.29 fat=42.16 carbs=28.88	fdc:169414
 2527	миндаль соломка	slivered almonds	2520		g=1 tbsp=7 cup=110
-2528	фундук бланшированный	blanched hazelnuts	2500		g=1 tbsp=9 cup=135
+2528	фундук бланшированный	blanched hazelnuts	2500		g=1 tbsp=9 cup=135				kcal=629 protein=13.7 fat=61.15 carbs=17	fdc:170582

@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recipe Fork — направление 5: Эмаль</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+:root{
+  --cob:#1F4FA8; --cobC:#DCE6F8; --ink-navy:#0B2559;
+  --red:#B8322A; --redC:#F8DDD8;
+  --grn:#2E6B4A; --grnC:#CDE8D6;
+  --mus:#8A6410;
+  --white:#FAF8F3; --sc:#F0EEE8; --sch:#E8E5DE;
+  --ink:#1A1C22; --ink2:#4A4E57; --ol:#767A83; --grout:#C9CCD1; --err:#9C1C2B;
+  --navy:#0F1626; --navy2:#172036; --navy3:#1F2A44;
+  --ui:'Rubik', 'Nunito', 'Segoe UI', Roboto, Arial, sans-serif;
+  --wm:'Unbounded', 'Rubik', Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--ui);color:var(--ink);background:#EDEAE3;font-size:16px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+section{background:var(--white);border:3px solid var(--cob);border-radius:28px;margin:32px 0;padding:40px 40px}
+h1,h2,h3{font-weight:600;line-height:1.2;margin:0}
+h1{font-family:var(--wm);font-size:40px;font-weight:600;letter-spacing:-.5px;color:var(--ink-navy)}
+h2{font-family:var(--wm);font-size:26px;color:var(--ink-navy);margin-bottom:20px;display:flex;align-items:center;gap:14px}
+h2 .n{display:inline-flex;width:44px;height:44px;border:4px solid var(--cob);border-radius:12px;align-items:center;justify-content:center;font-size:18px;color:var(--cob);flex:none}
+h3{font-size:18px;margin:28px 0 12px;color:var(--ink)}
+p{margin:0 0 12px;max-width:860px}
+.muted{color:var(--ink2)}
+.small{font-size:13px;color:var(--ink2)}
+code,.mono{font-family:'Roboto Mono',ui-monospace,Consolas,monospace;font-size:13px}
+.kw{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.kw span{border:2px solid var(--cob);border-radius:999px;padding:4px 14px;font-weight:500;color:var(--cob);background:#fff}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.box{background:#fff;border:2px solid var(--grout);border-radius:20px;padding:20px}
+.box.rim{border:3px solid var(--cob)}
+.cap{font-size:13px;color:var(--ink2);margin-top:8px}
+ul.dash{margin:0;padding-left:20px}
+ul.dash li{margin:4px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td:nth-child(2){white-space:nowrap}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grout);vertical-align:middle}
+th{font-weight:600;color:var(--ink2);font-size:13px}
+.sw{display:inline-block;width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.25);vertical-align:middle;margin-right:8px}
+.ok{font-weight:600;color:var(--grn)}
+.hdr{display:grid;grid-template-columns:1fr 360px;gap:40px;align-items:start}
+@media (max-width:1100px){.hdr{grid-template-columns:1fr}}
+
+/* logo */
+.logo-block{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+.art{background:#fff;border:2px solid var(--grout);border-radius:20px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;gap:10px}
+.art.dark{background:var(--navy);border-color:var(--navy)}
+.art.cobalt{background:var(--cob);border-color:var(--cob)}
+.wordmark{white-space:nowrap;font-family:var(--wm);font-weight:600;color:var(--ink-navy);letter-spacing:-.5px;line-height:1}
+.lock-h{display:flex;align-items:center;gap:16px}
+.lock-v{display:flex;flex-direction:column;align-items:center;gap:12px}
+.forbid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.forbid .art{min-height:170px;position:relative}
+.forbid .x{position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:50%;border:3px solid var(--err);color:var(--err);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px;background:#fff}
+
+/* palette */
+.palette{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.chip{border-radius:20px;overflow:hidden;border:3px solid var(--ink);background:#fff}
+.chip .c{height:120px;display:flex;align-items:flex-end;padding:12px;font-weight:600;font-size:14px}
+.chip .t{padding:10px 14px 14px;font-size:13px;line-height:1.4}
+.chip .t b{display:block;font-size:15px}
+.tok{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media (max-width:1100px){.tok{grid-template-columns:1fr}}
+
+/* type */
+.tsample{border-top:1px solid var(--grout);padding:10px 0;display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:baseline}
+.tsample .r{font-size:13px;color:var(--ink2)}
+
+/* icon */
+.icon-block{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;align-items:start}
+.launcher{display:flex;gap:26px;align-items:flex-start;padding:22px 26px;border-radius:24px;background:linear-gradient(#3a4a5e,#3a4a5e);flex-wrap:wrap}
+.launcher .ap{display:flex;flex-direction:column;align-items:center;gap:6px;width:64px;color:#fff;font-size:12px;text-align:center}
+.launcher.light{background:#E3E6EA}
+.launcher.light .ap{color:#1A1C22}
+
+/* signature */
+.sig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.sig{background:#fff;border:2px solid var(--grout);border-radius:20px;padding:20px}
+.sig h4{margin:0 0 12px;font-size:15px}
+
+/* phones */
+.phones{display:flex;flex-wrap:wrap;gap:48px 30px;justify-content:center}
+figure.phone-wrap{margin:0;width:360px;display:flex;flex-direction:column;align-items:center}
+figure.phone-wrap figcaption{font-size:14px;color:var(--ink2);margin-top:14px;max-width:360px}
+figure.phone-wrap figcaption b{color:var(--ink)}
+.ph{
+  --s:#FAF8F3; --sc:#F0EEE8; --sch:#E8E5DE; --on:#1A1C22; --on2:#4A4E57; --p:#1F4FA8; --onp:#FFFFFF; --pc:#DCE6F8; --onpc:#0B2559;
+  --sec:#B8322A; --secC:#F8DDD8; --ter:#2E6B4A; --terC:#CDE8D6; --ol:#767A83; --olv:#C9CCD1; --rimdk:#0B2559;
+  --r-cob:#1F4FA8; --r-red:#B8322A; --r-grn:#2E6B4A; --r-mus:#8A6410;
+  width:360px;height:780px;border-radius:38px;overflow:hidden;position:relative;background:var(--s);color:var(--on);
+  box-shadow:0 0 0 9px #16181d,0 0 0 10px #444,0 18px 40px rgba(0,0,0,.25);font-family:var(--ui);font-size:14px;line-height:1.4
+}
+.ph.dk{
+  --s:#0F1626; --sc:#172036; --sch:#1F2A44; --on:#E8ECF4; --on2:#B4BCCB; --p:#A9C3FF; --onp:#0B2559; --pc:#23428A; --onpc:#DCE6FF;
+  --sec:#FFB4A8; --secC:#7E241C; --ter:#9CD3B0; --terC:#1D4D33; --ol:#8D96A8; --olv:#374260; --rimdk:#DCE6FF;
+  --r-cob:#A9C3FF; --r-red:#FFB4A8; --r-grn:#9CD3B0; --r-mus:#E8C46A;
+}
+.sb{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 22px 0 26px;font-size:13px;font-weight:500}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.tb{height:60px;display:flex;align-items:center;padding:0 6px 0 4px;gap:2px}
+.tb .ttl{flex:1;font-size:20px;font-weight:500;padding-left:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--on2);flex:none}
+.ib svg{width:24px;height:24px}
+.tabs{display:flex;border-bottom:1px solid var(--olv);height:52px}
+.tabs div{flex:1;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:15px;color:var(--on2);position:relative;gap:8px}
+.tabs div.on{color:var(--p)}
+.tabs div.on:after{content:"";position:absolute;left:24%;right:24%;bottom:-1px;height:4px;border-radius:4px 4px 0 0;background:var(--p)}
+.gb{position:absolute;bottom:8px;left:50%;width:110px;height:4px;border-radius:4px;background:var(--on);opacity:.55;transform:translateX(-50%)}
+.bn{position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--sc);display:flex;padding-top:10px;border-top:1px solid var(--olv)}
+.bn div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--on2)}
+.bn .pill{width:60px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.bn .on .pill{background:var(--pc);box-shadow:inset 0 0 0 2px var(--p);color:var(--onpc)}
+.bn .on{color:var(--on)}
+.bn svg{width:22px;height:22px}
+.search{margin:4px 16px 10px;height:52px;border-radius:26px;background:var(--sch);display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--on2);font-size:15px}
+.chips{display:flex;gap:8px;padding:0 16px 10px;overflow:hidden}
+.chp{height:34px;border-radius:10px;border:1.5px solid var(--ol);padding:0 12px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;white-space:nowrap;color:var(--on2)}
+.chp.on{background:var(--pc);border:2px solid var(--p);color:var(--onpc)}
+.chp svg{width:16px;height:16px}
+
+/* rim system */
+.rim{border:3px solid var(--rc,var(--p));border-radius:16px;background:var(--sc)}
+.rim.fk{box-shadow:0 0 0 2px var(--s),0 0 0 4.5px var(--pr,var(--r-red))}
+.entry{margin:0 16px 14px;display:flex;gap:12px;padding:10px 12px 10px 10px}
+.thumb{width:64px;height:64px;border-radius:10px;flex:none;background-color:var(--s);
+  background-image:linear-gradient(var(--olv) 1.5px,transparent 1.5px),linear-gradient(90deg,var(--olv) 1.5px,transparent 1.5px);
+  background-size:16px 16px;display:flex;align-items:center;justify-content:center;border:2px solid var(--rc,var(--p))}
+.thumb svg{width:32px;height:32px;color:var(--rc,var(--p))}
+.entry .ti{font-size:16px;font-weight:600;line-height:1.25}
+.entry .me{font-size:12.5px;color:var(--on2);margin-top:2px}
+.entry .ft{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.fkm{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 5px;border-radius:7px;border:2px solid var(--sec);color:var(--sec);font-size:12px;font-weight:600;box-shadow:inset 0 0 0 1.5px var(--s),inset 0 0 0 3px var(--sec)}
+.fkm{box-shadow:none;outline:1.5px solid var(--sec);outline-offset:1.5px}
+.fkm svg{width:14px;height:14px}
+.cnt{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--on2)}
+.cnt svg{width:14px;height:14px}
+.fab{position:absolute;right:16px;width:56px;height:56px;border-radius:16px;background:var(--p);color:var(--onp);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 3px var(--rimdk),0 3px 8px rgba(0,0,0,.25)}
+.fab.ext{width:auto;padding:0 20px 0 16px;gap:10px;font-size:15px;font-weight:600}
+.fab svg{width:24px;height:24px}
+.btn{height:48px;border-radius:24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;padding:0 22px}
+.btn.f{background:var(--p);color:var(--onp);box-shadow:inset 0 0 0 3px var(--rimdk)}
+.btn.o{border:3px solid var(--p);color:var(--p)}
+.btn.t{color:var(--p)}
+.btn svg{width:20px;height:20px}
+
+/* view */
+.hero{margin:12px 16px 0;padding:14px 16px}
+.hero h5{margin:0;font-size:22px;font-weight:600;line-height:1.2}
+.prov{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px;color:var(--on2)}
+.prov svg{width:16px;height:16px;color:var(--sec);flex:none;margin-top:1px}
+.prov a{color:var(--p);text-decoration:underline;font-weight:500}
+.scaler{margin:14px 16px 4px;display:flex;align-items:center;gap:10px}
+.scaler .lbl{flex:1;font-weight:600;font-size:15px}
+.rb{width:48px;height:48px;border-radius:50%;border:3px solid var(--p);color:var(--p);display:flex;align-items:center;justify-content:center;background:var(--s)}
+.rb svg{width:22px;height:22px}
+.scaler .v{min-width:92px;text-align:center;font-size:18px;font-weight:600}
+.sect{padding:14px 16px 4px;font-size:13px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--on2);display:flex;justify-content:space-between}
+.ing{display:flex;align-items:baseline;justify-content:space-between;padding:7px 16px;border-bottom:1px dashed var(--olv);font-size:15px}
+.ing .q{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
+.ing .q.d{text-decoration:underline dotted 1.5px;text-underline-offset:4px}
+.miss{font-size:11.5px;font-weight:600;color:var(--p);border:1.5px solid var(--p);border-radius:6px;padding:0 5px;margin-left:6px}
+
+/* cooking */
+.fold{margin:10px 16px 0;height:56px;border-radius:14px;background:var(--sc);display:flex;align-items:center;gap:12px;padding:0 14px;font-size:15px;color:var(--on2)}
+.fold b{color:var(--on);font-weight:600}
+.ck{width:32px;height:32px;border-radius:50%;background:var(--ter);color:var(--s);display:flex;align-items:center;justify-content:center;flex:none}
+.ck svg{width:20px;height:20px}
+.ck0{width:32px;height:32px;border-radius:50%;border:3px solid var(--p);flex:none}
+.done{min-height:56px;margin:8px 16px 0;display:flex;gap:12px;align-items:center;padding:6px 14px;color:var(--on2);font-size:15px;border-radius:14px}
+.done span.s{text-decoration:line-through 2px;text-decoration-color:var(--on2)}
+.cur{margin:12px 16px 0;padding:16px 16px 18px;border:5px solid var(--p);border-radius:20px;background:var(--sc)}
+.cur .lb{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--p);text-transform:uppercase}
+.cur .tx{font-size:27px;line-height:1.28;font-weight:500;margin-top:10px}
+.cur .tx .ingref{color:var(--p);font-weight:600}
+.timer{display:flex;align-items:center;gap:14px;margin-top:16px}
+.tbtns{display:flex;flex-direction:column;gap:10px;align-items:center}
+.eb{width:64px;height:64px;border-radius:50%;background:var(--p);color:var(--onp);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 4px var(--rimdk)}
+.eb.o{background:transparent;border:4px solid var(--p);color:var(--p);box-shadow:none;width:56px;height:56px}
+.eb svg{width:28px;height:28px}
+.next{margin:12px 16px 0;padding:12px 14px;border:2px solid var(--olv);border-radius:16px;font-size:17px;line-height:1.35}
+.next .lb{font-size:12px;font-weight:600;color:var(--on2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+
+/* sheet */
+.scrim{position:absolute;inset:0;background:rgba(10,14,26,.5)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--s);border-radius:28px 28px 0 0;border-top:4px solid var(--p);padding:10px 20px 34px}
+.handle{width:36px;height:4px;border-radius:2px;background:var(--ol);margin:6px auto 16px}
+.sheet h5{font-size:22px;font-weight:600;margin:0 0 10px;line-height:1.25}
+
+.status{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px 2px 6px;border-radius:7px}
+.status svg{width:14px;height:14px}
+
+/* store */
+.shots{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.shots svg{width:300px;height:auto;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+svg.banner{width:100%;max-width:1024px;height:auto;border-radius:12px;display:block;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.cr{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- ============ Shared symbols ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- The badge mark, 96-unit grid -->
+    <symbol id="mk" viewBox="0 0 96 96">
+      <rect x="8" y="8" width="80" height="80" rx="20" fill="var(--mk-field,#FAF8F3)" stroke="var(--mk-rim,#1F4FA8)" stroke-width="8"/>
+      <g fill="none" stroke="var(--mk-fork,#1F4FA8)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 22v18M40 22v18M50 22v18"/>
+        <path d="M30 40c0 8 4 12 10 12s10-4 10-12"/>
+        <path d="M40 52v26" stroke-width="7"/>
+      </g>
+      <path d="M47 49C58 49 66 44 66 32V22" fill="none" stroke="var(--mk-branch,#B8322A)" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <!-- Fork glyph without the badge (UI icon, fork marker) -->
+    <symbol id="fk" viewBox="22 16 52 66">
+      <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 22v18M40 22v18M50 22v18"/>
+        <path d="M30 40c0 8 4 12 10 12s10-4 10-12"/>
+        <path d="M40 52v26"/>
+        <path d="M47 49C58 49 66 44 66 32V22" stroke="var(--br,currentColor)"/>
+      </g>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></g></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H5m6-7-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></g></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><g fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></g></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5M5 4v4h4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cat" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></g></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5h10a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3v-12Zm0 12a3 3 0 0 1 3-3h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pot" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h14v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-6Z"/><path d="M3 10h18M10 6.5h4M12 6.5V10"/></g></symbol>
+    <symbol id="i-mug" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 6h11v9a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V6Z"/><path d="M16 9h1.5a2.5 2.5 0 0 1 0 5H16"/></g></symbol>
+    <symbol id="i-pan" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="10" cy="13" rx="7" ry="5"/><path d="M17 12h5"/></g></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M10 3h4"/></g></symbol>
+    <symbol id="i-draft" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/></g></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></g></symbol>
+    <symbol id="i-pub" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="m8.5 12 2.5 2.5 4.5-5"/></g></symbol>
+    <symbol id="sbar" viewBox="0 0 64 14">
+      <g fill="currentColor"><path d="M2 12h2V9H2zM6 12h2V7H6zM10 12h2V5h-2zM14 12h2V2h-2z"/>
+      <path d="M22 5.5a10 10 0 0 1 14 0l-1.6 1.6a7.7 7.7 0 0 0-10.8 0zM25.2 8.7a5.5 5.5 0 0 1 7.6 0L29 12.4z"/>
+      <rect x="42" y="2.5" width="18" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="44" y="4.5" width="12" height="5" rx="1"/><rect x="60.5" y="5.2" width="1.8" height="3.6" rx=".6"/></g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<!-- ================= 1. Шапка ================= -->
+<section id="s1" style="margin-top:40px">
+  <div class="hdr">
+    <div>
+      <div class="small" style="font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--cob)">Идентичность · рабочее название</div>
+      <h1 style="margin:8px 0 18px">Recipe Fork — направление 5: Эмаль</h1>
+      <p>Эмалированная посуда и кафельная кухня: белая эмаль с кобальтовым ободком, тяжёлая кастрюля, кружка, квадратная настенная плитка, кухонный таймер со щелчком. Вещи, которые моют мокрыми руками и не боятся уронить. Направление берёт из этой памяти не картинку, а свойства: толстый край, который видно краем глаза, крупные цифры, белый фон, на котором ничего не теряется. Нарисовано чистыми современными векторами, без декоративной ностальгии и без «бабушкиной кухни». Главный экран направления — вкладка «Готовка»: крупный шаг, круглые эмалевые кнопки 56–64 dp, таймер, который читается с другого конца кухни.</p>
+      <div class="kw"><span>прочное</span><span>практичное</span><span>тёплое</span><span>кафельное</span><span>для мокрых рук</span><span>крупное</span></div>
+      <p class="muted"><b style="color:var(--ink)">Референсы:</b> эмалированные кастрюли и кружки с синим ободком; эмалевые таблички с номерами домов; кухонный кафель 10×10 с серой затиркой; механический кухонный таймер; уличная навигация с толстой рамкой; европейские вокзальные часы — крупные цифры без украшений.</p>
+      <p style="margin-top:16px;padding:14px 18px;border-left:6px solid var(--red);background:var(--sc);border-radius:0 14px 14px 0"><b>Форк в этом направлении</b> — это второй ободок: у рецепта-форка рядом с его собственным краем виден тонкий край родителя, как след от кастрюли, которая стояла на этом месте раньше; одна рамка — оригинал, две — у рецепта есть родитель.</p>
+    </div>
+    <div class="box rim" style="display:flex;flex-direction:column;align-items:center;gap:18px;padding:32px 20px">
+      <svg width="180" height="180" aria-label="Знак"><use href="#mk"/></svg>
+      <div class="wordmark" style="font-size:30px">Recipe Fork</div>
+      <div class="small" style="text-align:center">Знак-эмблема: вилка на эмалевой плитке, четвёртый зубец отходит веткой</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. Знак и логотип ================= -->
+<section id="s2">
+  <h2><span class="n">2</span>Знак и логотип</h2>
+  <p>Знак — эмалевая плитка со скруглёнными углами и толстым кобальтовым ободком. Внутри вилка: три прямых зубца, ложе, ручка. Из правого края ложа вырастает четвёртый зубец — он изгибается вбок и поднимается вверх параллельно остальным. Это одновременно вилка, у которой «отросло» лишнее, и ветка в истории версий, но без кружков-коммитов и стрелок: ветка нарисована тем же пером, что и зубцы. Ветка красная (вторичный цвет), остальное — кобальт; в одноцветном варианте всё одного цвета, смысл держит форма.</p>
+
+  <div class="logo-block">
+    <div class="art">
+      <svg width="240" height="240" viewBox="0 0 96 96" aria-label="Построение знака на сетке">
+        <g stroke="#C9CCD1" stroke-width=".35">
+          <path d="M0 8H96M0 16H96M0 24H96M0 32H96M0 40H96M0 48H96M0 56H96M0 64H96M0 72H96M0 80H96M0 88H96M8 0V96M16 0V96M24 0V96M32 0V96M40 0V96M48 0V96M56 0V96M64 0V96M72 0V96M80 0V96M88 0V96"/>
+        </g>
+        <rect x=".2" y=".2" width="95.6" height="95.6" fill="none" stroke="#C9CCD1" stroke-width=".4"/>
+        <use href="#mk" width="96" height="96" style="--mk-field:rgba(250,248,243,.55)"/>
+        <g fill="none" stroke="#B8322A" stroke-width=".5" stroke-dasharray="1.5 1">
+          <path d="M40 4V92M66 4V92"/>
+        </g>
+        <g font-family="Rubik" font-size="3.6" fill="#4A4E57">
+          <text x="73" y="94">96 × 96</text>
+          <text x="2" y="94">ободок 8 · модуль 8</text>
+          
+        </g>
+      </svg>
+      <div class="small" style="text-align:center">Сетка 96 ед., модуль 8. Ободок 8, перо зубцов 6, ручка 7. Радиус плитки 20. Ветка — дуга от ложа к оси x = 66, зазор с крайним зубцом 10.</div>
+    </div>
+
+    <div class="art">
+      <div class="lock-h">
+        <svg width="56" height="56"><use href="#mk"/></svg>
+        <div class="wordmark" style="font-size:26px">Recipe Fork</div>
+      </div>
+      <div class="small">Горизонтальный: высота знака = 2,1 × высоты строчных; зазор = 1/4 знака</div>
+      <div style="height:18px"></div>
+      <div class="wordmark" style="font-size:22px;font-weight:500">Recipe Fork</div>
+      <div class="small">Словесный знак: Unbounded 600, трекинг −1 %, без правки букв</div>
+    </div>
+
+    <div class="art">
+      <div class="lock-v">
+        <svg width="96" height="96"><use href="#mk"/></svg>
+        <div class="wordmark" style="font-size:26px;text-align:center;white-space:normal">Recipe<br>Fork</div>
+      </div>
+      <div class="small">Вертикальный — для заставки и обложек</div>
+    </div>
+
+    <div class="art dark">
+      <div class="lock-h">
+        <svg width="52" height="52" style="--mk-field:#0F1626;--mk-rim:#A9C3FF;--mk-fork:#A9C3FF;--mk-branch:#FFB4A8"><use href="#mk"/></svg>
+        <div class="wordmark" style="font-size:24px;color:#E8ECF4">Recipe Fork</div>
+      </div>
+      <div class="small" style="color:#B4BCCB">Тёмная тема: поле — глубокий синий, ободок светлый кобальт</div>
+    </div>
+
+    <div class="art">
+      <div style="display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;justify-content:center">
+        <div style="text-align:center"><svg width="72" height="72"><use href="#mk"/></svg><div class="small">72</div></div>
+        <div style="text-align:center"><svg width="48" height="48"><use href="#mk"/></svg><div class="small">48</div></div>
+        <div style="text-align:center"><svg width="32" height="32"><use href="#mk"/></svg><div class="small">32</div></div>
+        <div style="text-align:center"><svg width="24" height="24"><use href="#mk"/></svg><div class="small">24</div></div>
+      </div>
+      <div class="small" style="text-align:center">Только знак. Минимум с ободком — 24 px / 24 dp. Меньше 24 — глиф без плитки (16 dp, иконка интерфейса).</div>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:6px">
+        <svg width="24" height="24" style="color:var(--cob);--br:var(--red)"><use href="#fk"/></svg>
+        <svg width="16" height="16" style="color:var(--cob);--br:var(--red)"><use href="#fk"/></svg>
+        <svg width="48" height="48" style="--mk-field:#fff;--mk-rim:#1A1C22;--mk-fork:#1A1C22;--mk-branch:#1A1C22"><use href="#mk"/></svg>
+        <svg width="48" height="48" style="--mk-field:#1A1C22;--mk-rim:#fff;--mk-fork:#fff;--mk-branch:#fff;background:#1A1C22;border-radius:8px"><use href="#mk"/></svg>
+      </div>
+      <div class="small">Глиф 24 / 16 и одноцветные версии</div>
+    </div>
+
+    <div class="art cobalt">
+      <svg width="120" height="120" style="--mk-field:#FAF8F3;--mk-rim:#0B2559;--mk-fork:#1F4FA8;--mk-branch:#B8322A"><use href="#mk"/></svg>
+      <div class="small" style="color:#fff">На кобальте ободок становится тёмно-синим, плитка остаётся белой</div>
+    </div>
+  </div>
+
+  <h3>Чего нельзя</h3>
+  <div class="forbid">
+    <div class="art"><span class="x">×</span>
+      <svg width="80" height="80" viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="#FAF8F3" stroke="#1F4FA8" stroke-width="8"/><use href="#fk" x="26" y="18" width="44" height="60" style="color:#1F4FA8;--br:#B8322A"/></svg>
+      <div class="small" style="text-align:center">Круглая плитка — это уже значок-пуговица, а не эмалевая табличка</div></div>
+    <div class="art"><span class="x">×</span>
+      <svg width="80" height="80" viewBox="0 0 96 96"><rect x="8" y="8" width="80" height="80" rx="20" fill="#FAF8F3" stroke="#1F4FA8" stroke-width="8"/><g fill="none" stroke="#1F4FA8" stroke-width="6" stroke-linecap="round"><path d="M30 22v18M40 22v18M50 22v18M30 40c0 8 4 12 10 12s10-4 10-12M40 52v26M47 49C58 49 66 44 66 32V22"/></g><circle cx="64" cy="22" r="6" fill="#B8322A"/><circle cx="40" cy="78" r="6" fill="#B8322A"/></svg>
+      <div class="small" style="text-align:center">Кружки-коммиты на концах — превращает знак в git-логотип</div></div>
+    <div class="art"><span class="x">×</span>
+      <svg width="80" height="80" viewBox="0 0 96 96"><rect x="8" y="8" width="80" height="80" rx="20" fill="#FAF8F3" stroke="#1F4FA8" stroke-width="8"/><text x="48" y="58" text-anchor="middle" font-family="Unbounded" font-weight="700" font-size="26" fill="#1F4FA8">RF</text></svg>
+      <div class="small" style="text-align:center">Буквы или текст внутри плитки — знак должен жить без названия</div></div>
+    <div class="art"><span class="x">×</span>
+      <svg width="80" height="80" viewBox="0 0 96 96"><defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aa2ff"/><stop offset="1" stop-color="#1F4FA8"/></linearGradient></defs><rect x="8" y="8" width="80" height="80" rx="20" fill="url(#bg1)" stroke="#0B2559" stroke-width="8"/><g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"><path d="M30 22v18M40 22v18M50 22v18M30 40c0 8 4 12 10 12s10-4 10-12M40 52v26M47 49C58 49 66 44 66 32V22"/></g></svg>
+      <div class="small" style="text-align:center">Градиенты, блики «под эмаль», сколы и тени — эмаль передаётся краем, не фактурой</div></div>
+    <div class="art"><span class="x">×</span>
+      <svg width="80" height="80" viewBox="0 0 96 96"><rect x="8" y="8" width="80" height="80" rx="20" fill="#FAF8F3" stroke="#1F4FA8" stroke-width="3"/><use href="#fk" x="26" y="18" width="44" height="60" style="color:#1F4FA8;--br:#B8322A"/></svg>
+      <div class="small" style="text-align:center">Тонкий ободок — пропадает на 48 dp, знак теряет характер</div></div>
+    <div class="art"><span class="x">×</span>
+      <svg width="80" height="80" viewBox="0 0 96 96"><g transform="rotate(-12 48 48)"><use href="#mk" width="96" height="96"/></g></svg>
+      <div class="small" style="text-align:center">Поворот, растяжение, перекраска ветки в кобальт при цветном знаке</div></div>
+  </div>
+
+  <h3>Если название сменится</h3>
+  <p>Знак не содержит букв и не опирается на слово «Fork»: вилка и ветка понятны и по-русски, и по-английски, и без подписи. Словесный знак — это набор шрифтом Unbounded без нарисованных букв и лигатур, поэтому новое имя набирается заново за час и встаёт в те же композиции с теми же пропорциями. Ободок, палитра и правила экранов от имени не зависят вообще. Единственное, что придётся пересмотреть, — длину: в горизонтальной композиции название длиннее 14 знаков переходит во вертикальную.</p>
+</section>
+
+<!-- ================= 3. Палитра ================= -->
+<section id="s3">
+  <h2><span class="n">3</span>Палитра</h2>
+  <p>Четыре эмали и кафель. Кобальт — основной цвет и цвет ободков. Красная эмаль — только родословная: ветка в знаке, отметка «форк», второй ободок родителя. Зелёная — только «сделано» на вкладке «Готовка» и «есть в моей кухне». Серый — затирка между плитками: разделители и неактивные края. Тёмная тема — глубокий синий, как ночная кухня с синей посудой, а не чёрный.</p>
+
+  <div class="palette">
+    <div class="chip" style="border-color:#1F4FA8"><div class="c" style="background:#1F4FA8;color:#fff">Кобальт · #1F4FA8</div><div class="t"><b>primary</b>Ободки, кнопки, текущий шаг, вкладка. На белом <span class="cr">7,22:1</span></div></div>
+    <div class="chip" style="border-color:#B8322A"><div class="c" style="background:#B8322A;color:#fff">Красная эмаль · #B8322A</div><div class="t"><b>secondary</b>Только родословная: отметка «форк», ветка знака, край родителя. На белом <span class="cr">5,61:1</span></div></div>
+    <div class="chip" style="border-color:#2E6B4A"><div class="c" style="background:#2E6B4A;color:#fff">Зелёная эмаль · #2E6B4A</div><div class="t"><b>tertiary</b>Галочка «сделано», «есть в моей кухне». На белом <span class="cr">5,96:1</span></div></div>
+    <div class="chip" style="border-color:#1A1C22"><div class="c" style="background:#FAF8F3;color:#1A1C22;border-bottom:1px solid #C9CCD1">Белая эмаль · #FAF8F3</div><div class="t"><b>surface</b>Фон всех экранов светлой темы. Текст #1A1C22 <span class="cr">16,05:1</span></div></div>
+    <div class="chip" style="border-color:#767A83"><div class="c" style="background:#C9CCD1;color:#1A1C22;background-image:linear-gradient(#FAF8F3 0 0),linear-gradient(#FAF8F3 0 0),linear-gradient(#FAF8F3 0 0),linear-gradient(#FAF8F3 0 0);background-size:44% 40%;background-position:4% 8%,96% 8%,4% 92%,96% 92%;background-repeat:no-repeat">Затирка · #C9CCD1</div><div class="t"><b>outlineVariant</b>Разделители, неактивные края. Не для текста (<span class="cr">1,52:1</span>)</div></div>
+    <div class="chip" style="border-color:#0F1626"><div class="c" style="background:#0F1626;color:#E8ECF4">Ночной синий · #0F1626</div><div class="t"><b>surface (тёмная)</b>Фон тёмной темы. Текст #E8ECF4 <span class="cr">15,25:1</span></div></div>
+    <div class="chip" style="border-color:#8A6410"><div class="c" style="background:#8A6410;color:#fff">Горчичная эмаль · #8A6410</div><div class="t"><b>только ободок рецепта</b>Четвёртый цвет набора ободков. На белом <span class="cr">5,06:1</span></div></div>
+    <div class="chip" style="border-color:#9C1C2B"><div class="c" style="background:#9C1C2B;color:#fff">Ошибка · #9C1C2B</div><div class="t"><b>error</b>Темнее и холоднее красной эмали; всегда со значком и словами. <span class="cr">8,03:1</span></div></div>
+  </div>
+
+  <h3>Токены для app_theme.xml</h3>
+  <p class="small">Значения вставляются в <code>theme_light_&lt;role&gt;</code> и <code>theme_dark_&lt;role&gt;</code>. Справа — контраст пары «цвет / его on-цвет» или «цвет / фон», посчитанный по формуле WCAG 2.x (относительная яркость sRGB). Текст ≥ 4,5:1, края и значки ≥ 3:1.</p>
+  <div class="tok">
+    <div class="box">
+      <b>Светлая тема</b>
+      <table>
+        <tr><th>Роль</th><th>Цвет</th><th>Пара · контраст</th></tr>
+        <tr><td>primary</td><td><span class="sw" style="background:#1F4FA8"></span><code>#1F4FA8</code></td><td>onPrimary <span class="cr">7,66</span></td></tr>
+        <tr><td>onPrimary</td><td><span class="sw" style="background:#FFFFFF"></span><code>#FFFFFF</code></td><td>—</td></tr>
+        <tr><td>primaryContainer</td><td><span class="sw" style="background:#DCE6F8"></span><code>#DCE6F8</code></td><td>onPrimaryContainer <span class="cr">11,75</span></td></tr>
+        <tr><td>onPrimaryContainer</td><td><span class="sw" style="background:#0B2559"></span><code>#0B2559</code></td><td>—</td></tr>
+        <tr><td>secondary</td><td><span class="sw" style="background:#B8322A"></span><code>#B8322A</code></td><td>onSecondary #FFFFFF <span class="cr">5,95</span>; на surface <span class="cr">5,61</span></td></tr>
+        <tr><td>secondaryContainer</td><td><span class="sw" style="background:#F8DDD8"></span><code>#F8DDD8</code></td><td>onSecondaryContainer #4A0F09 <span class="cr">11,97</span></td></tr>
+        <tr><td>tertiary</td><td><span class="sw" style="background:#2E6B4A"></span><code>#2E6B4A</code></td><td>onTertiary #FFFFFF <span class="cr">6,33</span>; на surface <span class="cr">5,96</span></td></tr>
+        <tr><td>tertiaryContainer</td><td><span class="sw" style="background:#CDE8D6"></span><code>#CDE8D6</code></td><td>onTertiaryContainer #0F2E1E <span class="cr">11,27</span></td></tr>
+        <tr><td>surface / background</td><td><span class="sw" style="background:#FAF8F3"></span><code>#FAF8F3</code></td><td>onSurface <span class="cr">16,05</span></td></tr>
+        <tr><td>surfaceContainer</td><td><span class="sw" style="background:#F0EEE8"></span><code>#F0EEE8</code></td><td>onSurface <span class="cr">14,68</span>; onSurfaceVariant <span class="cr">7,19</span></td></tr>
+        <tr><td>surfaceContainerHigh</td><td><span class="sw" style="background:#E8E5DE"></span><code>#E8E5DE</code></td><td>onSurface <span class="cr">13,54</span>; onSurfaceVariant <span class="cr">6,63</span></td></tr>
+        <tr><td>onSurface</td><td><span class="sw" style="background:#1A1C22"></span><code>#1A1C22</code></td><td>—</td></tr>
+        <tr><td>onSurfaceVariant</td><td><span class="sw" style="background:#4A4E57"></span><code>#4A4E57</code></td><td>на surface <span class="cr">7,86</span></td></tr>
+        <tr><td>outline</td><td><span class="sw" style="background:#767A83"></span><code>#767A83</code></td><td>на surface <span class="cr">4,05</span>; на containerHigh <span class="cr">3,42</span></td></tr>
+        <tr><td>outlineVariant</td><td><span class="sw" style="background:#C9CCD1"></span><code>#C9CCD1</code></td><td>декор, <span class="cr">1,52</span> — не для смысла</td></tr>
+        <tr><td>error</td><td><span class="sw" style="background:#9C1C2B"></span><code>#9C1C2B</code></td><td>onError #FFFFFF <span class="cr">8,03</span>; на surface <span class="cr">7,57</span></td></tr>
+        <tr><td>onError</td><td><span class="sw" style="background:#FFFFFF"></span><code>#FFFFFF</code></td><td>—</td></tr>
+      </table>
+    </div>
+    <div class="box" style="background:#0F1626;color:#E8ECF4;border-color:#0F1626">
+      <b>Тёмная тема</b>
+      <table style="color:#E8ECF4">
+        <tr><th style="color:#B4BCCB">Роль</th><th style="color:#B4BCCB">Цвет</th><th style="color:#B4BCCB">Пара · контраст</th></tr>
+        <tr><td>primary</td><td><span class="sw" style="background:#A9C3FF"></span><code>#A9C3FF</code></td><td>onPrimary <span class="cr">8,39</span>; на surface <span class="cr">10,26</span></td></tr>
+        <tr><td>onPrimary</td><td><span class="sw" style="background:#0B2559"></span><code>#0B2559</code></td><td>—</td></tr>
+        <tr><td>primaryContainer</td><td><span class="sw" style="background:#23428A"></span><code>#23428A</code></td><td>onPrimaryContainer <span class="cr">7,58</span></td></tr>
+        <tr><td>onPrimaryContainer</td><td><span class="sw" style="background:#DCE6FF"></span><code>#DCE6FF</code></td><td>—</td></tr>
+        <tr><td>secondary</td><td><span class="sw" style="background:#FFB4A8"></span><code>#FFB4A8</code></td><td>onSecondary #5C130C <span class="cr">7,95</span>; на surface <span class="cr">10,62</span></td></tr>
+        <tr><td>secondaryContainer</td><td><span class="sw" style="background:#7E241C"></span><code>#7E241C</code></td><td>onSecondaryContainer #FFDAD4 <span class="cr">7,53</span></td></tr>
+        <tr><td>tertiary</td><td><span class="sw" style="background:#9CD3B0"></span><code>#9CD3B0</code></td><td>onTertiary #0F2E1E <span class="cr">8,64</span>; на surface <span class="cr">10,63</span></td></tr>
+        <tr><td>tertiaryContainer</td><td><span class="sw" style="background:#1D4D33"></span><code>#1D4D33</code></td><td>onTertiaryContainer #C4EDD1 <span class="cr">7,58</span></td></tr>
+        <tr><td>surface / background</td><td><span class="sw" style="background:#0F1626"></span><code>#0F1626</code></td><td>onSurface <span class="cr">15,25</span></td></tr>
+        <tr><td>surfaceContainer</td><td><span class="sw" style="background:#172036"></span><code>#172036</code></td><td>onSurface <span class="cr">13,68</span>; onSurfaceVariant <span class="cr">8,48</span></td></tr>
+        <tr><td>surfaceContainerHigh</td><td><span class="sw" style="background:#1F2A44"></span><code>#1F2A44</code></td><td>onSurface <span class="cr">12,04</span>; onSurfaceVariant <span class="cr">7,47</span></td></tr>
+        <tr><td>onSurface</td><td><span class="sw" style="background:#E8ECF4"></span><code>#E8ECF4</code></td><td>—</td></tr>
+        <tr><td>onSurfaceVariant</td><td><span class="sw" style="background:#B4BCCB"></span><code>#B4BCCB</code></td><td>на surface <span class="cr">9,45</span></td></tr>
+        <tr><td>outline</td><td><span class="sw" style="background:#8D96A8"></span><code>#8D96A8</code></td><td>на surface <span class="cr">6,07</span>; на container <span class="cr">5,45</span></td></tr>
+        <tr><td>outlineVariant</td><td><span class="sw" style="background:#374260"></span><code>#374260</code></td><td>декор, <span class="cr">1,81</span> — не для смысла</td></tr>
+        <tr><td>error</td><td><span class="sw" style="background:#FFB4AB"></span><code>#FFB4AB</code></td><td>onError #690005 <span class="cr">7,72</span>; на surface <span class="cr">10,63</span></td></tr>
+        <tr><td>onError</td><td><span class="sw" style="background:#690005"></span><code>#690005</code></td><td>—</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3>Где какой цвет</h3>
+  <div class="cols">
+    <div class="box"><b>Кобальт (primary)</b><ul class="dash"><li>ободок карточки рецепта по умолчанию и ободок текущего шага;</li><li>заливка главных кнопок (с тёмным внутренним ободком), выбранная вкладка, ссылки;</li><li>круглые кнопки таймера и шкала оставшегося времени.</li></ul></div>
+    <div class="box"><b>Красная эмаль (secondary) — только родословная</b><ul class="dash"><li>отметка «форк» в каталоге: глиф-ветка + слово «форк» в рамке с двойным краем;</li><li>второй, тонкий ободок у карточки форка, если у родителя нет своего цвета;</li><li>значок у строки «Форк рецепта … от …». Больше нигде — ни ошибки, ни предупреждения.</li></ul></div>
+    <div class="box"><b>Зелёная эмаль (tertiary) — «сделано»</b><ul class="dash"><li>на «Готовке» отмеченная строка теряет ободок, получает зелёный кружок с галочкой и зачёркивание; текст — onSurfaceVariant (7,86 / 9,45);</li><li>«есть в моей кухне» — та же галочка; «нет» — слово «нет» в рамке, а не цвет.</li></ul></div>
+    <div class="box"><b>Ободки рецептов</b><ul class="dash"><li>набор из четырёх эмалей: кобальт, красная, зелёная, горчичная; рецепт получает цвет от своего идентификатора и не меняет его;</li><li>все четыре держат ≥ 3:1 к surface в обеих темах (минимум 4,63 на container);</li><li>цвет — подсказка, носитель смысла — число ободков и подпись.</li></ul></div>
+  </div>
+</section>
+
+<!-- ================= 4. Шрифт ================= -->
+<section id="s4">
+  <h2><span class="n">4</span>Шрифт</h2>
+  <div class="cols">
+    <div class="box">
+      <div class="small">Интерфейс · SIL Open Font License 1.1</div>
+      <div style="font-size:44px;font-weight:600;line-height:1.1;margin:6px 0">Rubik</div>
+      <p class="small" style="margin:0">Гротеск с мягко скруглёнными углами, полная кириллица (включая ё, й, ъ), 300–900. Плотный, широкий, крупная высота строчных — хорошо держит 12 sp и выглядит «посудой» на 48 sp. Цифры таймера — с <code>tnum</code> (табличные), чтобы не прыгали.</p>
+    </div>
+    <div class="box">
+      <div class="small">Только словесный знак · SIL Open Font License 1.1</div>
+      <div style="font-family:var(--wm);font-size:40px;font-weight:600;line-height:1.1;margin:6px 0;color:var(--ink-navy)">Unbounded</div>
+      <p class="small" style="margin:0">Широкий геометричный гротеск, кириллица проверена в подмножестве Google Fonts (cyrillic, cyrillic-ext). В интерфейсе не используется — в APK не попадает, только в логотипе как кривые.</p>
+    </div>
+    <div class="box">
+      <div style="font-size:26px;line-height:1.3">Шакшука с фетой<br>Shakshuka with feta</div>
+      <div style="font-size:16px;margin-top:8px">Съешь же ещё этих мягких французских булок да выпей чаю. Ёжик, щука, объём, подъезд.</div>
+      <div style="font-size:16px">The quick brown fox jumps over the lazy dog. 0123456789 ½ ¼ °C</div>
+      <div style="font-family:var(--wm);font-size:20px;margin-top:8px;color:var(--ink-navy)">Вилка Ёлка Щи · Recipe Fork</div>
+    </div>
+  </div>
+
+  <h3>Шкала (роли Material 3, sp)</h3>
+  <div class="box">
+    <div class="tsample"><div class="r"><b>displayMedium</b> · 48/56 · 500 · tnum<br>цифры таймера на «Готовке»</div><div style="font-size:48px;font-weight:500;line-height:56px;font-variant-numeric:tabular-nums">07:42</div></div>
+    <div class="tsample"><div class="r"><b>headlineSmall: 24 → 28</b> · 28/36 · 500<br>текущий шаг на «Готовке»</div><div style="font-size:28px;font-weight:500;line-height:36px">Заложите морковь соломкой, не перемешивая.</div></div>
+    <div class="tsample"><div class="r"><b>headlineSmall</b>, начертание 600<br>название рецепта в шапке карточки (та же роль, что у шага — как в app_theme.xml)</div><div style="font-size:28px;font-weight:600;line-height:36px">Плов по-ферганский</div></div>
+    <div class="tsample"><div class="r"><b>titleLarge</b> · 22/28 · 500<br>верхняя панель, диалоги; шаги на «Просмотре»</div><div style="font-size:22px;font-weight:500;line-height:28px">Форкнуть «Сырники на рикотте»?</div></div>
+    <div class="tsample"><div class="r"><b>titleMedium</b> · 16/24 · 600<br>заголовок записи каталога</div><div style="font-size:16px;font-weight:600;line-height:24px">Борщ с черносливом</div></div>
+    <div class="tsample"><div class="r"><b>titleSmall</b> · 14/20 · 600<br>вкладки, заголовки разделов</div><div style="font-size:14px;font-weight:600;line-height:20px;text-transform:uppercase;letter-spacing:.4px">Ингредиенты · 9</div></div>
+    <div class="tsample"><div class="r"><b>bodyLarge</b> · 16/24 · 400<br>ингредиенты, поля; на «Готовке» 18</div><div style="font-size:16px;line-height:24px">Свёкла · <b style="font-weight:600">450 г</b></div></div>
+    <div class="tsample"><div class="r"><b>bodyMedium</b> · 14/20 · 400</div><div style="font-size:14px;line-height:20px">Форк рецепта «Шакшука» от quiet amber heron</div></div>
+    <div class="tsample"><div class="r"><b>bodySmall</b> · 12/16 · 400</div><div style="font-size:12px;line-height:16px">6 ингредиентов · 5 шагов · 40 мин</div></div>
+    <div class="tsample"><div class="r"><b>labelLarge</b> · 15/20 · 600</div><div style="font-size:15px;font-weight:600">Форкнуть · Начать таймер</div></div>
+  </div>
+  <p class="small" style="margin-top:10px">Изменения в <code>app_theme.xml</code>: <code>theme_type_headlineSmall</code> 24 → 28 sp (шаг на «Готовке»), остальные размеры совпадают с текущими. При шрифте 200 % шаг 56 sp, таймер переносит кнопки под циферблат.</p>
+</section>
+
+<!-- ================= 5. Иконка ================= -->
+<section id="s5">
+  <h2><span class="n">5</span>Иконка приложения</h2>
+  <p>Фон иконки — кобальт во весь холст, на нём белая эмалевая плитка знака с тёмно-синим ободком. Маска лаунчера режет только кобальт; плитка целиком внутри безопасного круга 66 dp, поэтому ободок не обрезается ни в круге, ни в «сквиркле».</p>
+  <div class="icon-block">
+    <div class="box" style="text-align:center">
+      <svg width="240" height="240" viewBox="0 0 512 512" aria-label="Иконка 512">
+        <rect width="512" height="512" fill="#1F4FA8"/>
+        <use href="#mk" x="96" y="96" width="320" height="320" style="--mk-field:#FAF8F3;--mk-rim:#0B2559;--mk-fork:#1F4FA8;--mk-branch:#B8322A"/>
+      </svg>
+      <div class="cap">512 × 512, квадратный холст для Google Play (маску накладывает магазин)</div>
+      <svg width="150" height="150" viewBox="0 0 512 512" style="margin-top:12px">
+        <defs><clipPath id="sq"><rect width="512" height="512" rx="154"/></clipPath></defs>
+        <g clip-path="url(#sq)"><rect width="512" height="512" fill="#1F4FA8"/><use href="#mk" x="96" y="96" width="320" height="320" style="--mk-field:#FAF8F3;--mk-rim:#0B2559;--mk-fork:#1F4FA8;--mk-branch:#B8322A"/></g>
+      </svg>
+      <div class="cap">Превью с маской магазина (радиус 30 %)</div>
+    </div>
+    <div class="box" style="text-align:center">
+      <svg width="240" height="240" viewBox="0 0 108 108" aria-label="Адаптивная иконка">
+        <rect width="108" height="108" fill="#1F4FA8"/>
+        <use href="#mk" x="25" y="25" width="58" height="58" style="--mk-field:#FAF8F3;--mk-rim:#0B2559;--mk-fork:#1F4FA8;--mk-branch:#B8322A"/>
+        <circle cx="54" cy="54" r="33" fill="none" stroke="#fff" stroke-width=".6" stroke-dasharray="2 1.5"/>
+        <circle cx="54" cy="54" r="36" fill="none" stroke="#DCE6F8" stroke-width=".4"/>
+        <rect x="18" y="18" width="72" height="72" fill="none" stroke="#DCE6F8" stroke-width=".4" stroke-dasharray="1 1"/>
+        <text x="54" y="102" text-anchor="middle" font-family="Rubik" font-size="4.2" fill="#DCE6F8">108 dp · безопасный круг 66 dp · видимая 72 dp</text>
+      </svg>
+      <div class="cap">Адаптивная 108 dp: фон — заливка #1F4FA8, передний план — плитка 58 dp (углы плитки на радиусе 33 dp — внутри круга)</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:14px">
+        <svg width="72" height="72" viewBox="18 18 72 72"><defs><clipPath id="m1"><circle cx="54" cy="54" r="36"/></clipPath></defs><g clip-path="url(#m1)"><rect width="108" height="108" fill="#1F4FA8"/><use href="#mk" x="25" y="25" width="58" height="58" style="--mk-rim:#0B2559"/></g></svg>
+        <svg width="72" height="72" viewBox="18 18 72 72"><defs><clipPath id="m2"><rect x="18" y="18" width="72" height="72" rx="22"/></clipPath></defs><g clip-path="url(#m2)"><rect width="108" height="108" fill="#1F4FA8"/><use href="#mk" x="25" y="25" width="58" height="58" style="--mk-rim:#0B2559"/></g></svg>
+        <svg width="72" height="72" viewBox="18 18 72 72"><defs><clipPath id="m3"><path d="M54 18c30 0 36 6 36 36s-6 36-36 36-36-6-36-36 6-36 36-36Z"/></clipPath></defs><g clip-path="url(#m3)"><rect width="108" height="108" fill="#1F4FA8"/><use href="#mk" x="25" y="25" width="58" height="58" style="--mk-rim:#0B2559"/></g></svg>
+      </div>
+      <div class="cap">Круг, скруглённый квадрат, сквиркл</div>
+    </div>
+    <div class="box" style="text-align:center">
+      <svg width="160" height="160" viewBox="0 0 108 108" aria-label="Монохромная иконка">
+        <rect width="108" height="108" fill="#E3E6EA"/>
+        <circle cx="54" cy="54" r="33" fill="none" stroke="#9aa0a8" stroke-width=".5" stroke-dasharray="2 1.5"/>
+        <use href="#mk" x="27" y="27" width="54" height="54" style="--mk-field:none;--mk-rim:#1A1C22;--mk-fork:#1A1C22;--mk-branch:#1A1C22"/>
+      </svg>
+      <div class="cap">Монохромный слой (Android 13+): ободок и вилка одной заливкой, внутренность плитки прозрачна</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:10px">
+        <svg width="64" height="64" viewBox="18 18 72 72"><defs><clipPath id="m4"><circle cx="54" cy="54" r="36"/></clipPath></defs><g clip-path="url(#m4)"><rect width="108" height="108" fill="#D6E3FF"/><use href="#mk" x="27" y="27" width="54" height="54" style="--mk-field:none;--mk-rim:#1B3263;--mk-fork:#1B3263;--mk-branch:#1B3263"/></g></svg>
+        <svg width="64" height="64" viewBox="18 18 72 72"><defs><clipPath id="m5"><circle cx="54" cy="54" r="36"/></clipPath></defs><g clip-path="url(#m5)"><rect width="108" height="108" fill="#2E3A2F"/><use href="#mk" x="27" y="27" width="54" height="54" style="--mk-field:none;--mk-rim:#CFE8C8;--mk-fork:#CFE8C8;--mk-branch:#CFE8C8"/></g></svg>
+        <svg width="64" height="64" viewBox="18 18 72 72"><defs><clipPath id="m6"><circle cx="54" cy="54" r="36"/></clipPath></defs><g clip-path="url(#m6)"><rect width="108" height="108" fill="#F2DFD6"/><use href="#mk" x="27" y="27" width="54" height="54" style="--mk-field:none;--mk-rim:#5A2D1E;--mk-fork:#5A2D1E;--mk-branch:#5A2D1E"/></g></svg>
+      </div>
+      <div class="cap">Тематическая окраска системы — три обоев</div>
+    </div>
+  </div>
+
+  <h3>48 dp в ряду лаунчера</h3>
+  <div class="cols">
+    <div class="launcher">
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#4285F4"/><circle cx="24" cy="24" r="10" fill="none" stroke="#fff" stroke-width="4"/></svg>Камера</div>
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#fff"/><path d="M14 30 24 14l10 16Z" fill="#34A853"/></svg>Карты</div>
+      <div class="ap"><svg width="48" height="48" viewBox="18 18 72 72"><defs><clipPath id="l1"><circle cx="54" cy="54" r="36"/></clipPath></defs><g clip-path="url(#l1)"><rect width="108" height="108" fill="#1F4FA8"/><use href="#mk" x="25" y="25" width="58" height="58" style="--mk-rim:#0B2559"/></g></svg>Recipe Fork</div>
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#F4B400"/><rect x="15" y="13" width="18" height="22" rx="3" fill="#fff"/></svg>Заметки</div>
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#E8EAED"/><circle cx="24" cy="24" r="11" fill="none" stroke="#5f6368" stroke-width="3"/><path d="M24 17v7l5 3" stroke="#5f6368" stroke-width="3" fill="none" stroke-linecap="round"/></svg>Часы</div>
+    </div>
+    <div class="launcher light">
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#C8D3F0"/><circle cx="24" cy="24" r="10" fill="none" stroke="#1B3263" stroke-width="4"/></svg>Камера</div>
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#C8D3F0"/><path d="M14 30 24 14l10 16Z" fill="#1B3263"/></svg>Карты</div>
+      <div class="ap"><svg width="48" height="48" viewBox="18 18 72 72"><defs><clipPath id="l2"><circle cx="54" cy="54" r="36"/></clipPath></defs><g clip-path="url(#l2)"><rect width="108" height="108" fill="#C8D3F0"/><use href="#mk" x="27" y="27" width="54" height="54" style="--mk-field:none;--mk-rim:#1B3263;--mk-fork:#1B3263;--mk-branch:#1B3263"/></g></svg>Recipe Fork</div>
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#C8D3F0"/><rect x="15" y="13" width="18" height="22" rx="3" fill="#1B3263"/></svg>Заметки</div>
+      <div class="ap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#C8D3F0"/><circle cx="24" cy="24" r="11" fill="none" stroke="#1B3263" stroke-width="3"/></svg>Часы</div>
+    </div>
+  </div>
+  <p class="small" style="margin-top:10px">В 48 dp ободок плитки — 2,9 px при mdpi и 8,7 px при xxhdpi, зубцы и ветка различимы; ветка читается как «лишний» изогнутый зубец. Белая плитка на кобальте выделяется в ряду круглых заливок.</p>
+</section>
+
+<!-- ================= 6. Фирменный элемент ================= -->
+<section id="s6">
+  <h2><span class="n">6</span>Фирменный элемент: «Ободок»</h2>
+  <p>Всё, что требует внимания, получает толстый цветной край — как ободок эмалированной кружки. Край не декоративный: у него три значения. <b>Один ободок</b> — объект в работе (карточка, текущий шаг, запущенный таймер). <b>Два ободка</b> — у рецепта есть родитель: снаружи тонкий край цвета родителя. <b>Нет ободка + галочка + зачёркивание</b> — сделано. Число краёв и галочка читаются без цвета; цвет добавляет «чей это край».</p>
+
+  <div class="sig-grid">
+    <div class="sig">
+      <h4>1. Оригинал — один ободок</h4>
+      <div class="ph" style="width:auto;height:auto;box-shadow:none;border-radius:0;background:transparent">
+        <div class="rim entry" style="--rc:var(--r-grn);margin:4px 0">
+          <div class="thumb"><svg><use href="#i-pot"/></svg></div>
+          <div><div class="ti">Борщ с черносливом</div><div class="me">calm silver otter · 11 ингр. · 2 ч</div><div class="ft"><span class="cnt"><svg><use href="#fk"/></svg>14 форков</span></div></div>
+        </div>
+      </div>
+      <p class="small" style="margin-top:12px">Цвет края — постоянный цвет рецепта из набора четырёх эмалей.</p>
+    </div>
+    <div class="sig">
+      <h4>2. Форк — свой край и тонкий край родителя</h4>
+      <div class="ph" style="width:auto;height:auto;box-shadow:none;border-radius:0;background:transparent;--s:#fff">
+        <div class="rim fk entry" style="--rc:var(--r-cob);--pr:var(--r-grn);margin:6px 4px">
+          <div class="thumb"><svg><use href="#i-pot"/></svg></div>
+          <div><div class="ti">Борщ без мяса, на фасоли</div><div class="me">brave linen fox · 12 ингр. · 1 ч 40</div><div class="ft"><span class="fkm"><svg><use href="#fk"/></svg>форк</span><span class="cnt">от «Борщ с черносливом»</span></div></div>
+        </div>
+      </div>
+      <p class="small" style="margin-top:12px">Зелёный внешний край — это край «Борща с черносливом». Родитель назван словами; цвет только связывает их взглядом.</p>
+    </div>
+    <div class="sig">
+      <h4>3. Шаг: текущий, сделанный, следующий</h4>
+      <div class="ph" style="width:auto;height:auto;box-shadow:none;border-radius:0;background:transparent;--s:#fff">
+        <div class="done" style="margin:0;padding-left:4px"><span class="ck"><svg><use href="#i-check"/></svg></span><span class="s">2. Обжарьте лук до золотистого</span></div>
+        <div class="cur" style="margin:8px 0 0;padding:12px 14px"><div class="lb">Шаг 3 · сейчас</div><div class="tx" style="font-size:21px">Добавьте <span class="ingref">помидоры</span> и тушите 10 минут.</div></div>
+        <div class="next" style="margin:8px 0 0;font-size:15px"><div class="lb">Шаг 4</div>Сделайте лунки и вбейте яйца.</div>
+      </div>
+      <p class="small" style="margin-top:12px">Текущий — толстый кобальтовый край 5 dp. Сделанный — край снят, кружок с галочкой, зачёркивание, озвучивается «сделано».</p>
+    </div>
+    <div class="sig">
+      <h4>4. Таймер — ободок как шкала</h4>
+      <div style="display:flex;gap:18px;align-items:center">
+        <svg width="132" height="132" viewBox="0 0 132 132" style="flex:none">
+          <circle cx="66" cy="66" r="58" fill="#F0EEE8"/>
+          <circle cx="66" cy="66" r="58" fill="none" stroke="#C9CCD1" stroke-width="10"/>
+          <circle cx="66" cy="66" r="58" fill="none" stroke="#1F4FA8" stroke-width="10" stroke-dasharray="281 365" transform="rotate(-90 66 66)" stroke-linecap="butt"/>
+          <g stroke="#4A4E57" stroke-width="2"><path d="M66 17v6M66 109v6"/></g>
+          <text x="66" y="72" text-anchor="middle" font-family="Rubik" font-weight="500" font-size="30" fill="#1A1C22" style="font-variant-numeric:tabular-nums">07:42</text>
+          <text x="66" y="92" text-anchor="middle" font-family="Rubik" font-size="11" fill="#4A4E57">из 10:00</text>
+        </svg>
+        <div class="small">Оставшееся время — кобальтовая часть ободка, прошедшее — затирка. Главное — цифры; шкала дублирует их для взгляда издалека.</div>
+      </div>
+    </div>
+    <div class="sig">
+      <h4>5. Кнопки — эмалевый край</h4>
+      <div class="ph" style="width:auto;height:auto;box-shadow:none;border-radius:0;background:transparent;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+        <span class="btn f"><svg><use href="#fk" style="--br:currentColor"/></svg>Форкнуть</span>
+        <span class="btn o">Отмена</span>
+        <span class="eb"><svg><use href="#i-pause"/></svg></span>
+        <span class="eb o"><svg><use href="#i-reset"/></svg></span>
+      </div>
+      <p class="small" style="margin-top:12px">Залитая кнопка — с внутренним тёмным краем 3 dp; контурная — ободок 3 dp кобальтом. Круглые кнопки «Готовки» — 64 и 56 dp.</p>
+    </div>
+    <div class="sig">
+      <h4>6. Плитка как пустое место</h4>
+      <div style="display:flex;gap:14px;align-items:center">
+        <div class="ph" style="width:auto;height:auto;box-shadow:none;border-radius:0;background:transparent;flex:none"><div class="thumb" style="width:96px;height:96px;background-size:24px 24px;--rc:#8A6410"><svg style="width:44px;height:44px"><use href="#i-mug"/></svg></div></div>
+        <div class="small">Нет фото — нет стоковой картинки: квадрат кафеля с затиркой и значком посуды цветом края рецепта. Тот же кафель — фон баннера и пустых состояний.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 7. Экраны ================= -->
+<section id="s7">
+  <h2><span class="n">7</span>Экраны</h2>
+  <p>360 × 780, плотность 1 CSS px = 1 dp. Компоненты Material 3 в своём облике: панель, вкладки, FAB, чипы, нижняя навигация — у всех главных элементов эмалевый край.</p>
+  <div class="phones">
+
+    <!-- Каталог -->
+    <figure class="phone-wrap">
+      <div class="ph">
+        <div class="sb"><span>12:30</span><span class="ic"><svg width="64" height="14"><use href="#sbar"/></svg></span></div>
+        <div class="tb"><svg width="34" height="34" style="margin-left:12px"><use href="#mk"/></svg><div class="ttl">Каталог</div><div class="ib"><svg><use href="#i-more"/></svg></div></div>
+        <div class="search"><svg width="22" height="22"><use href="#i-search"/></svg>Поиск: блюдо, ингредиент</div>
+        <div class="chips"><span class="chp on"><svg><use href="#i-check"/></svg>Новые</span><span class="chp">По оценке</span><span class="chp"><svg><use href="#fk"/></svg>Больше форков</span></div>
+        <div class="rim entry" style="--rc:var(--r-red)">
+          <div class="thumb"><svg><use href="#i-pan"/></svg></div>
+          <div><div class="ti">Шакшука с фетой</div><div class="me">quiet amber heron · 8 ингр. · 30 мин</div><div class="ft"><span class="cnt"><svg><use href="#fk"/></svg>23 форка</span></div></div>
+        </div>
+        <div class="rim fk entry" style="--rc:var(--r-cob);--pr:var(--r-red)">
+          <div class="thumb"><svg><use href="#i-pan"/></svg></div>
+          <div><div class="ti">Шакшука с нутом и шпинатом</div><div class="me">brave linen fox · 10 ингр. · 35 мин</div><div class="ft"><span class="fkm"><svg><use href="#fk"/></svg>форк</span><span class="cnt"><svg><use href="#fk"/></svg>3 форка</span></div></div>
+        </div>
+        <div class="rim entry" style="--rc:var(--r-mus)">
+          <div class="thumb"><svg><use href="#i-pot"/></svg></div>
+          <div><div class="ti">Плов по-ферганский</div><div class="me">steady copper lynx · 9 ингр. · 1 ч 50</div><div class="ft"><span class="cnt"><svg><use href="#fk"/></svg>41 форк</span></div></div>
+        </div>
+        <div class="rim fk entry" style="--rc:var(--r-grn);--pr:var(--r-cob)">
+          <div class="thumb"><svg><use href="#i-pan"/></svg></div>
+          <div><div class="ti">Сырники без муки</div><div class="me">mild paper crane · 5 ингр. · 25 мин</div><div class="ft"><span class="fkm"><svg><use href="#fk"/></svg>форк</span><span class="cnt">форков нет</span></div></div>
+        </div>
+        <div class="bn">
+          <div class="on"><span class="pill"><svg><use href="#i-cat"/></svg></span>Каталог</div>
+          <div><span class="pill"><svg><use href="#i-book"/></svg></span>Моя книга</div>
+          <div><span class="pill"><svg><use href="#i-pot"/></svg></span>Моя кухня</div>
+        </div>
+        <div class="gb"></div>
+      </div>
+      <figcaption><b>Каталог.</b> У каждой записи ободок цвета рецепта; у форка — второй тонкий ободок цвета родителя и отметка «форк» (глиф + слово). Число форков — глиф-ветка и число словами. Сортировки — чипы.</figcaption>
+    </figure>
+
+    <!-- Просмотр -->
+    <figure class="phone-wrap">
+      <div class="ph">
+        <div class="sb"><span>12:31</span><span class="ic"><svg width="64" height="14"><use href="#sbar"/></svg></span></div>
+        <div class="tb"><div class="ib" style="color:var(--on)"><svg><use href="#i-back"/></svg></div><div class="ttl"></div><div class="ib"><svg><use href="#i-edit"/></svg></div><div class="ib"><svg><use href="#i-more"/></svg></div></div>
+        <div class="tabs"><div class="on">Просмотр</div><div>Готовка</div></div>
+        <div class="rim fk hero" style="--rc:var(--r-cob);--pr:var(--r-red);margin-top:14px">
+          <h5>Шакшука с нутом и шпинатом</h5>
+          <div style="font-size:13px;color:var(--on2);margin-top:4px">10 ингредиентов · 6 шагов · 2 таймера · 35 мин</div>
+          <div class="prov"><svg><use href="#fk"/></svg><span>Форк рецепта <a>«Шакшука с фетой»</a> от quiet amber heron</span></div>
+        </div>
+        <div class="scaler"><span class="lbl">Порции</span><span class="rb"><svg><use href="#i-minus"/></svg></span><span class="v">3 порции</span><span class="rb"><svg><use href="#i-plus"/></svg></span></div>
+        <div style="padding:0 16px;font-size:12px;color:var(--on2)">Пунктир — количество пересчитано из 4 порций</div>
+        <div class="sect"><span>Ингредиенты · 10</span></div>
+        <div class="ing"><span>Яйца</span><span class="q d">4–5 шт</span></div>
+        <div class="ing"><span>Нут варёный</span><span class="q d">180 г</span></div>
+        <div class="ing"><span>Помидоры в собственном соку</span><span class="q d">300 г</span></div>
+        <div class="ing"><span>Шпинат</span><span class="q d">75 г</span></div>
+        <div class="ing"><span>Зира молотая</span><span class="q d">¾ ч. л.</span></div>
+        <div class="ing" style="border:0"><span>Сковорода 26 см <span class="miss">нет</span></span><span class="q">1</span></div>
+        <div class="fab ext" style="bottom:28px"><svg><use href="#fk" style="--br:currentColor"/></svg>Форкнуть</div>
+        <div class="gb"></div>
+      </div>
+      <figcaption><b>Карточка — Просмотр.</b> Шапка с двумя ободками и строкой происхождения со ссылкой на родителя. Порции — круглые кнопки 48 dp. «Форкнуть» — расширенная FAB, всегда на экране. Посуды нет в «Моей кухне» — слово «нет» в рамке.</figcaption>
+    </figure>
+
+    <!-- Готовка (тёмная) -->
+    <figure class="phone-wrap">
+      <div class="ph dk">
+        <div class="sb"><span>18:47</span><span class="ic"><svg width="64" height="14"><use href="#sbar"/></svg></span></div>
+        <div class="tb"><div class="ib" style="color:var(--on)"><svg><use href="#i-back"/></svg></div><div class="ttl" style="font-size:18px">Плов по-ферганский</div><div class="ib"><svg><use href="#i-more"/></svg></div></div>
+        <div class="tabs"><div>Просмотр</div><div class="on">Готовка</div></div>
+        <div class="fold"><span class="ck"><svg><use href="#i-check"/></svg></span><span style="flex:1"><b>Ингредиенты</b> · все 9 отмечены</span><svg width="24" height="24"><use href="#i-down"/></svg></div>
+        <div class="done"><span class="ck"><svg><use href="#i-check"/></svg></span><span class="s">1. Раскалите казан, обжарьте мясо</span></div>
+        <div class="done" style="margin-top:0"><span class="ck"><svg><use href="#i-check"/></svg></span><span class="s">2. Добавьте лук, жарьте 5 минут</span></div>
+        <div class="cur">
+          <div class="lb"><span class="ck0" style="width:22px;height:22px;border-width:3px"></span>Шаг 3 из 6 · сейчас</div>
+          <div class="tx">Заложите <span class="ingref">морковь</span> соломкой, не перемешивая. Жарьте до мягкости.</div>
+          <div class="timer">
+            <svg width="124" height="124" viewBox="0 0 132 132" style="flex:none">
+              <circle cx="66" cy="66" r="58" fill="#0F1626"/>
+              <circle cx="66" cy="66" r="58" fill="none" stroke="#374260" stroke-width="10"/>
+              <circle cx="66" cy="66" r="58" fill="none" stroke="#A9C3FF" stroke-width="10" stroke-dasharray="281 365" transform="rotate(-90 66 66)"/>
+              <g stroke="#B4BCCB" stroke-width="2"><path d="M66 17v6M66 109v6"/></g>
+              <text x="66" y="74" text-anchor="middle" font-family="Rubik" font-weight="500" font-size="34" fill="#E8ECF4" style="font-variant-numeric:tabular-nums">07:42</text>
+              <text x="66" y="94" text-anchor="middle" font-family="Rubik" font-size="12" fill="#B4BCCB">из 10:00</text>
+            </svg>
+            <div style="flex:1;font-size:14px;color:var(--on2);line-height:1.3">Жарить<br>морковь<br><span style="color:var(--on);font-weight:500">осталось</span></div>
+            <div class="tbtns"><span class="eb" aria-label="Пауза"><svg><use href="#i-pause"/></svg></span><span class="eb o" aria-label="Сначала"><svg><use href="#i-reset"/></svg></span></div>
+          </div>
+        </div>
+        <div class="next"><div class="lb">Шаг 4</div>Выложите рис ровным слоем, залейте кипятком на 2 см выше.</div>
+        <div class="gb"></div>
+      </div>
+      <figcaption><b>Карточка — Готовка, тёмная тема.</b> Текущий шаг — первый неотмеченный, толстый ободок, текст 28 sp. Сделанные шаги без края, с галочкой и зачёркиванием; отмеченный список свернут в одну строку 56 dp. Таймер — циферблат с ободком-шкалой и круглые кнопки 64 и 56 dp. Ни форка, ни правки.</figcaption>
+    </figure>
+
+    <!-- Моя книга -->
+    <figure class="phone-wrap">
+      <div class="ph">
+        <div class="sb"><span>12:40</span><span class="ic"><svg width="64" height="14"><use href="#sbar"/></svg></span></div>
+        <div class="tb"><div class="ttl" style="padding-left:16px">Моя книга</div><div class="ib"><svg><use href="#i-search"/></svg></div><div class="ib"><svg><use href="#i-more"/></svg></div></div>
+        <div class="chips" style="padding-top:2px"><span class="chp on"><svg><use href="#i-check"/></svg>Мои рецепты · 4</span><span class="chp">Сохранённые · 12</span></div>
+        <div class="rim fk entry" style="--rc:var(--r-cob);--pr:var(--r-red)">
+          <div class="thumb"><svg><use href="#i-pan"/></svg></div>
+          <div><div class="ti">Шакшука с нутом и шпинатом</div><div class="me">форк «Шакшука с фетой»</div><div class="ft"><span class="status" style="background:var(--terC);color:#0F2E1E"><svg><use href="#i-pub"/></svg>Опубликован</span></div></div>
+        </div>
+        <div class="rim entry" style="--rc:var(--r-mus)">
+          <div class="thumb"><svg><use href="#i-mug"/></svg></div>
+          <div><div class="ti">Глинтвейн безалкогольный</div><div class="me">свой рецепт · 7 ингр.</div><div class="ft"><span class="status" style="background:var(--pc);color:var(--onpc)"><svg><use href="#i-send"/></svg>Отправлен, ждёт проверки</span></div></div>
+        </div>
+        <div class="rim fk entry" style="--rc:var(--r-red);--pr:var(--r-grn)">
+          <div class="thumb"><svg><use href="#i-pot"/></svg></div>
+          <div><div class="ti">Борщ как у мамы</div><div class="me">форк «Борщ с черносливом»</div><div class="ft"><span class="status" style="border:1.5px dashed var(--ol);color:var(--on2)"><svg><use href="#i-draft"/></svg>Черновик, только на телефоне</span></div></div>
+        </div>
+        <div class="rim entry" style="--rc:var(--r-grn)">
+          <div class="thumb"><svg><use href="#i-pan"/></svg></div>
+          <div><div class="ti">Оладьи на кефире</div><div class="me">свой рецепт · 6 ингр.</div><div class="ft"><span class="status" style="border:1.5px dashed var(--ol);color:var(--on2)"><svg><use href="#i-draft"/></svg>Черновик, только на телефоне</span></div></div>
+        </div>
+        <div class="fab" style="bottom:100px"><svg><use href="#i-plus"/></svg></div>
+        <div class="bn">
+          <div><span class="pill"><svg><use href="#i-cat"/></svg></span>Каталог</div>
+          <div class="on"><span class="pill"><svg><use href="#i-book"/></svg></span>Моя книга</div>
+          <div><span class="pill"><svg><use href="#i-pot"/></svg></span>Моя кухня</div>
+        </div>
+        <div class="gb"></div>
+      </div>
+      <figcaption><b>Моя книга.</b> Свои рецепты и форки с теми же ободками. Состояние — значок, слово и форма плашки (пунктир у черновика), а не только цвет. FAB «+» — новый рецепт с эмалевым краем.</figcaption>
+    </figure>
+
+    <!-- Подтверждение форка -->
+    <figure class="phone-wrap">
+      <div class="ph">
+        <div class="sb"><span>12:32</span><span class="ic"><svg width="64" height="14"><use href="#sbar"/></svg></span></div>
+        <div class="tb"><div class="ib" style="color:var(--on)"><svg><use href="#i-back"/></svg></div><div class="ttl"></div><div class="ib"><svg><use href="#i-edit"/></svg></div></div>
+        <div class="tabs"><div class="on">Просмотр</div><div>Готовка</div></div>
+        <div class="rim hero" style="--rc:var(--r-red)"><h5>Шакшука с фетой</h5><div style="font-size:13px;color:var(--on2);margin-top:4px">8 ингредиентов · 5 шагов · 30 мин</div></div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <h5>Форкнуть «Шакшука с фетой»?</h5>
+          <svg width="320" height="118" viewBox="0 0 320 118" style="display:block;margin:4px 0 10px">
+            <rect x="6" y="20" width="118" height="78" rx="16" fill="#F0EEE8" stroke="#B8322A" stroke-width="4"/>
+            <text x="65" y="52" text-anchor="middle" font-family="Rubik" font-size="13" font-weight="600" fill="#1A1C22">Шакшука</text>
+            <text x="65" y="70" text-anchor="middle" font-family="Rubik" font-size="13" font-weight="600" fill="#1A1C22">с фетой</text>
+            <text x="65" y="114" text-anchor="middle" font-family="Rubik" font-size="11" fill="#4A4E57">не изменится</text>
+            <path d="M128 59h48" stroke="#4A4E57" stroke-width="3" stroke-linecap="round"/><path d="m168 51 9 8-9 8" fill="none" stroke="#4A4E57" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="188" y="16" width="126" height="86" rx="19" fill="none" stroke="#B8322A" stroke-width="2"/>
+            <rect x="193" y="21" width="116" height="76" rx="15" fill="#F0EEE8" stroke="#1F4FA8" stroke-width="4"/>
+            <text x="251" y="52" text-anchor="middle" font-family="Rubik" font-size="13" font-weight="600" fill="#1A1C22">Новый рецепт</text>
+            <text x="251" y="70" text-anchor="middle" font-family="Rubik" font-size="12" fill="#4A4E57">ваш, с родителем</text>
+            <text x="251" y="114" text-anchor="middle" font-family="Rubik" font-size="11" fill="#4A4E57">два ободка</text>
+          </svg>
+          <p style="font-size:14px;margin:0 0 6px;color:var(--on)">Появится новый рецепт в «Моей книге». Он назовёт этот рецепт своим родителем, а исходный не изменится.</p>
+          <p style="font-size:13px;margin:0 0 16px;color:var(--on2)">Ингредиенты, шаги и таймеры перейдут. Фото, описание и заметки к шагам — нет: они принадлежат автору.</p>
+          <div style="display:flex;gap:10px;justify-content:flex-end"><span class="btn t">Отмена</span><span class="btn f"><svg><use href="#fk" style="--br:currentColor"/></svg>Форкнуть</span></div>
+        </div>
+        <div class="gb"></div>
+      </div>
+      <figcaption><b>Подтверждение форка.</b> Нижний лист с кобальтовым краем. Схема показывает правило системы: родитель с одним ободком остаётся как есть, новый рецепт получает свой край и край родителя. Что переносится, а что нет (FORK-002), — словами.</figcaption>
+    </figure>
+
+    <!-- Моя кухня -->
+    <figure class="phone-wrap">
+      <div class="ph dk">
+        <div class="sb"><span>19:05</span><span class="ic"><svg width="64" height="14"><use href="#sbar"/></svg></span></div>
+        <div class="tb"><div class="ttl" style="padding-left:16px">Моя кухня</div><div class="ib"><svg><use href="#i-search"/></svg></div></div>
+        <div style="padding:0 16px 8px;font-size:14px;color:var(--on2)">Отметьте, что у вас есть. Карточка рецепта покажет, чего не хватает.</div>
+        <div class="sect"><span>Есть · 5</span></div>
+        <div class="done" style="margin-top:4px;color:var(--on)"><span class="ck"><svg><use href="#i-check"/></svg></span><span style="flex:1">Казан 6 л</span></div>
+        <div class="done" style="margin-top:0;color:var(--on)"><span class="ck"><svg><use href="#i-check"/></svg></span><span style="flex:1">Сковорода 28 см</span></div>
+        <div class="done" style="margin-top:0;color:var(--on)"><span class="ck"><svg><use href="#i-check"/></svg></span><span style="flex:1">Духовка</span></div>
+        <div class="done" style="margin-top:0;color:var(--on)"><span class="ck"><svg><use href="#i-check"/></svg></span><span style="flex:1">Блендер погружной</span></div>
+        <div class="done" style="margin-top:0;color:var(--on)"><span class="ck"><svg><use href="#i-check"/></svg></span><span style="flex:1">Кухонные весы</span></div>
+        <div class="sect"><span>Нет · 3</span></div>
+        <div class="done" style="margin-top:4px;color:var(--on)"><span class="ck0"></span><span style="flex:1">Сковорода 26 см</span><span class="miss">в 2 рецептах</span></div>
+        <div class="done" style="margin-top:0;color:var(--on)"><span class="ck0"></span><span style="flex:1">Мультиварка</span></div>
+        <div class="done" style="margin-top:0;color:var(--on)"><span class="ck0"></span><span style="flex:1">Форма для кекса</span></div>
+        <div class="bn">
+          <div><span class="pill"><svg><use href="#i-cat"/></svg></span>Каталог</div>
+          <div><span class="pill"><svg><use href="#i-book"/></svg></span>Моя книга</div>
+          <div class="on"><span class="pill"><svg><use href="#i-pot"/></svg></span>Моя кухня</div>
+        </div>
+        <div class="gb"></div>
+      </div>
+      <figcaption><b>Моя кухня, тёмная тема.</b> Та же грамматика: зелёная галочка — есть, пустой кобальтовый ободок — нет. Строки 56 dp, отметка нажатием на всю строку.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= 8. Магазин ================= -->
+<section id="s8">
+  <h2><span class="n">8</span>Магазин</h2>
+  <h3 style="margin-top:0">Графика для витрины, 1024 × 500</h3>
+  <svg class="banner" viewBox="0 0 1024 500" role="img" aria-label="Графика для витрины">
+    <defs>
+      <pattern id="tile" width="64" height="64" patternUnits="userSpaceOnUse"><rect width="64" height="64" fill="#C9CCD1"/><rect x="2" y="2" width="60" height="60" rx="4" fill="#FAF8F3"/></pattern>
+    </defs>
+    <rect width="1024" height="500" fill="#FAF8F3"/>
+    <rect x="560" y="0" width="464" height="500" fill="url(#tile)"/>
+    <rect x="0" y="0" width="1024" height="500" fill="none" stroke="#1F4FA8" stroke-width="16"/>
+    <use href="#mk" x="64" y="70" width="112" height="112"/>
+    <text x="64" y="250" font-family="Unbounded" font-weight="600" font-size="52" fill="#0B2559">Recipe Fork</text>
+    <text x="64" y="304" font-family="Rubik" font-size="26" fill="#1A1C22">Рецепты, которые пересчитываются</text>
+    <text x="64" y="338" font-family="Rubik" font-size="26" fill="#1A1C22">на нужное число порций</text>
+    <text x="64" y="398" font-family="Rubik" font-size="20" fill="#4A4E57">Таймеры в шагах · форк вместо правки</text><text x="64" y="428" font-family="Rubik" font-size="20" fill="#4A4E57">Работает без аккаунта и без сервера</text>
+    <!-- timer on tiles -->
+    <circle cx="720" cy="250" r="118" fill="#FAF8F3"/>
+    <circle cx="720" cy="250" r="110" fill="none" stroke="#C9CCD1" stroke-width="18"/>
+    <circle cx="720" cy="250" r="110" fill="none" stroke="#1F4FA8" stroke-width="18" stroke-dasharray="530 692" transform="rotate(-90 720 250)"/>
+    <g stroke="#4A4E57" stroke-width="3"><path d="M720 150v10M720 340v10"/></g>
+    <text x="720" y="266" text-anchor="middle" font-family="Rubik" font-weight="500" font-size="54" fill="#1A1C22">07:42</text>
+    <text x="720" y="300" text-anchor="middle" font-family="Rubik" font-size="20" fill="#4A4E57">морковь</text>
+    <rect x="866" y="88" width="104" height="104" rx="22" fill="#F0EEE8" stroke="#2E6B4A" stroke-width="7"/>
+    <use href="#i-pot" x="890" y="112" width="56" height="56" style="color:#2E6B4A"/>
+    <rect x="860" y="306" width="116" height="116" rx="26" fill="none" stroke="#2E6B4A" stroke-width="3"/>
+    <rect x="866" y="312" width="104" height="104" rx="22" fill="#F0EEE8" stroke="#1F4FA8" stroke-width="7"/>
+    <use href="#i-pot" x="890" y="336" width="56" height="56" style="color:#1F4FA8"/>
+    <path d="M918 204v90" stroke="#B8322A" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/>
+  </svg>
+  <p class="small" style="margin-top:10px">Слева — знак и одна фраза о сути, справа — кафельная стена с таймером и двумя «кастрюлями»: оригинал с одним ободком, ниже форк с двумя. Центральная треть свободна от мелкого текста (магазин может наложить кнопку воспроизведения).</p>
+
+  <h3>Скриншоты 1080 × 1920</h3>
+  <div class="shots">
+    <svg viewBox="0 0 1080 1920" role="img" aria-label="Скриншот: готовка">
+      <rect width="1080" height="1920" fill="#1F4FA8"/>
+      <text x="90" y="200" font-family="Rubik" font-weight="600" font-size="84" fill="#FFFFFF">Шаг крупно,</text>
+      <text x="90" y="300" font-family="Rubik" font-weight="600" font-size="84" fill="#FFFFFF">таймер рядом</text>
+      <text x="90" y="380" font-family="Rubik" font-size="40" fill="#DCE6F8">Кнопки 56 dp — для мокрых рук</text>
+      <rect x="130" y="470" width="820" height="1560" rx="70" fill="#0B0F1A"/>
+      <rect x="150" y="490" width="780" height="1540" rx="54" fill="#0F1626"/>
+      <rect x="190" y="560" width="300" height="10" rx="5" fill="#374260"/>
+      <text x="190" y="650" font-family="Rubik" font-weight="500" font-size="40" fill="#E8ECF4">Плов по-ферганский</text>
+      <g font-family="Rubik" font-size="32" fill="#B4BCCB">
+        <circle cx="216" cy="740" r="24" fill="#9CD3B0"/><path d="m204 741 8 8 16-16" stroke="#0F1626" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <text x="260" y="752" text-decoration="line-through">1. Обжарьте мясо</text>
+        <circle cx="216" cy="820" r="24" fill="#9CD3B0"/><path d="m204 821 8 8 16-16" stroke="#0F1626" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <text x="260" y="832" text-decoration="line-through">2. Добавьте лук</text>
+      </g>
+      <rect x="186" y="890" width="708" height="760" rx="44" fill="#172036" stroke="#A9C3FF" stroke-width="12"/>
+      <text x="230" y="960" font-family="Rubik" font-weight="600" font-size="30" fill="#A9C3FF">ШАГ 3 ИЗ 6 · СЕЙЧАС</text>
+      <g font-family="Rubik" font-weight="500" font-size="54" fill="#E8ECF4">
+        <text x="230" y="1050">Заложите морковь</text><text x="230" y="1120">соломкой, не</text><text x="230" y="1190">перемешивая.</text>
+      </g>
+      <circle cx="380" cy="1420" r="150" fill="#0F1626"/>
+      <circle cx="380" cy="1420" r="140" fill="none" stroke="#374260" stroke-width="22"/>
+      <circle cx="380" cy="1420" r="140" fill="none" stroke="#A9C3FF" stroke-width="22" stroke-dasharray="677 880" transform="rotate(-90 380 1420)"/>
+      <text x="380" y="1440" text-anchor="middle" font-family="Rubik" font-weight="500" font-size="72" fill="#E8ECF4">07:42</text>
+      <circle cx="720" cy="1340" r="76" fill="#A9C3FF" stroke="#DCE6FF" stroke-width="8"/>
+      <rect x="690" y="1305" width="20" height="70" rx="5" fill="#0B2559"/><rect x="730" y="1305" width="20" height="70" rx="5" fill="#0B2559"/>
+      <circle cx="720" cy="1520" r="64" fill="none" stroke="#A9C3FF" stroke-width="9"/>
+      <path d="M692 1520a28 28 0 1 0 8-20M692 1488v16h16" fill="none" stroke="#A9C3FF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="186" y="1700" width="708" height="200" rx="34" fill="none" stroke="#374260" stroke-width="5"/>
+      <text x="230" y="1770" font-family="Rubik" font-size="28" fill="#B4BCCB">ШАГ 4</text>
+      <text x="230" y="1830" font-family="Rubik" font-size="38" fill="#E8ECF4">Выложите рис ровным слоем</text>
+    </svg>
+    <svg viewBox="0 0 1080 1920" role="img" aria-label="Скриншот: форк">
+      <defs><pattern id="tile2" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#C9CCD1"/><rect x="3" y="3" width="114" height="114" rx="8" fill="#FAF8F3"/></pattern></defs>
+      <rect width="1080" height="1920" fill="url(#tile2)"/>
+      <rect x="0" y="0" width="1080" height="440" fill="#FAF8F3"/>
+      <text x="90" y="200" font-family="Rubik" font-weight="600" font-size="84" fill="#0B2559">Меняете рецепт —</text>
+      <text x="90" y="300" font-family="Rubik" font-weight="600" font-size="84" fill="#0B2559">получается форк</text>
+      <text x="90" y="380" font-family="Rubik" font-size="40" fill="#4A4E57">Исходный остаётся как был</text>
+      <rect x="130" y="470" width="820" height="1560" rx="70" fill="#16181d"/>
+      <rect x="150" y="490" width="780" height="1540" rx="54" fill="#FAF8F3"/>
+      <text x="200" y="640" font-family="Rubik" font-weight="500" font-size="48" fill="#1A1C22">Каталог</text>
+      <rect x="200" y="690" width="680" height="96" rx="48" fill="#E8E5DE"/>
+      <text x="260" y="750" font-family="Rubik" font-size="32" fill="#4A4E57">Поиск: блюдо, ингредиент</text>
+      <!-- entry 1 -->
+      <rect x="200" y="840" width="680" height="220" rx="36" fill="#F0EEE8" stroke="#B8322A" stroke-width="8"/>
+      <rect x="236" y="880" width="140" height="140" rx="22" fill="#FAF8F3" stroke="#B8322A" stroke-width="5"/>
+      <text x="410" y="930" font-family="Rubik" font-weight="600" font-size="38" fill="#1A1C22">Шакшука с фетой</text>
+      <text x="410" y="980" font-family="Rubik" font-size="28" fill="#4A4E57">8 ингр. · 30 мин</text>
+      <use href="#fk" x="410" y="1000" width="30" height="36" style="color:#4A4E57"/>
+      <text x="450" y="1030" font-family="Rubik" font-size="28" fill="#4A4E57">23 форка</text>
+      <!-- entry 2 fork -->
+      <rect x="190" y="1110" width="700" height="240" rx="46" fill="none" stroke="#B8322A" stroke-width="5"/>
+      <rect x="200" y="1120" width="680" height="220" rx="36" fill="#F0EEE8" stroke="#1F4FA8" stroke-width="8"/>
+      <rect x="236" y="1160" width="140" height="140" rx="22" fill="#FAF8F3" stroke="#1F4FA8" stroke-width="5"/>
+      <text x="410" y="1210" font-family="Rubik" font-weight="600" font-size="38" fill="#1A1C22">Шакшука с нутом</text>
+      <text x="410" y="1260" font-family="Rubik" font-size="28" fill="#4A4E57">10 ингр. · 35 мин</text>
+      <rect x="410" y="1278" width="132" height="46" rx="12" fill="none" stroke="#B8322A" stroke-width="4"/>
+      <use href="#fk" x="420" y="1284" width="28" height="34" style="color:#B8322A"/>
+      <text x="454" y="1312" font-family="Rubik" font-weight="600" font-size="28" fill="#B8322A">форк</text>
+      <!-- entry 3 -->
+      <rect x="200" y="1400" width="680" height="220" rx="36" fill="#F0EEE8" stroke="#8A6410" stroke-width="8"/>
+      <rect x="236" y="1440" width="140" height="140" rx="22" fill="#FAF8F3" stroke="#8A6410" stroke-width="5"/>
+      <text x="410" y="1490" font-family="Rubik" font-weight="600" font-size="38" fill="#1A1C22">Плов по-ферганский</text>
+      <text x="410" y="1540" font-family="Rubik" font-size="28" fill="#4A4E57">9 ингр. · 1 ч 50</text>
+      <rect x="690" y="1700" width="190" height="130" rx="36" fill="#1F4FA8" stroke="#0B2559" stroke-width="8"/>
+      <use href="#fk" x="740" y="1725" width="70" height="80" style="color:#fff"/>
+    </svg>
+    <div style="flex:1;min-width:260px">
+      <div class="box">
+        <b>Правила подписей</b>
+        <ul class="dash" style="font-size:14px">
+          <li>Одна фраза в две строки + одна строка пояснения. Факт о том, что делает приложение, без оценок.</li>
+          <li>Не пишем «бесплатно», «лучший», «№ 1», «самый удобный», восклицательные знаки.</li>
+          <li>Подпись — Rubik 600, 84 px на 1080; пояснение — 400, 40 px. Не больше 22 знаков в строке.</li>
+          <li>Фон — кобальт или кафель; телефон всегда реальный экран из сборки, не перерисованный.</li>
+          <li>Набор: 1) шаг и таймер, 2) форк, 3) пересчёт порций, 4) моя кухня, 5) работает без аккаунта и без сервера.</li>
+          <li>Английская версия — те же факты: «Big step, timer at hand», «Change a recipe — you get a fork».</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 9. Сильные стороны и риски ================= -->
+<section id="s9">
+  <h2><span class="n">9</span>Сильные стороны, риски, цена</h2>
+  <div class="cols">
+    <div class="box"><b>Сильные стороны</b>
+      <ul class="dash">
+        <li>Лучше всего ложится на «Готовку»: толстый край текущего шага виден издалека, круглые кнопки 56–64 dp естественны для «эмали».</li>
+        <li>Один приём (ободок) объясняет сразу три вещи — внимание, родословную, «сделано»; новых сущностей не нужно.</li>
+        <li>Знак без букв, переживает смену названия; читается в 24 dp и в монохроме.</li>
+        <li>Палитра проходит AA с запасом (основные пары ≥ 5,6:1); красный выделен под одну роль.</li>
+        <li>Пустые фото решаются кафелем — нет стоковых картинок и заглушек.</li>
+      </ul>
+    </div>
+    <div class="box"><b>Риски</b>
+      <ul class="dash">
+        <li>Ободки на всём — визуальный шум в длинных списках. Ограничитель: в каталоге край 3 dp, толстый (5 dp) только у текущего шага.</li>
+        <li>Цвет рецепта из набора четырёх совпадёт у родителя и форка в четверти случаев — тогда два края одного цвета; смысл держит число краёв, но связь «чей край» теряется. Можно запретить совпадение при создании форка.</li>
+        <li>Красная эмаль и цвет ошибки близки по тону; разведены по яркости и всегда со значком, но на тесте с пользователями стоит проверить.</li>
+        <li>Тема «советской кухни» может уйти в китч при неаккуратных иллюстрациях — правило: никаких сколов, бликов и узоров.</li>
+        <li>Двойной край на 320 dp съедает 4–5 dp ширины.</li>
+      </ul>
+    </div>
+    <div class="box"><b>Цена в Compose</b>
+      <ul class="dash">
+        <li>Шрифт: Rubik (вариативный TTF, ~ 240 КБ с латиницей и кириллицей) в <code>res/font</code>; Unbounded не нужен — словесный знак в векторе.</li>
+        <li>Цвета — только замена значений в <code>app_theme.xml</code>; <code>ContrastTest</code> пройдёт.</li>
+        <li><code>Modifier.rim(color, parent?)</code> — <code>border</code> + второй <code>border</code> с отступом; ~ 40 строк, используется в карточке, записи каталога, шаге.</li>
+        <li>Кнопки с внутренним краем — свои <code>ButtonDefaults</code>/обёртка, ~ 1 день.</li>
+        <li>Таймер-циферблат — <code>Canvas</code> с дугой и табличными цифрами, ~ 1–2 дня с анимацией и доступностью.</li>
+        <li>Иконка: адаптивная (VectorDrawable фон + передний план) и монохромный слой — пол-дня.</li>
+        <li>Итого ~ 4–6 рабочих дней поверх текущих экранов.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<p class="small" style="text-align:center;margin:20px 0 40px">Recipe Fork — рабочее название. Направление 5 «Эмаль». Шрифты: Rubik, Unbounded (SIL OFL 1.1). Контрасты посчитаны по WCAG 2.x.</p>
+</div>
+</body>
+</html>

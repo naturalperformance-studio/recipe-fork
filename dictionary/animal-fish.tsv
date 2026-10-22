@@ -1,15 +1,18 @@
 # Animal: fish and its fillets, smoked, salted and canned fish (4000-4199), seafood (4200-4299), roe (4300-4399).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 3000-4999
 
 # рыба — generic
 4000	рыба	fish			g=1
-4001	белая рыба	white fish	4000		g=1
-4002	красная рыба	salmon-type fish	4000		g=1
+# белая рыба → fdc:171955 Atlantic cod, the typical white fish
+4001	белая рыба	white fish	4000		g=1				kcal=82 protein=17.81 fat=0.67 carbs=0	fdc:171955
+# красная рыба → fdc:175167 farmed Atlantic salmon
+4002	красная рыба	salmon-type fish	4000		g=1				kcal=208 protein=20.42 fat=13.42 carbs=0	fdc:175167
 4003	филе рыбы	fish fillet	4000	true	g=1 pc=150
 4004	рыба копчёная	smoked fish	4000		g=1
 4005	рыба солёная	salted fish	4000		g=1
-4006	рыба вяленая	dried salted fish	4000		g=1
+# рыба вяленая → Skurikhin «Лещ вяленый» (4.1.7.9, p. 90-91)
+4006	рыба вяленая	dried salted fish	4000		g=1				kcal=221 protein=42 fat=5.9 carbs=0	skurikhin:Лещ вяленый
 4007	рыбные консервы	canned fish	4000		g=1
 4008	рыбный суповой набор	fish soup set	4000		g=1
 4009	рыба морская	sea fish	4000		g=1
@@ -17,179 +20,226 @@
 4011	стейк рыбы	fish steak	4000	true	g=1 pc=200
 
 # salmon family
-4020	лосось	salmon			g=1
+# лосось → fdc:175167 farmed Atlantic salmon, what is sold as лосось
+4020	лосось	salmon			g=1				kcal=208 protein=20.42 fat=13.42 carbs=0	fdc:175167
 4021	филе лосося	salmon fillet	4020	true	g=1 pc=200
 4022	стейк лосося	salmon steak	4020	true	g=1 pc=250
-4023	лосось слабосолёный	lightly salted salmon	4020		g=1
-4024	лосось копчёный	smoked salmon	4020		g=1
+# лосось слабосолёный → Skurikhin «Семга соленая» (4.1.6.12, p. 88-89)
+4023	лосось слабосолёный	lightly salted salmon	4020		g=1				kcal=202 protein=22.5 fat=12.5 carbs=0	skurikhin:Семга соленая потрошенная с головой
+4024	лосось копчёный	smoked salmon	4020		g=1				kcal=117 protein=18.28 fat=4.32 carbs=0	fdc:173687
 4025	брюшки лосося	salmon bellies	4020		g=1
-4026	лосось консервированный	canned salmon	4020		g=1
-4030	сёмга	Atlantic salmon			g=1
-4040	форель	trout		true	g=1 pc=400
+4026	лосось консервированный	canned salmon	4020		g=1				kcal=138 protein=23.1 fat=5.02 carbs=0	fdc:175175
+4030	сёмга	Atlantic salmon			g=1				kcal=208 protein=20.42 fat=13.42 carbs=0	fdc:175167
+4040	форель	trout		true	g=1 pc=400				kcal=141 protein=19.94 fat=6.18 carbs=0	fdc:173717
 4041	филе форели	trout fillet	4040	true	g=1 pc=150
 4042	стейк форели	trout steak	4040	true	g=1 pc=200
 4043	форель слабосолёная	lightly salted trout	4040		g=1
 4044	форель копчёная	smoked trout	4040		g=1
 4045	форель радужная	rainbow trout	4040	true	g=1 pc=400
-4050	горбуша	pink salmon		true	g=1 pc=1500
+4050	горбуша	pink salmon		true	g=1 pc=1500				kcal=127 protein=20.5 fat=4.4 carbs=0	fdc:175138
 4051	филе горбуши	pink salmon fillet	4050	true	g=1 pc=450
 4052	горбуша консервированная	canned pink salmon	4050		g=1
 4053	горбуша копчёная	smoked pink salmon	4050		g=1
-4055	кета	chum salmon			g=1
+4055	кета	chum salmon			g=1				kcal=120 protein=20.14 fat=3.77 carbs=0	fdc:173689
 4056	филе кеты	chum salmon fillet	4055	true	g=1 pc=600
-4057	нерка	sockeye salmon			g=1
-4058	кижуч	coho salmon			g=1
-4059	чавыча	chinook salmon			g=1
-4060	голец	char			g=1
+4057	нерка	sockeye salmon			g=1				kcal=131 protein=22.25 fat=4.69 carbs=0	fdc:173691
+4058	кижуч	coho salmon			g=1				kcal=146 protein=21.62 fat=5.93 carbs=0	fdc:175136
+4059	чавыча	chinook salmon			g=1				kcal=179 protein=19.93 fat=10.43 carbs=0	fdc:173688
+# голец → fdc:175181 brook trout, a char
+4060	голец	char			g=1				kcal=110 protein=21.23 fat=2.73 carbs=0	fdc:175181
 
 # cod family and white sea fish
-4065	треска	cod			g=1
+4065	треска	cod			g=1				kcal=82 protein=17.81 fat=0.67 carbs=0	fdc:171955
 4066	филе трески	cod fillet	4065	true	g=1 pc=200
-4067	треска солёная	salt cod	4065		g=1
+# Skurikhin 4.1.4.17, p. 86-87
+4067	треска солёная	salt cod	4065		g=1				kcal=98 protein=23.1 fat=0.6 carbs=0	skurikhin:Треска соленая
 4068	стейк трески	cod steak	4065	true	g=1 pc=200
-4070	минтай	Alaska pollock		true	g=1 pc=400
+4070	минтай	Alaska pollock		true	g=1 pc=400				kcal=76 protein=17.17 fat=0.82 carbs=0	fdc:173725
 4071	филе минтая	Alaska pollock fillet	4070	true	g=1 pc=150
-4075	хек	hake		true	g=1 pc=400
+# Skurikhin 4.1.4.20, p. 86-87
+4075	хек	hake		true	g=1 pc=400				kcal=86 protein=16.6 fat=2.2 carbs=0	skurikhin:Хек
 4076	филе хека	hake fillet	4075	true	g=1 pc=150
-4080	пикша	haddock			g=1
+4080	пикша	haddock			g=1				kcal=74 protein=16.32 fat=0.45 carbs=0	fdc:171964
 4081	филе пикши	haddock fillet	4080	true	g=1 pc=200
-4082	пикша копчёная	smoked haddock	4080		g=1
-4083	сайда	Atlantic pollock			g=1
-4084	путассу	blue whiting		true	g=1 pc=150
-4085	навага	saffron cod		true	g=1 pc=150
+4082	пикша копчёная	smoked haddock	4080		g=1				kcal=116 protein=25.23 fat=0.96 carbs=0	fdc:174199
+4083	сайда	Atlantic pollock			g=1				kcal=92 protein=19.44 fat=0.98 carbs=0	fdc:175129
+# Skurikhin 4.1.4.7, p. 84-85
+4084	путассу	blue whiting		true	g=1 pc=150				kcal=82 protein=18.5 fat=0.9 carbs=0	skurikhin:Путассу
+# Skurikhin 4.1.4.4, p. 84-85
+4085	навага	saffron cod		true	g=1 pc=150				kcal=91 protein=19.2 fat=1.6 carbs=0	skurikhin:Навага
 4086	макрурус	grenadier			g=1
 4087	ледяная рыба	icefish		true	g=1 pc=250
 4088	нототения	notothenia			g=1
-4089	зубатка	wolffish			g=1
-4090	палтус	halibut			g=1
+4089	зубатка	wolffish			g=1				kcal=96 protein=17.5 fat=2.39 carbs=0	fdc:175162
+# палтус → fdc:171965 Greenland halibut, what is sold as палтус
+4090	палтус	halibut			g=1				kcal=186 protein=14.37 fat=13.84 carbs=0	fdc:171965
 4091	филе палтуса	halibut fillet	4090	true	g=1 pc=200
 4092	палтус копчёный	smoked halibut	4090		g=1
-4093	камбала	flounder		true	g=1 pc=500
-4094	морской язык	sole		true	g=1 pc=300
-4095	тюрбо	turbot			g=1
-4096	окунь морской	ocean perch		true	g=1 pc=400
+4093	камбала	flounder		true	g=1 pc=500				kcal=70 protein=12.41 fat=1.93 carbs=0	fdc:174196
+4094	морской язык	sole		true	g=1 pc=300				kcal=70 protein=12.41 fat=1.93 carbs=0	fdc:174196
+4095	тюрбо	turbot			g=1				kcal=95 protein=16.05 fat=2.95 carbs=0	fdc:173710
+4096	окунь морской	ocean perch		true	g=1 pc=400				kcal=79 protein=15.31 fat=1.54 carbs=0	fdc:175125
 4097	филе морского окуня	ocean perch fillet	4096	true	g=1 pc=150
 4098	дорадо	sea bream		true	g=1 pc=400
 4099	филе дорадо	sea bream fillet	4098	true	g=1 pc=120
-4100	сибас	sea bass		true	g=1 pc=400
+4100	сибас	sea bass		true	g=1 pc=400				kcal=97 protein=18.43 fat=2 carbs=0	fdc:175142
 4101	филе сибаса	sea bass fillet	4100	true	g=1 pc=120
-4102	тилапия	tilapia			g=1
+4102	тилапия	tilapia			g=1				kcal=96 protein=20.08 fat=1.7 carbs=0	fdc:175176
 4103	филе тилапии	tilapia fillet	4102	true	g=1 pc=120
 4104	пангасиус	pangasius			g=1
 4105	филе пангасиуса	pangasius fillet	4104	true	g=1 pc=250
 4106	масляная рыба	escolar			g=1
-4107	меч-рыба	swordfish			g=1
-4108	кефаль	grey mullet		true	g=1 pc=400
+4107	меч-рыба	swordfish			g=1				kcal=144 protein=19.66 fat=6.65 carbs=0	fdc:173703
+# кефаль → fdc:175123 striped mullet (Mugil cephalus), the grey mullet
+4108	кефаль	grey mullet		true	g=1 pc=400				kcal=117 protein=19.35 fat=3.79 carbs=0	fdc:175123
 4109	барабулька	red mullet		false	g=1 pc=50
-4110	ставрида	horse mackerel		true	g=1 pc=200
+# Skurikhin 4.1.3.1, p. 82-83
+4110	ставрида	horse mackerel		true	g=1 pc=200				kcal=114 protein=18.5 fat=4.5 carbs=0	skurikhin:Ставрида океаническая
 4111	лемонема	lemonema			g=1
 4112	сайра	saury		true	g=1 pc=150
 4113	сайра консервированная	canned saury	4112		g=1
 
 # freshwater fish
-4120	судак	zander		true	g=1 pc=1200
+# Skurikhin 4.1.9.12, p. 94-95
+4120	судак	zander		true	g=1 pc=1200				kcal=84 protein=18.4 fat=1.1 carbs=0	skurikhin:Судак
 4121	филе судака	zander fillet	4120	true	g=1 pc=250
-4122	щука	pike		true	g=1 pc=1500
-4123	окунь	perch		true	g=1 pc=300
-4124	карп	carp		true	g=1 pc=1500
-4125	сазан	wild carp		true	g=1 pc=1500
+4122	щука	pike		true	g=1 pc=1500				kcal=88 protein=19.26 fat=0.69 carbs=0	fdc:173680
+4123	окунь	perch		true	g=1 pc=300				kcal=91 protein=19.39 fat=0.92 carbs=0	fdc:173678
+4124	карп	carp		true	g=1 pc=1500				kcal=127 protein=17.83 fat=5.6 carbs=0	fdc:171952
+# Skurikhin 4.1.7.11, p. 90-91
+4125	сазан	wild carp		true	g=1 pc=1500				kcal=97 protein=18.2 fat=2.7 carbs=0	skurikhin:Сазан
 4126	толстолобик	silver carp			g=1
 4127	белый амур	grass carp			g=1
-4128	карась	crucian carp		true	g=1 pc=250
-4129	лещ	bream		true	g=1 pc=800
-4130	сом	catfish			g=1
-4131	налим	burbot			g=1
-4132	сиг	common whitefish			g=1
-4133	муксун	muksun			g=1
-4134	омуль	omul			g=1
-4135	нельма	nelma			g=1
+# Skurikhin 4.1.7.3, p. 90-91
+4128	карась	crucian carp		true	g=1 pc=250				kcal=87 protein=17.7 fat=1.8 carbs=0	skurikhin:Карась
+# Skurikhin 4.1.7.6, p. 90-91
+4129	лещ	bream		true	g=1 pc=800				kcal=105 protein=17.1 fat=4.4 carbs=0	skurikhin:Лещ
+# сом → Skurikhin «Сом» (4.1.13.2, p. 96-97), the wels catfish
+4130	сом	catfish			g=1				kcal=115 protein=17.2 fat=5.1 carbs=0	skurikhin:Сом
+4131	налим	burbot			g=1				kcal=90 protein=19.31 fat=0.81 carbs=0	fdc:171950
+4132	сиг	common whitefish			g=1				kcal=134 protein=19.09 fat=5.86 carbs=0	fdc:173711
+# муксун → fdc:173711 whitefish, mixed species: muksun is a whitefish
+4133	муксун	muksun			g=1				kcal=134 protein=19.09 fat=5.86 carbs=0	fdc:173711
+# омуль → fdc:171953 cisco, the omul's genus
+4134	омуль	omul			g=1				kcal=98 protein=18.99 fat=1.91 carbs=0	fdc:171953
+# нельма → fdc:167648 sheefish, the same fish
+4135	нельма	nelma			g=1				kcal=115 protein=22.25 fat=2.84 carbs=0	fdc:167648
 4136	хариус	grayling			g=1
-4137	вобла	vobla		false	g=1 pc=150
+# вобла → Skurikhin «Лещ вяленый» (4.1.7.9, p. 90-91): the table has no dried vobla
+4137	вобла	vobla		false	g=1 pc=150				kcal=221 protein=42 fat=5.9 carbs=0	skurikhin:Лещ вяленый
 4138	чехонь	sabre carp			g=1
-4139	осётр	sturgeon			g=1
+# Skurikhin 4.1.8.1, p. 90-91
+4139	осётр	sturgeon			g=1				kcal=164 protein=16.4 fat=10.9 carbs=0	skurikhin:Осетр каспийский
 4140	стерлядь	sterlet			g=1
-4141	угорь	eel			g=1
+# Skurikhin 4.1.13.5, p. 96-97
+4141	угорь	eel			g=1				kcal=333 protein=14.5 fat=30.5 carbs=0	skurikhin:Угорь
 4142	угорь копчёный	smoked eel	4141		g=1
 4143	линь	tench			g=1
 
 # oily small and canned fish
-4150	скумбрия	mackerel		true	g=1 pc=350
-4151	скумбрия копчёная	smoked mackerel	4150	true	g=1 pc=300
-4152	скумбрия солёная	salted mackerel	4150	true	g=1 pc=300
+4150	скумбрия	mackerel		true	g=1 pc=350				kcal=205 protein=18.6 fat=13.89 carbs=0	fdc:175119
+# Skurikhin 4.1.2.2, p. 82-83
+4151	скумбрия копчёная	smoked mackerel	4150	true	g=1 pc=300				kcal=150 protein=23.4 fat=6.4 carbs=0	skurikhin:Скумбрия холодного копчения
+4152	скумбрия солёная	salted mackerel	4150	true	g=1 pc=300				kcal=305 protein=18.5 fat=25.1 carbs=0	fdc:168149
 4153	филе скумбрии	mackerel fillet	4150	true	g=1 pc=120
-4154	скумбрия консервированная	canned mackerel	4150		g=1
-4155	сельдь	herring		true	g=1 pc=300
+# скумбрия консервированная → Skurikhin «Скумбрия натуральная. Консервы» (4.1.2.3, p. 82-83)
+4154	скумбрия консервированная	canned mackerel	4150		g=1				kcal=200 protein=17.7 fat=14.4 carbs=0	skurikhin:Скумбрия натуральная. Консервы
+4155	сельдь	herring		true	g=1 pc=300				kcal=158 protein=17.96 fat=9.04 carbs=0	fdc:175116
 4156	селёдка	salted herring	4155	true	g=1 pc=300		сельдь солёная;сельдь слабосолёная
 4157	филе сельди	herring fillet	4155		g=1
-4158	сельдь копчёная	kippers	4155		g=1
+4158	сельдь копчёная	kippers	4155		g=1				kcal=217 protein=24.58 fat=12.37 carbs=0	fdc:173668
 4159	сельдь пряного посола	spiced herring	4155		g=1
 4160	иваси	Pacific sardine			g=1
-4161	тунец	tuna			g=1
+# тунец → fdc:175159 yellowfin tuna
+4161	тунец	tuna			g=1				kcal=109 protein=24.4 fat=0.49 carbs=0	fdc:175159
 4162	стейк тунца	tuna steak	4161	true	g=1 pc=200
-4163	тунец консервированный	canned tuna	4161		g=1
+4163	тунец консервированный	canned tuna	4161		g=1				kcal=86 protein=19.44 fat=0.96 carbs=0	fdc:173709
 4164	сардина	sardine		false	g=1 pc=60
-4165	сардины консервированные	canned sardines	4164		g=1
-4166	шпроты	smoked sprats in oil			g=1
-4167	килька	sprat			g=1
+4165	сардины консервированные	canned sardines	4164		g=1				kcal=208 protein=24.62 fat=11.45 carbs=0	fdc:175139
+# Skurikhin 4.1.1.8, p. 80-81
+4166	шпроты	smoked sprats in oil			g=1				kcal=363 protein=17.4 fat=32.4 carbs=0	skurikhin:Шпроты в масле. Консервы
+# Skurikhin 4.1.1.1, p. 80-81
+4167	килька	sprat			g=1				kcal=137 protein=14.1 fat=9 carbs=0	skurikhin:Килька балтийская
 4168	килька в томате	sprats in tomato sauce	4167		g=1
-4169	анчоусы	anchovies		false	g=1 pc=4
-4170	хамса	Black Sea anchovy			g=1
-4171	мойва	capelin		false	g=1 pc=30
-4172	корюшка	smelt		false	g=1 pc=30
-4173	тюлька	Caspian sprat			g=1
-4174	салака	Baltic herring			g=1
+# анчоусы → fdc:174183 anchovies canned in oil, as they are bought
+4169	анчоусы	anchovies		false	g=1 pc=4				kcal=210 protein=28.89 fat=9.71 carbs=0	fdc:174183
+# хамса → fdc:174182 European anchovy, the same fish
+4170	хамса	Black Sea anchovy			g=1				kcal=131 protein=20.35 fat=4.84 carbs=0	fdc:174182
+# мойва → Skurikhin «Мойва весенняя» (4.1.12.1, p. 96-97)
+4171	мойва	capelin		false	g=1 pc=30				kcal=116 protein=13.1 fat=7.1 carbs=0	skurikhin:Мойва весенняя
+# корюшка → fdc:175146 rainbow smelt
+4172	корюшка	smelt		false	g=1 pc=30				kcal=97 protein=17.63 fat=2.42 carbs=0	fdc:175146
+# тюлька → Skurikhin «Килька каспийская» (4.1.1.7, p. 80-81)
+4173	тюлька	Caspian sprat			g=1				kcal=192 protein=18.5 fat=13.1 carbs=0	skurikhin:Килька каспийская
+# Skurikhin 4.1.1.9, p. 80-81
+4174	салака	Baltic herring			g=1				kcal=125 protein=17 fat=6.3 carbs=0	skurikhin:Салака
 4175	бычки в томате	gobies in tomato sauce			g=1
-4176	крабовые палочки	crab sticks		false	g=1 pc=17
-4177	сурими	surimi			g=1
+4176	крабовые палочки	crab sticks		false	g=1 pc=17				kcal=95 protein=7.62 fat=0.46 carbs=15	fdc:174203
+4177	сурими	surimi			g=1				kcal=99 protein=15.18 fat=0.9 carbs=6.85	fdc:173702
 
 # морепродукты
 4200	морепродукты	seafood			g=1
 4201	морской коктейль	seafood mix	4200		g=1
-4210	креветки	shrimp		false	g=1 pc=12
+4210	креветки	shrimp		false	g=1 pc=12				kcal=85 protein=20.1 fat=0.51 carbs=0	fdc:175179
 4211	креветки тигровые	tiger shrimp	4210	false	g=1 pc=25
 4212	креветки королевские	jumbo shrimp	4210	false	g=1 pc=20
 4213	креветки коктейльные	cocktail shrimp	4210	false	g=1 pc=5
 4214	креветки очищенные	peeled shrimp	4210	false	g=1 pc=10
-4215	креветки варёно-мороженые	cooked frozen shrimp	4210	false	g=1 pc=12
+4215	креветки варёно-мороженые	cooked frozen shrimp	4210	false	g=1 pc=12				kcal=99 protein=23.98 fat=0.28 carbs=0.2	fdc:175180
 4216	креветки аргентинские	Argentine red shrimp	4210	false	g=1 pc=30
-4217	лангустины	langoustines		false	g=1 pc=50
-4220	кальмар	squid		true	g=1 pc=250
+# лангустины → fdc:174208 northern lobster, of the same family
+4217	лангустины	langoustines		false	g=1 pc=50				kcal=77 protein=16.52 fat=0.75 carbs=0	fdc:174208
+4220	кальмар	squid		true	g=1 pc=250				kcal=92 protein=15.58 fat=1.38 carbs=3.08	fdc:174223
 4221	кольца кальмара	squid rings	4220		g=1
 4222	филе кальмара	squid fillet	4220		g=1
 4223	щупальца кальмара	squid tentacles	4220		g=1
-4224	кальмар сушёный	dried squid	4220		g=1
-4230	осьминог	octopus			g=1
+# кальмар сушёный → none: dried, so several times denser than fresh squid; no source holds it
+4224	кальмар сушёный	dried squid	4220		g=1					none
+4230	осьминог	octopus			g=1				kcal=82 protein=14.91 fat=1.04 carbs=2.2	fdc:174218
 4231	осьминоги мини	baby octopus	4230	false	g=1 pc=30
-4232	каракатица	cuttlefish		true	g=1 pc=300
-4235	мидии	mussels		false	g=1 pc=20
+4232	каракатица	cuttlefish		true	g=1 pc=300				kcal=79 protein=16.24 fat=0.7 carbs=0.82	fdc:174215
+4235	мидии	mussels		false	g=1 pc=20				kcal=86 protein=11.9 fat=2.24 carbs=3.69	fdc:174216
 4237	мясо мидий	mussel meat	4235		g=1
-4238	мидии в половинках раковин	half-shell mussels	4235	false	g=1 pc=15
-4240	гребешки	scallops		false	g=1 pc=25
-4243	устрицы	oysters		false	g=1 pc=80
-4245	вонголе	clams		false	g=1 pc=10
-4250	краб	crab			g=1
+# мидии в половинках раковин → none: the weight includes the shell; no source holds it so
+4238	мидии в половинках раковин	half-shell mussels	4235	false	g=1 pc=15					none
+4240	гребешки	scallops		false	g=1 pc=25				kcal=69 protein=12.06 fat=0.49 carbs=3.18	fdc:174220
+4243	устрицы	oysters		false	g=1 pc=80				kcal=81 protein=9.45 fat=2.3 carbs=4.95	fdc:174219
+4245	вонголе	clams		false	g=1 pc=10				kcal=86 protein=14.67 fat=0.96 carbs=3.57	fdc:174214
+# краб → fdc:175164 Alaska king crab, what is sold as краб
+4250	краб	crab			g=1				kcal=84 protein=18.29 fat=0.6 carbs=0	fdc:175164
 4251	крабовое мясо	crab meat	4250		g=1
 4252	камчатский краб	king crab	4250		g=1
 4253	фаланги краба	crab legs	4250		g=1
-4255	омар	lobster		true	g=1 pc=600
-4256	лангуст	spiny lobster		true	g=1 pc=600
-4257	раки	crayfish		false	g=1 pc=50
+4255	омар	lobster		true	g=1 pc=600				kcal=77 protein=16.52 fat=0.75 carbs=0	fdc:174208
+4256	лангуст	spiny lobster		true	g=1 pc=600				kcal=112 protein=20.6 fat=1.51 carbs=2.43	fdc:174211
+4257	раки	crayfish		false	g=1 pc=50				kcal=77 protein=15.97 fat=0.95 carbs=0	fdc:174206
 4258	раковые шейки	crayfish tails	4257		g=1
 4260	трепанг	sea cucumber			g=1
 4261	морской ёж	sea urchin			g=1
-4262	рапаны	rapana whelks			g=1
+# рапаны → fdc:171983 whelk
+4262	рапаны	rapana whelks			g=1				kcal=137 protein=23.84 fat=0.4 carbs=7.76	fdc:171983
 
 # икра, молоки
-4300	икра	roe			g=1
-4301	красная икра	salmon roe	4300		g=1 tsp=6 tbsp=18
-4302	чёрная икра	black caviar	4300		g=1 tsp=6 tbsp=18
-4303	щучья икра	pike roe	4300		g=1
+4300	икра	roe			g=1				kcal=264 protein=24.6 fat=17.9 carbs=4	fdc:174188
+# красная икра → Skurikhin «Горбуши зернистая» (4.3.2, p. 98-99)
+4301	красная икра	salmon roe	4300		g=1 tsp=6 tbsp=18				kcal=230 protein=30.6 fat=11.5 carbs=1	skurikhin:Горбуши зернистая
+# чёрная икра → Skurikhin «Осетровая зернистая» (4.3.5, p. 98-99)
+4302	чёрная икра	black caviar	4300		g=1 tsp=6 tbsp=18				kcal=200 protein=28.4 fat=9.3 carbs=0.6	skurikhin:Осетровая зернистая
+# щучья икра → Skurikhin «Минтаевая пробойная» (4.3.4, p. 98-99): salted roe of a lean fish
+4303	щучья икра	pike roe	4300		g=1				kcal=132 protein=27.9 fat=1.8 carbs=1.1	skurikhin:Минтаевая пробойная
 4304	икра мойвы	capelin roe	4300		g=1 tsp=6 tbsp=18
-4305	икра летучей рыбы	flying fish roe	4300		g=1 tsp=5 tbsp=15
-4306	икра минтая	pollock roe	4300		g=1
-4307	икра трески	cod roe	4300		g=1
-4308	икра горбуши	pink salmon roe	4300		g=1 tsp=6 tbsp=18
-4309	икра форели	trout roe	4300		g=1 tsp=6 tbsp=18
-4310	икра сельди	herring roe	4300		g=1
-4311	икра судака	zander roe	4300		g=1
+# икра летучей рыбы → Skurikhin «Минтаевая пробойная» (4.3.4, p. 98-99): salted roe of a lean fish
+4305	икра летучей рыбы	flying fish roe	4300		g=1 tsp=5 tbsp=15				kcal=132 protein=27.9 fat=1.8 carbs=1.1	skurikhin:Минтаевая пробойная
+# Skurikhin 4.3.4, p. 98-99
+4306	икра минтая	pollock roe	4300		g=1				kcal=132 protein=27.9 fat=1.8 carbs=1.1	skurikhin:Минтаевая пробойная
+# икра трески → Skurikhin «Минтаевая пробойная» (4.3.4, p. 98-99): salted roe of the same family
+4307	икра трески	cod roe	4300		g=1				kcal=132 protein=27.9 fat=1.8 carbs=1.1	skurikhin:Минтаевая пробойная
+# Skurikhin 4.3.2, p. 98-99
+4308	икра горбуши	pink salmon roe	4300		g=1 tsp=6 tbsp=18				kcal=230 protein=30.6 fat=11.5 carbs=1	skurikhin:Горбуши зернистая
+# икра форели → Skurikhin «Кеты зернистая» (4.3.3, p. 98-99)
+4309	икра форели	trout roe	4300		g=1 tsp=6 tbsp=18				kcal=249 protein=31.5 fat=13.2 carbs=1	skurikhin:Кеты зернистая
+# икра сельди → fdc:169806 Pacific herring eggs, plain
+4310	икра сельди	herring roe	4300		g=1				kcal=74 protein=9.6 fat=1.93 carbs=4.47	fdc:169806
+# икра судака → Skurikhin «Минтаевая пробойная» (4.3.4, p. 98-99): salted roe of a lean fish
+4311	икра судака	zander roe	4300		g=1				kcal=132 protein=27.9 fat=1.8 carbs=1.1	skurikhin:Минтаевая пробойная
 4320	молоки	milt			g=1

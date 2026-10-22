@@ -1,42 +1,45 @@
 # Produce: dried and candied fruit.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 1000-2999
 
 # Dried and candied fruit (2400-2499)
 2400	сухофрукты	dried fruit			g=1 cup=150
-2401	инжир сушёный	dried figs	2400	true	g=1 pc=20 cup=150
-2402	яблоки сушёные	dried apples	2400		g=1 cup=85
-2403	груша сушёная	dried pears	2400		g=1
-2404	персик сушёный	dried peaches	2400		g=1
-2405	манго сушёное	dried mango	2400		g=1
+2401	инжир сушёный	dried figs	2400	true	g=1 pc=20 cup=150				kcal=249 protein=3.3 fat=0.93 carbs=63.87	fdc:174665
+2402	яблоки сушёные	dried apples	2400		g=1 cup=85				kcal=243 protein=0.93 fat=0.32 carbs=65.89	fdc:171691
+2403	груша сушёная	dried pears	2400		g=1				kcal=262 protein=1.87 fat=0.63 carbs=69.7	fdc:169121
+2404	персик сушёный	dried peaches	2400		g=1				kcal=239 protein=3.61 fat=0.76 carbs=61.33	fdc:169934
+2405	манго сушёное	dried mango	2400		g=1				kcal=319 protein=2.45 fat=1.18 carbs=78.58	fdc:169091
 2406	ананас сушёный	dried pineapple	2400		g=1
 2407	дыня сушёная	dried melon	2400		g=1
-2408	банановые чипсы	banana chips	2400		g=1 cup=70
-2409	яблочные чипсы	apple chips	2400		g=1
-2410	клюква сушёная	dried cranberries	2400		g=1 tbsp=8 cup=120
-2411	вишня сушёная	dried cherries	2400		g=1 tbsp=9 cup=150
-2412	черника сушёная	dried bilberries	2400		g=1 tbsp=9 cup=150
-2413	ягоды годжи	goji berries	2400		g=1 tbsp=9 cup=110
-2414	шиповник сушёный	dried rose hips	2400		g=1
+2408	банановые чипсы	banana chips	2400		g=1 cup=70				kcal=519 protein=2.3 fat=33.6 carbs=58.4	fdc:168849
+# яблочные чипсы → fdc:173931 Apples, dehydrated (low moisture), sulfured, uncooked
+2409	яблочные чипсы	apple chips	2400		g=1				kcal=346 protein=1.32 fat=0.58 carbs=93.53	fdc:173931
+2410	клюква сушёная	dried cranberries	2400		g=1 tbsp=8 cup=120				kcal=308 protein=0.17 fat=1.09 carbs=82.8	fdc:171723
+2411	вишня сушёная	dried cherries	2400		g=1 tbsp=9 cup=150				kcal=333 protein=1.25 fat=0.73 carbs=80.45	fdc:171708
+# черника сушёная → fdc:168158 Blueberries, dried, sweetened: the nearest dried berry, no dried bilberry listed
+2412	черника сушёная	dried bilberries	2400		g=1 tbsp=9 cup=150				kcal=317 protein=2.5 fat=2.5 carbs=80	fdc:168158
+2413	ягоды годжи	goji berries	2400		g=1 tbsp=9 cup=110				kcal=349 protein=14.26 fat=0.39 carbs=77.06	fdc:173032
+# шиповник сушёный → Skurikhin «Шиповник сухой» (9.2.1.13, p. 156-157): the book prints kcal 284 with protein 3.4, fat 1.4, carbs 48.3 (its macros give about 219); copied as printed
+2414	шиповник сушёный	dried rose hips	2400		g=1				kcal=284 protein=3.4 fat=1.4 carbs=48.3	skurikhin:Шиповник сухой
 2415	малина сублимированная	freeze-dried raspberries	2400		g=1 tbsp=2 cup=30
 2416	клубника сублимированная	freeze-dried strawberries	2400		g=1 tbsp=2 cup=30
-2420	изюм	raisins			g=1 tbsp=10 cup=150
+2420	изюм	raisins			g=1 tbsp=10 cup=150				kcal=299 protein=3.3 fat=0.25 carbs=79.32	fdc:168165
 2421	изюм светлый	golden raisins	2420		g=1 tbsp=10 cup=150
 2422	изюм тёмный	dark raisins	2420		g=1 tbsp=10 cup=150
 2423	кишмиш	seedless raisins	2420		g=1 tbsp=10 cup=150
 2424	коринка	Zante currants	2420		g=1 tbsp=9 cup=145
-2430	курага	dried apricots		false	g=1 pc=8 tbsp=10 cup=130
+2430	курага	dried apricots		false	g=1 pc=8 tbsp=10 cup=130				kcal=241 protein=3.39 fat=0.51 carbs=62.64	fdc:173941
 2431	урюк	whole dried apricots	2430	false	g=1 pc=8
-2435	чернослив	prunes		false	g=1 pc=8 cup=170
+2435	чернослив	prunes		false	g=1 pc=8 cup=170				kcal=240 protein=2.18 fat=0.38 carbs=63.88	fdc:168162
 2436	чернослив копчёный	smoked prunes	2435	false	g=1 pc=8
-2440	финики	dates		false	g=1 pc=8 cup=150
+2440	финики	dates		false	g=1 pc=8 cup=150				kcal=282 protein=2.45 fat=0.39 carbs=75.03	fdc:171726
 2441	финики меджул	Medjool dates	2440	false	g=1 pc=24
-2445	цукаты	candied fruit			g=1 tbsp=10 cup=160
+2445	цукаты	candied fruit			g=1 tbsp=10 cup=160				kcal=322 protein=0.34 fat=0.07 carbs=82.74	fdc:167781
 2446	цукаты апельсиновые	candied orange peel	2445		g=1 tbsp=10
 2447	цукаты лимонные	candied lemon peel	2445		g=1 tbsp=10
 2448	имбирь засахаренный	crystallized ginger	2445		g=1 tbsp=10
-2417	бананы сушёные	dried bananas	2400		g=1
-2418	хурма сушёная	dried persimmon	2400		g=1
+2417	бананы сушёные	dried bananas	2400		g=1				kcal=346 protein=3.89 fat=1.81 carbs=88.28	fdc:173945
+2418	хурма сушёная	dried persimmon	2400		g=1				kcal=274 protein=1.38 fat=0.59 carbs=73.43	fdc:169942
 2419	папайя сушёная	dried papaya	2400		g=1
 2425	шелковица сушёная	dried mulberries	2400		g=1 cup=110
 2426	кизил сушёный	dried cornelian cherries	2400		g=1

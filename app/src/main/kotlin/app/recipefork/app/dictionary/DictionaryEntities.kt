@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
+import app.recipefork.core.api.NutritionDto
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
@@ -17,7 +18,9 @@ typealias DictionaryEntry = app.recipefork.core.search.DictionaryEntry
  * An ingredient dictionary entry as the device holds it (FLOW-001, DOM-010), with its divisibility, its comparison
  * factors (DOM-011, CAT-009 — never shown) and whether it is [removed] upstream: a removed entry is held so that the
  * recipes naming it keep its name (DOM-009), and is offered to nobody. [synonymsRu] and [synonymsEn] are the other
- * words the entry may be found by in each language.
+ * words the entry may be found by in each language. [nutrition] is what 100 g of the raw product holds, null when the
+ * dictionary does not say; [noNutrition] marks a child known to have no values of its own, which does not take its
+ * parent's.
  */
 @Entity(tableName = "ingredient_entry")
 data class IngredientEntryEntity(
@@ -30,15 +33,17 @@ data class IngredientEntryEntity(
     override val removed: Boolean = false,
     override val synonymsRu: List<String> = emptyList(),
     override val synonymsEn: List<String> = emptyList(),
+    val nutrition: NutritionDto? = null,
+    val noNutrition: Boolean = false,
 ) : DictionaryEntry {
     fun toDto(): IngredientEntryDto =
-        IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn)
+        IngredientEntryDto(id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, noNutrition)
 
     companion object {
         fun of(dto: IngredientEntryDto): IngredientEntryEntity =
             IngredientEntryEntity(
                 dto.id, dto.labelRu, dto.labelEn, dto.parentId, dto.divisible, dto.factors, dto.removed,
-                dto.synonymsRu, dto.synonymsEn,
+                dto.synonymsRu, dto.synonymsEn, dto.nutrition, dto.noNutrition,
             )
     }
 }
@@ -66,8 +71,8 @@ data class EquipmentEntryEntity(
 }
 
 /**
- * How the device database holds an entry's factors and synonyms: as the JSON object and array the dictionary carries
- * them in.
+ * How the device database holds an entry's factors, synonyms and nutrition: as the JSON objects and array the
+ * dictionary carries them in.
  */
 class FactorsConverter {
     private val serializer = MapSerializer(String.serializer(), Double.serializer())
@@ -84,6 +89,12 @@ class FactorsConverter {
 
     @TypeConverter
     fun wordsFromText(text: String): List<String> = Json.decodeFromString(words, text)
+
+    @TypeConverter
+    fun nutritionToText(nutrition: NutritionDto?): String? = nutrition?.let { Json.encodeToString(NutritionDto.serializer(), it) }
+
+    @TypeConverter
+    fun nutritionFromText(text: String?): NutritionDto? = text?.let { Json.decodeFromString(NutritionDto.serializer(), it) }
 }
 
 /** A tag as the device holds it (FLOW-001). */

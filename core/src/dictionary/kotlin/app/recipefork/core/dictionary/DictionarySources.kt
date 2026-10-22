@@ -3,6 +3,7 @@ package app.recipefork.core.dictionary
 import app.recipefork.core.api.DictionariesDto
 import app.recipefork.core.api.EquipmentEntryDto
 import app.recipefork.core.api.IngredientEntryDto
+import app.recipefork.core.api.NutritionDto
 import app.recipefork.core.api.TagDto
 import app.recipefork.core.search.WordPrefix
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -47,14 +48,21 @@ enum class Family(val prefix: String, val dictionary: Dictionary, val ranges: Li
  *
  * A source is tab-separated text, one entry per line; `#` starts a comment line, and `@range FIRST-LAST` declares an
  * id range the file may use. An ingredient line is `id, labelRu, labelEn, parentId, divisible, factors, removed,
- * synonymsRu, synonymsEn` — each synonym list `;`-separated — trailing empty columns left out; a tag line is `id, labelRu, labelEn`;
+ * synonymsRu, synonymsEn, nutrition, nutritionSource` — each synonym list `;`-separated, the source kept in the sources
+ * alone, a source `none` written as the entry's `noNutrition` — trailing empty columns left out; a tag line is `id, labelRu, labelEn`;
  * an equipment line is `id, labelRu, labelEn, parentId, removed, synonymsRu, synonymsEn`.
  */
 object DictionaryBuild {
-    private const val INGREDIENT_COLUMNS = 9
+    private const val INGREDIENT_COLUMNS = 11
     private const val TAG_COLUMNS = 3
     private const val EQUIPMENT_COLUMNS = 7
     private const val SYNONYM_SEPARATOR = ';'
+
+    /** The `nutritionSource` of a child entry known to have no values of its own. */
+    private const val NO_NUTRITION = "none"
+
+    /** The names of a `nutrition` cell, in the order the README gives them. */
+    private val NUTRITION_NAMES = listOf("kcal", "protein", "fat", "carbs")
 
     @OptIn(ExperimentalSerializationApi::class)
     private val pretty = Json {
@@ -215,6 +223,8 @@ object DictionaryBuild {
         val removed = removed(at, cells[6], errors)
         val synonymsRu = synonyms(at, "synonymsRu", cells[7], errors)
         val synonymsEn = synonyms(at, "synonymsEn", cells[8], errors)
+        val nutrition = nutrition(at, cells[9], errors)
+        val noNutrition = nutritionSource(at, cells[10], hasNutrition = cells[9].isNotEmpty(), isChild = cells[3].isNotEmpty(), errors)
         if ("pc" in factors && divisible == null) {
             errors += "$at: a 'pc' factor needs the divisible flag ('true' or 'false')"
         }
@@ -222,7 +232,7 @@ object DictionaryBuild {
         if (id == null || !labelled) return null
         return Row(
             at, id, listOf(cells[1], cells[2]),
-            IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn),
+            IngredientEntryDto(id, cells[1], cells[2], parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, noNutrition),
             parentId, removed, listOf(synonymsRu, synonymsEn),
         )
     }
@@ -278,6 +288,88 @@ object DictionaryBuild {
             }
         }
         return factors
+    }
+
+    /**
+     * The values of a `nutrition` cell — `kcal=n protein=n fat=n carbs=n`, all four or none, per 100 g of the raw
+     * product — or null when the cell is empty or refused.
+     */
+    private fun nutrition(at: String, cell: String, errors: MutableList<String>): NutritionDto? {
+        if (cell.isEmpty()) return null
+        val values = linkedMapOf<String, Double>()
+        val before = errors.size
+        cell.split(' ').filter { it.isNotEmpty() }.forEach { pair ->
+            val name = pair.substringBefore('=', "")
+            val number = pair.substringAfter('=', "").toDoubleOrNull()
+            when {
+                name.isEmpty() || number == null -> errors += "$at: nutrition '$pair' is not 'name=number'"
+                name !in NUTRITION_NAMES ->
+                    errors += "$at: unknown nutrition value '$name' (known: ${NUTRITION_NAMES.joinToString(" ")})"
+                name in values -> errors += "$at: nutrition value '$name' given twice"
+                !number.isFinite() || number < 0 -> errors += "$at: nutrition $name=$number is not a finite number of at least zero"
+                name == "kcal" && number > NutritionDto.MAX_KCAL ->
+                    errors += "$at: nutrition kcal=$number is above ${NutritionDto.MAX_KCAL.toInt()} per 100 g"
+                name != "kcal" && number > NutritionDto.MAX_GRAMS ->
+                    errors += "$at: nutrition $name=$number is above ${NutritionDto.MAX_GRAMS.toInt()} g per 100 g"
+                else -> values[name] = number
+            }
+        }
+        if (errors.size > before) return null
+        val missing = NUTRITION_NAMES.filterNot { it in values }
+        if (missing.isNotEmpty()) {
+            errors += "$at: nutrition lacks ${missing.joinToString(" ")} (all four or none: ${NUTRITION_NAMES.joinToString(" ")})"
+            return null
+        }
+        val nutrition = NutritionDto(values.getValue("kcal"), values.getValue("protein"), values.getValue("fat"), values.getValue("carbs"))
+        val grams = nutrition.protein + nutrition.fat + nutrition.carbs
+        // Within a rounding error: values that a source gives as adding up to 100 g are taken.
+        if (grams > NutritionDto.MAX_GRAMS + 1e-9) {
+            errors += "$at: nutrition protein, fat and carbs together are $grams g, above ${NutritionDto.MAX_GRAMS.toInt()} g per 100 g"
+            return null
+        }
+        return nutrition
+    }
+
+    /**
+     * A `nutritionSource` cell: where the line's nutrition comes from — `fdc:<FoodData Central id>` or
+     * `skurikhin:<the table's product name>` — required with a nutrition and refused without one; or `none`, on a child
+     * entry without a nutrition, which is known to have no values of its own and must not take its parent's. Whether the
+     * line says `none`.
+     */
+    private fun nutritionSource(at: String, cell: String, hasNutrition: Boolean, isChild: Boolean, errors: MutableList<String>): Boolean {
+        if (cell == NO_NUTRITION) {
+            when {
+                hasNutrition -> errors += "$at: nutritionSource '$NO_NUTRITION' with a nutrition ('$NO_NUTRITION' marks an entry with no values of its own)"
+                !isChild -> errors += "$at: nutritionSource '$NO_NUTRITION' on a top-level entry (only a child may be kept from its parent's values)"
+                else -> return true
+            }
+            return false
+        }
+        if (cell.isEmpty()) {
+            if (hasNutrition) errors += "$at: nutrition needs its nutritionSource ('fdc:<id>' or 'skurikhin:<product name>')"
+            return false
+        }
+        if (!hasNutrition) {
+            errors += "$at: nutritionSource '$cell' without a nutrition"
+            return false
+        }
+        when {
+            cell.startsWith("fdc:") -> {
+                val id = cell.removePrefix("fdc:")
+                if (!id.all { it in '0'..'9' } || (id.toLongOrNull() ?: 0) <= 0) {
+                    errors += "$at: nutritionSource '$cell': a FoodData Central id is a positive whole number"
+                }
+            }
+            cell.startsWith("skurikhin:") -> {
+                val product = cell.removePrefix("skurikhin:")
+                when {
+                    WordPrefix.words(product).isEmpty() -> errors += "$at: nutritionSource '$cell' names no product"
+                    product != product.trim() -> errors += "$at: nutritionSource '$cell': the product name has spaces around it"
+                }
+            }
+            else -> errors += "$at: nutritionSource '$cell' is neither 'fdc:<id>' nor 'skurikhin:<product name>'"
+        }
+        return false
     }
 
     private fun uniqueIds(rows: List<Row<*>>, errors: MutableList<String>) {

@@ -135,6 +135,15 @@ class ContrastTest {
         graphic("My kitchen — the tick or the dash in a ticked or partly ticked checkbox's box", c.onPrimary, c.primary),
         graphic("My kitchen opened from a recipe — its item's checkbox boundary, unticked, on the primary container", c.onSurfaceVariant, c.primaryContainer),
         graphic("My kitchen opened from a recipe — its item's checkbox box, ticked, on the primary container", c.primary, c.primaryContainer),
+        text("the card's nutrition — a tile's value", c.onSurface, c.surfaceContainer),
+        text("the card's nutrition — a tile's word", c.onSurfaceVariant, c.surfaceContainer),
+        text("the card's nutrition — the chosen segment's label and check", c.onSecondaryContainer, c.secondaryContainer),
+        text("the card's nutrition — the segment not chosen", c.onSurface, c.surface),
+        text("the card's nutrition — \"Whole dish\" alone, the rows not counted", c.onSurfaceVariant, c.surface),
+        text("the card's nutrition — \"Details\" and its chevron", c.primary, c.surface),
+        graphic("the card's nutrition — the switch's boundary", c.outline, c.surface),
+        text("the nutrition sheet — its title, captions and counted rows", c.onSurface, c.surfaceContainerLow),
+        text("the nutrition sheet — the rows not counted and how it is counted", c.onSurfaceVariant, c.surfaceContainerLow),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }

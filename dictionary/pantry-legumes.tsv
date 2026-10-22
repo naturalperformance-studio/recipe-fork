@@ -1,10 +1,11 @@
 # Pantry: dried and canned legumes (5900-5999), tofu and soy products (6000-6049), plant milks and creams (6050-6099).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 # A canned legume's pc is the whole can (400 g net); its cup is drained legumes, about 170 g.
 @range 5000-6999
 
 # фасоль
-5900	фасоль	beans			g=1 tbsp=12 cup=200
+# фасоль → fdc:175193 kidney beans, all types, raw: dry beans
+5900	фасоль	beans			g=1 tbsp=12 cup=200				kcal=333 protein=23.58 fat=0.83 carbs=60.01	fdc:175193
 5901	фасоль белая	white beans	5900		g=1 tbsp=12 cup=200
 5902	фасоль красная	red kidney beans	5900		g=1 tbsp=12 cup=200			kidney beans
 5903	фасоль чёрная	black beans	5900		g=1 tbsp=12 cup=200
@@ -14,85 +15,106 @@
 5907	фасоль каннеллини	cannellini beans	5900		g=1 tbsp=12 cup=200
 5908	фасоль пёстрая	borlotti beans	5900		g=1 tbsp=12 cup=200
 5909	фасоль чёрный глаз	black-eyed peas	5900		g=1 tbsp=12 cup=200
-5910	фасоль консервированная	canned beans	5900	true	g=1 pc=400 cup=170
-5911	фасоль красная консервированная	canned red kidney beans	5900	true	g=1 pc=400 cup=170
-5912	фасоль белая консервированная	canned white beans	5900	true	g=1 pc=400 cup=170
-5913	фасоль чёрная консервированная	canned black beans	5900	true	g=1 pc=400 cup=170
+# фасоль консервированная → fdc:174285 red kidney beans, canned, drained solids: the canned beans Russian shops sell most
+5910	фасоль консервированная	canned beans	5900	true	g=1 pc=400 cup=170				kcal=124 protein=7.98 fat=1.05 carbs=21.49	fdc:174285
+5911	фасоль красная консервированная	canned red kidney beans	5900	true	g=1 pc=400 cup=170				kcal=124 protein=7.98 fat=1.05 carbs=21.49	fdc:174285
+5912	фасоль белая консервированная	canned white beans	5900	true	g=1 pc=400 cup=170				kcal=114 protein=7.26 fat=0.29 carbs=21.2	fdc:175204
+# фасоль чёрная консервированная → fdc:2644285 Beans, black, canned, sodium added, drained and rinsed: SR has canned black beans only with their liquid; energy from 2048, Atwater specific factors.
+5913	фасоль чёрная консервированная	canned black beans	5900	true	g=1 pc=400 cup=170				kcal=115.28233 protein=6.9125 fat=1.273 carbs=19.8135	fdc:2644285
 5914	фасоль мелкая белая	navy beans	5900		g=1 tbsp=13 cup=210
 5915	фасоль крупная белая	gigante beans	5900		g=1 tbsp=11 cup=190
-5916	бобы	fava beans			g=1 tbsp=11 cup=190
+# бобы → fdc:175205 fava beans, mature seeds, raw: the measures are for dry beans
+5916	бобы	fava beans			g=1 tbsp=11 cup=190				kcal=341 protein=26.12 fat=1.53 carbs=58.29	fdc:175205
 5917	бобы сушёные	dried fava beans	5916		g=1 tbsp=11 cup=190
-5918	бобы консервированные	canned fava beans	5916	true	g=1 pc=400 cup=170
+# Canned with their liquid: neither source has drained fava beans, so this undercounts drained beans.
+5918	бобы консервированные	canned fava beans	5916	true	g=1 pc=400 cup=170				kcal=71 protein=5.47 fat=0.22 carbs=12.41	fdc:173754
 
 # нут, чечевица, горох, маш, соя
-5920	нут	chickpeas			g=1 tbsp=12 cup=200
-5921	нут консервированный	canned chickpeas	5920	true	g=1 pc=400 cup=170
+5920	нут	chickpeas			g=1 tbsp=12 cup=200				kcal=378 protein=20.47 fat=6.04 carbs=62.95	fdc:173756
+5921	нут консервированный	canned chickpeas	5920	true	g=1 pc=400 cup=170				kcal=139 protein=7.05 fat=2.77 carbs=22.53	fdc:173800
 5922	нут чёрный	black chickpeas	5920		g=1 tbsp=12 cup=200
 5923	нут дроблёный	split chickpeas	5920		g=1 tbsp=13 cup=210
-5924	нут пророщенный	sprouted chickpeas	5920		g=1 tbsp=8 cup=140
-5930	чечевица	lentils			g=1 tbsp=12 cup=200
-5931	чечевица красная	red lentils	5930		g=1 tbsp=12 cup=200
+# нут пророщенный → fdc:170422 peas, mature seeds, sprouted, raw: no sprouted chickpeas in FoodData Central; a sprouted dry pea is the same form
+5924	нут пророщенный	sprouted chickpeas	5920		g=1 tbsp=8 cup=140				kcal=124 protein=8.8 fat=0.68 carbs=27.11	fdc:170422
+5930	чечевица	lentils			g=1 tbsp=12 cup=200				kcal=352 protein=24.63 fat=1.06 carbs=63.35	fdc:172420
+5931	чечевица красная	red lentils	5930		g=1 tbsp=12 cup=200				kcal=358 protein=23.91 fat=2.17 carbs=63.1	fdc:174284
 5932	чечевица зелёная	green lentils	5930		g=1 tbsp=12 cup=200
 5933	чечевица коричневая	brown lentils	5930		g=1 tbsp=12 cup=200
 5934	чечевица чёрная	black beluga lentils	5930		g=1 tbsp=13 cup=210
 5935	чечевица жёлтая	yellow lentils	5930		g=1 tbsp=12 cup=200
 5936	чечевица пюи	Puy lentils	5930		g=1 tbsp=13 cup=210
-5937	чечевица консервированная	canned lentils	5930	true	g=1 pc=400 cup=170
-5938	чечевица пророщенная	sprouted lentils	5930		g=1 tbsp=6 cup=100
-5940	горох	dried peas			g=1 tbsp=13 cup=220
+# чечевица консервированная → fdc:172421 lentils, boiled: no canned lentils in FoodData Central; canned lentils are cooked lentils
+5937	чечевица консервированная	canned lentils	5930	true	g=1 pc=400 cup=170				kcal=116 protein=9.02 fat=0.38 carbs=20.13	fdc:172421
+5938	чечевица пророщенная	sprouted lentils	5930		g=1 tbsp=6 cup=100				kcal=106 protein=8.96 fat=0.55 carbs=22.14	fdc:168427
+# горох → fdc:172428 split peas, raw: yellow and green dried peas hold the same
+5940	горох	dried peas			g=1 tbsp=13 cup=220				kcal=364 protein=23.12 fat=3.89 carbs=61.63	fdc:172428
 5941	горох колотый	split peas	5940		g=1 tbsp=14 cup=230
 5942	горох целый	whole dried peas	5940		g=1 tbsp=13 cup=210
 5943	горох зелёный сушёный	green split peas	5940		g=1 tbsp=14 cup=230
-5950	маш	mung beans			g=1 tbsp=13 cup=210
+5950	маш	mung beans			g=1 tbsp=13 cup=210				kcal=347 protein=23.86 fat=1.15 carbs=62.62	fdc:174256
 5951	маш колотый	split mung beans	5950		g=1 tbsp=13 cup=210
-5955	соевые бобы	soybeans			g=1 tbsp=12 cup=190
-5956	урд	urad dal			g=1 tbsp=13 cup=210
+5955	соевые бобы	soybeans			g=1 tbsp=12 cup=190				kcal=446 protein=36.49 fat=19.94 carbs=30.16	fdc:174270
+# урд → fdc:174259 mungo beans, raw: urad is black gram
+5956	урд	urad dal			g=1 tbsp=13 cup=210				kcal=341 protein=25.21 fat=1.64 carbs=58.99	fdc:174259
 5957	смесь бобовых	mixed legumes			g=1 tbsp=12 cup=200
-5958	люпин	lupini beans			g=1 tbsp=12 cup=200
+5958	люпин	lupini beans			g=1 tbsp=12 cup=200				kcal=371 protein=36.17 fat=9.74 carbs=40.37	fdc:172423
 
 # тофу и соевые продукты
-6000	тофу	tofu			g=1
-6001	тофу твёрдый	firm tofu	6000		g=1
-6002	тофу мягкий	soft tofu	6000		g=1
-6003	тофу шёлковый	silken tofu	6000		g=1
-6004	тофу копчёный	smoked tofu	6000		g=1
-6005	тофу жареный	fried tofu	6000		g=1
+# тофу → fdc:172476 tofu, regular, prepared with calcium sulfate
+6000	тофу	tofu			g=1				kcal=76 protein=8.08 fat=4.78 carbs=1.87	fdc:172476
+6001	тофу твёрдый	firm tofu	6000		g=1				kcal=78 protein=9.04 fat=4.17 carbs=2.85	fdc:172448
+6002	тофу мягкий	soft tofu	6000		g=1				kcal=61 protein=7.17 fat=3.69 carbs=1.18	fdc:172449
+# тофу шёлковый → fdc:174292 MORI-NU, Tofu, silken, soft: the soft silken tofu, the usual one.
+6003	тофу шёлковый	silken tofu	6000		g=1				kcal=55 protein=4.8 fat=2.7 carbs=2.9	fdc:174292
+# тофу копчёный → fdc:172475 firm tofu, calcium sulfate: smoked tofu is pressed firm tofu
+6004	тофу копчёный	smoked tofu	6000		g=1				kcal=144 protein=17.27 fat=8.72 carbs=2.78	fdc:172475
+6005	тофу жареный	fried tofu	6000		g=1				kcal=270 protein=18.82 fat=20.18 carbs=8.86	fdc:172451
 6006	тофу маринованный	marinated tofu	6000		g=1
-6007	тофу сверхтвёрдый	extra-firm tofu	6000		g=1
-6010	темпе	tempeh			g=1
-6011	соевое мясо	textured soy protein			g=1 cup=90
+6007	тофу сверхтвёрдый	extra-firm tofu	6000		g=1				kcal=83 protein=9.98 fat=5.26 carbs=1.18	fdc:174290
+6010	темпе	tempeh			g=1				kcal=192 protein=20.29 fat=10.8 carbs=7.64	fdc:174272
+# соевое мясо → fdc:174275 defatted soy flour: textured soy protein is extruded defatted soy flour
+6011	соевое мясо	textured soy protein			g=1 cup=90				kcal=327 protein=51.46 fat=1.22 carbs=33.92	fdc:174275
 6012	соевый фарш	soy crumbles	6011		g=1 cup=90
 6013	соевый гуляш	soy chunks	6011		g=1 cup=80
 6014	соевая спаржа	dried bean curd sticks			g=1
 6015	юба	yuba			g=1
 6016	сейтан	seitan			g=1
-6017	окара	okara			g=1 tbsp=15 cup=200
+6017	окара	okara			g=1 tbsp=15 cup=200				kcal=76 protein=3.52 fat=1.73 carbs=12.23	fdc:172452
 6018	растительный фарш	plant-based ground meat			g=1
 6019	растительный протеин гороховый	pea protein powder			g=1 tbsp=8
 
 # растительное молоко и сливки
 6050	молоко растительное	plant milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-6051	молоко овсяное	oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-6052	молоко соевое	soy milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-6053	молоко миндальное	almond milk	6050		g=1 ml=1.02 tsp=5 tbsp=15 cup=255
-6054	молоко рисовое	rice milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+# молоко овсяное → fdc:2257046 Oat milk, unsweetened, plain, refrigerated (Foundation); energy from nutrient 2047 (Atwater general factors): the Foundation food has no 1008
+6051	молоко овсяное	oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=48.3298 protein=0.796875 fat=2.749 carbs=5.100325	fdc:2257046
+# молоко соевое → fdc:172446 soymilk, original, unfortified
+6052	молоко соевое	soy milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=54 protein=3.27 fat=1.75 carbs=6.28	fdc:172446
+# молоко миндальное → fdc:174832 almond milk, unsweetened, shelf stable
+6053	молоко миндальное	almond milk	6050		g=1 ml=1.02 tsp=5 tbsp=15 cup=255				kcal=15 protein=0.4 fat=0.96 carbs=1.31	fdc:174832
+6054	молоко рисовое	rice milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=47 protein=0.28 fat=0.97 carbs=9.17	fdc:171942
 6055	молоко фундучное	hazelnut milk	6050		g=1 ml=1.02 tsp=5 tbsp=15 cup=255
 6056	молоко кешью	cashew milk	6050		g=1 ml=1.02 tsp=5 tbsp=15 cup=255
 6057	молоко гороховое	pea milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 6058	молоко гречневое	buckwheat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 6059	молоко конопляное	hemp milk	6050		g=1 ml=1.02 tsp=5 tbsp=15 cup=255
-6060	молоко овсяное бариста	barista oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-6070	сливки растительные	non-dairy cream			g=1 ml=1.0 tsp=5 tbsp=15 cup=250
-6071	сливки растительные для взбивания	non-dairy whipping cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250
-6072	сливки соевые	soy cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250
-6073	сливки овсяные	oat cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250
-6074	сливки для кофе растительные	non-dairy creamer	6070		g=1 ml=1.0 tsp=5 tbsp=15
-6075	сливки сухие растительные	powdered creamer	6070		g=1 tsp=2 tbsp=6
-6080	йогурт растительный	plant-based yogurt			g=1 tsp=5 tbsp=15 cup=250
+# молоко овсяное бариста → fdc:2257046 Oat milk, unsweetened, plain, refrigerated (Foundation): the only oat milk in FoodData Central; energy from nutrient 2047 (Atwater general factors): the Foundation food has no 1008
+6060	молоко овсяное бариста	barista oat milk	6050		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=48.3298 protein=0.796875 fat=2.749 carbs=5.100325	fdc:2257046
+# сливки растительные → fdc:170867 dessert topping, pressurized: the non-dairy whipping cream Russian cooks buy
+6070	сливки растительные	non-dairy cream			g=1 ml=1.0 tsp=5 tbsp=15 cup=250				kcal=264 protein=0.98 fat=22.3 carbs=16.07	fdc:170867
+6071	сливки растительные для взбивания	non-dairy whipping cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250				kcal=264 protein=0.98 fat=22.3 carbs=16.07	fdc:170867
+# сливки соевые → none: a soy cream, not the pressurized dessert topping its parent cites; no source holds it
+6072	сливки соевые	soy cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250					none
+# сливки овсяные → none: an oat cream, not the pressurized dessert topping its parent cites; no source holds it
+6073	сливки овсяные	oat cream	6070		g=1 ml=1.0 tsp=5 tbsp=15 cup=250					none
+# сливки для кофе растительные → fdc:171261 cream substitute, liquid
+6074	сливки для кофе растительные	non-dairy creamer	6070		g=1 ml=1.0 tsp=5 tbsp=15				kcal=136 protein=1 fat=9.97 carbs=11.38	fdc:171261
+6075	сливки сухие растительные	powdered creamer	6070		g=1 tsp=2 tbsp=6				kcal=529 protein=2.48 fat=32.92 carbs=59.29	fdc:171263
+# йогурт растительный → fdc:167722 tofu yogurt: soy, the common plant yogurt
+6080	йогурт растительный	plant-based yogurt			g=1 tsp=5 tbsp=15 cup=250				kcal=94 protein=3.5 fat=1.8 carbs=15.96	fdc:167722
 6081	йогурт соевый	soy yogurt	6080		g=1 tsp=5 tbsp=15 cup=250
 6082	йогурт овсяный	oat yogurt	6080		g=1 tsp=5 tbsp=15 cup=250
 6085	сыр растительный	vegan cheese			g=1
-5959	эдамаме	edamame	5955		g=1 cup=155
-5960	арахисовая паста	peanut butter			g=1 tsp=5 tbsp=16 cup=260
+5959	эдамаме	edamame	5955		g=1 cup=155				kcal=109 protein=11.22 fat=4.73 carbs=7.61	fdc:168410
+5960	арахисовая паста	peanut butter			g=1 tsp=5 tbsp=16 cup=260				kcal=598 protein=22.21 fat=51.36 carbs=22.31	fdc:172470
 5961	арахисовая паста кранчи	crunchy peanut butter	5960		g=1 tsp=5 tbsp=16 cup=260
 5962	арахисовая паста без сахара	unsweetened peanut butter	5960		g=1 tsp=5 tbsp=16 cup=260
