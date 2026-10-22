@@ -38,10 +38,12 @@
 1840	грибы сушёные	dried mushrooms	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
 1841	белые грибы сушёные	dried porcini	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
 1842	шиитаке сушёные	dried shiitake	1800	false	g=1 pc=3				kcal=296 protein=9.58 fat=0.99 carbs=75.37	fdc:168436
-1843	сморчки сушёные	dried morels	1800		g=1
+# сморчки сушёные → Skurikhin «Белые сушеные»: a dried mushroom, no dried morel listed
+1843	сморчки сушёные	dried morels	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
 1835	вешенки замороженные	frozen oyster mushrooms	1800		g=1				kcal=33 protein=3.31 fat=0.41 carbs=6.09	fdc:168580
 1836	маслята замороженные	frozen slippery jacks	1800		g=1
-1844	лисички сушёные	dried chanterelles	1800		g=1
+# лисички сушёные → Skurikhin «Белые сушеные»: a dried mushroom, no dried chanterelle listed
+1844	лисички сушёные	dried chanterelles	1800		g=1				kcal=286 protein=30.3 fat=14.3 carbs=9	skurikhin:Белые сушеные
 1824	трюфель чёрный	black truffle	1800		g=1
 1825	трюфель белый	white truffle	1800		g=1
 1826	моховики	bay boletes	1800		g=1

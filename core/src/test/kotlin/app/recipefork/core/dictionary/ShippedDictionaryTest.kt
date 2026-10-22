@@ -63,16 +63,15 @@ class ShippedDictionaryTest {
         val sugar = NutritionDto(387.0, 0.0, 0.0, 99.98)
         val butter = NutritionDto(717.0, 0.85, 81.11, 0.06)
         val flour = NutritionDto(364.0, 10.33, 0.98, 76.31)
-        assertEquals(
-            mapOf(
-                4400L to NutritionDto(143.0, 12.56, 9.51, 0.72),
-                4600L to butter, 4601L to butter, 4602L to butter,
-                5001L to flour, 5002L to flour,
-                6100L to sugar, 6101L to sugar,
-                8800L to NutritionDto(0.0, 0.0, 0.0, 0.0),
-            ),
-            dictionaries.ingredients.filter { it.nutrition != null }.associate { it.id to it.nutrition },
+        val first = mapOf(
+            4400L to NutritionDto(143.0, 12.56, 9.51, 0.72),
+            4600L to butter, 4601L to butter, 4602L to butter,
+            5001L to flour, 5002L to flour,
+            6100L to sugar, 6101L to sugar,
+            8800L to NutritionDto(0.0, 0.0, 0.0, 0.0),
         )
+        // Later data tasks add entries; these nine keep their values.
+        assertEquals(first, dictionaries.ingredients.filter { it.id in first }.associate { it.id to it.nutrition })
         val dairy = File(sources, "animal-dairy.tsv").readText(Charsets.UTF_8)
         assertTrue("fdc:171287" in dairy && "fdc:173430" in dairy && "fdc:173410" in dairy)
         val shipped = asset.readText(Charsets.UTF_8)

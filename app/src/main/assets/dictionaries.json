@@ -1,5 +1,5 @@
 {
-  "version": "2cb1946fc2c26e394091baa058f13fa6bd94f49bbc7516857075a4696f4c814a",
+  "version": "d94da00f4e4fe31f6d5ebbb1be83d93f0cda6b7bd7bb47256bdd44dacc3517c7",
   "ingredients": [
     {
       "id": 1,
@@ -2299,6 +2299,12 @@
       "parentId": 1410,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 29.0,
+        "protein": 4.1,
+        "fat": 0.25,
+        "carbs": 4.82
       }
     },
     {
@@ -4402,6 +4408,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 286.0,
+        "protein": 30.3,
+        "fat": 14.3,
+        "carbs": 9.0
       }
     },
     {
@@ -4411,6 +4423,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 286.0,
+        "protein": 30.3,
+        "fat": 14.3,
+        "carbs": 9.0
       }
     },
     {
