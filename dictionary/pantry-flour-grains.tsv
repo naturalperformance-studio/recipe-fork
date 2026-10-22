@@ -5,63 +5,91 @@
 @range 5000-6999
 
 # мука
-5000	мука	flour			g=1 tsp=3 tbsp=10 cup=130
+# мука → fdc:169761 all-purpose wheat flour: what мука means in a Russian recipe
+5000	мука	flour			g=1 tsp=3 tbsp=10 cup=130				kcal=364 protein=10.33 fat=0.98 carbs=76.31	fdc:169761
 5001	мука пшеничная	wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=364 protein=10.33 fat=0.98 carbs=76.31	fdc:169761
 5002	мука пшеничная высшего сорта	all-purpose flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=364 protein=10.33 fat=0.98 carbs=76.31	fdc:169761
-5003	мука пшеничная первого сорта	all-purpose flour, first grade	5000		g=1 tsp=3 tbsp=10 cup=130
-5004	мука цельнозерновая	whole wheat flour	5000		g=1 tsp=3 tbsp=9 cup=125
-5005	мука хлебопекарная	bread flour	5000		g=1 tsp=3 tbsp=10 cup=135
-5006	мука 00	00 flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5007	мука самоподнимающаяся	self-rising flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5009	мука ржаная	rye flour	5000		g=1 tsp=3 tbsp=9 cup=120
-5010	мука ржаная обдирная	medium rye flour	5000		g=1 tsp=3 tbsp=9 cup=120
-5011	мука полбяная	spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120
-5012	мука ячменная	barley flour	5000		g=1 tsp=3 tbsp=9 cup=120
-5013	мука гречневая	buckwheat flour	5000		g=1 tsp=3 tbsp=9 cup=130
-5014	мука кукурузная	cornmeal	5000		g=1 tsp=3 tbsp=10 cup=140
-5015	маса харина	masa harina	5000		g=1 tsp=3 tbsp=8 cup=120
-5016	мука рисовая	rice flour	5000		g=1 tsp=3 tbsp=10 cup=160
-5017	мука рисовая клейкая	glutinous rice flour	5000		g=1 tsp=3 tbsp=10 cup=160
-5018	мука овсяная	oat flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5019	мука миндальная	almond flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5020	мука кокосовая	coconut flour	5000		g=1 tsp=2 tbsp=7 cup=120
-5021	мука нутовая	chickpea flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5022	мука гороховая	pea flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5023	мука соевая	soy flour	5000		g=1 tsp=2 tbsp=5 cup=90
+# Skurikhin 6.1.3.4, p. 114-115
+5003	мука пшеничная первого сорта	all-purpose flour, first grade	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=330 protein=10.6 fat=1.3 carbs=69	skurikhin:Мука 1 сорта
+5004	мука цельнозерновая	whole wheat flour	5000		g=1 tsp=3 tbsp=9 cup=125				kcal=340 protein=13.21 fat=2.5 carbs=71.97	fdc:168893
+5005	мука хлебопекарная	bread flour	5000		g=1 tsp=3 tbsp=10 cup=135				kcal=361 protein=11.98 fat=1.66 carbs=72.53	fdc:168913
+# мука 00 → fdc:2003586 Flour, 00 (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5006	мука 00	00 flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=365.610744 protein=11.4 fat=1.52 carbs=74.4462	fdc:2003586
+5007	мука самоподнимающаяся	self-rising flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=354 protein=9.89 fat=0.97 carbs=74.22	fdc:168895
+# мука ржаная → fdc:168886 medium rye flour
+5009	мука ржаная	rye flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=349 protein=10.88 fat=1.52 carbs=75.43	fdc:168886
+# Skurikhin 6.3.3, p. 120-121
+5010	мука ржаная обдирная	medium rye flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=298 protein=8.9 fat=1.7 carbs=61.8	skurikhin:Мука обдирная
+# мука полбяная → fdc:2003587 Flour, spelt, whole grain (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5011	мука полбяная	spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=340.5831 protein=14.475 fat=2.543 carbs=70.723	fdc:2003587
+5012	мука ячменная	barley flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=345 protein=10.5 fat=1.6 carbs=74.52	fdc:169739
+5013	мука гречневая	buckwheat flour	5000		g=1 tsp=3 tbsp=9 cup=130				kcal=335 protein=12.62 fat=3.1 carbs=70.59	fdc:170687
+# мука кукурузная → fdc:168929 degermed yellow cornmeal, unenriched: the fine corn flour Russian shops sell
+5014	мука кукурузная	cornmeal	5000		g=1 tsp=3 tbsp=10 cup=140				kcal=370 protein=7.11 fat=1.75 carbs=79.45	fdc:168929
+5015	маса харина	masa harina	5000		g=1 tsp=3 tbsp=8 cup=120				kcal=363 protein=8.46 fat=3.69 carbs=76.59	fdc:169696
+5016	мука рисовая	rice flour	5000		g=1 tsp=3 tbsp=10 cup=160				kcal=366 protein=5.95 fat=1.42 carbs=80.13	fdc:169714
+# мука рисовая клейкая → fdc:1104867 glutinous rice flour (Foundation; SR Legacy has none)
+5017	мука рисовая клейкая	glutinous rice flour	5000		g=1 tsp=3 tbsp=10 cup=160				kcal=358 protein=6.69 fat=1.16 carbs=80.1	fdc:1104867
+5018	мука овсяная	oat flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=404 protein=14.66 fat=9.12 carbs=65.7	fdc:169741
+# мука миндальная → fdc:2261420 Flour, almond (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5019	мука миндальная	almond flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=577.62536 protein=26.24375 fat=50.23 carbs=16.24925	fdc:2261420
+# мука кокосовая → fdc:2515382 Flour, coconut (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5020	мука кокосовая	coconut flour	5000		g=1 tsp=2 tbsp=7 cup=120				kcal=423.62737 protein=16.1385 fat=15.28 carbs=58.9025	fdc:2515382
+5021	мука нутовая	chickpea flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=387 protein=22.39 fat=6.69 carbs=57.82	fdc:174288
+# мука гороховая → fdc:172428 split peas, raw: pea flour is milled dried peas
+5022	мука гороховая	pea flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=364 protein=23.12 fat=3.89 carbs=61.63	fdc:172428
+5023	мука соевая	soy flour	5000		g=1 tsp=2 tbsp=5 cup=90				kcal=434 protein=37.81 fat=20.65 carbs=31.92	fdc:174273
 5024	мука льняная	flaxseed meal	5000		g=1 tsp=2 tbsp=7 cup=110
-5025	мука амарантовая	amaranth flour	5000		g=1 tsp=2 tbsp=7 cup=110
-5026	мука из киноа	quinoa flour	5000		g=1 tsp=2 tbsp=7 cup=110
-5027	мука каштановая	chestnut flour	5000		g=1 tsp=2 tbsp=6 cup=105
+# мука амарантовая → fdc:2512371 Flour, amaranth (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5025	мука амарантовая	amaranth flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=377.9609 protein=13.2093 fat=6.236 carbs=68.7787	fdc:2512371
+# мука из киноа → fdc:2512372 Flour, quinoa (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5026	мука из киноа	quinoa flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=378.394015 protein=11.92235 fat=6.601 carbs=69.52465	fdc:2512372
+# мука каштановая → fdc:2515377 Flour, chestnut (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5027	мука каштановая	chestnut flour	5000		g=1 tsp=2 tbsp=6 cup=105				kcal=384.58086 protein=5.28675 fat=4.636 carbs=80.45025	fdc:2515377
 5028	мука конопляная	hemp flour	5000		g=1 tsp=2 tbsp=7 cup=110
 5029	мука тыквенная	pumpkin seed flour	5000		g=1 tsp=2 tbsp=7 cup=110
 5030	мука кедровая	pine nut flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5031	мука фундучная	hazelnut flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5032	мука из сорго	sorghum flour	5000		g=1 tsp=3 tbsp=8 cup=125
-5033	мука теф	teff flour	5000		g=1 tsp=3 tbsp=8 cup=125
+# мука фундучная → fdc:170581 hazelnuts: hazelnut flour is ground whole nuts
+5031	мука фундучная	hazelnut flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=628 protein=14.95 fat=60.75 carbs=16.7	fdc:170581
+5032	мука из сорго	sorghum flour	5000		g=1 tsp=3 tbsp=8 cup=125				kcal=359 protein=8.43 fat=3.34 carbs=76.64	fdc:168943
+# мука теф → fdc:169747 teff, uncooked: teff flour is milled whole teff
+5033	мука теф	teff flour	5000		g=1 tsp=3 tbsp=8 cup=125				kcal=367 protein=13.3 fat=2.38 carbs=73.13	fdc:169747
 5034	мука безглютеновая	gluten-free flour	5000		g=1 tsp=3 tbsp=10 cup=140
-5035	мука блинная	pancake mix	5000		g=1 tsp=3 tbsp=10 cup=130
+# мука блинная → fdc:175007 plain pancake dry mix, incomplete: a mix the cook adds milk and eggs to
+5035	мука блинная	pancake mix	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=355 protein=10 fat=1.7 carbs=73.6	fdc:175007
 5036	мука для темпуры	tempura flour	5000		g=1 tsp=3 tbsp=9 cup=130
-5037	мука пшеничная второго сорта	second-grade wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5038	мука из твёрдых сортов пшеницы (семола)	durum wheat flour	5000		g=1 tsp=4 tbsp=11 cup=165
-5039	мука для пиццы	pizza flour	5000		g=1 tsp=3 tbsp=10 cup=130
-5040	мука кондитерская	cake flour	5000		g=1 tsp=3 tbsp=9 cup=125
-5041	мука ржаная цельнозерновая	whole grain rye flour	5000		g=1 tsp=3 tbsp=9 cup=120
-5042	мука спельтовая цельнозерновая	whole grain spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120
-5044	мука рисовая коричневая	brown rice flour	5000		g=1 tsp=3 tbsp=10 cup=155
-5045	мука маниоковая	cassava flour	5000		g=1 tsp=3 tbsp=9 cup=135
-5046	мука арахисовая	peanut flour	5000		g=1 tsp=2 tbsp=6 cup=100
-5047	мука кунжутная	sesame flour	5000		g=1 tsp=2 tbsp=7 cup=110
+# Skurikhin 6.1.3.7, p. 116-117
+5037	мука пшеничная второго сорта	second-grade wheat flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=322 protein=11.6 fat=1.8 carbs=64.8	skurikhin:Мука 2 сорта
+# мука из твёрдых сортов пшеницы → fdc:168933 semolina, unenriched: semola is durum semolina
+5038	мука из твёрдых сортов пшеницы (семола)	durum wheat flour	5000		g=1 tsp=4 tbsp=11 cup=165				kcal=360 protein=12.68 fat=1.05 carbs=72.83	fdc:168933
+# мука для пиццы → fdc:168913 bread flour: a strong high-protein wheat flour
+5039	мука для пиццы	pizza flour	5000		g=1 tsp=3 tbsp=10 cup=130				kcal=361 protein=11.98 fat=1.66 carbs=72.53	fdc:168913
+5040	мука кондитерская	cake flour	5000		g=1 tsp=3 tbsp=9 cup=125				kcal=362 protein=8.2 fat=0.86 carbs=78.03	fdc:169723
+# мука ржаная цельнозерновая → fdc:168885 dark rye flour, the whole-meal rye flour in FoodData Central
+5041	мука ржаная цельнозерновая	whole grain rye flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=325 protein=15.91 fat=2.22 carbs=68.63	fdc:168885
+# мука спельтовая цельнозерновая → fdc:2003587 Flour, spelt, whole grain (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5042	мука спельтовая цельнозерновая	whole grain spelt flour	5000		g=1 tsp=3 tbsp=9 cup=120				kcal=340.5831 protein=14.475 fat=2.543 carbs=70.723	fdc:2003587
+5044	мука рисовая коричневая	brown rice flour	5000		g=1 tsp=3 tbsp=10 cup=155				kcal=363 protein=7.23 fat=2.78 carbs=76.48	fdc:168898
+# мука маниоковая → fdc:2512377 Flour, cassava (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5045	мука маниоковая	cassava flour	5000		g=1 tsp=3 tbsp=9 cup=135				kcal=358.55706075 protein=0.918225 fat=0.4938 carbs=87.312975	fdc:2512377
+# мука арахисовая → fdc:172435 low-fat peanut flour: peanut flour is milled from pressed peanuts
+5046	мука арахисовая	peanut flour	5000		g=1 tsp=2 tbsp=6 cup=100				kcal=428 protein=33.8 fat=21.9 carbs=31.27	fdc:172435
+# мука кунжутная → fdc:170153 partially defatted sesame flour: sesame flour is milled from pressed seed
+5047	мука кунжутная	sesame flour	5000		g=1 tsp=2 tbsp=7 cup=110				kcal=382 protein=40.32 fat=11.89 carbs=35.14	fdc:170153
 5048	мука льняная золотистая	golden flaxseed meal	5000		g=1 tsp=2 tbsp=7 cup=110
 5049	мука из пророщенной пшеницы	sprouted wheat flour	5000		g=1 tsp=3 tbsp=9 cup=125
-5050	мука солодовая	malt flour	5000		g=1 tsp=3 tbsp=9 cup=125
+5050	мука солодовая	malt flour	5000		g=1 tsp=3 tbsp=9 cup=125				kcal=361 protein=10.28 fat=1.84 carbs=78.3	fdc:169740
 5051	солод ржаной ферментированный	fermented rye malt			g=1 tsp=3 tbsp=8 cup=110
-5052	солод ячменный	barley malt			g=1 tsp=3 tbsp=8 cup=110
-5053	экстракт солода	malt extract			g=1 ml=1.4 tsp=7 tbsp=21
+# солод ячменный → fdc:169740 barley malt flour: dried barley malt, used ground
+5052	солод ячменный	barley malt			g=1 tsp=3 tbsp=8 cup=110				kcal=361 protein=10.28 fat=1.84 carbs=78.3	fdc:169740
+# экстракт солода → fdc:169660 malt syrup
+5053	экстракт солода	malt extract			g=1 ml=1.4 tsp=7 tbsp=21				kcal=318 protein=6.2 fat=0 carbs=71.3	fdc:169660
 
 # крахмал, тапиока, саго
-5100	крахмал	starch			g=1 tsp=4 tbsp=11 cup=180
+# крахмал → Skurikhin «Крахмал картофельный»: крахмал in a Russian recipe is potato starch (Skurikhin 10.11.6, p. 170-171)
+5100	крахмал	starch			g=1 tsp=4 tbsp=11 cup=180				kcal=313 protein=0.1 fat=0 carbs=78.2	skurikhin:Крахмал картофельный
 5101	крахмал картофельный	potato starch	5100		g=1 tsp=4 tbsp=11 cup=180
-5102	крахмал кукурузный	cornstarch	5100		g=1 tsp=3 tbsp=8 cup=135
+5102	крахмал кукурузный	cornstarch	5100		g=1 tsp=3 tbsp=8 cup=135				kcal=381 protein=0.26 fat=0.05 carbs=91.27	fdc:169698
 5103	крахмал рисовый	rice starch	5100		g=1 tsp=3 tbsp=9 cup=150
 5104	крахмал тапиоковый	tapioca starch	5100		g=1 tsp=3 tbsp=8 cup=130
 5105	крахмал маранты	arrowroot	5100		g=1 tsp=3 tbsp=8 cup=130
@@ -69,84 +97,103 @@
 5107	крахмал модифицированный	modified starch	5100		g=1 tsp=3 tbsp=9 cup=140
 5108	крахмал бататовый	sweet potato starch	5100		g=1 tsp=4 tbsp=11 cup=170
 5109	крахмал гороховый	pea starch	5100		g=1 tsp=3 tbsp=9 cup=150
-5120	тапиока	tapioca pearls			g=1 tsp=3 tbsp=10 cup=160
+5120	тапиока	tapioca pearls			g=1 tsp=3 tbsp=10 cup=160				kcal=358 protein=0.19 fat=0.02 carbs=88.69	fdc:169717
 5121	саго	sago			g=1 tsp=3 tbsp=10 cup=160
 
 # отруби и клетчатка
-5150	отруби	bran			g=1 tsp=1 tbsp=4 cup=60
-5151	отруби пшеничные	wheat bran	5150		g=1 tsp=1 tbsp=4 cup=60
-5152	отруби овсяные	oat bran	5150		g=1 tsp=2 tbsp=6 cup=95
+# отруби → fdc:169722 wheat bran: отруби without a qualifier are wheat bran
+5150	отруби	bran			g=1 tsp=1 tbsp=4 cup=60				kcal=216 protein=15.55 fat=4.25 carbs=64.51	fdc:169722
+5151	отруби пшеничные	wheat bran	5150		g=1 tsp=1 tbsp=4 cup=60				kcal=216 protein=15.55 fat=4.25 carbs=64.51	fdc:169722
+5152	отруби овсяные	oat bran	5150		g=1 tsp=2 tbsp=6 cup=95				kcal=246 protein=17.3 fat=7.03 carbs=66.22	fdc:168872
 5153	отруби ржаные	rye bran	5150		g=1 tsp=1 tbsp=4 cup=60
-5154	отруби рисовые	rice bran	5150		g=1 tsp=2 tbsp=5 cup=80
+5154	отруби рисовые	rice bran	5150		g=1 tsp=2 tbsp=5 cup=80				kcal=316 protein=13.35 fat=20.85 carbs=49.69	fdc:169713
 5155	отруби гречневые	buckwheat bran	5150		g=1 tsp=1 tbsp=4 cup=60
 5170	псиллиум	psyllium husk			g=1 tsp=3 tbsp=8
 5171	клетчатка	dietary fiber			g=1 tsp=2 tbsp=6
-5172	глютен	vital wheat gluten			g=1 tsp=3 tbsp=9 cup=150
-5173	зародыши пшеницы	wheat germ			g=1 tsp=2 tbsp=7 cup=110
+5172	глютен	vital wheat gluten			g=1 tsp=3 tbsp=9 cup=150				kcal=370 protein=75.16 fat=1.85 carbs=13.79	fdc:168147
+5173	зародыши пшеницы	wheat germ			g=1 tsp=2 tbsp=7 cup=110				kcal=360 protein=23.15 fat=9.72 carbs=51.8	fdc:168892
 
 # крупы и зерно
-5200	гречка	buckwheat			g=1 tbsp=13 cup=210		гречневая крупа
+# гречка → Skurikhin «Крупа ядрица»: the whole roasted groats гречка means (Skurikhin 6.6.4, p. 122-123)
+5200	гречка	buckwheat			g=1 tbsp=13 cup=210		гречневая крупа		kcal=308 protein=12.6 fat=3.3 carbs=57.1	skurikhin:Крупа ядрица
 5201	гречка ядрица	whole buckwheat groats	5200		g=1 tbsp=13 cup=210
 5202	гречка продел	broken buckwheat groats	5200		g=1 tbsp=12 cup=200
 5203	гречка зелёная	green buckwheat	5200		g=1 tbsp=12 cup=200
 5204	гречка жареная	kasha	5200		g=1 tbsp=13 cup=210
 5205	гречка в пакетиках	boil-in-bag buckwheat	5200	false	g=1 pc=80 cup=210
 5206	гречка дроблёная	cracked buckwheat	5200		g=1 tbsp=12 cup=200
-5210	пшено	millet			g=1 tbsp=13 cup=220
+# Skurikhin 6.8.2, p. 124-125
+5210	пшено	millet			g=1 tbsp=13 cup=220				kcal=342 protein=11.5 fat=3.3 carbs=66.5	skurikhin:Крупа пшено шлифованное
 5211	пшено шлифованное	polished millet	5210		g=1 tbsp=13 cup=220
 5212	пшено дроблёное	cracked millet	5210		g=1 tbsp=13 cup=210
-5215	перловая крупа	pearl barley			g=1 tbsp=14 cup=230
-5216	ячневая крупа	barley grits			g=1 tbsp=11 cup=180
-5217	ячмень	barley			g=1 tbsp=13 cup=210
-5220	пшеничная крупа	wheat groats			g=1 tbsp=12 cup=200
+# Skurikhin 6.7.2, p. 122-123
+5215	перловая крупа	pearl barley			g=1 tbsp=14 cup=230				kcal=315 protein=9.3 fat=1.1 carbs=66.9	skurikhin:Крупа перловая
+# Skurikhin 6.7.3, p. 122-123
+5216	ячневая крупа	barley grits			g=1 tbsp=11 cup=180				kcal=313 protein=10 fat=1.3 carbs=65.4	skurikhin:Крупа ячневая
+# ячмень → fdc:170283 barley, hulled: the whole grain
+5217	ячмень	barley			g=1 tbsp=13 cup=210				kcal=354 protein=12.48 fat=2.3 carbs=73.48	fdc:170283
+# пшеничная крупа → Skurikhin «Крупа «Полтавская»»: the common wheat groats (Skurikhin 6.1.3.11.3, p. 118-119)
+5220	пшеничная крупа	wheat groats			g=1 tbsp=12 cup=200				kcal=329 protein=11.5 fat=1.3 carbs=67.9	skurikhin:Крупа «Полтавская»
 5221	крупа артек	fine wheat groats	5220		g=1 tbsp=12 cup=200
 5222	крупа полтавская	coarse wheat groats	5220		g=1 tbsp=12 cup=200
-5225	манная крупа	semolina			g=1 tsp=4 tbsp=12 cup=200		манка
+# Skurikhin 6.1.3.11.2, p. 118-119
+5225	манная крупа	semolina			g=1 tsp=4 tbsp=12 cup=200		манка		kcal=333 protein=10.3 fat=1 carbs=70.6	skurikhin:Крупа манная
 5226	манная крупа из твёрдых сортов	durum semolina	5225		g=1 tsp=4 tbsp=12 cup=200
-5230	кукурузная крупа	corn grits			g=1 tbsp=11 cup=180
+# кукурузная крупа → fdc:171670 yellow corn grits, unenriched, dry
+5230	кукурузная крупа	corn grits			g=1 tbsp=11 cup=180				kcal=371 protein=8.8 fat=1.2 carbs=79.6	fdc:171670
 5231	полента	polenta	5230		g=1 tbsp=11 cup=170
 5232	кукурузная крупа мелкая	fine corn grits	5230		g=1 tbsp=11 cup=180
 5233	кукурузная крупа крупная	coarse corn grits	5230		g=1 tbsp=12 cup=190
 5234	полента быстрого приготовления	instant polenta	5230		g=1 tbsp=11 cup=170
-5235	кукуруза для попкорна	popcorn kernels			g=1 tbsp=12 cup=200
-5236	хомини	hominy			g=1 tbsp=12 cup=190
-5240	булгур	bulgur			g=1 tbsp=11 cup=170
+# кукуруза для попкорна → fdc:170288 yellow corn grain: popcorn kernels are whole dried corn
+5235	кукуруза для попкорна	popcorn kernels			g=1 tbsp=12 cup=200				kcal=365 protein=9.42 fat=4.74 carbs=74.26	fdc:170288
+# хомини → fdc:168920 white corn grain: dried hominy is hulled whole corn; the measures are for the dry kernels
+5236	хомини	hominy			g=1 tbsp=12 cup=190				kcal=365 protein=9.42 fat=4.74 carbs=74.26	fdc:168920
+5240	булгур	bulgur			g=1 tbsp=11 cup=170				kcal=342 protein=12.29 fat=1.33 carbs=75.87	fdc:170688
 5241	булгур мелкий	fine bulgur	5240		g=1 tbsp=11 cup=170
 5242	булгур крупный	coarse bulgur	5240		g=1 tbsp=11 cup=175
-5245	кускус	couscous			g=1 tbsp=11 cup=180
+5245	кускус	couscous			g=1 tbsp=11 cup=180				kcal=376 protein=12.76 fat=0.64 carbs=77.43	fdc:169699
 5246	кускус цельнозерновой	whole wheat couscous	5245		g=1 tbsp=11 cup=180
 5247	птитим	pearl couscous	5245		g=1 tbsp=10 cup=170
-5250	киноа	quinoa			g=1 tbsp=11 cup=180
+5250	киноа	quinoa			g=1 tbsp=11 cup=180				kcal=368 protein=14.12 fat=6.07 carbs=64.16	fdc:168874
 5251	киноа белая	white quinoa	5250		g=1 tbsp=11 cup=180
 5252	киноа красная	red quinoa	5250		g=1 tbsp=11 cup=180
 5253	киноа чёрная	black quinoa	5250		g=1 tbsp=11 cup=180
 5254	киноа воздушная	puffed quinoa	5250		g=1 tbsp=2 cup=30
-5255	полба	spelt			g=1 tbsp=12 cup=200
+5255	полба	spelt			g=1 tbsp=12 cup=200				kcal=338 protein=14.57 fat=2.43 carbs=70.19	fdc:169745
 5256	фарро	farro	5255		g=1 tbsp=12 cup=200
 5257	камут	kamut	5255		g=1 tbsp=12 cup=200
 5258	фрике	freekeh			g=1 tbsp=11 cup=180
-5260	пшеница	wheat berries			g=1 tbsp=12 cup=200
-5262	рожь	rye berries			g=1 tbsp=12 cup=200
-5263	овёс	oat groats			g=1 tbsp=11 cup=180
-5264	амарант	amaranth			g=1 tbsp=12 cup=200
+# пшеница → fdc:168890 hard red winter wheat
+5260	пшеница	wheat berries			g=1 tbsp=12 cup=200				kcal=327 protein=12.61 fat=1.54 carbs=71.18	fdc:168890
+5262	рожь	rye berries			g=1 tbsp=12 cup=200				kcal=338 protein=10.34 fat=1.63 carbs=75.86	fdc:168884
+# овёс → fdc:169705 oats: whole oat groats
+5263	овёс	oat groats			g=1 tbsp=11 cup=180				kcal=389 protein=16.89 fat=6.9 carbs=66.27	fdc:169705
+5264	амарант	amaranth			g=1 tbsp=12 cup=200				kcal=371 protein=13.56 fat=7.02 carbs=65.25	fdc:170682
 5265	амарант воздушный	puffed amaranth	5264		g=1 tbsp=1 cup=20
-5266	сорго	sorghum			g=1 tbsp=12 cup=200
-5267	теф	teff			g=1 tbsp=12 cup=200
-5268	чумиза	foxtail millet			g=1 tbsp=13 cup=210
-5269	овсяная крупа дроблёная	steel-cut oats			g=1 tbsp=11 cup=180
-5270	толокно	toasted oat flour			g=1 tsp=2 tbsp=7 cup=100
+5266	сорго	sorghum			g=1 tbsp=12 cup=200				kcal=329 protein=10.62 fat=3.46 carbs=72.09	fdc:169716
+5267	теф	teff			g=1 tbsp=12 cup=200				kcal=367 protein=13.3 fat=2.38 carbs=73.13	fdc:169747
+# чумиза → fdc:169702 millet, raw: foxtail millet is a millet
+5268	чумиза	foxtail millet			g=1 tbsp=13 cup=210				kcal=378 protein=11.02 fat=4.22 carbs=72.85	fdc:169702
+# овсяная крупа дроблёная → fdc:169705 oats: steel-cut oats are cut whole groats
+5269	овсяная крупа дроблёная	steel-cut oats			g=1 tbsp=11 cup=180				kcal=389 protein=16.89 fat=6.9 carbs=66.27	fdc:169705
+# Skurikhin 6.4.3, p. 120-121
+5270	толокно	toasted oat flour			g=1 tsp=2 tbsp=7 cup=100				kcal=363 protein=12.5 fat=6 carbs=64.9	skurikhin:Толокно
 
 # рис
-5300	рис	rice			g=1 tbsp=13 cup=210
+# рис → fdc:168931 white short-grain rice, raw: the round rice a Russian kitchen keeps
+5300	рис	rice			g=1 tbsp=13 cup=210				kcal=358 protein=6.5 fat=0.52 carbs=79.15	fdc:168931
 5301	рис круглозёрный	short-grain rice	5300		g=1 tbsp=13 cup=220
 5302	рис длиннозёрный	long-grain rice	5300		g=1 tbsp=12 cup=200
 5303	рис пропаренный	parboiled rice	5300		g=1 tbsp=12 cup=200
 5304	рис басмати	basmati rice	5300		g=1 tbsp=12 cup=200
 5305	рис жасмин	jasmine rice	5300		g=1 tbsp=12 cup=200
-5306	рис бурый	brown rice	5300		g=1 tbsp=12 cup=200
-5307	рис дикий	wild rice	5300		g=1 tbsp=10 cup=170
-5308	рис красный	red rice	5300		g=1 tbsp=12 cup=200
-5309	рис чёрный	black rice	5300		g=1 tbsp=12 cup=200
+5306	рис бурый	brown rice	5300		g=1 tbsp=12 cup=200				kcal=367 protein=7.54 fat=3.2 carbs=76.25	fdc:169703
+5307	рис дикий	wild rice	5300		g=1 tbsp=10 cup=170				kcal=357 protein=14.73 fat=1.08 carbs=74.9	fdc:169726
+# рис красный → fdc:2710838 Rice, red, unenriched, dry, raw (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5308	рис красный	red rice	5300		g=1 tbsp=12 cup=200				kcal=359.99995 protein=8.5625 fat=3.44 carbs=76.1545	fdc:2710838
+# рис чёрный → fdc:2710825 Rice, black, unenriched, raw (Foundation); energy from nutrient 2048 (Atwater specific factors): the Foundation food has no 1008
+5309	рис чёрный	black rice	5300		g=1 tbsp=12 cup=200				kcal=360.53871 protein=7.56875 fat=3.438 carbs=77.18825	fdc:2710825
 5310	рис арборио	arborio rice	5300		g=1 tbsp=13 cup=220
 5311	рис карнароли	carnaroli rice	5300		g=1 tbsp=13 cup=220
 5312	рис для суши	sushi rice	5300		g=1 tbsp=13 cup=220
@@ -164,23 +211,34 @@
 5324	смесь риса	rice blend	5300		g=1 tbsp=12 cup=200
 
 # овсяные хлопья, хлопья, мюсли
-5350	овсяные хлопья	rolled oats			g=1 tsp=2 tbsp=6 cup=90		овсянка	old-fashioned oats
+# овсяные хлопья → fdc:173904 oats, regular and quick, not fortified, dry
+5350	овсяные хлопья	rolled oats			g=1 tsp=2 tbsp=6 cup=90		овсянка	old-fashioned oats	kcal=379 protein=13.15 fat=6.52 carbs=67.7	fdc:173904
 5351	геркулес	thick rolled oats	5350		g=1 tsp=2 tbsp=6 cup=90
 5352	овсяные хлопья быстрого приготовления	quick oats	5350		g=1 tsp=2 tbsp=6 cup=85
 5354	овсяные хлопья мелкие	fine oat flakes	5350		g=1 tsp=2 tbsp=6 cup=90
 5355	овсяные хлопья без глютена	gluten-free oats	5350		g=1 tsp=2 tbsp=6 cup=90
 5356	овсянка быстрого приготовления в пакетиках	instant oatmeal packets	5350	true	g=1 pc=40
 5370	хлопья	cereal flakes			g=1 tbsp=6 cup=100
-5371	кукурузные хлопья	corn flakes	5370		g=1 tbsp=2 cup=30
-5372	хлопья гречневые	buckwheat flakes	5370		g=1 tbsp=6 cup=90
-5373	хлопья рисовые	rice flakes	5370		g=1 tbsp=6 cup=100
-5374	хлопья пшеничные	wheat flakes	5370		g=1 tbsp=6 cup=100
-5375	хлопья ржаные	rye flakes	5370		g=1 tbsp=6 cup=100
-5376	хлопья ячменные	barley flakes	5370		g=1 tbsp=6 cup=100
+# кукурузные хлопья → fdc:174648 corn flakes cereal
+5371	кукурузные хлопья	corn flakes	5370		g=1 tbsp=2 cup=30				kcal=384 protein=5.9 fat=0.91 carbs=88.01	fdc:174648
+# хлопья гречневые → Skurikhin «Крупа ядрица»: the flakes are rolled buckwheat groats (Skurikhin 6.6.4, p. 122-123)
+5372	хлопья гречневые	buckwheat flakes	5370		g=1 tbsp=6 cup=90				kcal=308 protein=12.6 fat=3.3 carbs=57.1	skurikhin:Крупа ядрица
+# хлопья рисовые → fdc:169756 white long-grain rice, raw: the flakes are rolled rice
+5373	хлопья рисовые	rice flakes	5370		g=1 tbsp=6 cup=100				kcal=365 protein=7.13 fat=0.66 carbs=79.95	fdc:169756
+# хлопья пшеничные → fdc:168890 hard red winter wheat: the flakes are rolled wheat
+5374	хлопья пшеничные	wheat flakes	5370		g=1 tbsp=6 cup=100				kcal=327 protein=12.61 fat=1.54 carbs=71.18	fdc:168890
+# хлопья ржаные → fdc:168884 rye grain: the flakes are rolled rye
+5375	хлопья ржаные	rye flakes	5370		g=1 tbsp=6 cup=100				kcal=338 protein=10.34 fat=1.63 carbs=75.86	fdc:168884
+# хлопья ячменные → fdc:170284 pearled barley, raw: the flakes are rolled pearled barley
+5376	хлопья ячменные	barley flakes	5370		g=1 tbsp=6 cup=100				kcal=352 protein=9.91 fat=1.16 carbs=77.72	fdc:170284
 5377	хлопья из смеси злаков	multigrain flakes	5370		g=1 tbsp=6 cup=100
-5378	хлопья полбяные	spelt flakes	5370		g=1 tbsp=6 cup=100
-5379	хлопья киноа	quinoa flakes	5370		g=1 tbsp=6 cup=100
-5380	хлопья пшённые	millet flakes	5370		g=1 tbsp=6 cup=100
+# хлопья полбяные → fdc:169745 spelt, uncooked: the flakes are rolled spelt
+5378	хлопья полбяные	spelt flakes	5370		g=1 tbsp=6 cup=100				kcal=338 protein=14.57 fat=2.43 carbs=70.19	fdc:169745
+# хлопья киноа → fdc:168874 quinoa, uncooked: the flakes are rolled quinoa
+5379	хлопья киноа	quinoa flakes	5370		g=1 tbsp=6 cup=100				kcal=368 protein=14.12 fat=6.07 carbs=64.16	fdc:168874
+# хлопья пшённые → Skurikhin «Крупа пшено шлифованное»: the flakes are rolled millet (Skurikhin 6.8.2, p. 124-125)
+5380	хлопья пшённые	millet flakes	5370		g=1 tbsp=6 cup=100				kcal=342 protein=11.5 fat=3.3 carbs=66.5	skurikhin:Крупа пшено шлифованное
 5390	мюсли	muesli			g=1 tbsp=7 cup=110
 5391	мюсли запечённые	crunchy muesli	5390		g=1 tbsp=8 cup=120
-5392	гранола	granola			g=1 tbsp=8 cup=120
+# гранола → fdc:171646 granola, homemade
+5392	гранола	granola			g=1 tbsp=8 cup=120				kcal=489 protein=13.67 fat=24.31 carbs=53.88	fdc:171646

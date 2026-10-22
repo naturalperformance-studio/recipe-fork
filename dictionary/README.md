@@ -108,7 +108,9 @@ citation stays in these sources and is not written into the asset, which carries
 
 - **USDA FoodData Central** (https://fdc.nal.usda.gov/), public domain, cited as `fdc:<id>` — the food's FDC id
   (SR Legacy where it has the product: energy is nutrient 208, protein 203, total lipid 204, carbohydrate by
-  difference 205);
+  difference 205). Where SR Legacy lacks the product, a Foundation food is cited; when it has no energy row 1008
+  (208), its energy is taken from 2048 (Atwater specific factors), else 2047 (Atwater general factors), with protein,
+  fat and carbohydrate as above and a `#` comment above the line naming the energy row used;
 - **I. M. Skurikhin's tables of the composition of Russian food products**, for what FoodData Central does not hold as
   Russian cooks buy it, cited as `skurikhin:<the product's name in the table>`, the name exactly as the table prints
   it.

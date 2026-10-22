@@ -1,11 +1,12 @@
 # Pantry: pasta (5400-5499), noodles and rice paper (5500-5599), bread (5600-5699), flatbreads, crumbs and rusks
 # (5700-5799), ready dough, dumplings, cookies and cake layers (5800-5899).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 # A pc factor is the weight of what a cook counts: a loaf, a sheet, a tortilla, one dumpling.
 @range 5000-6999
 
 # макароны
-5400	макароны	pasta			g=1		паста
+# макароны → fdc:168927 dry pasta, unenriched
+5400	макароны	pasta			g=1		паста		kcal=371 protein=13.04 fat=1.51 carbs=74.67	fdc:168927
 5401	спагетти	spaghetti	5400		g=1
 5402	спагеттини	spaghettini	5400		g=1
 5403	капеллини	capellini	5400		g=1
@@ -33,174 +34,244 @@
 5425	джемелли	gemelli	5400		g=1
 5427	каватаппи	cavatappi	5400		g=1
 5428	дитали	ditali	5400		g=1
-5429	макароны цельнозерновые	whole wheat pasta	5400		g=1
-5430	макароны безглютеновые	gluten-free pasta	5400		g=1
+5429	макароны цельнозерновые	whole wheat pasta	5400		g=1				kcal=352 protein=13.87 fat=2.93 carbs=73.37	fdc:169738
+# макароны безглютеновые → fdc:168899 gluten-free corn pasta, dry
+5430	макароны безглютеновые	gluten-free pasta	5400		g=1				kcal=357 protein=7.46 fat=2.08 carbs=79.26	fdc:168899
 5431	макароны из твёрдых сортов пшеницы	durum wheat pasta	5400		g=1
-5432	макароны гречневые	buckwheat pasta	5400		g=1
-5433	макароны из чечевицы	lentil pasta	5400		g=1
-5434	макароны из нута	chickpea pasta	5400		g=1
-5435	паста свежая	fresh pasta	5400		g=1
-5436	спагетти цельнозерновые	whole wheat spaghetti	5400		g=1
+# макароны гречневые → fdc:168906 soba, dry: buckwheat noodles
+5432	макароны гречневые	buckwheat pasta	5400		g=1				kcal=336 protein=14.38 fat=0.71 carbs=74.62	fdc:168906
+# макароны из чечевицы → fdc:172420 lentils, raw: the pasta is made of lentil flour alone
+5433	макароны из чечевицы	lentil pasta	5400		g=1				kcal=352 protein=24.63 fat=1.06 carbs=63.35	fdc:172420
+# макароны из нута → fdc:173756 chickpeas, raw: the pasta is made of chickpea flour alone
+5434	макароны из нута	chickpea pasta	5400		g=1				kcal=378 protein=20.47 fat=6.04 carbs=62.95	fdc:173756
+5435	паста свежая	fresh pasta	5400		g=1				kcal=288 protein=11.31 fat=2.3 carbs=54.73	fdc:169727
+5436	спагетти цельнозерновые	whole wheat spaghetti	5400		g=1				kcal=352 protein=13.87 fat=2.93 carbs=73.37	fdc:169738
 5440	трубочки	macaroni tubes	5400		g=1
 5441	гнёзда тальятелле	tagliatelle nests	5400	true	g=1 pc=45
-5442	равиоли	ravioli	5400		g=1
-5443	тортеллини	tortellini	5400		g=1
-5444	тортеллони	tortelloni	5400		g=1
-5445	аньолотти	agnolotti	5400		g=1
+# равиоли → fdc:172094 cheese tortellini, fresh: the filled fresh pasta FoodData Central has
+5442	равиоли	ravioli	5400		g=1				kcal=307 protein=13.5 fat=7.23 carbs=47	fdc:172094
+5443	тортеллини	tortellini	5400		g=1				kcal=307 protein=13.5 fat=7.23 carbs=47	fdc:172094
+# тортеллони → fdc:172094 cheese tortellini, fresh: the same filled fresh pasta
+5444	тортеллони	tortelloni	5400		g=1				kcal=307 protein=13.5 fat=7.23 carbs=47	fdc:172094
+# аньолотти → fdc:172094 cheese tortellini, fresh: the filled fresh pasta FoodData Central has
+5445	аньолотти	agnolotti	5400		g=1				kcal=307 protein=13.5 fat=7.23 carbs=47	fdc:172094
 5446	макароны чернильные	squid ink pasta	5400		g=1
 5447	ньокки	gnocchi			g=1
 
 # лапша, рисовая бумага
-5500	лапша	noodles			g=1
+# лапша → fdc:169755 egg noodles, dry, unenriched: shop лапша is egg noodles
+5500	лапша	noodles			g=1				kcal=384 protein=14.16 fat=4.44 carbs=71.27	fdc:169755
 5501	лапша яичная	egg noodles	5500		g=1
 5502	лапша домашняя	homemade-style noodles	5500		g=1
-5503	лапша рисовая	rice noodles	5500		g=1
-5504	лапша соба	soba noodles	5500		g=1
+5503	лапша рисовая	rice noodles	5500		g=1				kcal=364 protein=5.95 fat=0.56 carbs=80.18	fdc:169742
+5504	лапша соба	soba noodles	5500		g=1				kcal=336 protein=14.38 fat=0.71 carbs=74.62	fdc:168906
 5505	удон	udon	5500		g=1
 5506	лапша рамен	ramen noodles	5500		g=1
-5507	фунчоза	glass noodles	5500		g=1
-5508	лапша пшеничная	wheat noodles	5500		g=1
+# фунчоза → fdc:174258 cellophane noodles (mung bean), dehydrated
+5507	фунчоза	glass noodles	5500		g=1				kcal=351 protein=0.16 fat=0.06 carbs=86.09	fdc:174258
+# лапша пшеничная → fdc:168927 dry pasta, unenriched: wheat noodles without egg are pasta dough
+5508	лапша пшеничная	wheat noodles	5500		g=1				kcal=371 protein=13.04 fat=1.51 carbs=74.67	fdc:168927
 5509	лапша для вока	stir-fry noodles	5500		g=1
-5510	лапша быстрого приготовления	instant noodles	5500	true	g=1 pc=75
-5511	лапша рисовая широкая	flat rice noodles	5500		g=1
-5512	лапша рисовая тонкая	rice vermicelli	5500		g=1
+# лапша быстрого приготовления → fdc:171177 ramen noodle soup, dry: the fried noodle block with its seasoning
+5510	лапша быстрого приготовления	instant noodles	5500	true	g=1 pc=75				kcal=440 protein=10.17 fat=17.59 carbs=60.26	fdc:171177
+5511	лапша рисовая широкая	flat rice noodles	5500		g=1				kcal=364 protein=5.95 fat=0.56 carbs=80.18	fdc:169742
+5512	лапша рисовая тонкая	rice vermicelli	5500		g=1				kcal=364 protein=5.95 fat=0.56 carbs=80.18	fdc:169742
 5513	лапша ширатаки	shirataki noodles	5500		g=1
-5515	сомэн	somen	5500		g=1
+5515	сомэн	somen	5500		g=1				kcal=356 protein=11.35 fat=0.81 carbs=74.1	fdc:168908
 5516	лапша китайская яичная	chow mein noodles	5500		g=1
 5518	лапша для лагмана	lagman noodles	5500		g=1
 5550	рисовая бумага	rice paper		false	g=1 pc=10
-5551	листы для спринг-роллов	spring roll wrappers		false	g=1 pc=15
-5552	тесто для вонтонов	wonton wrappers		false	g=1 pc=8
-5553	тесто для гёдза	gyoza wrappers		false	g=1 pc=7
+# листы для спринг-роллов → fdc:172802 wonton wrappers (includes egg roll wrappers): the same thin wheat sheets
+5551	листы для спринг-роллов	spring roll wrappers		false	g=1 pc=15				kcal=291 protein=9.8 fat=1.5 carbs=57.9	fdc:172802
+5552	тесто для вонтонов	wonton wrappers		false	g=1 pc=8				kcal=291 protein=9.8 fat=1.5 carbs=57.9	fdc:172802
+# тесто для гёдза → fdc:172802 wonton wrappers: the same thin wheat wrappers
+5553	тесто для гёдза	gyoza wrappers		false	g=1 pc=7				kcal=291 protein=9.8 fat=1.5 carbs=57.9	fdc:172802
 
 # хлеб
-5600	хлеб	bread			g=1
-5601	хлеб белый	white bread	5600		g=1
-5602	хлеб ржаной	rye bread	5600		g=1
-5603	хлеб бородинский	Borodinsky bread	5600		g=1
-5604	хлеб цельнозерновой	whole wheat bread	5600		g=1
-5605	хлеб отрубной	bran bread	5600		g=1
-5606	хлеб зерновой	multigrain bread	5600		g=1
-5607	хлеб тостовый	sandwich bread	5600	false	g=1 pc=25
+# хлеб → Skurikhin «Хлеб пшеничный формовой»: plain white tin bread (Skurikhin 6.1.3.2.1, p. 110-111)
+5600	хлеб	bread			g=1				kcal=235 protein=7.6 fat=0.8 carbs=49.2	skurikhin:Хлеб пшеничный формовой
+# Skurikhin 6.1.3.2.1, p. 110-111
+5601	хлеб белый	white bread	5600		g=1				kcal=235 protein=7.6 fat=0.8 carbs=49.2	skurikhin:Хлеб пшеничный формовой
+# хлеб ржаной → Skurikhin «Хлеб подовый (из обдирной муки)»: rye bread of обдирная flour (Skurikhin 6.3.5.2, p. 120-121)
+5602	хлеб ржаной	rye bread	5600		g=1				kcal=197 protein=6.1 fat=1.2 carbs=39.9	skurikhin:Хлеб подовый (из обдирной муки)
+# Skurikhin 6.2.2.1, p. 118-119
+5603	хлеб бородинский	Borodinsky bread	5600		g=1				kcal=201 protein=6.8 fat=1.3 carbs=39.8	skurikhin:Хлеб бородинский
+5604	хлеб цельнозерновой	whole wheat bread	5600		g=1				kcal=252 protein=12.45 fat=3.5 carbs=42.71	fdc:172688
+# хлеб отрубной → Skurikhin «Хлебцы докторские»: wheat bread with wheat bran (Skurikhin 6.2.1.2, p. 118-119)
+5605	хлеб отрубной	bran bread	5600		g=1				kcal=242 protein=8.2 fat=2.6 carbs=46.3	skurikhin:Хлебцы докторские
+# Skurikhin 6.2.1.1, p. 118-119
+5606	хлеб зерновой	multigrain bread	5600		g=1				kcal=228 protein=8.6 fat=1.4 carbs=45.1	skurikhin:Хлеб зерновой
+# хлеб тостовый → fdc:174924 white bread, commercially prepared: sandwich bread
+5607	хлеб тостовый	sandwich bread	5600	false	g=1 pc=25				kcal=266 protein=8.85 fat=3.33 carbs=49.42	fdc:174924
 5608	хлеб бездрожжевой	yeast-free bread	5600		g=1
-5609	хлеб безглютеновый	gluten-free bread	5600		g=1
+5609	хлеб безглютеновый	gluten-free bread	5600		g=1				kcal=248 protein=4.31 fat=5.24 carbs=45.78	fdc:174100
 5610	хлеб чёрствый	stale bread	5600		g=1
-5611	хлеб ржано-пшеничный	wheat and rye bread	5600		g=1
-5612	хлеб на закваске	sourdough bread	5600		g=1
-5613	батон	white bread loaf	5600	true	g=1 pc=400
-5614	багет	baguette	5600	true	g=1 pc=250
-5615	чиабатта	ciabatta	5600	true	g=1 pc=270
-5616	бриошь	brioche	5600		g=1
-5617	фокачча	focaccia	5600		g=1
+# хлеб ржано-пшеничный → Skurikhin «Хлеб украинский»: rye обдирная with wheat flour (Skurikhin 6.2.2.3, p. 120-121)
+5611	хлеб ржано-пшеничный	wheat and rye bread	5600		g=1				kcal=198 protein=6.6 fat=1.2 carbs=39.6	skurikhin:Хлеб украинский
+# хлеб на закваске → fdc:172675 french or vienna bread (includes sourdough)
+5612	хлеб на закваске	sourdough bread	5600		g=1				kcal=272 protein=10.75 fat=2.42 carbs=51.88	fdc:172675
+# Skurikhin 6.1.3.2.2, p. 110-111
+5613	батон	white bread loaf	5600	true	g=1 pc=400				kcal=262 protein=7.5 fat=2.9 carbs=51.4	skurikhin:Батон нарезной
+# багет → fdc:172675 french or vienna bread
+5614	багет	baguette	5600	true	g=1 pc=250				kcal=272 protein=10.75 fat=2.42 carbs=51.88	fdc:172675
+# чиабатта → fdc:174913 Italian bread
+5615	чиабатта	ciabatta	5600	true	g=1 pc=270				kcal=259 protein=9.49 fat=2.73 carbs=48.11	fdc:174913
+# бриошь → Skurikhin «Булочки сдобные»: an enriched sweet yeast dough; FoodData Central has no brioche (Skurikhin 6.1.3.2.5, p. 110-111)
+5616	бриошь	brioche	5600		g=1				kcal=339 protein=7.9 fat=9.4 carbs=55.5	skurikhin:Булочки сдобные
+5617	фокачча	focaccia	5600		g=1				kcal=249 protein=8.77 fat=7.89 carbs=35.82	fdc:167945
 5618	буханка хлеба	loaf of bread	5600	true	g=1 pc=700
-5619	хлеб тостовый цельнозерновой	whole wheat sandwich bread	5600	false	g=1 pc=25
-5620	хлеб кукурузный	cornbread	5600		g=1
-5622	хлеб дарницкий	Darnitsky bread	5600		g=1
-5623	хлеб с семечками	seeded bread	5600		g=1
-5624	пумперникель	pumpernickel	5600		g=1
-5625	хала	challah	5600	true	g=1 pc=400
+# хлеб тостовый цельнозерновой → fdc:172688 whole-wheat bread, commercially prepared
+5619	хлеб тостовый цельнозерновой	whole wheat sandwich bread	5600	false	g=1 pc=25				kcal=252 protein=12.45 fat=3.5 carbs=42.71	fdc:172688
+# хлеб кукурузный → fdc:174910 cornbread, prepared from recipe
+5620	хлеб кукурузный	cornbread	5600		g=1				kcal=266 protein=6.7 fat=7.1 carbs=43.5	fdc:174910
+# хлеб дарницкий → Skurikhin «Хлеб украинский»: Darnitsky is rye обдирная with wheat flour; the table has no Darnitsky (Skurikhin 6.2.2.3, p. 120-121)
+5622	хлеб дарницкий	Darnitsky bread	5600		g=1				kcal=198 protein=6.6 fat=1.2 carbs=39.6	skurikhin:Хлеб украинский
+# хлеб с семечками → fdc:168013 multi-grain bread (includes whole-grain)
+5623	хлеб с семечками	seeded bread	5600		g=1				kcal=265 protein=13.36 fat=4.23 carbs=43.34	fdc:168013
+5624	пумперникель	pumpernickel	5600		g=1				kcal=250 protein=8.7 fat=3.1 carbs=47.5	fdc:174918
+# хала → fdc:172673 egg bread: challah is an egg bread
+5625	хала	challah	5600	true	g=1 pc=400				kcal=287 protein=9.5 fat=6 carbs=47.8	fdc:172673
 5626	хлеб японский молочный	Japanese milk bread	5600		g=1
-5640	ломтик хлеба	slice of bread		false	g=1 pc=30
-5641	хлебцы	crispbread		false	g=1 pc=10
-5642	гриссини	breadsticks		false	g=1 pc=5
-5650	булочка	bread roll		false	g=1 pc=60
-5651	булочка для бургера	burger bun	5650	false	g=1 pc=70		булочка для гамбургера	hamburger bun
-5652	булочка для хот-дога	hot dog bun	5650	false	g=1 pc=50
-5653	булочка бриошь	brioche bun	5650	false	g=1 pc=60
-5654	булочка сдобная	sweet bun	5650	false	g=1 pc=60
-5655	круассан	croissant	5650	false	g=1 pc=60
-5656	бублик	bagel	5650	false	g=1 pc=90
-5657	английский маффин	English muffin	5650	false	g=1 pc=60
+# ломтик хлеба → Skurikhin «Хлеб пшеничный формовой»: a slice of plain white bread (Skurikhin 6.1.3.2.1, p. 110-111)
+5640	ломтик хлеба	slice of bread		false	g=1 pc=30				kcal=235 protein=7.6 fat=0.8 carbs=49.2	skurikhin:Хлеб пшеничный формовой
+# хлебцы → fdc:172739 rye crispbread
+5641	хлебцы	crispbread		false	g=1 pc=10				kcal=366 protein=7.9 fat=1.3 carbs=82.2	fdc:172739
+5642	гриссини	breadsticks		false	g=1 pc=5				kcal=412 protein=12 fat=9.5 carbs=68.4	fdc:174929
+# булочка → Skurikhin «Булки городские»: the plain white roll (Skurikhin 6.1.3.2.3, p. 110-111)
+5650	булочка	bread roll		false	g=1 pc=60				kcal=265 protein=7.7 fat=2.4 carbs=52.9	skurikhin:Булки городские
+5651	булочка для бургера	burger bun	5650	false	g=1 pc=70		булочка для гамбургера	hamburger bun	kcal=279 protein=9.77 fat=3.91 carbs=50.12	fdc:172796
+5652	булочка для хот-дога	hot dog bun	5650	false	g=1 pc=50				kcal=279 protein=9.77 fat=3.91 carbs=50.12	fdc:172796
+# булочка бриошь → Skurikhin «Булочки сдобные»: an enriched sweet yeast bun (Skurikhin 6.1.3.2.5, p. 110-111)
+5653	булочка бриошь	brioche bun	5650	false	g=1 pc=60				kcal=339 protein=7.9 fat=9.4 carbs=55.5	skurikhin:Булочки сдобные
+# Skurikhin 6.1.3.2.5, p. 110-111
+5654	булочка сдобная	sweet bun	5650	false	g=1 pc=60				kcal=339 protein=7.9 fat=9.4 carbs=55.5	skurikhin:Булочки сдобные
+5655	круассан	croissant	5650	false	g=1 pc=60				kcal=406 protein=8.2 fat=21 carbs=45.8	fdc:174987
+# бублик → fdc:175051 bagel, plain, unenriched
+5656	бублик	bagel	5650	false	g=1 pc=90				kcal=275 protein=10.5 fat=1.6 carbs=53.4	fdc:175051
+5657	английский маффин	English muffin	5650	false	g=1 pc=60				kcal=235 protein=7.7 fat=1.8 carbs=46	fdc:173238
 5658	булочка для бао	bao bun	5650	false	g=1 pc=35
 
 # лепёшки
-5700	лепёшка	flatbread		true	g=1 pc=100
+# лепёшка → fdc:172816 white pita, unenriched: a plain lean wheat flatbread
+5700	лепёшка	flatbread		true	g=1 pc=100				kcal=275 protein=9.1 fat=1.2 carbs=55.7	fdc:172816
 5701	лаваш	lavash	5700	true	g=1 pc=90
-5702	пита	pita bread	5700	true	g=1 pc=60
-5703	тортилья	tortilla	5700	true	g=1 pc=45
-5704	тортилья пшеничная	flour tortilla	5700	true	g=1 pc=45
-5705	тортилья кукурузная	corn tortilla	5700	true	g=1 pc=30
+5702	пита	pita bread	5700	true	g=1 pc=60				kcal=275 protein=9.1 fat=1.2 carbs=55.7	fdc:172816
+# тортилья → fdc:175037 flour tortilla, refrigerated
+5703	тортилья	tortilla	5700	true	g=1 pc=45				kcal=306 protein=8.2 fat=7.99 carbs=49.38	fdc:175037
+5704	тортилья пшеничная	flour tortilla	5700	true	g=1 pc=45				kcal=306 protein=8.2 fat=7.99 carbs=49.38	fdc:175037
+5705	тортилья кукурузная	corn tortilla	5700	true	g=1 pc=30				kcal=218 protein=5.7 fat=2.85 carbs=44.64	fdc:175036
 5706	лепёшка тандырная	tandoor flatbread	5700	true	g=1 pc=250
-5707	нан	naan	5700	true	g=1 pc=90
-5708	чапати	chapati	5700	true	g=1 pc=40
+5707	нан	naan	5700	true	g=1 pc=90				kcal=291 protein=9.62 fat=5.65 carbs=50.43	fdc:171845
+5708	чапати	chapati	5700	true	g=1 pc=40				kcal=297 protein=11.25 fat=7.45 carbs=46.36	fdc:171844
 5709	лаваш грузинский	Georgian lavash bread	5700	true	g=1 pc=300
 5710	шоти	shoti bread	5700	true	g=1 pc=250
-5711	лепёшка для тако	taco shell	5700	false	g=1 pc=12
+5711	лепёшка для тако	taco shell	5700	false	g=1 pc=12				kcal=476 protein=6.41 fat=21.79 carbs=63.49	fdc:172800
 5712	лаваш армянский	Armenian lavash	5700	true	g=1 pc=90
 5713	лепёшка узбекская	Uzbek non bread	5700	true	g=1 pc=300
 5714	матнакаш	matnakash	5700	true	g=1 pc=500
-5715	тортилья цельнозерновая	whole wheat tortilla	5700	true	g=1 pc=45
-5716	пита цельнозерновая	whole wheat pita	5700	true	g=1 pc=60
+5715	тортилья цельнозерновая	whole wheat tortilla	5700	true	g=1 pc=45				kcal=310 protein=9.76 fat=9.76 carbs=45.89	fdc:174081
+5716	пита цельнозерновая	whole wheat pita	5700	true	g=1 pc=60				kcal=262 protein=9.8 fat=1.71 carbs=55.89	fdc:174916
 
 # панировка, сухари
-5750	панировочные сухари	breadcrumbs			g=1 tsp=2 tbsp=7 cup=115
+5750	панировочные сухари	breadcrumbs			g=1 tsp=2 tbsp=7 cup=115				kcal=395 protein=13.35 fat=5.3 carbs=71.98	fdc:174928
 5751	панко	panko	5750		g=1 tsp=1 tbsp=4 cup=60
-5752	хлебная крошка	fresh breadcrumbs	5750		g=1 tsp=1 tbsp=4 cup=50
+# хлебная крошка → fdc:174924 white bread (includes soft bread crumbs)
+5752	хлебная крошка	fresh breadcrumbs	5750		g=1 tsp=1 tbsp=4 cup=50				kcal=266 protein=8.85 fat=3.33 carbs=49.42	fdc:174924
 5753	панировка кукурузная	corn breading	5750		g=1 tsp=2 tbsp=7 cup=120
-5754	панировочные сухари с травами	seasoned breadcrumbs	5750		g=1 tsp=2 tbsp=7 cup=115
-5770	сухари	rusks			g=1
-5771	сухарики	croutons			g=1 cup=30
+5754	панировочные сухари с травами	seasoned breadcrumbs	5750		g=1 tsp=2 tbsp=7 cup=115				kcal=383 protein=14.13 fat=5.48 carbs=68.49	fdc:172806
+# сухари → Skurikhin «Сухари сливочные»: the sweet rusks sold as сухари (Skurikhin 6.1.3.2.11, p. 112-113)
+5770	сухари	rusks			g=1				kcal=399 protein=8.5 fat=10.8 carbs=66.7	skurikhin:Сухари сливочные
+5771	сухарики	croutons			g=1 cup=30				kcal=407 protein=11.9 fat=6.6 carbs=73.5	fdc:172751
 5772	сухари ванильные	vanilla rusks	5770		g=1
-5773	сушки	sushki		false	g=1 pc=8
-5774	баранки	baranki		false	g=1 pc=20
+# Skurikhin 6.1.3.2.10, p. 112-113
+5773	сушки	sushki		false	g=1 pc=8				kcal=339 protein=10.7 fat=1.2 carbs=71.2	skurikhin:Сушки простые
+# Skurikhin 6.1.3.5.8, p. 114-115
+5774	баранки	baranki		false	g=1 pc=20				kcal=311 protein=10.4 fat=1.3 carbs=64.2	skurikhin:Баранки простые
 
 # тесто, полуфабрикаты, коржи, печенье
 5800	тесто	dough			g=1
-5801	тесто слоёное	puff pastry	5800		g=1
+5801	тесто слоёное	puff pastry	5800		g=1				kcal=551 protein=7.3 fat=38.1 carbs=45.1	fdc:172790
 5802	тесто слоёное дрожжевое	yeast puff pastry	5800		g=1
-5803	тесто слоёное бездрожжевое	yeast-free puff pastry	5800		g=1
+# тесто слоёное бездрожжевое → fdc:172790 puff pastry, frozen, ready-to-bake: classic puff pastry has no yeast
+5803	тесто слоёное бездрожжевое	yeast-free puff pastry	5800		g=1				kcal=551 protein=7.3 fat=38.1 carbs=45.1	fdc:172790
 5804	тесто дрожжевое	yeast dough	5800		g=1
-5805	тесто песочное	pie crust dough	5800		g=1			pie dough
-5806	тесто фило	phyllo dough	5800	true	g=1 pc=20
+# тесто песочное → fdc:172814 pie crust, standard-type, prepared from recipe, unbaked
+5805	тесто песочное	pie crust dough	5800		g=1			pie dough	kcal=469 protein=5.7 fat=30.8 carbs=42.3	fdc:172814
+5806	тесто фило	phyllo dough	5800	true	g=1 pc=20				kcal=299 protein=7.1 fat=6 carbs=52.6	fdc:172791
 5807	тесто для пиццы	pizza dough	5800		g=1
 5808	тесто для пельменей	dumpling dough	5800		g=1
-5809	тесто катаифи	kataifi pastry	5800		g=1
-5810	тесто для штруделя	strudel pastry	5800		g=1
+# тесто катаифи → fdc:172791 phyllo dough: kataifi is shredded phyllo
+5809	тесто катаифи	kataifi pastry	5800		g=1				kcal=299 protein=7.1 fat=6 carbs=52.6	fdc:172791
+# тесто для штруделя → fdc:172791 phyllo dough: strudel pastry is the same stretched flour-and-water sheet
+5810	тесто для штруделя	strudel pastry	5800		g=1				kcal=299 protein=7.1 fat=6 carbs=52.6	fdc:172791
 5811	тесто для чебуреков	chebureki dough	5800		g=1
 5812	тесто для пирожков	hand pie dough	5800		g=1
-5813	тесто юфка	yufka	5800	true	g=1 pc=100
-5814	тесто брик	brick pastry	5800	false	g=1 pc=15
+# тесто юфка → fdc:172791 phyllo dough: yufka is the same flour-and-water sheet, rolled thicker
+5813	тесто юфка	yufka	5800	true	g=1 pc=100				kcal=299 protein=7.1 fat=6 carbs=52.6	fdc:172791
+# тесто брик → fdc:172791 phyllo dough: brick pastry is a thin flour-and-water sheet like phyllo
+5814	тесто брик	brick pastry	5800	false	g=1 pc=15				kcal=299 protein=7.1 fat=6 carbs=52.6	fdc:172791
 5830	основа для пиццы	pizza base		true	g=1 pc=200
-5831	тарталетки	tartlet shells		false	g=1 pc=10
-5832	волованы	puff pastry shells		false	g=1 pc=8
-5833	коржи бисквитные	sponge cake layers		true	g=1 pc=150
-5834	коржи вафельные	wafer sheets		false	g=1 pc=22
-5835	коржи песочные	shortcake layers		true	g=1 pc=150
-5836	корзиночки вафельные	wafer cups		false	g=1 pc=5
-5837	рожки вафельные	ice cream cones		false	g=1 pc=12
+# тарталетки → fdc:175025 pie crust, frozen, baked: tartlet shells are baked shortcrust
+5831	тарталетки	tartlet shells		false	g=1 pc=10				kcal=508 protein=6.5 fat=28.59 carbs=56.24	fdc:175025
+# волованы → fdc:172738 puff pastry, baked
+5832	волованы	puff pastry shells		false	g=1 pc=8				kcal=558 protein=7.4 fat=38.5 carbs=45.7	fdc:172738
+# коржи бисквитные → fdc:172706 sponge cake, commercially prepared
+5833	коржи бисквитные	sponge cake layers		true	g=1 pc=150				kcal=290 protein=5.4 fat=2.7 carbs=61	fdc:172706
+# коржи вафельные → fdc:175000 ice cream cones, cake or wafer-type: the same baked wafer batter
+5834	коржи вафельные	wafer sheets		false	g=1 pc=22				kcal=417 protein=8.1 fat=6.9 carbs=79	fdc:175000
+# коржи песочные → fdc:174967 shortbread cookies, plain: baked shortcrust
+5835	коржи песочные	shortcake layers		true	g=1 pc=150				kcal=514 protein=5.37 fat=26.22 carbs=63.78	fdc:174967
+# корзиночки вафельные → fdc:175000 ice cream cones, cake or wafer-type: the same baked wafer
+5836	корзиночки вафельные	wafer cups		false	g=1 pc=5				kcal=417 protein=8.1 fat=6.9 carbs=79	fdc:175000
+5837	рожки вафельные	ice cream cones		false	g=1 pc=12				kcal=417 protein=8.1 fat=6.9 carbs=79	fdc:175000
 5838	вафельная бумага	wafer paper		false	g=1 pc=2
 5839	коржи медовые	honey cake layers		true	g=1 pc=120
-5850	пельмени	pelmeni		false	g=1 pc=12
+# пельмени → Skurikhin «Пельмени отварные»: boiled; neither source has raw frozen pelmeni, which hold a little less water (Skurikhin 3.5.10.1, p. 72-73)
+5850	пельмени	pelmeni		false	g=1 pc=12				kcal=219 protein=9.9 fat=13.9 carbs=13.5	skurikhin:Пельмени отварные
 5851	пельмени домашние	homestyle pelmeni	5850	false	g=1 pc=12
 5852	пельмени куриные	chicken pelmeni	5850	false	g=1 pc=12
-5853	вареники	vareniki		false	g=1 pc=25
+# вареники → fdc:169779 dumplings, potato- or cheese-filled, frozen: frozen pierogi
+5853	вареники	vareniki		false	g=1 pc=25				kcal=195 protein=5.26 fat=6.14 carbs=29.64	fdc:169779
 5854	вареники с картофелем	potato vareniki	5853	false	g=1 pc=25
 5855	вареники с творогом	quark vareniki	5853	false	g=1 pc=25
 5856	вареники с вишней	cherry vareniki	5853	false	g=1 pc=25
 5857	вареники с капустой	cabbage vareniki	5853	false	g=1 pc=25
 5858	хинкали	khinkali		false	g=1 pc=50
 5859	манты	manti		false	g=1 pc=50
-5860	гёдза	gyoza		false	g=1 pc=20
-5880	печенье	cookies			g=1
-5881	савоярди	ladyfingers	5880	false	g=1 pc=10
-5882	печенье песочное	shortbread	5880	false	g=1 pc=10
-5883	печенье овсяное	oatmeal cookies	5880	false	g=1 pc=15
-5884	печенье сахарное	sugar cookies	5880	false	g=1 pc=8
-5885	печенье шоколадное	chocolate cookies	5880	false	g=1 pc=12
-5886	амаретти	amaretti	5880	false	g=1 pc=8
-5887	крекер	crackers			g=1
-5888	крекер грэм	graham crackers	5887	false	g=1 pc=15 cup=120
-5889	крекер солёный	saltines	5887	false	g=1 pc=4
-5890	печенье имбирное	gingerbread cookies	5880	false	g=1 pc=12
+# гёдза → fdc:169773 potsticker or wonton, pork and vegetable, frozen, unprepared
+5860	гёдза	gyoza		false	g=1 pc=20				kcal=136 protein=8.28 fat=5.52 carbs=13.28	fdc:169773
+# печенье → Skurikhin «Печенье сахарное»: plain sweet biscuits, the печенье of Russian recipes (Skurikhin 6.1.3.2.15, p. 112-113)
+5880	печенье	cookies			g=1				kcal=417 protein=7.5 fat=9.8 carbs=74.4	skurikhin:Печенье сахарное
+5881	савоярди	ladyfingers	5880	false	g=1 pc=10				kcal=363 protein=10.6 fat=9.1 carbs=59.7	fdc:172821
+5882	печенье песочное	shortbread	5880	false	g=1 pc=10				kcal=514 protein=5.37 fat=26.22 carbs=63.78	fdc:174967
+5883	печенье овсяное	oatmeal cookies	5880	false	g=1 pc=15				kcal=450 protein=6.2 fat=18.1 carbs=68.7	fdc:172725
+# Skurikhin 6.1.3.2.15, p. 112-113
+5884	печенье сахарное	sugar cookies	5880	false	g=1 pc=8				kcal=417 protein=7.5 fat=9.8 carbs=74.4	skurikhin:Печенье сахарное
+# печенье шоколадное → fdc:172714 chocolate wafers: crisp chocolate cookies
+5885	печенье шоколадное	chocolate cookies	5880	false	g=1 pc=12				kcal=433 protein=6.6 fat=14.2 carbs=72.7	fdc:172714
+# амаретти → Skurikhin «Печенье миндальное»: almond cookies (Skurikhin 6.1.3.2.14, p. 112-113)
+5886	амаретти	amaretti	5880	false	g=1 pc=8				kcal=422 protein=7.6 fat=13.6 carbs=67.4	skurikhin:Печенье миндальное
+# крекер → fdc:172746 saltines: the plain wheat cracker
+5887	крекер	crackers			g=1				kcal=418 protein=9.46 fat=8.64 carbs=74.05	fdc:172746
+5888	крекер грэм	graham crackers	5887	false	g=1 pc=15 cup=120				kcal=430 protein=6.69 fat=10.6 carbs=77.66	fdc:174957
+5889	крекер солёный	saltines	5887	false	g=1 pc=4				kcal=418 protein=9.46 fat=8.64 carbs=74.05	fdc:172746
+# печенье имбирное → fdc:174956 gingersnaps
+5890	печенье имбирное	gingerbread cookies	5880	false	g=1 pc=12				kcal=416 protein=5.6 fat=9.8 carbs=76.9	fdc:174956
 
 # more pantry staples: wrappers, matzo, ready crusts and doughs, mixes, chips
-5554	листы для яичных роллов	egg roll wrappers		false	g=1 pc=30
-5644	маца	matzo		false	g=1 pc=30
-5755	мука из мацы	matzo meal	5750		g=1 tsp=3 tbsp=8 cup=120
+5554	листы для яичных роллов	egg roll wrappers		false	g=1 pc=30				kcal=291 protein=9.8 fat=1.5 carbs=57.9	fdc:172802
+# маца → fdc:172740 matzo, plain
+5644	маца	matzo		false	g=1 pc=30				kcal=395 protein=10 fat=1.4 carbs=83.7	fdc:172740
+# мука из мацы → fdc:172740 matzo, plain: matzo meal is ground matzo
+5755	мука из мацы	matzo meal	5750		g=1 tsp=3 tbsp=8 cup=120				kcal=395 protein=10 fat=1.4 carbs=83.7	fdc:172740
 5815	тесто для круассанов охлаждённое	refrigerated crescent dough	5800		g=1
-5816	тесто для булочек охлаждённое	refrigerated biscuit dough	5800		g=1
-5840	основа для пирога	pie crust		false	g=1 pc=200
-5841	корзина для пирога замороженная	frozen pie shell		false	g=1 pc=200
-5862	блины готовые	ready-made crepes		false	g=1 pc=50
-5893	печенье шоколадное с начинкой	chocolate sandwich cookies	5880	false	g=1 pc=11
-5894	крошка крекера грэм	graham cracker crumbs	5887		g=1 tbsp=8 cup=120
+# тесто для булочек охлаждённое → fdc:172668 biscuits, refrigerated dough, higher fat
+5816	тесто для булочек охлаждённое	refrigerated biscuit dough	5800		g=1				kcal=307 protein=6.66 fat=10.58 carbs=46.32	fdc:172668
+# основа для пирога → fdc:175024 pie crust, frozen, ready-to-bake
+5840	основа для пирога	pie crust		false	g=1 pc=200				kcal=457 protein=6.16 fat=26.07 carbs=48.62	fdc:175024
+5841	корзина для пирога замороженная	frozen pie shell		false	g=1 pc=200				kcal=457 protein=6.16 fat=26.07 carbs=48.62	fdc:175024
+# блины готовые → Skurikhin «Блины» (Skurikhin 6.1.3.6.1, p. 116-117)
+5862	блины готовые	ready-made crepes		false	g=1 pc=50				kcal=189 protein=5.1 fat=3.1 carbs=32.6	skurikhin:Блины
+5893	печенье шоколадное с начинкой	chocolate sandwich cookies	5880	false	g=1 pc=11				kcal=464 protein=5.21 fat=19.14 carbs=71	fdc:172718
+# крошка крекера грэм → fdc:174957 graham crackers: the crumbs are ground crackers
+5894	крошка крекера грэм	graham cracker crumbs	5887		g=1 tbsp=8 cup=120				kcal=430 protein=6.69 fat=10.6 carbs=77.66	fdc:174957

@@ -1,11 +1,12 @@
 # Pantry: vegetable oils (6700-6799), fats (6800-6899).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 # Oils are about 0.92 g per ml; spoon and cup factors are grams per level measure, a cup is 250 ml.
 # Cured pork fat (сало, шпик) is the animal family's; butter and ghee too.
 @range 5000-6999
 
 # масло растительное
-6700	масло растительное	vegetable oil			g=1 ml=0.92 tsp=5 tbsp=14 cup=230
+# масло растительное → fdc:171025 sunflower oil (linoleic, about 65%): масло растительное in a Russian recipe is sunflower oil
+6700	масло растительное	vegetable oil			g=1 ml=0.92 tsp=5 tbsp=14 cup=230				kcal=884 protein=0 fat=100 carbs=0	fdc:171025
 6701	масло подсолнечное	sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6702	масло подсолнечное нерафинированное	unrefined sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6703	масло подсолнечное рафинированное	refined sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
@@ -43,10 +44,12 @@
 6739	масло растительное без запаха	neutral oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6741	масло подсолнечное высокоолеиновое	high-oleic sunflower oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
 6742	масло кокосовое нерафинированное	virgin coconut oil	6700		g=1 ml=0.92 tsp=5 tbsp=14 cup=230
-6760	спрей для жарки	cooking spray			g=1
+# спрей для жарки → fdc:171430 cooking spray, original
+6760	спрей для жарки	cooking spray			g=1				kcal=792 protein=0.26 fat=78.69 carbs=20.69	fdc:171430
 
 # жиры
-6800	жир	fat			g=1 tsp=4 tbsp=13 cup=205
+# жир → fdc:172327 household shortening, lard and vegetable oil: any rendered cooking fat holds about the same; lard itself (fdc:171401, 902 kcal) is above the format's 900 kcal cap
+6800	жир	fat			g=1 tsp=4 tbsp=13 cup=205				kcal=900 protein=0 fat=100 carbs=0	fdc:172327
 6801	смалец	lard	6800		g=1 tsp=4 tbsp=13 cup=205
 6803	жир утиный	duck fat	6800		g=1 tsp=4 tbsp=13 cup=205
 6804	жир гусиный	goose fat	6800		g=1 tsp=4 tbsp=13 cup=205
@@ -57,11 +60,16 @@
 6809	жир кондитерский	confectionery fat	6800		g=1 tsp=4 tbsp=13
 6811	смалец с луком	lard with onions	6800		g=1 tsp=4 tbsp=13
 6812	жир говяжий почечный	beef suet	6800		g=1 tsp=4 tbsp=12
-6820	маргарин	margarine		true	g=1 pc=250 tsp=5 tbsp=14 cup=230
+# маргарин → fdc:171040 margarine, regular, 80% fat, unsalted
+6820	маргарин	margarine		true	g=1 pc=250 tsp=5 tbsp=14 cup=230				kcal=717 protein=0.16 fat=80.71 carbs=0.7	fdc:171040
 6821	маргарин сливочный	butter-flavored margarine	6820	true	g=1 pc=250 tsp=5 tbsp=14 cup=230
 6822	маргарин для выпечки	baking margarine	6820	true	g=1 pc=250 tsp=5 tbsp=14 cup=230
 6823	маргарин для слоёного теста	puff pastry margarine	6820	true	g=1 pc=250
-6824	маргарин мягкий	soft margarine	6820		g=1 tsp=5 tbsp=14 cup=230
-6830	спред	spread			g=1 tsp=5 tbsp=14
-6831	спред сливочно-растительный	butter blend spread	6830		g=1 tsp=5 tbsp=14
-6833	масло веганское	vegan butter	6830	true	g=1 pc=200 tsp=5 tbsp=14
+# маргарин мягкий → fdc:171431 margarine-like spread, 67-70% fat, tub
+6824	маргарин мягкий	soft margarine	6820		g=1 tsp=5 tbsp=14 cup=230				kcal=606 protein=0.07 fat=68.29 carbs=0.59	fdc:171431
+# спред → fdc:171431 margarine-like vegetable oil spread, 67-70% fat
+6830	спред	spread			g=1 tsp=5 tbsp=14				kcal=606 protein=0.07 fat=68.29 carbs=0.59	fdc:171431
+# спред сливочно-растительный → fdc:169052 butter-margarine blend, 80% fat, unsalted
+6831	спред сливочно-растительный	butter blend spread	6830		g=1 tsp=5 tbsp=14				kcal=718 protein=0.9 fat=80.7 carbs=0.6	fdc:169052
+# масло веганское → fdc:171040 margarine, regular, 80% fat: a plant-oil butter
+6833	масло веганское	vegan butter	6830	true	g=1 pc=200 tsp=5 tbsp=14				kcal=717 protein=0.16 fat=80.71 carbs=0.7	fdc:171040
