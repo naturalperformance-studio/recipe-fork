@@ -432,13 +432,39 @@ internal fun EntryProvenance(recipeId: String, parentTitle: String?) {
                 .size(PROVENANCE_GLYPH)
                 .testTag(BookEntryRowTags.provenanceGlyph(recipeId)),
         )
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
-            color = beet,
-            modifier = Modifier.weight(1f).testTag(BookEntryRowTags.provenanceWords(recipeId)),
-            onTextLayout = { firstLine = (it.getLineBottom(0) - it.getLineTop(0)).roundToInt() },
-        )
+        // As the row's title: the words wrap between words and after hyphens, never inside one; at a large font they
+        // are made only as small as their widest word needs, never below their size at a font scale of 1.
+        val style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
+        val measurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+        val laid = remember { LaidTitle() }
+        BoxWithConstraints(
+            Modifier
+                .weight(1f)
+                // The words as written are what is read out, without the places to break [breakAfterHyphens] adds.
+                .semantics {
+                    this.text = AnnotatedString(text)
+                    getTextLayoutResult { layouts -> laid.result?.let(layouts::add) != null }
+                }
+                .testTag(BookEntryRowTags.provenanceWords(recipeId)),
+        ) {
+            val width = constraints.maxWidth
+            val fitted = remember(text, style, width, measurer, density) {
+                fitWords(text, style, width, measurer, density, hyphenParts = true)
+            }
+            Box(Modifier.clearAndSetSemantics {}) {
+                Text(
+                    breakAfterHyphens(text),
+                    style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
+                    color = beet,
+                    softWrap = true,
+                    onTextLayout = {
+                        laid.result = it
+                        firstLine = (it.getLineBottom(0) - it.getLineTop(0)).roundToInt()
+                    },
+                )
+            }
+        }
     }
 }
 

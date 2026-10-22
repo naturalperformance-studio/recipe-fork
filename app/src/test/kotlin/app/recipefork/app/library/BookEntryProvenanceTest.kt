@@ -268,10 +268,17 @@ class BookEntryProvenanceTest {
         val layouts = mutableListOf<TextLayoutResult>()
         node.config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
         val layout = layouts.single()
-        assertEquals(words, layout.layoutInput.text.text)
+        // The drawn words carry an invisible place to break after each inner hyphen (breakAfterHyphens).
+        val drawn = layout.layoutInput.text.text
+        assertEquals(words, drawn.replace("\u200B", ""))
         assertFalse("$words: nothing beyond the last line", layout.hasVisualOverflow)
         (0 until layout.lineCount).forEach { assertFalse("$words: line $it is not cut short", layout.isLineEllipsized(it)) }
-        assertEquals("$words: the last line ends with the last word", words.length, layout.getLineEnd(layout.lineCount - 1))
+        assertEquals("$words: the last line ends with the last word", drawn.length, layout.getLineEnd(layout.lineCount - 1))
+        // No line breaks inside a word: each line but the last ends after a space or after a hyphen.
+        (0 until layout.lineCount - 1).forEach {
+            val before = drawn[layout.getLineEnd(it) - 1]
+            assertTrue("$words: line $it ends between words, not inside one ('$before')", before == ' ' || before == '\u200B' || before == '-')
+        }
         (0 until layout.lineCount).forEach { assertEquals("$words: line $it starts at the words' start", 0f, layout.getLineLeft(it), 0.5f) }
         val glyph = bounds(BookEntryRowTags.provenanceGlyph(id))
         val text = bounds(BookEntryRowTags.provenanceWords(id))
@@ -356,6 +363,21 @@ class BookEntryProvenanceTest {
         showCollection(version)
         await(BookEntryRowTags.provenance(version.id.value))
         assertTrue(assertWhole(version, "по рецепту «Шакшука»") >= 2)
+    }
+
+    // The narrowest case design QA found: a collection row at twice the font on a 320 dp phone, where the words have
+    // about 100 dp beside the handle, the cover and the menu. The names wrap between words, never inside one.
+    @Test
+    @Config(qualifiers = "ru-w320dp-h711dp", fontScale = 2f)
+    fun onANarrowPhoneAtFontScaleTwoACollectionRowsLinesBreakOnlyBetweenWords() {
+        val parent = own("Шакшука", minutesAgo = 5)
+        val pilaf = own("Плов по-фергански", minutesAgo = 4)
+        val version = versionOf(parent, "Моя шакшука с фетой")
+        val other = versionOf(pilaf, "Мой плов")
+        showCollection(version, other)
+        await(BookEntryRowTags.provenance(version.id.value))
+        assertWhole(version, "по рецепту «Шакшука»")
+        assertWhole(other, "по рецепту «Плов по-фергански»")
     }
 
     /** A book of 300 recipes, every other one a version — of one held, of one gone, or of one found — and its queries. */
