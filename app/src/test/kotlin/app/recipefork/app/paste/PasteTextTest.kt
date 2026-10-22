@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -138,7 +139,7 @@ class PasteTextTest {
     /** "New recipe" — the empty book's offer — then "Paste text". */
     private fun openPaste() {
         awaitTag(LibraryTags.WRITE)
-        compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.WRITE).performScrollTo().performClick()
         awaitTag(LibraryTags.PASTE)
         compose.onNodeWithTag(LibraryTags.PASTE).performClick()
         awaitTag(PasteTags.FIELD)

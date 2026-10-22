@@ -15,6 +15,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -265,7 +266,7 @@ class FoundRecipesTest {
     fun theImportActionImportsThePickedFile() {
         show(Mode.Serverless)
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.IMPORT), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.IMPORT).performClick()
+        compose.onNodeWithTag(LibraryTags.IMPORT).performScrollTo().performClick()
         val activity = shadowOf(compose.activity)
         compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivityForResult() != null }
         val started = activity.nextStartedActivityForResult

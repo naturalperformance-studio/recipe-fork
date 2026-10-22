@@ -23,7 +23,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.swipeDown
-import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -220,7 +220,8 @@ class BookHeaderAndNoticesTest {
     private fun assertATitleIsReadOnTheFirstScreen() {
         val three = listOf(own("Plum cake", 2), own("Chicken soup", 1), own("Pancakes"))
         show(LibraryView.OWN)
-        three.forEach { await(LibraryTags.entryTitle(it.id.value)) }
+        // The newest, first in the list; the others may stand below the first screen under the book's title (v0.42).
+        await(LibraryTags.entryTitle(three.last().id.value))
         await(LibraryTags.NEW)
         compose.waitForIdle()
         val header = shown(LibraryTags.HEADER_AREA)
@@ -228,6 +229,7 @@ class BookHeaderAndNoticesTest {
         val action = shown(LibraryTags.NEW)
         val read = three.filter { recipe ->
             val tag = LibraryTags.entryTitle(recipe.id.value)
+            if (!exists(tag)) return@filter false
             val title = shown(tag)
             val unclipped = whole(tag)
             title.height > 0f && title.height >= unclipped.height - 0.5f && title.top >= header.bottom - 0.5f &&
@@ -318,7 +320,7 @@ class BookHeaderAndNoticesTest {
         await(LibraryTags.entry(soup.id.value))
         deleteFromItsMenu(soup)
 
-        compose.onNodeWithTag(LibraryTags.PAGER).performTouchInput { swipeRight() }
+        compose.onNodeWithTag(LibraryTags.PAGER).performTouchInput { swipeLeft() }
 
         compose.waitUntil(PATIENCE_MS) { session.view.value == LibraryView.MARKED }
         compose.waitUntil(PATIENCE_MS) { !compose.noticeShown() }

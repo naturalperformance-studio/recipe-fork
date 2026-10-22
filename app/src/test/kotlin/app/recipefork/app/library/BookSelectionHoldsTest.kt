@@ -197,7 +197,7 @@ class BookSelectionHoldsTest {
         // Once it ends, a swipe shows the other view again.
         compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
         compose.waitUntil(PATIENCE_MS) { session.selection.value == null }
-        compose.onNodeWithTag(LibraryTags.PAGER).performTouchInput { swipeRight() }
+        compose.onNodeWithTag(LibraryTags.PAGER).performTouchInput { swipeLeft() }
         compose.waitUntil(PATIENCE_MS) { session.view.value == LibraryView.MARKED }
     }
 
@@ -386,7 +386,7 @@ class BookSelectionHoldsTest {
         found("Борщ")
         show(LibraryView.OWN)
         longPress(soup)
-        compose.onNodeWithTag(LibraryTags.PAGER).performTouchInput { swipeRight() }
+        compose.onNodeWithTag(LibraryTags.PAGER).performTouchInput { swipeLeft() }
         assertHolds(soup.id.value)
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.MARKED)).assertIsNotEnabled().performClick()
         assertHolds(soup.id.value)
