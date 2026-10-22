@@ -36,6 +36,19 @@
     <string name="editor_servings">Servings</string>
     <string name="editor_servings_accepts">A whole number, 1 or more</string>
     <string name="editor_servings_none">Not given</string>
+    <!-- The finished dish's weight, under the serving count (v0.44): whole grams, or nothing. -->
+    <string name="editor_finished_weight">Finished dish weight</string>
+    <string name="editor_finished_weight_suffix">g</string>
+    <!-- The hint, with the serving phrase of editor_finished_weight_servings, and without a serving count. -->
+    <string name="editor_finished_weight_hint">What the whole dish for %1$s weighs — for nutrition per 100\u00A0g</string>
+    <string name="editor_finished_weight_hint_no_servings">What the whole dish weighs — for nutrition per 100\u00A0g</string>
+    <plurals name="editor_finished_weight_servings">
+        <item quantity="one">%1$d serving</item>
+        <item quantity="other">%1$d servings</item>
+    </plurals>
+    <!-- A recipe that cannot be edited: the weight it holds, or none. -->
+    <string name="editor_finished_weight_value">%1$d\u00A0g</string>
+    <string name="editor_finished_weight_none">Not given</string>
     <!-- The ingredient rows: each reads as a line and opens in a sheet of its fields (FLOW-023). -->
     <string name="editor_ingredients">Ingredients</string>
     <string name="editor_ingredient_add">Add ingredient</string>

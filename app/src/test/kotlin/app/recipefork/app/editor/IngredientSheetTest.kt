@@ -536,8 +536,9 @@ class IngredientSheetTest {
         assertEquals(7, stored(id).ingredients.size)
     }
 
-    // Next from the serving count opens the first row's sheet once the serving count is left: what leaving it does is
-    // done — a count left empty is marked — and once the sheet goes, the focus does not come back to it.
+    // Next from the serving count goes to the finished weight, and the serving count is left: what leaving it does is
+    // done — a count left empty is marked. The weight's Next opens the first row's sheet, and once the sheet goes, the
+    // focus does not come back to the serving count.
     @Test
     fun theServingCountIsLeftBeforeTheFirstRowsSheetOpens() {
         open(draft().copy(servings = null))
@@ -545,8 +546,10 @@ class IngredientSheetTest {
         awaitFocused(EditorTags.SERVINGS)
         assertFalse(exists(EditorTags.SERVINGS_MARK))
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
-        awaitFocused(EditorTags.ingredientName(0))
+        awaitFocused(EditorTags.FINISHED_WEIGHT)
         compose.waitUntil(PATIENCE_MS) { exists(EditorTags.SERVINGS_MARK) }
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performImeAction()
+        awaitFocused(EditorTags.ingredientName(0))
         assertFalse(isFocused(EditorTags.SERVINGS))
         compose.closeIngredient()
         assertFalse(isFocused(EditorTags.SERVINGS))

@@ -255,13 +255,15 @@ class EquipmentScreenTest {
         assertFalse(exists(EditorTags.equipmentMenu(0)))
     }
 
-    // The keyboard's Next goes from the serving count through every item to the first ingredient row, whose sheet opens
-    // with its name focused.
+    // The keyboard's Next goes from the serving count and the finished weight through every item to the first
+    // ingredient row, whose sheet opens with its name focused.
     @Test
     fun nextGoesFromTheServingsThroughTheItemsToTheIngredients() {
         open(recipe("Bowl", "Whisk"))
         compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
         compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
+        compose.waitUntil(PATIENCE_MS) { focused(EditorTags.FINISHED_WEIGHT) }
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(field(0)) }
         assertEquals(androidx.compose.ui.text.input.ImeAction.Next, node(field(0)).config[SemanticsProperties.ImeAction])
         compose.onNodeWithTag(field(0)).performImeAction()
@@ -271,13 +273,13 @@ class EquipmentScreenTest {
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
     }
 
-    // With no equipment, Next goes from the serving count straight to the first ingredient row; with no ingredients
+    // With no equipment, Next goes from the finished weight straight to the first ingredient row; with no ingredients
     // either, the last item says Done.
     @Test
     fun withNoItemsNextSkipsTheSectionAndWithNoIngredientsTheLastItemSaysDone() {
         val recipe = open(recipe())
-        compose.onNodeWithTag(EditorTags.SERVINGS).performScrollTo().performClick()
-        compose.onNodeWithTag(EditorTags.SERVINGS).performImeAction()
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performScrollTo().performClick()
+        compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).performImeAction()
         compose.waitUntil(PATIENCE_MS) { focused(EditorTags.ingredientName(0)) }
         compose.removeIngredient(0)
         compose.waitUntil(PATIENCE_MS) { stored(recipe).ingredients.isEmpty() }

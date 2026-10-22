@@ -296,9 +296,10 @@ fun EditorScreen(
                     )
                 }
                 CompositionLocalProvider(LocalEditorStatements provides statements, LocalEditorScroll provides scroll) {
-                    // The keyboard's Next goes from the title to the serving count, and from there through the
-                    // equipment into the ingredient list.
+                    // The keyboard's Next goes from the title to the serving count, on to the finished weight, and
+                    // from there through the equipment into the ingredient list.
                     val servings = remember { FocusRequester() }
+                    val weight = remember { FocusRequester() }
                     val rows = remember { RowFocus() }
                     val headings = remember { RowFocus() }
                     val equipment = remember { RowFocus() }
@@ -310,7 +311,8 @@ fun EditorScreen(
                     // The description stands with the title it tells about, before the serving count; over several
                     // lines it keeps the keyboard's new-line key, so the title's Next passes over it as over the tags.
                     DescriptionField(shown, editor)
-                    ServingCount(shown, editor, servings, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
+                    ServingCount(shown, editor, servings) { weight.requestFocus() }
+                    FinishedWeight(shown, editor, weight, if (shown.equipment.isNotEmpty()) ({ equipment.ask(0) }) else toIngredients)
                     Equipment(shown, editor, equipment, toIngredients, equipmentDictionary, equipmentLanguage)
                     CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                         Ingredients(shown, editor, environment.ingredients, scroll, environment.mode, units, rows, headings)
@@ -899,6 +901,9 @@ object EditorTags {
     fun removeIcon(tagId: Long) = "editor-tag-remove-icon-$tagId"
     const val SERVINGS = "editor-servings"
     const val SERVINGS_ACCEPTS = "editor-servings-accepts"
+    /** The finished dish's weight, under the serving count, and its hint. */
+    const val FINISHED_WEIGHT = "editor-finished-weight"
+    const val FINISHED_WEIGHT_HINT = "editor-finished-weight-hint"
     /** The equipment, its "Add", and the statement an "Add" past the limit makes (GUIDE-007). */
     const val EQUIPMENT = "editor-equipment"
     const val EQUIPMENT_ADD = "editor-equipment-add"

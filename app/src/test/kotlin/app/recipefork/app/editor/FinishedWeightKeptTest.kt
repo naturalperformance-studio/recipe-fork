@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 import java.time.Instant
 
 /**
- * v0.44, T-318: the editor shows no finished weight yet, and a change of anything else — servings among it — keeps the
+ * v0.44, T-318: a change of anything else in the editor — servings among it — keeps the
  * weight the recipe holds, in the editor and in the book.
  */
 @RunWith(AndroidJUnit4::class)
