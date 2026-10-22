@@ -50,6 +50,22 @@ class FitWordsTest {
         assertTrue("${px(together)} px where $fits px fit", px(together) >= fits * 0.95f)
     }
 
+    // A hyphenated word may break after its hyphen: with hyphenParts its parts are measured, not the whole (T-301).
+    @Test
+    fun aHyphenatedWordCountsAsItsParts() {
+        assertEquals(listOf("Картофельно-", "грибная"), hyphenPartsOf("Картофельно-грибная"))
+        assertEquals(listOf("a-", "b-", "c"), hyphenPartsOf("a-b-c"))
+        assertEquals(listOf("plain"), hyphenPartsOf("plain"))
+        val title = "Strawberry-rhubarb crumble"
+        val partsWidth = maxOf(widestAtFull("Strawberry-"), widestAtFull("rhubarb"), widestAtFull("crumble"))
+        val width = partsWidth + 2
+        assertTrue("the whole word is wider than the room", widestAtFull("Strawberry-rhubarb") > width)
+        val parts = fitWords(title, style, width, measurer, density, hyphenParts = true)
+        assertEquals("its parts fit as they are", px(style), px(parts.style), 0.01f)
+        assertTrue(!parts.overflows)
+        assertTrue("taken whole, it would be made smaller", px(fitWords(title, style, width, measurer, density).style) < px(style))
+    }
+
     @Test
     fun theTextsAreNeverDrawnBelowTheSizeAtAFontScaleOfOne() {
         val width = (widestAtFull(wide) * 0.3f).toInt()

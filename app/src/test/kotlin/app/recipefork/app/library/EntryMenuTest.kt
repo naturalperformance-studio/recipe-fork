@@ -146,7 +146,7 @@ class EntryMenuTest {
         val menu = node(LibraryTags.actions(id)).boundsInRoot
         assertEquals(dp(48f), menu.width, 0.5f)
         assertEquals(dp(48f), menu.height, 0.5f)
-        assertEquals("the ⋮ ends the entry's line: $menu, $entry", entry.right - dp(4f), menu.right, 1f)
+        assertEquals("the ⋮ ends the entry's row: $menu, $entry", entry.right, menu.right, 1f)
         val title = compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         assertTrue("the title does not reach under the ⋮: $title, $menu", title.right <= menu.left)
         assertTrue("nothing stands under the entry: $menu, $entry", menu.top >= entry.top && menu.bottom <= entry.bottom)
@@ -163,8 +163,8 @@ class EntryMenuTest {
         bringIntoView(list, id)
         assertFalse("$id has a menu", exists(LibraryTags.actions(id)))
         items(id).forEach { assertFalse(exists(it)) }
-        // The title takes the card's whole width less its padding: no room is kept for a ⋮.
-        val width = node(LibraryTags.entry(id)).boundsInRoot.width - dp(32f)
+        // The title takes the row's whole width less its padding and its cover or drop cap: no room is kept for a ⋮.
+        val width = node(LibraryTags.entry(id)).boundsInRoot.width - dp(16f + 60f + 12f + 16f)
         val layouts = mutableListOf<TextLayoutResult>()
         compose.onNodeWithTag(LibraryTags.entryTitle(id), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
