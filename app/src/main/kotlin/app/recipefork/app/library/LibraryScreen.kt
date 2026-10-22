@@ -941,7 +941,7 @@ private fun OwnList(
 @Composable
 private fun NothingWritten(onWrite: () -> Unit, modifier: Modifier = Modifier) {
     EmptyState(
-        picture = R.drawable.ic_empty_book,
+        engraving = Engraving.MARK,
         headline = stringResource(R.string.library_own_empty),
         sentence = stringResource(R.string.library_own_empty_sentence),
         action = EmptyAction(stringResource(R.string.library_own_new), R.drawable.ic_new_recipe, LibraryTags.WRITE, onWrite),
@@ -1197,7 +1197,7 @@ private fun MarkedList(
                 CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP), enabled = !selecting)
                 val serverless = mode == Mode.Serverless
                 EmptyState(
-                    picture = R.drawable.ic_empty_book,
+                    engraving = Engraving.MARK,
                     headline = stringResource(if (serverless) R.string.library_marked_empty_serverless else R.string.library_marked_empty),
                     sentence = stringResource(
                         if (serverless) R.string.library_marked_empty_sentence_serverless else R.string.library_marked_empty_sentence,

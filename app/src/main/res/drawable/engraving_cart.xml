@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The engraved cart of the empty shopping list: symbol il-cart of docs/brand/identity/redesign-1-recipe-fork.html
+     (section 4.5, "Shopping list, empty"), a thin-line cart in its 56-unit box, drawn at 96 dp. The paths are the
+     design's; its two wheels, circles there, are each two half-circle arcs here (EngravingsFromDesignTest). One colour,
+     tinted by the screen. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M6 12h6l5 24h26l5-17H14" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M19 31h25M17.5 26h28" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M18 43A3 3 0 1 0 24 43A3 3 0 1 0 18 43" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M37 43A3 3 0 1 0 43 43A3 3 0 1 0 37 43" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M22 22l1 9M28 22v9M34 22l-1 9M40 22l-2 9" />
+</vector>

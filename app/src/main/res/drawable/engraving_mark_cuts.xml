@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The engraved mark of an empty book section, its cuts: the light hairlines cut into the handle and the left tine,
+     as in a woodcut (docs/brand/identity/mark-2.html, symbol m2be), flattened as engraving_mark_ink. The screen paints
+     them in the colour of the paper behind the mark. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="112dp"
+    android:height="112dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.3948"
+        android:strokeLineCap="round"
+        android:pathData="M19.175,26.763C15.087,30.651 11.332,33.543 7.609,37.132" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.3948"
+        android:strokeLineCap="round"
+        android:pathData="M19.142,28.059C15.12,32.014 11.398,34.938 7.41,38.927" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.3948"
+        android:strokeLineCap="round"
+        android:pathData="M18.078,30.319C14.522,34.074 10.866,37.065 7.277,40.655" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.3948"
+        android:strokeLineCap="round"
+        android:pathData="M33.731,7.554Q30.009,10.345 26.885,13.469" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="0.3948"
+        android:strokeLineCap="round"
+        android:pathData="M25.223,16.062Q24.16,18.986 24.559,20.98" />
+</vector>

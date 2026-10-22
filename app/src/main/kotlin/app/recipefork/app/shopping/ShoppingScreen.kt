@@ -76,6 +76,7 @@ import app.recipefork.app.dictionary.EquipmentSource
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.library.EmptyState
+import app.recipefork.app.library.Engraving
 import app.recipefork.app.library.TITLE_CLEARANCE
 import app.recipefork.app.print.PrintWay
 import app.recipefork.app.print.PrintProgress
@@ -263,7 +264,7 @@ fun ShoppingScreen(
                 CircularProgressIndicator()
             }
             shown.isEmpty() && own.isEmpty() -> EmptyState(
-                picture = R.drawable.ic_shopping_cart,
+                engraving = Engraving.CART,
                 headline = stringResource(R.string.shopping_empty),
                 sentence = stringResource(R.string.shopping_empty_sentence, stringResource(R.string.shopping_add), stringResource(R.string.shopping_own_add)),
                 action = null,
