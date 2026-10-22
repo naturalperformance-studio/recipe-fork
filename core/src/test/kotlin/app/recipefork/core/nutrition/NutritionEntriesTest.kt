@@ -16,13 +16,13 @@ class NutritionEntriesTest {
     fun `a child without its own values takes its parent's`() {
         // Two wings at the wing's own 90 g a piece, by chicken's values: 360 kcal, 36 g protein, 23.4 g fat.
         val result = assertNotNull(dish(row(WINGS, r(2), PIECE)))
-        assertEquals(NutritionValues(kcal = 360, protein = 36, fat = 23, carbs = 0), result.whole)
+        assertEquals(totals(kcal = 360, protein = 36, fat = 23, carbs = 0), result.whole)
     }
 
     @Test
     fun `a child with its own values keeps them`() {
         val result = assertNotNull(dish(row(THIGHS, r(100), GRAM)))
-        assertEquals(NutritionValues(kcal = 180, protein = 18, fat = 10, carbs = 0), result.whole)
+        assertEquals(totals(kcal = 180, protein = 18, fat = 10, carbs = 0), result.whole)
     }
 
     @Test
@@ -47,6 +47,6 @@ class NutritionEntriesTest {
         assertEquals(NutritionEntry(parentId = 1, factors = mapOf("pc" to 90.0)), entries.entry(2))
         assertNull(entries.entry(3))
         val result = assertNotNull(Nutrition.of(listOf(row(2, r(2), PIECE)), ScaleFactor.ONE, entries))
-        assertEquals(360, result.whole.kcal)
+        assertEquals(big(360), result.whole.kcal)
     }
 }

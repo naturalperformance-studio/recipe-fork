@@ -154,7 +154,8 @@ fun measureOf(factors: Map<String, Double>, unit: QuantityUnit): Rational? {
     return comparisonFactor(factors, unit)?.takeIf { it.isFinite() && it > 0 }?.let(::rationalOf)
 }
 
-private fun rationalOf(value: Double): Rational {
+/** [value] exactly as its shortest decimal reads (0.92 is 92/100), for a number the dictionary gives. */
+internal fun rationalOf(value: Double): Rational {
     val decimal = BigDecimal.valueOf(value)
     return if (decimal.scale() >= 0) Rational.of(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()))
     else Rational.of(decimal.unscaledValue() * BigInteger.TEN.pow(-decimal.scale()))

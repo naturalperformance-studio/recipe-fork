@@ -8,7 +8,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.ScaleFactor
 import app.recipefork.core.scaling.measureOf
-import java.math.BigDecimal
+import app.recipefork.core.scaling.rationalOf
 import java.math.BigInteger
 
 /**
@@ -90,19 +90,13 @@ object Nutrition {
     }
 
     /** [kcal] to the nearest 10, half up. */
-    private fun kcalOf(kcal: Rational): Long = halfUp(kcal / TEN) * 10
+    private fun kcalOf(kcal: Rational): BigInteger = halfUp(kcal / TEN) * BigInteger.TEN
 
     /** [grams] to the nearest whole gram, half up. */
-    private fun gramsOf(grams: Rational): Long = halfUp(grams)
+    private fun gramsOf(grams: Rational): BigInteger = halfUp(grams)
 
-    private fun halfUp(value: Rational): Long = (value + HALF).floor().toLong()
-
-    /** [value] exactly as its decimal reads. */
-    private fun rationalOf(value: Double): Rational {
-        val decimal = BigDecimal.valueOf(value)
-        return if (decimal.scale() >= 0) Rational.of(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()))
-        else Rational.of(decimal.unscaledValue() * BigInteger.TEN.pow(-decimal.scale()))
-    }
+    /** [value] to the nearest whole number, half up, however large (SCALE-010 sets the factor no ceiling). */
+    private fun halfUp(value: Rational): BigInteger = (value + HALF).floor()
 
     private val HALF = Rational.of(1, 2)
     private val TEN = Rational.of(10)

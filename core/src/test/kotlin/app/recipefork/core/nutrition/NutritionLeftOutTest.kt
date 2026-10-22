@@ -6,6 +6,8 @@ import app.recipefork.core.recipe.QuantityUnit.MILLILITRE
 import app.recipefork.core.recipe.QuantityUnit.PIECE
 import app.recipefork.core.recipe.QuantityUnit.TABLESPOON
 import app.recipefork.core.recipe.QuantityUnit.TEASPOON
+import app.recipefork.core.recipe.QuantityUnit.TO_TASTE
+import app.recipefork.core.recipe.UnitType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -35,8 +37,8 @@ class NutritionLeftOutTest {
             ),
             result.leftOut,
         )
-        assertEquals(NutritionValues(kcal = 730, protein = 20, fat = 2, carbs = 152), result.whole)
-        assertEquals(listOf(CountedRow(1, 730)), result.counted)
+        assertEquals(totals(kcal = 730, protein = 20, fat = 2, carbs = 152), result.whole)
+        assertEquals(listOf(counted(1, 730)), result.counted)
     }
 
     @Test
@@ -55,6 +57,12 @@ class NutritionLeftOutTest {
     fun `to taste is left out before no quantity`() {
         assertEquals(LeftOutReason.TO_TASTE, reasonOf(toTaste(BARE)))
         assertEquals(LeftOutReason.TO_TASTE, reasonOf(toTaste(SALT)))
+    }
+
+    @Test
+    fun `a row in the to-taste unit is to taste whatever its unit type says`() {
+        val row = row(TENTH, r(1), TO_TASTE).copy(unitType = UnitType.HOUSEHOLD)
+        assertEquals(LeftOutReason.TO_TASTE, reasonOf(row))
     }
 
     @Test

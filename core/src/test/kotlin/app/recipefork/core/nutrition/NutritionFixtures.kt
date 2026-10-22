@@ -6,8 +6,15 @@ import app.recipefork.core.recipe.QuantityUnit
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.ScaleFactor
+import java.math.BigInteger
 
 internal fun r(n: Long, d: Long = 1) = Rational.of(n, d)
+
+internal fun big(n: Long): BigInteger = BigInteger.valueOf(n)
+
+internal fun totals(kcal: Long, protein: Long, fat: Long, carbs: Long) = NutritionValues(big(kcal), big(protein), big(fat), big(carbs))
+
+internal fun counted(position: Int, kcal: Long) = CountedRow(position, big(kcal))
 
 internal const val FLOUR = 1L
 internal const val EGG = 2L
@@ -92,4 +99,4 @@ internal fun dish(
 )
 
 /** The protein in grams of a dish of [row] alone, [PURE] giving one gram of protein per gram. */
-internal fun proteinOf(row: Ingredient): Long = checkNotNull(dish(row)).whole.protein
+internal fun proteinOf(row: Ingredient): BigInteger = checkNotNull(dish(row)).whole.protein

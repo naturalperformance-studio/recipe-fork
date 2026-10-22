@@ -26,59 +26,59 @@ class NutritionGramsTest {
 
     @Test
     fun `a mass counts exactly, by its multiple of a gram`() {
-        assertEquals(300, proteinOf(row(PURE, r(300), GRAM)))
-        assertEquals(2_000, proteinOf(row(PURE, r(2), KILOGRAM)))
-        assertEquals(1_000_000, proteinOf(row(PURE, r(1), TONNE)))
+        assertEquals(big(300), proteinOf(row(PURE, r(300), GRAM)))
+        assertEquals(big(2_000), proteinOf(row(PURE, r(2), KILOGRAM)))
+        assertEquals(big(1_000_000), proteinOf(row(PURE, r(1), TONNE)))
         // 28.349523125 g and 907.18474 g.
-        assertEquals(28, proteinOf(row(PURE, r(1), OUNCE)))
-        assertEquals(907, proteinOf(row(PURE, r(2), POUND)))
+        assertEquals(big(28), proteinOf(row(PURE, r(1), OUNCE)))
+        assertEquals(big(907), proteinOf(row(PURE, r(2), POUND)))
     }
 
     @Test
     fun `a mass ignores the entry's own gram factor`() {
-        assertEquals(100, proteinOf(row(HEAVY_GRAM, r(100), GRAM)))
-        assertEquals(1_000, proteinOf(row(HEAVY_GRAM, r(1), KILOGRAM)))
+        assertEquals(big(100), proteinOf(row(HEAVY_GRAM, r(100), GRAM)))
+        assertEquals(big(1_000), proteinOf(row(HEAVY_GRAM, r(1), KILOGRAM)))
     }
 
     @Test
     fun `a volume counts by the entry's ml measure`() {
         // 0.5 g per ml.
-        assertEquals(50, proteinOf(row(PURE, r(100), MILLILITRE)))
-        assertEquals(1_000, proteinOf(row(PURE, r(2), LITRE)))
-        assertEquals(500_000, proteinOf(row(PURE, r(1), CUBIC_METRE)))
+        assertEquals(big(50), proteinOf(row(PURE, r(100), MILLILITRE)))
+        assertEquals(big(1_000), proteinOf(row(PURE, r(2), LITRE)))
+        assertEquals(big(500_000), proteinOf(row(PURE, r(1), CUBIC_METRE)))
         // 2 fl oz is 59.147059125 ml, 29.57 g.
-        assertEquals(30, proteinOf(row(PURE, r(2), FLUID_OUNCE)))
+        assertEquals(big(30), proteinOf(row(PURE, r(2), FLUID_OUNCE)))
     }
 
     @Test
     fun `pieces count by the entry's pc measure`() {
-        assertEquals(120, proteinOf(row(PURE, r(3), PIECE)))
+        assertEquals(big(120), proteinOf(row(PURE, r(3), PIECE)))
     }
 
     @Test
     fun `pieces count by the row's own piece weight before the entry's pc measure`() {
-        assertEquals(165, proteinOf(row(PURE, r(3), PIECE, pieceWeight = r(55))))
+        assertEquals(big(165), proteinOf(row(PURE, r(3), PIECE, pieceWeight = r(55))))
     }
 
     @Test
     fun `a piece weight counts a row whose entry has no pc measure`() {
         val result = assertNotNull(dish(row(TENTH, r(2), PIECE, pieceWeight = r(150))))
-        assertEquals(300, result.whole.kcal)
+        assertEquals(big(300), result.whole.kcal)
     }
 
     @Test
     fun `spoons, cups and pinches count by the entry's measure for that unit`() {
-        assertEquals(10, proteinOf(row(PURE, r(2), TEASPOON)))
-        assertEquals(30, proteinOf(row(PURE, r(2), TABLESPOON)))
-        assertEquals(300, proteinOf(row(PURE, r(3, 2), CUP)))
-        assertEquals(2, proteinOf(row(PURE, r(4), PINCH)))
+        assertEquals(big(10), proteinOf(row(PURE, r(2), TEASPOON)))
+        assertEquals(big(30), proteinOf(row(PURE, r(2), TABLESPOON)))
+        assertEquals(big(300), proteinOf(row(PURE, r(3, 2), CUP)))
+        assertEquals(big(2), proteinOf(row(PURE, r(4), PINCH)))
     }
 
     @Test
     fun `two eggs and a tablespoon of oil count through their piece and spoon measures`() {
         val result = assertNotNull(dish(row(EGG, r(2), PIECE), row(OIL, r(1), TABLESPOON)))
         // 100 g of egg: 143 kcal, 9.5 g fat; 13.6 g of oil: 120.224 kcal, 13.6 g fat.
-        assertEquals(NutritionValues(kcal = 260, protein = 13, fat = 23, carbs = 1), result.whole)
-        assertEquals(listOf(CountedRow(0, 140), CountedRow(1, 120)), result.counted)
+        assertEquals(totals(kcal = 260, protein = 13, fat = 23, carbs = 1), result.whole)
+        assertEquals(listOf(counted(0, 140), counted(1, 120)), result.counted)
     }
 }
