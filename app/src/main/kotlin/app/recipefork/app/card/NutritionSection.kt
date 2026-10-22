@@ -159,9 +159,9 @@ internal fun NutritionSection(
  */
 @Composable
 private fun NutritionSwitch(whole: MutableState<Boolean>) {
-    // A segment answers a touch within the card's target of it, which Compose takes from the view configuration. The
-    // gaps above and below belong to each segment, outside its own click, so a touch in them reaches it: at 40 dp drawn
-    // they are that target's room, and Material lays out no room of its own around it.
+    // A segment answers a touch within the card's target of it: Compose widens a touch to a click smaller than the view
+    // configuration's minimum target, here the card's. At 40 dp drawn the gaps above and below are that target's room,
+    // so Material lays out no room of its own around it; the gaps are each segment's, so they hold at any text size.
     val configuration = LocalViewConfiguration.current
     val touch = remember(configuration) {
         object : ViewConfiguration by configuration {
