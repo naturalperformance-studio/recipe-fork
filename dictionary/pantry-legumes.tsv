@@ -19,12 +19,14 @@
 5910	фасоль консервированная	canned beans	5900	true	g=1 pc=400 cup=170				kcal=124 protein=7.98 fat=1.05 carbs=21.49	fdc:174285
 5911	фасоль красная консервированная	canned red kidney beans	5900	true	g=1 pc=400 cup=170				kcal=124 protein=7.98 fat=1.05 carbs=21.49	fdc:174285
 5912	фасоль белая консервированная	canned white beans	5900	true	g=1 pc=400 cup=170				kcal=114 protein=7.26 fat=0.29 carbs=21.2	fdc:175204
-5913	фасоль чёрная консервированная	canned black beans	5900	true	g=1 pc=400 cup=170				kcal=91 protein=6.03 fat=0.29 carbs=16.55	fdc:175238
+# Drained and rinsed (Foundation; SR has canned black beans only with their liquid); energy from 2048, Atwater specific factors.
+5913	фасоль чёрная консервированная	canned black beans	5900	true	g=1 pc=400 cup=170				kcal=115.28233 protein=6.9125 fat=1.273 carbs=19.8135	fdc:2644285
 5914	фасоль мелкая белая	navy beans	5900		g=1 tbsp=13 cup=210
 5915	фасоль крупная белая	gigante beans	5900		g=1 tbsp=11 cup=190
 # бобы → fdc:175205 fava beans, mature seeds, raw: the measures are for dry beans
 5916	бобы	fava beans			g=1 tbsp=11 cup=190				kcal=341 protein=26.12 fat=1.53 carbs=58.29	fdc:175205
 5917	бобы сушёные	dried fava beans	5916		g=1 tbsp=11 cup=190
+# Canned with their liquid: neither source has drained fava beans, so this undercounts drained beans.
 5918	бобы консервированные	canned fava beans	5916	true	g=1 pc=400 cup=170				kcal=71 protein=5.47 fat=0.22 carbs=12.41	fdc:173754
 
 # нут, чечевица, горох, маш, соя
@@ -62,7 +64,8 @@
 6000	тофу	tofu			g=1				kcal=76 protein=8.08 fat=4.78 carbs=1.87	fdc:172476
 6001	тофу твёрдый	firm tofu	6000		g=1				kcal=78 protein=9.04 fat=4.17 carbs=2.85	fdc:172448
 6002	тофу мягкий	soft tofu	6000		g=1				kcal=61 protein=7.17 fat=3.69 carbs=1.18	fdc:172449
-6003	тофу шёлковый	silken tofu	6000		g=1
+# MORI-NU silken soft tofu, the only raw silken tofu in SR Legacy.
+6003	тофу шёлковый	silken tofu	6000		g=1				kcal=55 protein=4.8 fat=2.7 carbs=2.9	fdc:174292
 # тофу копчёный → fdc:172475 firm tofu, calcium sulfate: smoked tofu is pressed firm tofu
 6004	тофу копчёный	smoked tofu	6000		g=1				kcal=144 protein=17.27 fat=8.72 carbs=2.78	fdc:172475
 6005	тофу жареный	fried tofu	6000		g=1				kcal=270 protein=18.82 fat=20.18 carbs=8.86	fdc:172451

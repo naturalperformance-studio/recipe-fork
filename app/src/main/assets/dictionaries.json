@@ -1,5 +1,5 @@
 {
-  "version": "81084d8eb2e9702e1e7fa6e8b50e00670e575952b2586af4105d4e9501bce50d",
+  "version": "94cb0941976a310469598a803c9182c0ce7da57802087124c1ba45f5510408cc",
   "ingredients": [
     {
       "id": 1,
@@ -21999,10 +21999,10 @@
         "cup": 170.0
       },
       "nutrition": {
-        "kcal": 91.0,
-        "protein": 6.03,
-        "fat": 0.29,
-        "carbs": 16.55
+        "kcal": 115.28233,
+        "protein": 6.9125,
+        "fat": 1.273,
+        "carbs": 19.8135
       }
     },
     {
@@ -22510,6 +22510,12 @@
       "parentId": 6000,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 55.0,
+        "protein": 4.8,
+        "fat": 2.7,
+        "carbs": 2.9
       }
     },
     {
