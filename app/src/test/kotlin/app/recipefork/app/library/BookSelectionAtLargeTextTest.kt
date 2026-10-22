@@ -138,7 +138,9 @@ class BookSelectionAtLargeTextTest {
         assertTrue("the count ($count) inside the bar ($bar)", count.top >= bar.top - 0.5f && count.bottom <= bar.bottom + 0.5f)
         assertAtLeast48(LibraryTags.SELECTION_CLOSE)
         assertAtLeast48(LibraryTags.SELECTION_MENU)
-        assertAtLeast48(LibraryTags.selectionMark(first))
+        // The mark of being chosen is a picture over the cover (T-301), 26 dp; the row is what is pressed.
+        val mark = bounds(LibraryTags.selectionMark(first))
+        assertEquals(26f, mark.width, 0.5f)
         assertTrue(48.dp.value <= bounds(LibraryTags.entry(first)).height)
     }
 

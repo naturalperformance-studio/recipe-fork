@@ -11,15 +11,8 @@ import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -35,10 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -46,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -82,10 +71,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.AlignmentLine
-import androidx.compose.ui.layout.HorizontalAlignmentLine
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
@@ -97,7 +82,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -106,12 +90,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -166,7 +146,6 @@ import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.search.BookOrder
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -926,10 +905,12 @@ private fun OwnList(
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(top = ENTRY_GAP, bottom = bottom),
-                verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
                 modifier = Modifier.fillMaxSize().testTag(LibraryTags.OWN_LIST),
             ) {
-                if (above > 0) item(key = COLLECTIONS_KEY) { CollectionsRow(collections, session::openCollection, enabled = !selecting) }
+                // The entries' rows meet at their hairlines; the collections keep the gap above them.
+                if (above > 0) item(key = COLLECTIONS_KEY) {
+                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP), enabled = !selecting)
+                }
                 items(loaded.orEmpty(), key = { it.recipeId }) { row ->
                     OwnEntry(
                         row,
@@ -1003,7 +984,7 @@ private fun rememberWrite(recipes: RecipeRepository, session: LibrarySession, ed
 }
 
 /**
- * An own recipe's entry, a card; tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the
+ * An own recipe's entry, a row of the book's contents ([BookEntryRow]); tapping it opens the recipe's card (FLOW-029 (1)). Its actions are in its menu, at the
  * end of its title line, from the top ([entryActions]): "Add to collection" and "Add to shopping list" ([adding]), Print
  * and Share as PDF ([printing]), in [Mode.Serverless] the export of every recipe (FLOW-063), and deletion for a recipe
  * its owner may delete (FLOW-053 (1), ST-010).
@@ -1029,7 +1010,7 @@ private fun OwnEntry(
         null
     }
     val actions = entryActions(row.recipeId, mode, adding, printing, onExport, removal)
-    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier, selected = selected, onSelect = onSelect) {
+    BookEntryRow(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
         EntryTags(row.recipeId, tags)
         // The state is named in words, never carried by colour alone (A11Y-008); a serverless draft names none.
@@ -1064,129 +1045,8 @@ private fun entryActions(
         removal?.let(::add)
     }
 
-/**
- * An entry of the book as a card: its cover across the card's width in the 4:3 frame, when it has one, and beneath
- * it the entry's [lines], the first of them its title. When there are any [actions], their menu stands at the end of
- * the title's first line, and the text keeps clear of it. [onOpen], when given, opens the recipe. [inner] goes on the
- * card itself, inside its margins, and [wrap] lays its content out — beside a drag column, in a collection's screen.
- *
- * Where [onSelect] is given, a long press on the entry calls it: the book's selection starts with it. While the selection
- * is on, [selected] says whether the entry is chosen (null while it is off): a tap, or a long press, calls [onSelect] in
- * place of opening the recipe, the entry's menu gives way to its mark of being chosen ([SelectionMark]), a chosen entry
- * is edged in the primary colour, and the screen reader hears "Selected" or "Not selected" (A11Y-008).
- */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-internal fun EntryCard(
-    recipeId: String,
-    title: String,
-    coverId: String?,
-    cover: EntryCover,
-    actions: List<EntryAction>,
-    onOpen: (() -> Unit)?,
-    modifier: Modifier,
-    inner: Modifier = Modifier,
-    wrap: @Composable (content: @Composable () -> Unit) -> Unit = { it() },
-    selected: Boolean? = null,
-    onSelect: (() -> Unit)? = null,
-    lines: @Composable ColumnScope.() -> Unit,
-) {
-    val openLabel = stringResource(R.string.library_entry_open_action)
-    val selectLabel = stringResource(R.string.library_entry_select_action)
-    val toggleLabel = if (selected == true) stringResource(R.string.library_entry_deselect_action) else selectLabel
-    val state = stringResource(if (selected == true) R.string.library_entry_selected else R.string.library_entry_not_selected)
-    val open = when {
-        selected != null && onSelect != null -> Modifier
-            .combinedClickable(
-                onClickLabel = toggleLabel, onLongClickLabel = toggleLabel, onLongClick = onSelect, onClick = onSelect,
-                // Felt only through the application's haptics: starting the selection plays its confirmation.
-                hapticFeedbackEnabled = false,
-            )
-            .semantics {
-                this.selected = selected
-                stateDescription = state
-            }
-        onSelect != null && onOpen != null ->
-            Modifier.combinedClickable(
-                onClickLabel = openLabel, role = Role.Button, onLongClickLabel = selectLabel, onLongClick = onSelect, onClick = onOpen,
-                hapticFeedbackEnabled = false,
-            )
-        // An entry that does not open is still chosen by a long press.
-        onSelect != null -> Modifier
-            .pointerInput(onSelect) { detectTapGestures(onLongPress = { onSelect() }) }
-            .semantics {
-                onLongClick(label = selectLabel) {
-                    onSelect()
-                    true
-                }
-            }
-        onOpen != null -> Modifier.clickable(onClickLabel = openLabel, role = Role.Button, onClick = onOpen)
-        else -> Modifier
-    }
-    val marked = selected != null && onSelect != null
-    val edge = if (selected == true) BorderStroke(SELECTED_EDGE, MaterialTheme.colorScheme.primary) else null
-    Card(modifier.fillMaxWidth().padding(horizontal = 16.dp).then(inner), border = edge) {
-        wrap {
-            Layout(
-                content = {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .semantics(mergeDescendants = true) {}
-                            .then(open)
-                            .testTag(LibraryTags.entry(recipeId)),
-                    ) {
-                        cover(coverId, LibraryTags.cover(recipeId))
-                        Column(
-                            Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = if (actions.isEmpty() && !marked) 16.dp else MENU_ROOM),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                            content = lines,
-                        )
-                    }
-                    if (marked) SelectionMark(recipeId, selected == true) else if (actions.isNotEmpty()) EntryMenu(recipeId, title, actions)
-                },
-            ) { measurables, constraints ->
-                val entry = measurables[0].measure(constraints)
-                val menu = measurables.getOrNull(1)?.measure(Constraints())
-                layout(entry.width, entry.height) {
-                    entry.place(0, 0)
-                    if (menu != null) {
-                        // Level with the middle of the title's first line, 4 dp from the card's end.
-                        val line = entry[TitleLine].takeIf { it != AlignmentLine.Unspecified } ?: (entry.height / 2)
-                        menu.place(entry.width - menu.width - 4.dp.roundToPx(), line - menu.height / 2)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** How wide the edge of an entry chosen in the selection is drawn. */
-private val SELECTED_EDGE = 2.dp
-
-/** The room kept at the end of an entry's text for its ⋮, or its mark of being chosen: the ⋮ itself and its margin. */
-private val MENU_ROOM = 52.dp
-
-/** The space between two entries of a list, and above the first. */
+/** The space above a list's first entry, and between the row of collections and the entries. */
 internal val ENTRY_GAP = 12.dp
-
-/**
- * The tags a recipe carries, as its entry shows them: one muted line of their labels in the interface language,
- * cut short where it does not fit; nothing for a recipe that carries none.
- */
-@Composable
-private fun EntryTags(recipeId: String, tags: String) {
-    if (tags.isEmpty()) return
-    Text(
-        tags,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.testTag(LibraryTags.entryTags(recipeId)),
-    )
-}
 
 /**
  * The tags of each recipe of a view as its entry shows them, by the recipe's identity: their labels in the interface
@@ -1210,73 +1070,6 @@ private fun rememberEntryTags(choices: FilterChoices, carries: Map<String, List<
 
 /** What stands between two tags on an entry's line of tags. */
 private const val TAG_SEPARATOR = " · "
-
-/** An entry's title, which tells the entry's menu where its first line stands ([TitleLine]). */
-@Composable
-internal fun EntryTitle(recipeId: String, title: String) {
-    // The middle of the first line, as the title was last laid out; the text is laid out while it is measured.
-    val firstLine = remember { FirstLine() }
-    Text(
-        text = title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-        style = MaterialTheme.typography.titleMedium,
-        onTextLayout = { firstLine.centre = ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt() },
-        modifier = Modifier
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                val centre = firstLine.centre.coerceIn(0, placeable.height)
-                layout(placeable.width, placeable.height, mapOf(TitleLine to centre)) { placeable.place(0, 0) }
-            }
-            .testTag(LibraryTags.entryTitle(recipeId)),
-    )
-}
-
-/** Where the middle of a title's first line stands, in pixels from the title's top. */
-private class FirstLine(var centre: Int = 0)
-
-/** The middle of an entry's first title line, which the entry's menu stands level with. */
-private val TitleLine = HorizontalAlignmentLine { a, b -> min(a, b) }
-
-/**
- * One item of an entry's menu: what it reads, its tag, what choosing it does, and whether it takes the recipe out of
- * the book — such an item is drawn in the theme's error colour, as on the card.
- */
-internal class EntryAction(@StringRes val label: Int, val tag: String, val destructive: Boolean = false, val onClick: () -> Unit)
-
-/**
- * The ⋮ of an entry, 48 by 48 dp (A11Y-003), named for the screen reader by the recipe it acts on (A11Y-005), with
- * the same name in a tooltip on a long press; it opens the menu of the entry's [actions].
- */
-@Composable
-private fun EntryMenu(recipeId: String, title: String, actions: List<EntryAction>, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    val name = title.ifBlank { stringResource(R.string.common_untitled_recipe) }
-    Box(modifier) {
-        BlockAction(
-            R.drawable.ic_row_menu,
-            stringResource(R.string.library_entry_actions, name),
-            LibraryTags.actions(recipeId),
-            onClick = { expanded = !expanded },
-            action = stringResource(R.string.library_entry_actions_action),
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            actions.forEach { action ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(action.label)) },
-                    onClick = {
-                        expanded = false
-                        action.onClick()
-                    },
-                    colors = if (action.destructive) {
-                        MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error)
-                    } else {
-                        MenuDefaults.itemColors()
-                    },
-                    modifier = Modifier.testTag(action.tag),
-                )
-            }
-        }
-    }
-}
 
 /**
  * Exports a recipe of the book, own or found (FLOW-063): its file is written and the system's share and save sheet
@@ -1307,19 +1100,6 @@ private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): 
                 }
             }
         }
-    }
-}
-
-/** Shows an entry's cover, given its media identity (null for none) and the picture's tag. */
-internal typealias EntryCover = @Composable (mediaId: String?, tag: String) -> Unit
-
-/** The covers of the active book's entries, read from where its media is kept (MEDIA-001). */
-@Composable
-internal fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): EntryCover {
-    val book = recipes.bookName()
-    val files = recipes.filesDirectory
-    return remember(book, files, thumbnails) {
-        { mediaId, tag -> CoverThumbnail(mediaId, book, files, thumbnails, tag) }
     }
 }
 
@@ -1459,10 +1239,12 @@ private fun MarkedList(
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(top = ENTRY_GAP, bottom = bottom),
-                verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
                 modifier = Modifier.fillMaxSize().testTag(LibraryTags.MARKED_LIST),
             ) {
-                if (above > 0) item(key = COLLECTIONS_KEY) { CollectionsRow(collections, session::openCollection, enabled = !selecting) }
+                // The entries' rows meet at their hairlines; the collections keep the gap above them.
+                if (above > 0) item(key = COLLECTIONS_KEY) {
+                    CollectionsRow(collections, session::openCollection, Modifier.padding(bottom = ENTRY_GAP), enabled = !selecting)
+                }
                 items(marked.orEmpty(), key = { it.recipeId }) { row ->
                     MarkedEntry(
                         row,
@@ -1487,7 +1269,7 @@ private fun MarkedList(
 }
 
 /**
- * A marked recipe's entry, a card: its title, any stated author and its tags; one whose content the book holds opens,
+ * A marked recipe's entry, a row of the book's contents ([BookEntryRow]): its title, any stated author and its tags; one whose content the book holds opens,
  * and its menu, at the end of its title line, offers "Add to collection" and "Add to shopping list" ([adding]), Print and
  * Share as PDF ([printing]), in [Mode.Serverless] its export (FLOW-063 (2)), and its removal ([entryActions]). One whose
  * content the book does not hold offers nothing.
@@ -1513,15 +1295,9 @@ private fun MarkedEntry(
         val removal = EntryAction(R.string.library_entry_remove, LibraryTags.remove(row.recipeId), destructive = true, onClick = onRemove)
         entryActions(row.recipeId, mode, adding, printing, onExport, removal)
     }
-    EntryCard(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier, selected = selected, onSelect = onSelect) {
+    BookEntryRow(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
-        row.statedAuthor?.let {
-            Text(
-                stringResource(R.string.file_stated_author, it),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.testTag(LibraryTags.statedAuthor(row.recipeId)),
-            )
-        }
+        row.statedAuthor?.let { EntryAuthor(row.recipeId, it) }
         EntryTags(row.recipeId, tags)
     }
 }
@@ -1707,7 +1483,7 @@ object LibraryTags {
     const val SELECTION_PRINT = "library-selection-print"
     const val SELECTION_SHARE_PDF = "library-selection-share-pdf"
     const val PRINT_PROGRESS = PrintTags.PROGRESS
-    /** An entry's mark of being chosen, where its ⋮ stands while the selection is on. */
+    /** An entry's mark of being chosen, over its cover's bottom-end corner, while the selection is on. */
     fun selectionMark(recipeId: String) = "library-selection-mark-$recipeId"
     /** The place a cover with the tag [coverTag] holds, whether or not its picture is read yet. */
     fun coverSlot(coverTag: String) = "$coverTag-slot"
