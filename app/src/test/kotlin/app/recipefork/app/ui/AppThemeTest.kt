@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -47,7 +48,8 @@ import java.io.File
 /**
  * The theme is one resource file (ADR 20261004): every colour role of both schemes, the corners and the main type sizes
  * come from `app_theme.xml`; both schemes are the redesign's paper and ink, never the wallpaper's colours; a changed
- * value reaches the screen; the system bars' icons follow the scheme; each type role is set in its bundled family (T-297).
+ * value reaches the screen; the system bars' icons follow the scheme; each type role is set in its bundled family (T-297);
+ * the colours beyond Material 3's roles — raised paper — come from the same file, through the theme (T-308).
  */
 @RunWith(AndroidJUnit4::class)
 class AppThemeTest {
@@ -80,7 +82,8 @@ class AppThemeTest {
     }
 
     // The redesign's paper and ink (docs/brand/identity/port-1-rodoslovnaya.html): the file holds its 48 light and 48
-    // dark roles, in its order, as #AARRGGBB, and each scheme the app builds is exactly those colours.
+    // dark roles, in its order, as #AARRGGBB, and each scheme the app builds is exactly those colours. After them, and
+    // nothing else, the colours beyond Material 3's roles, light then dark (T-308).
     @Test
     fun bothSchemesAreThePaperAndInkOfTheRedesign() {
         val written = Regex("""<color name="theme_(light|dark)_(\w+)">(#[0-9A-F]{8})</color>""")
@@ -88,7 +91,7 @@ class AppThemeTest {
             .map { Triple(it.groupValues[1], it.groupValues[2], it.groupValues[3]) }.toList()
         fun expected(scheme: String, values: Map<String, Long>) =
             values.map { (role, value) -> Triple(scheme, role, "#%08X".format(value)) }
-        assertEquals(expected("light", LIGHT) + expected("dark", DARK), written)
+        assertEquals(expected("light", LIGHT) + expected("dark", DARK) + expected("light", BEYOND_LIGHT) + expected("dark", BEYOND_DARK), written)
         assertEquals(LIGHT.mapValues { Color(it.value) }, roles(appColorScheme(resources, dark = false)))
         assertEquals(DARK.mapValues { Color(it.value) }, roles(appColorScheme(resources, dark = true)))
     }
@@ -109,6 +112,50 @@ class AppThemeTest {
         val using = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { dynamic.containsMatchIn(it.readText()) }.map { it.name }.toList()
         assertEquals(emptyList<String>(), using)
+    }
+
+    // T-308: raised paper, the redesign's s0 (redesign-1-recipe-fork.html), is the file's colour, lighter than the page
+    // in both schemes, and AppTheme gives the one of the scheme on the screen as it changes.
+    @Test
+    fun theRaisedPaperIsTheFilesLighterThanThePageAndGivenWithTheScheme() {
+        assertEquals(AppColors(raisedPaper = Color(BEYOND_LIGHT.getValue("raisedPaper"))), appColors(resources, dark = false))
+        assertEquals(AppColors(raisedPaper = Color(BEYOND_DARK.getValue("raisedPaper"))), appColors(resources, dark = true))
+        for (dark in listOf(false, true)) {
+            val scheme = appColorScheme(resources, dark)
+            val paper = appColors(resources, dark).raisedPaper.luminance()
+            assertTrue("raised paper lighter than the surface (dark = $dark)", paper > scheme.surface.luminance())
+            assertTrue("raised paper lighter than the background (dark = $dark)", paper > scheme.background.luminance())
+        }
+        val dark = mutableStateOf(false)
+        var shown: AppColors? = null
+        compose.setContent { AppTheme(dark = dark.value) { shown = MaterialTheme.appColors } }
+        compose.waitForIdle()
+        assertEquals(appColors(resources, dark = false), shown)
+        dark.value = true
+        compose.waitForIdle()
+        assertEquals(appColors(resources, dark = true), shown)
+    }
+
+    @Test
+    fun aChangedRaisedPaperInTheFileReachesTheTheme() {
+        val changed = Color(0xFF00796B)
+        val base = compose.activity
+        @Suppress("DEPRECATION")
+        val edited = object : Resources(base.assets, base.resources.displayMetrics, base.resources.configuration) {
+            override fun getColor(id: Int, theme: Theme?): Int =
+                if (id == R.color.theme_dark_raisedPaper) changed.toArgb() else super.getColor(id, theme)
+        }
+        val context = object : ContextWrapper(base) {
+            override fun getResources(): Resources = edited
+        }
+        var shown: AppColors? = null
+        compose.setContent {
+            CompositionLocalProvider(LocalContext provides context) {
+                AppTheme(dark = true) { shown = MaterialTheme.appColors }
+            }
+        }
+        compose.waitForIdle()
+        assertEquals(changed, shown!!.raisedPaper)
     }
 
     @Test
@@ -251,6 +298,10 @@ class AppThemeTest {
 
     private companion object {
         const val BUTTON = "button"
+
+        /** The colours beyond Material 3's roles, light and dark, in the file's order (T-308). */
+        val BEYOND_LIGHT = mapOf("raisedPaper" to 0xFFFCF8F0)
+        val BEYOND_DARK = mapOf("raisedPaper" to 0xFF2A251F)
 
         /** The design source's colour roles, light and dark, in the file's order. */
         val LIGHT = mapOf(

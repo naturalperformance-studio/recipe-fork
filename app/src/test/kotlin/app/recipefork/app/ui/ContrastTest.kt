@@ -14,8 +14,9 @@ import kotlin.math.pow
 
 /**
  * A11Y-002: the contrast of every pair of the theme's colours the screens draw text, icons and control boundaries in,
- * computed in both schemes AppTheme builds from `app_theme.xml` — the light one and the dark one — by the formula of
- * WCAG 2.2. A disabled control (drawn at 38 % opacity) is left out, as WCAG leaves out inactive controls.
+ * computed in both schemes AppTheme builds from `app_theme.xml` — the light one and the dark one, each with its colours
+ * beyond Material 3's roles (raised paper) — by the formula of WCAG 2.2. A disabled control (drawn at 38 % opacity) is
+ * left out, as WCAG leaves out inactive controls.
  */
 @RunWith(AndroidJUnit4::class)
 class ContrastTest {
@@ -25,7 +26,7 @@ class ContrastTest {
     private fun text(where: String, foreground: Color, background: Color) = Pair(where, foreground, background, TEXT)
     private fun graphic(where: String, foreground: Color, background: Color) = Pair(where, foreground, background, GRAPHIC)
 
-    private fun pairs(c: ColorScheme) = listOf(
+    private fun pairs(c: ColorScheme, a: AppColors) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
         text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", a heading's \"Unnamed group\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
@@ -83,8 +84,8 @@ class ContrastTest {
         text("a book's entry chosen in the selection, on its tint — its title and state", c.onSurface, c.secondaryContainer),
         text("a book's entry chosen in the selection, on its tint — its tags, stated author and sending mark", c.onSurfaceVariant, c.secondaryContainer),
         text("a book's entry's drop cap — the title's first letter on its square", c.onSurfaceVariant, c.surfaceContainer),
-        text("a collection's card in the book's row of collections — its name", c.onSurface, c.surfaceContainerHighest),
-        text("a collection's card in the book's row of collections — its count of recipes", c.onSurfaceVariant, c.surfaceContainerHighest),
+        text("a collection's spine on the book's shelf, on raised paper — its name", c.onSurface, a.raisedPaper),
+        text("a collection's spine on the book's shelf, on raised paper — its count of recipes", c.onSurfaceVariant, a.raisedPaper),
         text("the heading of the book's row of collections, and an imported collection's stated author", c.onSurfaceVariant, c.surface),
         text("a photo source sheet's title and items", c.onSurface, c.surfaceContainerLow),
         text("a photo source sheet's removal — the cover, a step's photo or clip", c.error, c.surfaceContainerLow),
@@ -157,19 +158,19 @@ class ContrastTest {
         graphic("the engraved mark's bent tine in an empty section of the book", c.tertiary, c.background),
     )
 
-    private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }
+    private fun failing(c: ColorScheme, a: AppColors) = pairs(c, a).filter { ratio(it.foreground, it.background) < it.least }
         .map { "${it.where}: %.2f:1, less than %.1f:1".format(ratio(it.foreground, it.background), it.least) }
 
     private val resources = ApplicationProvider.getApplicationContext<Context>().resources
 
     @Test
     fun everyPairTheScreensUseMeetsItsThresholdInTheLightScheme() {
-        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = false)))
+        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = false), appColors(resources, dark = false)))
     }
 
     @Test
     fun everyPairTheScreensUseMeetsItsThresholdInTheDarkScheme() {
-        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = true)))
+        assertEquals(emptyList<String>(), failing(appColorScheme(resources, dark = true), appColors(resources, dark = true)))
     }
 
     // The formula itself, on the pairs whose ratios are known.
