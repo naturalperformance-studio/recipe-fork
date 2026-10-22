@@ -591,9 +591,10 @@ object CollectionScreenTags {
     fun moveDown(recipeId: String) = "collection-move-down-$recipeId"
     fun remove(recipeId: String) = "collection-remove-$recipeId"
 
-    /** The book's row of collections, and a collection's card in it with its name and count. */
+    /** The book's row of collections, and a collection's spine in it with its stripe, name and count. */
     const val ROW = "collections-row"
     fun card(collectionId: String) = "collections-card-$collectionId"
+    fun spineStripe(collectionId: String) = "collections-card-stripe-$collectionId"
     fun cardName(collectionId: String) = "collections-card-name-$collectionId"
     fun cardCount(collectionId: String) = "collections-card-count-$collectionId"
 }

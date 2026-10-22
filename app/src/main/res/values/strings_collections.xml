@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- v0.36: the row of collections above a view's recipes in the book. -->
-    <string name="collections_heading">Collections</string>
     <plurals name="collections_count">
         <item quantity="one">%d recipe</item>
         <item quantity="other">%d recipes</item>

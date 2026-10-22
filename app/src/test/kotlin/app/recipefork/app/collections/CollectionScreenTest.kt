@@ -11,9 +11,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -83,7 +81,7 @@ import java.time.Instant
 
 /**
  * Collections in the book and a collection's screen (v0.36, T-254): the own view shows the reader's collections and the
- * Imported view the imported ones, each as a row of cards above the recipes; a collection opens on its recipes in
+ * Imported view the imported ones, each as a row of spines above the recipes; a collection opens on its recipes in
  * order, each opening its card, back from which returns to it. An own collection is renamed, deleted with Undo, has a
  * recipe removed with Undo and is reordered; an imported one is frozen and names its stated author. An empty own
  * collection says how recipes are added.
@@ -694,7 +692,7 @@ class CollectionScreenTest {
         val empty = collection("Салаты")
         show(LibraryView.OWN)
         awaitCollectionCard(menu)
-        compose.onNode(hasText("Коллекции") and hasAnyAncestor(hasTestTag(CollectionScreenTags.ROW)), useUnmergedTree = true).assertExists()
+        assertEquals("Новогоднее меню", text(CollectionScreenTags.cardName(menu.value)))
         assertEquals("2 рецепта", text(CollectionScreenTags.cardCount(menu.value)))
         assertEquals("0 рецептов", text(CollectionScreenTags.cardCount(empty.value)))
 
