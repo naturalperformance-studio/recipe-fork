@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -253,6 +255,12 @@ private const val DROP_CAP_SIZE = 30f
 internal object BookEntryRowTags {
     /** The drop cap at the start of the entry of [recipeId]. */
     fun dropCap(recipeId: String) = "library-drop-cap-$recipeId"
+
+    /** The line under the title of the entry of [recipeId] that names its parent. */
+    fun provenance(recipeId: String) = "library-provenance-$recipeId"
+
+    /** The provenance glyph at the start of that line. */
+    fun provenanceGlyph(recipeId: String) = "library-provenance-glyph-$recipeId"
 }
 
 /** The letter a drop cap shows for [title]: its first letter or digit, in capitals; none for a title without one. */
@@ -386,6 +394,48 @@ internal fun EntryTags(recipeId: String, tags: String) {
         modifier = Modifier.testTag(LibraryTags.entryTags(recipeId)),
     )
 }
+
+/**
+ * The line under a version's title that names the recipe it was made from (FORK-010, decisions.md #3): the provenance
+ * glyph, 16 dp, and «по рецепту «…»» in Literata italics, both in beet — a provenance mark. [parentTitle] is the title
+ * the version recorded, else that of the parent the book holds; null when the parent is gone and the version recorded
+ * none, which the line then says, as the card does. One line, cut short where it does not fit. It is part of the row's
+ * spoken label and does nothing of its own: a tap on it opens the recipe, as anywhere on the row.
+ */
+@Composable
+internal fun EntryProvenance(recipeId: String, parentTitle: String?) {
+    val text = if (parentTitle == null) {
+        stringResource(R.string.library_entry_parent_unavailable)
+    } else {
+        stringResource(R.string.library_entry_parent, parentTitle.ifBlank { stringResource(R.string.common_untitled_recipe) })
+    }
+    val beet = MaterialTheme.colorScheme.tertiary
+    Row(
+        Modifier.testTag(BookEntryRowTags.provenance(recipeId)),
+        horizontalArrangement = Arrangement.spacedBy(PROVENANCE_GAP),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_provenance),
+            contentDescription = null,
+            tint = beet,
+            modifier = Modifier.size(PROVENANCE_GLYPH).testTag(BookEntryRowTags.provenanceGlyph(recipeId)),
+        )
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+            color = beet,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** The side of the provenance glyph on an entry (redesign-1 § 5, «Глиф «Происхождения»»). */
+internal val PROVENANCE_GLYPH = 16.dp
+
+/** The space between the provenance glyph and its words. */
+private val PROVENANCE_GAP = 6.dp
 
 /**
  * The author a found recipe's file states, under its title, marked as stated and not verified: in Literata italics, as

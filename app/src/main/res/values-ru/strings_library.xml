@@ -27,6 +27,8 @@
     <string name="library_entry_open_action">Открыть рецепт</string>
     <string name="library_entry_actions">Действия с рецептом «%1$s»</string>
     <string name="library_entry_actions_action">Показать действия с рецептом</string>
+    <string name="library_entry_parent">по рецепту «%1$s»</string>
+    <string name="library_entry_parent_unavailable">по рецепту, которого нет в книге</string>
     <string name="library_entry_delete">Удалить</string>
     <string name="library_marked_empty">Отмеченных рецептов пока нет</string>
     <string name="library_marked_empty_sentence">Здесь хранятся рецепты, которые вы отметили.</string>

@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -17,8 +18,10 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.percentOffset
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
@@ -224,7 +227,8 @@ class FileProgressTest {
         compose.waitForIdle()
         val other = LibraryTags.entry(earlier[29 - 20].value)
         val left = top(other)
-        compose.onNodeWithTag(other).performClick()
+        // Tapped near its top: on the default 320 × 470 window the notice stands over the middle of the tall row.
+        compose.onNodeWithTag(other).performTouchInput { click(percentOffset(0.5f, 0.1f)) }
         compose.awaitCard()
         assertNull("the notice is closed once the book is left", session.message.value)
         compose.backThroughTheCard()
