@@ -30,8 +30,8 @@ abstract class CollectionDao {
     /** The recipes of the collection [id], in its order. */
     @Query(
         "select r.recipe_id as recipe_id, r.title as title, $COVER_OF_R as cover_id, r.stated_author as stated_author, " +
-            "exists(select 1 from favourite f where f.recipe_id = r.recipe_id) as found " +
-            "from collection_recipe m join recipe r on r.recipe_id = m.recipe_id " +
+            "exists(select 1 from favourite f where f.recipe_id = r.recipe_id) as found, $PARENT_OF_R " +
+            "from collection_recipe m join recipe r on r.recipe_id = m.recipe_id $PARENT_OF_R_JOIN " +
             "where m.collection_id = :id order by m.position, m.recipe_id",
     )
     abstract fun recipes(id: String): Flow<List<CollectionRecipeRow>>

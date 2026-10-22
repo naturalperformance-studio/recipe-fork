@@ -8,8 +8,9 @@ import java.io.File
 /**
  * Beet is provenance (the redesign, T-296): the scheme's tertiary roles — tertiary, onTertiary, tertiaryContainer and
  * onTertiaryContainer — are read only by provenance marks: the card's provenance line, the provenance glyph heading
- * the held-fork dialog (T-299), and the bent tine of the mark — the version branching off — in the engraved empty
- * states of the book (T-306). The scheme itself is
+ * the held-fork dialog (T-299), the bent tine of the mark — the version branching off — in the engraved empty
+ * states of the book (T-306), and the line under a version's title in the book that names its parent, glyph and words
+ * (T-302). The scheme itself is
  * built in `ui/AppTheme.kt` by naming the roles, not by reading them, so it is not a reader.
  */
 class BeetIsProvenanceTest {
@@ -26,8 +27,8 @@ class BeetIsProvenanceTest {
                 .sumOf { line -> aRead.findAll(line).count() }
         }.filterValues { it > 0 }
         // The provenance line's two forms (a parent the book holds, and one it does not) and the held-fork dialog's glyph;
-        // the engraved mark's bent tine.
-        assertEquals(mapOf("card/CardScreen.kt" to 3, "library/EmptyState.kt" to 1), reads)
+        // the engraved mark's bent tine; the book entry's provenance line.
+        assertEquals(mapOf("card/CardScreen.kt" to 3, "library/EmptyState.kt" to 1, "library/BookEntryRow.kt" to 1), reads)
     }
 
     // Both of the card's reads stand in its provenance area, and are its tertiary itself.
@@ -53,5 +54,17 @@ class BeetIsProvenanceTest {
         val engraved = File(sources, "library/EmptyState.kt").readText().substringAfter("private fun Engraved(").substringBefore("\n}\n")
         assertEquals(listOf("tertiary"), aRead.findAll(engraved).map { it.groupValues[1] }.toList())
         assertTrue(Regex("""R\.drawable\.engraving_mark_beet,\s*tint = colours\.tertiary""").containsMatchIn(engraved))
+    }
+
+    // The book entry's read is its provenance line's beet, which tints the glyph and colours the words, and nothing else.
+    @Test
+    fun theBookEntrysReadIsItsProvenanceLine() {
+        val row = File(sources, "library/BookEntryRow.kt").readText()
+        val line = row.substringAfter("internal fun EntryProvenance(").substringBefore("\n}\n")
+        assertEquals(listOf("tertiary"), aRead.findAll(line).map { it.groupValues[1] }.toList())
+        assertTrue(Regex("""val beet = MaterialTheme\.colorScheme\.tertiary""").containsMatchIn(line))
+        assertTrue(Regex("""R\.drawable\.ic_provenance""").containsMatchIn(line))
+        assertTrue(Regex("""tint = beet""").containsMatchIn(line))
+        assertTrue(Regex("""color = beet""").containsMatchIn(line))
     }
 }

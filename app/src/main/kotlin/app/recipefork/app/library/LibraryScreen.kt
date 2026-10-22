@@ -1012,6 +1012,7 @@ private fun OwnEntry(
     val actions = entryActions(row.recipeId, mode, adding, printing, onExport, removal)
     BookEntryRow(row.recipeId, row.title, row.coverId, cover, actions, onOpen, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
+        if (row.forked) EntryProvenance(row.recipeId, row.parentTitle)
         EntryTags(row.recipeId, tags)
         // The state is named in words, never carried by colour alone (A11Y-008); a serverless draft names none.
         stateLabel(row.state, mode)?.let { Text(stringResource(it), style = MaterialTheme.typography.labelLarge) }
@@ -1297,6 +1298,7 @@ private fun MarkedEntry(
     }
     BookEntryRow(row.recipeId, row.title, row.coverId, cover, actions, onOpen.takeIf { row.held }, modifier, selected = selected, onSelect = onSelect) {
         EntryTitle(row.recipeId, row.title)
+        if (row.forked) EntryProvenance(row.recipeId, row.parentTitle)
         row.statedAuthor?.let { EntryAuthor(row.recipeId, it) }
         EntryTags(row.recipeId, tags)
     }
