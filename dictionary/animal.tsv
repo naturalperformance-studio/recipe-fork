@@ -53,8 +53,10 @@
 3124	говядина на кости	bone-in beef	5		g=1
 # мраморная говядина → fdc:169503 rib, prime grade: the marbled grade
 3125	мраморная говядина	marbled beef	5		g=1				kcal=355 protein=16.15 fat=31.66 carbs=0	fdc:169503
-3126	говяжьи кости	beef bones	5		g=1
-3127	мозговая кость	marrowbone	5	false	g=1 pc=300
+# говяжьи кости → none: the weight is mostly bone; no source holds it
+3126	говяжьи кости	beef bones	5		g=1					none
+# мозговая кость → none: the weight is mostly bone; no source holds it
+3127	мозговая кость	marrowbone	5	false	g=1 pc=300					none
 3128	солонина	corned beef	5		g=1				kcal=198 protein=14.68 fat=14.9 carbs=0.14	fdc:170199
 3129	ростбиф	roast beef	5		g=1
 # говяжья пашина → fdc:169563 flank steak
@@ -85,13 +87,16 @@
 3208	свиная рулька	pork knuckle	3200	true	g=1 pc=1000				kcal=193 protein=19.87 fat=11.96 carbs=0	fdc:168226
 3209	свиные ножки	pig feet	3200	false	g=1 pc=400				kcal=212 protein=23.16 fat=12.59 carbs=0	fdc:167859
 3210	свиная отбивная	pork chop	3200	true	g=1 pc=200				kcal=170 protein=20.71 fat=9.03 carbs=0	fdc:168238
+# свиной стейк → fdc:167849 Pork, fresh, shoulder, (Boston butt), blade (steaks), separable lean and fat, raw: the shoulder steak sold as pork steak
 3211	свиной стейк	pork steak	3200	true	g=1 pc=250				kcal=186 protein=17.42 fat=12.36 carbs=0	fdc:167849
 3212	свиная мякоть	boneless pork	3200		g=1
 3213	свиная щековина	pork jowl	3200		g=1				kcal=655 protein=6.38 fat=69.61 carbs=0	fdc:168269
 3214	свиные уши	pig ears	3200	false	g=1 pc=200				kcal=234 protein=22.45 fat=15.1 carbs=0.6	fdc:167857
 3215	свиная шкурка	pork rind	3200		g=1
+# эскалоп → fdc:167839 Pork, fresh, loin, top loin (chops), boneless, separable lean and fat, raw: the boneless loin an escalope is cut from
 3216	эскалоп	escalope	3200	true	g=1 pc=120				kcal=155 protein=21.55 fat=6.94 carbs=0	fdc:167839
 3217	карбонад	boneless pork loin	3200		g=1				kcal=166 protein=21.34 fat=8.33 carbs=0	fdc:168314
+# Skurikhin 3.1.9, p. 52
 3218	молочный поросёнок	suckling pig	3200	true	g=1 pc=5000				kcal=109 protein=20.6 fat=3 carbs=0	skurikhin:Поросята
 3219	свинина на кости	bone-in pork	3200		g=1
 # свиные медальоны → fdc:168312 tenderloin, from which medallions are cut
@@ -154,6 +159,7 @@
 3132	сирлойн	sirloin steak	5	true	g=1 pc=300
 3133	ромштекс	rump steak	5	true	g=1 pc=200
 3134	говядина для тушения	beef stew meat	5		g=1				kcal=128 protein=21.75 fat=4.48 carbs=0.16	fdc:171206
-3131	говяжьи ноги	beef feet	5		g=1		говяжьи ножки
+# говяжьи ноги → none: the weight is mostly bone, skin and tendon; no source holds it
+3131	говяжьи ноги	beef feet	5		g=1		говяжьи ножки			none
 # стейк из свиной шеи → fdc:167849 Boston butt blade steaks
 3222	стейк из свиной шеи	pork neck steak	3200	true	g=1 pc=250				kcal=186 protein=17.42 fat=12.36 carbs=0	fdc:167849

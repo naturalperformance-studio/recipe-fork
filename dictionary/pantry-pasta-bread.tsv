@@ -76,7 +76,8 @@
 5510	лапша быстрого приготовления	instant noodles	5500	true	g=1 pc=75				kcal=440 protein=10.17 fat=17.59 carbs=60.26	fdc:171177
 5511	лапша рисовая широкая	flat rice noodles	5500		g=1				kcal=364 protein=5.95 fat=0.56 carbs=80.18	fdc:169742
 5512	лапша рисовая тонкая	rice vermicelli	5500		g=1				kcal=364 protein=5.95 fat=0.56 carbs=80.18	fdc:169742
-5513	лапша ширатаки	shirataki noodles	5500		g=1
+# лапша ширатаки → none: konjac, almost no energy, nothing like the dry egg noodles its parent cites; no source holds it
+5513	лапша ширатаки	shirataki noodles	5500		g=1					none
 5515	сомэн	somen	5500		g=1				kcal=356 protein=11.35 fat=0.81 carbs=74.1	fdc:168908
 5516	лапша китайская яичная	chow mein noodles	5500		g=1
 5518	лапша для лагмана	lagman noodles	5500		g=1

@@ -40,14 +40,18 @@
 
 # утка, гусь, other birds
 3620	утка	duck		true	g=1 pc=2000				kcal=404 protein=11.49 fat=39.34 carbs=0	fdc:172408
-3621	утиная грудка	duck breast	3620	true	g=1 pc=350
-3622	утиные ножки	duck legs	3620	false	g=1 pc=300
+# утиная грудка → none: a cut sold with its skin, not the whole bird's meat and skin; no source holds it
+3621	утиная грудка	duck breast	3620	true	g=1 pc=350					none
+# утиные ножки → none: a cut sold with its skin and bone, not the whole bird's meat and skin; no source holds it
+3622	утиные ножки	duck legs	3620	false	g=1 pc=300					none
 3623	утиные крылья	duck wings	3620	false	g=1 pc=100
 3624	утка копчёная	smoked duck	3620		g=1
 3625	мускусная утка	Muscovy duck	3620	true	g=1 pc=2500
 3640	гусь	goose		true	g=1 pc=4000				kcal=371 protein=15.86 fat=33.62 carbs=0	fdc:174470
-3641	гусиная грудка	goose breast	3640	true	g=1 pc=500
-3642	гусиные ножки	goose legs	3640	false	g=1 pc=500
+# гусиная грудка → none: a cut sold with its skin, not the whole bird's meat and skin; no source holds it
+3641	гусиная грудка	goose breast	3640	true	g=1 pc=500					none
+# гусиные ножки → none: a cut sold with its skin and bone, not the whole bird's meat and skin; no source holds it
+3642	гусиные ножки	goose legs	3640	false	g=1 pc=500					none
 3660	перепёлка	quail		true	g=1 pc=180				kcal=192 protein=19.63 fat=12.05 carbs=0	fdc:172418
 3670	цесарка	guinea fowl		true	g=1 pc=1200				kcal=158 protein=23.4 fat=6.45 carbs=0	fdc:172416
 3680	голубь	pigeon		true	g=1 pc=400				kcal=294 protein=18.47 fat=23.8 carbs=0	fdc:174475
@@ -65,6 +69,7 @@
 3707	гусиная печень	goose liver	3700		g=1				kcal=133 protein=16.37 fat=4.28 carbs=6.32	fdc:172415
 # фуа-гра → fdc:171100 pâté de foie gras: no raw fattened liver listed
 3708	фуа-гра	foie gras	3700		g=1				kcal=462 protein=11.4 fat=43.84 carbs=4.67	fdc:171100
+# Skurikhin 4.2.1, p. 98
 3709	печень трески	cod liver	3700		g=1				kcal=613 protein=4.2 fat=65.7 carbs=1.2	skurikhin:Печень трески. Консервы
 3710	кроличья печень	rabbit liver	3700		g=1
 3711	баранья печень	lamb liver	3700		g=1				kcal=139 protein=20.38 fat=5.02 carbs=1.78	fdc:172531

@@ -1,5 +1,5 @@
 {
-  "version": "262a15b71eaa684c4a6fef9634c79b1fadf58daf19f68e723e365aa6675e1b87",
+  "version": "7d0ddc666c4f14af0e2b72ff3544a93f57b7d893524447a6993fb0a838e718e4",
   "ingredients": [
     {
       "id": 1,
@@ -1036,7 +1036,8 @@
       "factors": {
         "g": 1.0,
         "pc": 40.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 1125,
@@ -2255,7 +2256,8 @@
       "factors": {
         "g": 1.0,
         "pc": 10.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 1410,
@@ -4162,6 +4164,12 @@
       "parentId": 1800,
       "factors": {
         "g": 1.0
+      },
+      "nutrition": {
+        "kcal": 31.0,
+        "protein": 3.12,
+        "fat": 0.57,
+        "carbs": 5.1
       }
     },
     {
@@ -6941,6 +6949,12 @@
         "g": 1.0,
         "tbsp": 9.0,
         "cup": 150.0
+      },
+      "nutrition": {
+        "kcal": 317.0,
+        "protein": 2.5,
+        "fat": 2.5,
+        "carbs": 80.0
       }
     },
     {
@@ -8353,7 +8367,8 @@
       "parentId": 5,
       "factors": {
         "g": 1.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 3127,
@@ -8364,7 +8379,8 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 3128,
@@ -8415,7 +8431,8 @@
       },
       "synonymsRu": [
         "говяжьи ножки"
-      ]
+      ],
+      "noNutrition": true
     },
     {
       "id": 3132,
@@ -9900,7 +9917,8 @@
       "factors": {
         "g": 1.0,
         "pc": 350.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 3622,
@@ -9911,7 +9929,8 @@
       "factors": {
         "g": 1.0,
         "pc": 300.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 3623,
@@ -9969,7 +9988,8 @@
       "factors": {
         "g": 1.0,
         "pc": 500.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 3642,
@@ -9980,7 +10000,8 @@
       "factors": {
         "g": 1.0,
         "pc": 500.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 3660,
@@ -13544,7 +13565,8 @@
       "parentId": 4220,
       "factors": {
         "g": 1.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4230,
@@ -13621,7 +13643,8 @@
       "factors": {
         "g": 1.0,
         "pc": 15.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4240,
@@ -14460,7 +14483,8 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 258.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4465,
@@ -14637,7 +14661,8 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 245.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4487,
@@ -14702,7 +14727,8 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 240.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4500,
@@ -15263,7 +15289,8 @@
         "tsp": 6.0,
         "tbsp": 17.0,
         "cup": 280.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4567,
@@ -15275,7 +15302,8 @@
         "tsp": 6.0,
         "tbsp": 17.0,
         "cup": 280.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4568,
@@ -16272,7 +16300,8 @@
       "factors": {
         "g": 1.0,
         "pc": 150.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4739,
@@ -16282,7 +16311,8 @@
       "factors": {
         "g": 1.0,
         "tbsp": 15.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 4740,
@@ -16312,6 +16342,12 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 240.0
+      },
+      "nutrition": {
+        "kcal": 350.0,
+        "protein": 6.15,
+        "fat": 34.44,
+        "carbs": 5.52
       }
     },
     {
@@ -16726,6 +16762,12 @@
         "g": 1.0,
         "tbsp": 7.0,
         "cup": 100.0
+      },
+      "nutrition": {
+        "kcal": 173.0,
+        "protein": 24.35,
+        "fat": 7.0,
+        "carbs": 1.91
       }
     },
     {
@@ -17260,7 +17302,8 @@
         "tsp": 2.0,
         "tbsp": 7.0,
         "cup": 110.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 5025,
@@ -17326,7 +17369,8 @@
         "tsp": 2.0,
         "tbsp": 7.0,
         "cup": 110.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 5029,
@@ -17338,7 +17382,8 @@
         "tsp": 2.0,
         "tbsp": 7.0,
         "cup": 110.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 5030,
@@ -17350,7 +17395,8 @@
         "tsp": 2.0,
         "tbsp": 6.0,
         "cup": 100.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 5031,
@@ -17638,7 +17684,8 @@
         "tsp": 2.0,
         "tbsp": 7.0,
         "cup": 110.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 5049,
@@ -19945,7 +19992,8 @@
       "parentId": 5500,
       "factors": {
         "g": 1.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 5515,
@@ -22898,7 +22946,8 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 6073,
@@ -22911,7 +22960,8 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 6074,
@@ -28708,7 +28758,8 @@
         "ml": 1.25,
         "tsp": 6.0,
         "tbsp": 19.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8005,
@@ -29892,7 +29943,8 @@
         "g": 1.0,
         "tsp": 6.0,
         "tbsp": 17.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8205,
@@ -29920,7 +29972,8 @@
         "g": 1.0,
         "tsp": 6.0,
         "tbsp": 17.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8210,
@@ -30315,7 +30368,8 @@
         "tsp": 5.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8303,
@@ -30340,7 +30394,8 @@
         "ml": 1.07,
         "tsp": 5.4,
         "tbsp": 16.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8305,
@@ -31132,7 +31187,8 @@
       "factors": {
         "g": 1.0,
         "pc": 3.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8470,
@@ -32373,7 +32429,8 @@
         "ml": 1.0,
         "tbsp": 15.0,
         "cup": 250.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8610,
@@ -33698,7 +33755,8 @@
         "g": 1.0,
         "tsp": 2.0,
         "tbsp": 6.0
-      }
+      },
+      "noNutrition": true
     },
     {
       "id": 8836,

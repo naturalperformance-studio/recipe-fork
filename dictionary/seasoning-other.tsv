@@ -17,7 +17,8 @@
 8607	бульон мясной	meat stock	8600		g=1 ml=1 tbsp=15 cup=250				kcal=13 protein=1.97 fat=0.09 carbs=1.2	fdc:172883
 # бульон сухой → fdc:171562 dry chicken broth or bouillon (powder)
 8608	бульон сухой	bouillon powder	8600		g=1 tsp=4 tbsp=12				kcal=267 protein=16.66 fat=13.88 carbs=18.01	fdc:171562
-8609	даши	dashi	8600		g=1 ml=1 tbsp=15 cup=250
+# даши → none: a fish and kelp stock, not the chicken stock its parent cites; no source holds it
+8609	даши	dashi	8600		g=1 ml=1 tbsp=15 cup=250					none
 8610	бульон из индейки	turkey stock	8600		g=1 ml=1 tbsp=15 cup=250
 8620	бульонный кубик	bouillon cube		true	g=1 pc=10				kcal=198 protein=14.6 fat=4.7 carbs=23.5	fdc:171563
 8621	бульонный кубик куриный	chicken bouillon cube	8620	true	g=1 pc=10
@@ -137,7 +138,8 @@
 8832	чай зелёный	green tea	8830		g=1 tsp=2
 8833	пакетик чая	tea bag	8830	false	g=1 pc=2
 8834	чай заваренный	brewed tea	8830		g=1 ml=1 cup=250
-8835	матча	matcha	8830		g=1 tsp=2 tbsp=6
+# матча → none: a powdered leaf eaten whole, not brewed tea; no source holds it
+8835	матча	matcha	8830		g=1 tsp=2 tbsp=6					none
 8836	каркаде	hibiscus tea	8830		g=1 tsp=1.5 tbsp=4.5
 8837	чай эрл грей	Earl Grey tea	8830		g=1 tsp=2.5
 8838	ройбуш	rooibos	8830		g=1 tsp=2.5

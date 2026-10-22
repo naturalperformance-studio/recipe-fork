@@ -3,10 +3,20 @@ package app.recipefork.core.dictionary
 import app.recipefork.core.api.IngredientEntryDto
 import app.recipefork.core.api.NutritionDto
 import app.recipefork.core.api.TagDto
+import app.recipefork.core.nutrition.CountedRow
+import app.recipefork.core.nutrition.LeftOutReason
+import app.recipefork.core.nutrition.LeftOutRow
+import app.recipefork.core.nutrition.Nutrition
+import app.recipefork.core.nutrition.NutritionEntries
+import app.recipefork.core.nutrition.r
+import app.recipefork.core.nutrition.row
+import app.recipefork.core.recipe.QuantityUnit
+import app.recipefork.core.scaling.ScaleFactor
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -74,8 +84,55 @@ class ShippedDictionaryTest {
         assertEquals(first, dictionaries.ingredients.filter { it.id in first }.associate { it.id to it.nutrition })
         val dairy = File(sources, "animal-dairy.tsv").readText(Charsets.UTF_8)
         assertTrue("fdc:171287" in dairy && "fdc:173430" in dairy && "fdc:173410" in dairy)
+        // No source reaches the asset: neither a citation nor the word that marks an entry without values.
         val shipped = asset.readText(Charsets.UTF_8)
-        assertTrue("fdc:" !in shipped && "nutritionSource" !in shipped)
+        listOf("fdc:", "skurikhin:", "nutritionSource", "\"none\"").forEach { assertTrue(it !in shipped, it) }
+    }
+
+    // T-294: children of another form that no source holds are marked as having no values of its own, and do not take
+    // their parent's; and the review's data fixes.
+    @Test
+    fun childrenOfAnotherFormCarryTheMarkAndTheReviewedEntriesTheirSources() {
+        val byId = built().dictionaries.ingredients.associateBy { it.id }
+        val marked = mapOf(
+            1403L to "мини-кукуруза", 1122L to "чеснок чёрный", 3621L to "утиная грудка", 3622L to "утиные ножки",
+            3641L to "гусиная грудка", 3642L to "гусиные ножки", 4224L to "кальмар сушёный", 4238L to "мидии в половинках раковин",
+            4486L to "двойные сливки", 4491L to "девонширские сливки", 4566L to "лабне", 4567L to "сузьма", 4464L to "молоко 6%",
+            3126L to "говяжьи кости", 3127L to "мозговая кость", 3131L to "говяжьи ноги", 5024L to "мука льняная",
+            5048L to "мука льняная золотистая", 5028L to "мука конопляная", 5029L to "мука тыквенная", 5030L to "мука кедровая",
+            5513L to "лапша ширатаки", 6072L to "сливки соевые", 6073L to "сливки овсяные", 8004L to "соевый соус сладкий",
+            8204L to "горчица медовая", 8206L to "горчица баварская", 8302L to "уксус столовый 9%", 8304L to "уксусная эссенция",
+            8457L to "маслины вяленые", 8609L to "даши", 8835L to "матча", 4738L to "буррата", 4739L to "страчателла",
+        )
+        marked.forEach { (id, label) ->
+            val entry = byId.getValue(id)
+            assertEquals(label, entry.labelRu)
+            assertTrue(entry.noNutrition && entry.nutrition == null && byId[entry.parentId]?.nutrition != null, "$entry")
+        }
+        assertEquals(marked.keys, byId.values.filter { it.noNutrition }.map { it.id }.toSet())
+        // Counted from the shipped entries, 100 g of each is left out as no data; the corn beside them counts.
+        val rows = (listOf(1400L) + marked.keys).mapIndexed { i, id -> row(id, r(100), QuantityUnit.GRAM).copy(position = i) }
+        val dish = assertNotNull(Nutrition.of(rows, ScaleFactor.ONE, NutritionEntries.of(byId.values)))
+        assertEquals(marked.keys.indices.map { LeftOutRow(it + 1, LeftOutReason.NO_DATA) }, dish.leftOut)
+        assertEquals(listOf(CountedRow(0, java.math.BigInteger.valueOf(90))), dish.counted)
+        val fixed = mapOf(
+            1816L to NutritionDto(31.0, 3.12, 0.57, 5.1),
+            2412L to NutritionDto(317.0, 2.5, 2.5, 80.0),
+            4777L to NutritionDto(173.0, 24.35, 7.0, 1.91),
+            4741L to NutritionDto(350.0, 6.15, 34.44, 5.52),
+            // Re-read from the book: Skurikhin prints 284 kcal for «Шиповник сухой» (9.2.1.13, p. 156-157).
+            2414L to NutritionDto(284.0, 3.4, 1.4, 48.3),
+        )
+        assertEquals(fixed, fixed.keys.associateWith { byId.getValue(it).nutrition })
+        // Raw pistachios differ from the mixed nuts by less than the child rule, so the pistachios inherit.
+        listOf(2506L, 2507L, 2515L, 2526L).forEach { assertEquals(2500L to null, byId.getValue(it).let { e -> e.parentId to e.nutrition }) }
+        val sources = sources.listFiles { f -> f.name.endsWith(".tsv") }!!.joinToString("\n") { it.readText(Charsets.UTF_8) }
+        listOf(
+            "# сморчки → fdc:168423 Mushrooms, morel, raw", "# черника сушёная → fdc:168158 Blueberries, dried, sweetened",
+            "# сыр лёгкий → fdc:173439 Cheese, low fat, cheddar or colby", "# маскарпоне → fdc:173418 Cheese, cream",
+            "# свиной стейк → fdc:167849 ", "# эскалоп → fdc:167839 ", "# Skurikhin 3.1.9, p. 52", "# Skurikhin 4.2.1, p. 98",
+            "# фисташки → inherits орехи: fdc:170184 Nuts, pistachio nuts, raw",
+        ).forEach { assertTrue(it in sources, it) }
     }
 
     @Test
@@ -133,7 +190,7 @@ class ShippedDictionaryTest {
             "**Factors, one scale.**", "**Ids.**", "**No brands**",
             "### The baseline", "merge base", "--first-build", "### Merging", "./gradlew testAll",
             "`nutrition`", "`nutritionSource`", "### Nutrition", "USDA FoodData Central", "public domain", "`fdc:<id>`",
-            "Skurikhin", "`skurikhin:<the product's name in the table>`", "100 g of the raw product",
+            "Skurikhin", "`skurikhin:<the product's name in the table>`", "100 g of the raw product", "**`none`**", "`IngredientEntryDto.noNutrition`",
         ).forEach { assertTrue(it in readme, "README.md lacks $it") }
         assertTrue("$ASSET merge=binary" in File(root, ".gitattributes").readText(), ".gitattributes")
     }

@@ -40,7 +40,8 @@
 4462	варёная сгущёнка	boiled condensed milk	4450		g=1 ml=1.35 tsp=7 tbsp=20 cup=340				kcal=328 protein=7.2 fat=8.5 carbs=55.5	skurikhin:Молоко сгущенное с сахаром 8,5% жирности
 # Skurikhin 1.3.4.3, p. 38-39
 4463	сгущённое молоко без сахара	evaporated milk	4450		g=1 ml=1.07 tsp=5 tbsp=16 cup=265				kcal=138 protein=6.4 fat=7.8 carbs=10.3	skurikhin:Молоко сгущенное стерилизованное 7,8% жирности
-4464	молоко 6%	milk 6%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+# молоко 6% → none: about twice the fat of the 3.25 % milk its parent cites; no source holds it
+4464	молоко 6%	milk 6%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258					none
 4465	молоко овечье	sheep milk	4450		g=1 ml=1.04 tsp=5 tbsp=15 cup=260				kcal=108 protein=5.98 fat=7 carbs=5.36	fdc:170882
 4466	молоко домашнее	farm milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 # сгущёнка с какао → Skurikhin «Какао со сгущенным молоком и сахаром» (1.3.4.4, p. 38-39)
@@ -59,7 +60,8 @@
 4484	сливки 35%	heavy cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248				kcal=337 protein=2.2 fat=35 carbs=3.2	skurikhin:Сливки пастеризованные 35,0% жирности
 # сливки для взбивания → Skurikhin «Сливки пастеризованные 35,0%» (1.4.1.2, p. 38-39)
 4485	сливки для взбивания	whipping cream	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248				kcal=337 protein=2.2 fat=35 carbs=3.2	skurikhin:Сливки пастеризованные 35,0% жирности
-4486	двойные сливки	extra-heavy cream	4480		g=1 ml=0.98 tsp=5 tbsp=15 cup=245
+# двойные сливки → none: about twice the fat of 20 % cream; no source holds it
+4486	двойные сливки	extra-heavy cream	4480		g=1 ml=0.98 tsp=5 tbsp=15 cup=245					none
 4487	взбитые сливки	whipped cream	4480		g=1 tbsp=4 cup=60				kcal=257 protein=3.2 fat=22.22 carbs=12.49	fdc:170860
 # Skurikhin 1.4.4.4, p. 42-43
 4488	сливки сухие	powdered cream	4480		g=1 tsp=3 tbsp=7				kcal=577 protein=19 fat=42 carbs=30.2	skurikhin:Сливки сухие 42,0% жирности
@@ -125,8 +127,10 @@
 # Skurikhin 1.2.2.3, p. 28-29
 4564	йогурт фруктовый	fruit yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255				kcal=90 protein=4 fat=1.5 carbs=14.3	skurikhin:Йогурт плодово-ягодный, 1,5% жирности
 4565	йогурт обезжиренный	fat-free yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250				kcal=56 protein=5.73 fat=0.18 carbs=7.68	fdc:170887
-4566	лабне	labneh	4560		g=1 tsp=6 tbsp=17 cup=280
-4567	сузьма	suzma	4560		g=1 tsp=6 tbsp=17 cup=280
+# лабне → none: strained, far thicker and fattier than yogurt; no source holds it
+4566	лабне	labneh	4560		g=1 tsp=6 tbsp=17 cup=280					none
+# сузьма → none: strained, far thicker and fattier than yogurt; no source holds it
+4567	сузьма	suzma	4560		g=1 tsp=6 tbsp=17 cup=280					none
 # скир → fdc:170894 Greek yogurt, plain, nonfat: a strained skim-milk yogurt like skyr
 4568	скир	skyr	4560		g=1 tsp=6 tbsp=17 cup=280				kcal=59 protein=10.19 fat=0.39 carbs=3.6	fdc:170894
 4569	йогурт ванильный	vanilla yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255				kcal=85 protein=4.93 fat=1.25 carbs=13.8	fdc:170888
@@ -236,10 +240,13 @@
 # моцарелла для пиццы → fdc:170846 low-moisture whole-milk mozzarella
 4736	моцарелла для пиццы	pizza mozzarella	4700		g=1 tbsp=7 cup=110				kcal=318 protein=21.6 fat=24.64 carbs=2.47	fdc:170846
 4737	мини-моцарелла	mini mozzarella balls	4700	false	g=1 pc=10				kcal=299 protein=22.17 fat=22.14 carbs=2.4	fdc:170845
-4738	буррата	burrata	4700	true	g=1 pc=150
-4739	страчателла	stracciatella	4700		g=1 tbsp=15
+# буррата → none: a fresh cream-filled cheese, nothing like a hard cheese; no source holds it fairly
+4738	буррата	burrata	4700	true	g=1 pc=150					none
+# страчателла → none: fresh curd in cream, nothing like a hard cheese; no source holds it fairly
+4739	страчателла	stracciatella	4700		g=1 tbsp=15					none
 4740	рикотта	ricotta	4700		g=1 tsp=5 tbsp=15 cup=245				kcal=150 protein=7.54 fat=10.18 carbs=7.27	fdc:170851
-4741	маскарпоне	mascarpone	4700		g=1 tsp=5 tbsp=15 cup=240
+# маскарпоне → fdc:173418 Cheese, cream: a fair analogue, a soft fresh cream cheese
+4741	маскарпоне	mascarpone	4700		g=1 tsp=5 tbsp=15 cup=240				kcal=350 protein=6.15 fat=34.44 carbs=5.52	fdc:173418
 4742	скаморца	scamorza	4700		g=1
 4743	проволоне	provolone	4700		g=1				kcal=351 protein=25.58 fat=26.62 carbs=2.14	fdc:170850
 4744	качокавалло	caciocavallo	4700		g=1
@@ -273,7 +280,8 @@
 4773	сыр для фондю	fondue cheese	4700		g=1
 4774	кашкавал	kashkaval	4700		g=1 tbsp=7 cup=100
 4776	сыр мраморный	marble cheese	4700		g=1 tbsp=7 cup=100
-4777	сыр лёгкий	reduced-fat cheese	4700		g=1 tbsp=7 cup=100
+# сыр лёгкий → fdc:173439 Cheese, low fat, cheddar or colby: a reduced-fat hard cheese
+4777	сыр лёгкий	reduced-fat cheese	4700		g=1 tbsp=7 cup=100				kcal=173 protein=24.35 fat=7 carbs=1.91	fdc:173439
 4779	эпуас	Époisses	4700		g=1
 4783	сыр гриль	grilling cheese	4700		g=1
 # сыр-спагетти → fdc:171244 low-moisture part-skim mozzarella, the string cheese
@@ -283,4 +291,5 @@
 4790	бофор	Beaufort	4700		g=1
 4791	лимбургский сыр	Limburger	4700		g=1				kcal=327 protein=20.05 fat=27.25 carbs=0.49	fdc:171243
 4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90	removed			kcal=392 protein=35.75 fat=25 carbs=3.22	fdc:170848
-4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240
+# девонширские сливки → none: more than twice the fat of 20 % cream; no source holds it
+4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240					none
