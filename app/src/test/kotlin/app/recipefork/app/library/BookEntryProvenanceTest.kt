@@ -16,6 +16,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ import app.recipefork.app.book.PARENT_OF_R_JOIN
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardTags
 import app.recipefork.app.collections.CollectionRepository
+import app.recipefork.app.collections.CollectionScreenTags
 import app.recipefork.app.dictionary.TagEntity
 import app.recipefork.app.dictionary.TagSource
 import app.recipefork.app.editor.EditorEnvironment
@@ -66,7 +68,9 @@ import kotlin.math.abs
  * A version's entry names the recipe it was made from (v0.42, T-302; FORK-010, decisions.md #3): under its title the
  * provenance glyph, 16 dp, and «по рецепту «…»» / "after “…”" in beet. The title is the one the version recorded, so it
  * stays when the parent leaves the book; a recipe without a parent has no such line. The line is part of the row's
- * spoken label and does nothing of its own. The listings read the parent in their one query, through the recipe's key.
+ * spoken label and does nothing of its own. Its words wrap beside the glyph and are never cut short — on a book row, an
+ * imported recipe's row and a collection's row, at a font scale of 1 and of 2 (design QA of v0.42). The listings read
+ * the parent in their one query, through the recipe's key.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -87,6 +91,8 @@ class BookEntryProvenanceTest {
             override suspend fun tags() = emptyList<TagEntity>()
         },
     ) { now }
+
+    private val collections = CollectionRepository(active) { now }
 
     private lateinit var scheme: ColorScheme
 
@@ -123,7 +129,7 @@ class BookEntryProvenanceTest {
         compose.setContent {
             AppTheme {
                 scheme = MaterialTheme.colorScheme
-                AppNavHost(session, recipes, Mode.Serverless, editor = editor)
+                AppNavHost(session, recipes, Mode.Serverless, editor = editor, collections = collections)
             }
         }
         compose.waitForIdle()
@@ -249,6 +255,107 @@ class BookEntryProvenanceTest {
         await(BookEntryRowTags.provenance(id))
         assertEquals("after “Borscht”", lineOf(version).layoutInput.text.text)
         assertTrue("the author under the line", bounds(LibraryTags.statedAuthor(id)).top >= bounds(BookEntryRowTags.provenance(id)).bottom)
+    }
+
+    /**
+     * Asserts the provenance line of the entry of [recipe] shows [words] whole: no line cut short and nothing beyond
+     * the last; a continued line starts where the words start, beside the glyph, and the glyph stands level with the
+     * middle of the first line. Returns how many lines the words take.
+     */
+    private fun assertWhole(recipe: Recipe, words: String): Int {
+        val id = recipe.id.value
+        val node = compose.onNodeWithTag(BookEntryRowTags.provenanceWords(id), useUnmergedTree = true).fetchSemanticsNode()
+        val layouts = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action!!(layouts)
+        val layout = layouts.single()
+        assertEquals(words, layout.layoutInput.text.text)
+        assertFalse("$words: nothing beyond the last line", layout.hasVisualOverflow)
+        (0 until layout.lineCount).forEach { assertFalse("$words: line $it is not cut short", layout.isLineEllipsized(it)) }
+        assertEquals("$words: the last line ends with the last word", words.length, layout.getLineEnd(layout.lineCount - 1))
+        (0 until layout.lineCount).forEach { assertEquals("$words: line $it starts at the words' start", 0f, layout.getLineLeft(it), 0.5f) }
+        val glyph = bounds(BookEntryRowTags.provenanceGlyph(id))
+        val text = bounds(BookEntryRowTags.provenanceWords(id))
+        assertEquals("$words: the words beside the glyph", glyph.right + dp(6f), text.left, 1f)
+        assertEquals(
+            "$words: the glyph level with the first line's middle",
+            text.top + (layout.getLineTop(0) + layout.getLineBottom(0)) / 2,
+            glyph.center.y,
+            1f,
+        )
+        assertEquals("$words: the glyph keeps 16 dp", dp(16f), glyph.width, 1f)
+        return layout.lineCount
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp")
+    fun aLongParentNameWrapsWholeAt360dp() {
+        val parent = own("Плов по-фергански", minutesAgo = 5)
+        val version = versionOf(parent, "Мой плов")
+        show(LibraryView.OWN)
+        await(BookEntryRowTags.provenance(version.id.value))
+        assertWhole(version, "по рецепту «Плов по-фергански»")
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp", fontScale = 2f)
+    fun atFontScaleTwoEveryProvenanceLineShowsAllItsWords() {
+        // A book row.
+        val pilaf = own("Плов по-фергански", minutesAgo = 5)
+        val mine = versionOf(pilaf, "Мой плов")
+        // A row whose parent is gone and recorded no title.
+        val gone = own("Щи", minutesAgo = 6)
+        val orphan = versionOf(gone, "Мои щи")
+        runBlocking { assertTrue(recipes.delete(gone.id)) }
+        show(LibraryView.OWN)
+        listOf(mine to "по рецепту «Плов по-фергански»", orphan to "по рецепту, которого нет в книге").forEach { (recipe, words) ->
+            compose.onNodeWithTag(LibraryTags.OWN_LIST).performScrollToNode(hasTestTag(LibraryTags.entry(recipe.id.value)))
+            await(BookEntryRowTags.provenance(recipe.id.value))
+            compose.waitForIdle()
+            assertTrue("$words wraps at a font scale of 2", assertWhole(recipe, words) >= 2)
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp", fontScale = 2f)
+    fun atFontScaleTwoAnImportedRowsLineShowsAllItsWords() {
+        val parent = found("Шакшука", "Марина")
+        val version = parent.fork(now, owner = null, byAuthor = false).copy(title = "Шакшука с фетой", statedAuthor = "Олег")
+            .inState(RecipeImport.FOUND_STATE)
+        runBlocking { assertTrue(recipes.addFound(version, now)) }
+        show(LibraryView.MARKED)
+        compose.onNodeWithTag(LibraryTags.MARKED_LIST).performScrollToNode(hasTestTag(LibraryTags.entry(version.id.value)))
+        await(BookEntryRowTags.provenance(version.id.value))
+        compose.waitForIdle()
+        assertTrue(assertWhole(version, "по рецепту «Шакшука»") >= 1)
+    }
+
+    /** The screen of a collection holding [members], over the book. */
+    private fun showCollection(vararg members: Recipe) {
+        val id = runBlocking { collections.create("Завтраки")!!.also { c -> members.forEach { collections.addTo(it.id, listOf(c)) } } }
+        show(LibraryView.OWN)
+        compose.runOnIdle { session.openCollection(id.value) }
+        compose.waitUntil(PATIENCE_MS) { exists(CollectionScreenTags.LIST) && !exists(LibraryTags.PAGER) }
+        compose.waitForIdle()
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp")
+    fun aCollectionRowsLineShowsAllItsWords() {
+        val parent = own("Плов по-фергански", minutesAgo = 5)
+        val version = versionOf(parent, "Мой плов с айвой и барбарисом")
+        showCollection(version)
+        await(BookEntryRowTags.provenance(version.id.value))
+        assertWhole(version, "по рецепту «Плов по-фергански»")
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp", fontScale = 2f)
+    fun atFontScaleTwoACollectionRowsLineShowsAllItsWords() {
+        val parent = own("Шакшука", minutesAgo = 5)
+        val version = versionOf(parent, "Моя шакшука с фетой")
+        showCollection(version)
+        await(BookEntryRowTags.provenance(version.id.value))
+        assertTrue(assertWhole(version, "по рецепту «Шакшука»") >= 2)
     }
 
     /** A book of 300 recipes, every other one a version — of one held, of one gone, or of one found — and its queries. */

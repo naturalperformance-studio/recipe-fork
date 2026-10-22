@@ -27,6 +27,7 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -203,6 +204,9 @@ internal object BookEntryRowTags {
 
     /** The provenance glyph at the start of that line. */
     fun provenanceGlyph(recipeId: String) = "library-provenance-glyph-$recipeId"
+
+    /** The words of that line, beside the glyph. */
+    fun provenanceWords(recipeId: String) = "library-provenance-words-$recipeId"
 }
 
 /** The letter a drop cap shows for [title]: its first letter or digit, in capitals; none for a title without one. */
@@ -298,8 +302,9 @@ internal fun EntryTags(recipeId: String, tags: String) {
  * The line under a version's title that names the recipe it was made from (FORK-010, decisions.md #3): the provenance
  * glyph, 16 dp, and «по рецепту «…»» in Literata italics, both in beet — a provenance mark. [parentTitle] is the title
  * the version recorded, else that of the parent the book holds; null when the parent is gone and the version recorded
- * none, which the line then says, as the card does. One line, cut short where it does not fit. It is part of the row's
- * spoken label and does nothing of its own: a tap on it opens the recipe, as anywhere on the row.
+ * none, which the line then says, as the card does. The words wrap beside the glyph and are never cut short: a
+ * continued line starts where the words start, and the glyph stands level with the middle of their first line. It is
+ * part of the row's spoken label and does nothing of its own: a tap on it opens the recipe, as anywhere on the row.
  */
 @Composable
 internal fun EntryProvenance(recipeId: String, parentTitle: String?) {
@@ -309,23 +314,29 @@ internal fun EntryProvenance(recipeId: String, parentTitle: String?) {
         stringResource(R.string.library_entry_parent, parentTitle.ifBlank { stringResource(R.string.common_untitled_recipe) })
     }
     val beet = MaterialTheme.colorScheme.tertiary
+    // The height of the words' first line, as they were last laid out; the glyph is centred on it.
+    var firstLine by remember { mutableIntStateOf(0) }
+    val glyphTop = with(LocalDensity.current) { ((firstLine.toDp() - PROVENANCE_GLYPH) / 2).coerceAtLeast(0.dp) }
     Row(
         Modifier.testTag(BookEntryRowTags.provenance(recipeId)),
         horizontalArrangement = Arrangement.spacedBy(PROVENANCE_GAP),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
         Icon(
             painterResource(R.drawable.ic_provenance),
             contentDescription = null,
             tint = beet,
-            modifier = Modifier.size(PROVENANCE_GLYPH).testTag(BookEntryRowTags.provenanceGlyph(recipeId)),
+            modifier = Modifier
+                .padding(top = glyphTop)
+                .size(PROVENANCE_GLYPH)
+                .testTag(BookEntryRowTags.provenanceGlyph(recipeId)),
         )
         Text(
             text,
             style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
             color = beet,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).testTag(BookEntryRowTags.provenanceWords(recipeId)),
+            onTextLayout = { firstLine = (it.getLineBottom(0) - it.getLineTop(0)).roundToInt() },
         )
     }
 }
