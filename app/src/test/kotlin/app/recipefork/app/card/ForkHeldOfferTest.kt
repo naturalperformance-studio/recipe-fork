@@ -1,10 +1,14 @@
 package app.recipefork.app.card
 
+import app.recipefork.app.R
 import app.recipefork.app.ui.AppNavHost
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -36,6 +40,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -181,6 +187,25 @@ class ForkHeldOfferTest {
         assertNotEquals(first, session.editing.value)
         assertEquals(false, dialogShown())
         assertEquals(3, count())
+    }
+
+    // Scenario 4 of v0.41: the offer is headed by the provenance glyph at 32 dp, above its words and unread.
+    @Test
+    fun theOfferIsHeadedByTheProvenanceGlyph() {
+        heldFork()
+        forkAndAwaitOffer()
+        val glyphs = compose.onAllNodes(
+            hasAnyAncestor(hasTestTag(CardTags.FORK_HELD)) and SemanticsMatcher.expectValue(DrawnIcon, R.drawable.ic_provenance),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()
+        assertEquals(1, glyphs.size)
+        val glyph = glyphs.single()
+        assertNull(glyph.config.getOrElseNullable(SemanticsProperties.ContentDescription) { null })
+        val side = (32 * context.resources.displayMetrics.density).toInt()
+        assertEquals(side, glyph.size.width)
+        assertEquals(side, glyph.size.height)
+        val words = compose.onNodeWithText("You already have a fork of this recipe, unchanged since you made it.").fetchSemanticsNode()
+        assertTrue("${glyph.boundsInRoot} above ${words.boundsInRoot}", glyph.boundsInRoot.bottom <= words.boundsInRoot.top)
     }
 
     // The offer in the interface's other language.

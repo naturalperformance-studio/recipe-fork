@@ -150,6 +150,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.ui.Haptic
 import app.recipefork.app.ui.rememberHaptics
@@ -972,7 +974,7 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit, modifier: Modifier
     val action = stringResource(R.string.card_fork_action)
     ExtendedFloatingActionButton(
         text = { Text(word) },
-        icon = { Icon(painterResource(R.drawable.ic_fork), contentDescription = null) },
+        icon = { ProvenanceGlyph() },
         onClick = onFork,
         expanded = expanded,
         modifier = modifier
@@ -1562,6 +1564,9 @@ fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> U
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(CardTags.FORK_HELD),
+        icon = { ProvenanceGlyph(Modifier.size(HELD_GLYPH)) },
+        // The glyph marks provenance, so it is beet here, as the redesign draws the dialog.
+        iconContentColor = MaterialTheme.colorScheme.tertiary,
         text = { Text(stringResource(R.string.card_fork_held)) },
         confirmButton = {
             TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = CardTarget).widthIn(min = CardTarget).testTag(CardTags.FORK_HELD_OPEN)) {
@@ -1575,6 +1580,27 @@ fun HeldForkDialog(onOpen: () -> Unit, onAnother: () -> Unit, onDismiss: () -> U
         },
     )
 }
+
+/** The provenance glyph at the size the held-fork dialog heads with it. */
+private val HELD_GLYPH = 32.dp
+
+/**
+ * The provenance glyph (hollow node, a line with one knee, filled node), in the content colour of where it stands and
+ * read by nothing: the words beside it say what it marks. It names its drawing in [DrawnIcon] for tests.
+ */
+@Composable
+private fun ProvenanceGlyph(modifier: Modifier = Modifier) {
+    Icon(
+        painterResource(R.drawable.ic_provenance),
+        contentDescription = null,
+        modifier = modifier.semantics { drawnIcon = R.drawable.ic_provenance },
+    )
+}
+
+/** The drawable an icon draws, kept in the semantics tree for tests, never read aloud. */
+internal val DrawnIcon = SemanticsPropertyKey<Int>(DRAWN_ICON_KEY)
+private const val DRAWN_ICON_KEY = "card.drawn-icon"
+internal var SemanticsPropertyReceiver.drawnIcon by DrawnIcon
 
 object CardTags {
     const val FORK_HELD = "card-fork-held"
