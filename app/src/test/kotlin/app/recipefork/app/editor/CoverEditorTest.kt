@@ -240,7 +240,8 @@ class CoverEditorTest {
     }
 
     // T-218: with the empty cover a compact tile, a new recipe's Ingredients heading stands on the first screen of a
-    // 360 × 720 dp phone, the form not scrolled.
+    // 360 × 720 dp phone, the form not scrolled — but for the finished weight field and its gap, which v0.44 (T-319)
+    // added above the ingredients at the decided cost of one field more for everyone.
     @Test
     @Config(qualifiers = "w360dp-h720dp")
     fun aNewRecipesIngredientsAreOnTheFirstScreen() {
@@ -249,7 +250,9 @@ class CoverEditorTest {
         val heading = compose.onNode(hasText("Ingredients") and hasAnyAncestor(hasTestTag(EditorTags.INGREDIENTS))).fetchSemanticsNode()
         val screen = compose.onRoot().fetchSemanticsNode().size.height
         assertEquals(720f, screen / compose.density.density, 1f)
-        assertTrue("${(heading.positionInRoot.y + heading.size.height) / compose.density.density} dp", heading.positionInRoot.y + heading.size.height <= screen)
+        val weight = compose.onNodeWithTag(EditorTags.FINISHED_WEIGHT).fetchSemanticsNode().size.height + 16 * compose.density.density
+        val bottom = heading.positionInRoot.y + heading.size.height - weight
+        assertTrue("${bottom / compose.density.density} dp", bottom <= screen)
     }
 
     // T-147: a cover that is set opens the same sheet, which offers to replace it — camera, gallery — and to remove it.
