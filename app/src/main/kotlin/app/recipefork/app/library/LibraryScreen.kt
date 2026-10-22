@@ -75,6 +75,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -650,6 +651,21 @@ private fun RevealRestored(
     }
 }
 
+/**
+ * Keeps a list's start in sight when [above] items come to stand above its rows — the row of collections, read after the
+ * recipes (T-307). A lazy list keeps its first visible item in place when items are put before it, so a list at its very
+ * top would settle with its first recipe there and the row scrolled out above; such a list is brought to the row instead,
+ * in the same layout that puts it in. A list scrolled down keeps its place.
+ */
+@Composable
+private fun KeepTopInSight(above: Int, state: LazyListState) {
+    val shown = remember(state) { intArrayOf(above) }
+    // Read before the layout that puts the new items in: the place the list stood at, not the one it is about to keep.
+    val atTop = Snapshot.withoutReadObservation { state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0 }
+    if (above > shown[0] && atTop) state.requestScrollToItem(0)
+    SideEffect { shown[0] = above }
+}
+
 /** The key of the row of collections among a list's items: no recipe's identity is it. */
 private const val COLLECTIONS_KEY = "collections"
 
@@ -981,6 +997,7 @@ private fun OwnList(
     val loaded = found?.take(limit)
     // The collections stand above the recipes while the view is not narrowed by a search or a filter (v0.36).
     val above = if (listed?.narrowed == false && collections.isNotEmpty()) 1 else 0
+    KeepTopInSight(above, listState)
     ScrollToTopOnChange(listed?.params, listState)
     RevealOnNotice(reveal, loaded?.map { it.recipeId }, listState, above)
     // A recipe an Undo put back is brought into view (v0.38).
@@ -1311,6 +1328,7 @@ private fun MarkedList(
     // The imported collections stand above the recipes while the view is not narrowed (v0.36); an empty view shows
     // them above its empty state instead.
     val above = if (listed?.narrowed == false && listed?.viewIsEmpty == false && collections.isNotEmpty()) 1 else 0
+    KeepTopInSight(above, listState)
     RevealOnNotice(reveal, marked?.map { it.recipeId }, listState, above)
     // A recipe an Undo put back is brought into view (v0.38).
     val markedIds = marked?.map { it.recipeId }
