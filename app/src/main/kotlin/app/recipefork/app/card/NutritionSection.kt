@@ -27,7 +27,6 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -39,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -55,6 +55,8 @@ import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -152,29 +154,27 @@ internal fun NutritionSection(
 
 /**
  * "Per serving" | "Whole dish", an M3 segmented row the content's width, opening on one serving: each segment drawn
- * 40 dp tall, its touch target the card's [CardTarget] tall — room laid out for it above and below the drawing, and the
- * touch reaching into that room — its role and selection told to the screen reader, the chosen one checked.
+ * 40 dp tall — taller at a large font — with [SWITCH_GAP] above and below it at any size, its touch target the card's
+ * [CardTarget] tall, reaching into that room; its role and selection told to the screen reader, the chosen one checked.
  */
 @Composable
 private fun NutritionSwitch(whole: MutableState<Boolean>) {
-    // A segment answers a touch within the card's target of it, which Compose takes from the view configuration; the
-    // room for that target is laid out as Material lays out its minimum interactive size.
+    // A segment answers a touch within the card's target of it, which Compose takes from the view configuration: at
+    // 40 dp drawn, the gaps above and below are that target's room, so Material lays out no room of its own around it.
     val configuration = LocalViewConfiguration.current
     val touch = remember(configuration) {
         object : ViewConfiguration by configuration {
             override val minimumTouchTargetSize: DpSize get() = DpSize(CardTarget, CardTarget)
         }
     }
-    CompositionLocalProvider(LocalViewConfiguration provides touch, LocalMinimumInteractiveComponentSize provides CardTarget) {
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag(NutritionTags.SWITCH)) {
+    CompositionLocalProvider(LocalViewConfiguration provides touch, LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(vertical = SWITCH_GAP).testTag(NutritionTags.SWITCH)) {
             listOf(false, true).forEachIndexed { index, choice ->
                 SegmentedButton(
                     selected = whole.value == choice,
                     onClick = { whole.value = choice },
                     shape = SegmentedButtonDefaults.itemShape(index, 2),
-                    modifier = Modifier
-                        .minimumInteractiveComponentSize()
-                        .testTag(if (choice) NutritionTags.SWITCH_WHOLE else NutritionTags.SWITCH_PER_SERVING),
+                    modifier = Modifier.testTag(if (choice) NutritionTags.SWITCH_WHOLE else NutritionTags.SWITCH_PER_SERVING),
                     label = {
                         Text(
                             stringResource(if (choice) R.string.card_nutrition_whole else R.string.card_nutrition_per_serving),
@@ -319,20 +319,45 @@ private fun Caption(text: String, tag: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** One row of the sheet, read as one item: the [name] at its start, the [value] — kcal or a reason — at its end. */
+/**
+ * One row of the sheet, read as one item: the [name] at its start, the [value] — kcal, which never wraps, or a reason
+ * ([muted]) — at its end, while the value whole and the name's longest word fit beside each other; otherwise the value
+ * stands under the name, so that the name never breaks inside a word to make room for it.
+ */
 @Composable
 private fun SheetRow(name: String, value: String, muted: Boolean, tag: String) {
     val color = if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-    Row(
-        Modifier
+    val gap = with(LocalDensity.current) { SHEET_ROW_GAP.roundToPx() }
+    Layout(
+        content = {
+            Text(name, style = MaterialTheme.typography.bodyMedium, color = color)
+            Text(value, style = MaterialTheme.typography.bodyMedium, color = color, softWrap = muted)
+        },
+        modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = SHEET_ROW_PADDING)
             .semantics(mergeDescendants = true) {}
             .testTag(tag),
-        horizontalArrangement = Arrangement.spacedBy(SHEET_ROW_GAP),
-    ) {
-        Text(name, style = MaterialTheme.typography.bodyMedium, color = color, modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = color, softWrap = false)
+    ) { (named, valued), constraints ->
+        val width = constraints.maxWidth
+        val valueWidth = valued.maxIntrinsicWidth(Constraints.Infinity)
+        val beside = valueWidth + gap + named.minIntrinsicWidth(Constraints.Infinity) <= width
+        val loose = Constraints(maxWidth = width)
+        if (beside) {
+            val v = valued.measure(Constraints(maxWidth = valueWidth))
+            val n = named.measure(Constraints(maxWidth = width - valueWidth - gap))
+            layout(width, maxOf(n.height, v.height)) {
+                n.placeRelative(0, 0)
+                v.placeRelative(width - v.width, 0)
+            }
+        } else {
+            val n = named.measure(loose)
+            val v = valued.measure(loose)
+            layout(width, n.height + v.height) {
+                n.placeRelative(0, 0)
+                v.placeRelative(0, n.height)
+            }
+        }
     }
 }
 

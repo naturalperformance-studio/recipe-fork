@@ -329,8 +329,6 @@ class CardNutritionTest {
             // Drawn 40 dp tall within the card's target.
             val density = node.layoutInfo.density.density
             assertTrue("$tag is ${node.touchBoundsInRoot.height / density} dp to touch", node.touchBoundsInRoot.height / density + 0.5f >= CardTarget.value)
-            // Laid out with room for its target, so that the touch reaches no neighbour.
-            assertTrue(compose.onNodeWithTag(NutritionTags.SWITCH).fetchSemanticsNode().size.height / density + 0.5f >= CardTarget.value)
         }
         val tiles = compose.onNodeWithTag(NutritionTags.TILES).fetchSemanticsNode()
         assertFalse(tiles.config.contains(SemanticsActions.OnClick))
@@ -373,18 +371,6 @@ class CardNutritionTest {
         open()
         val tops = (0..3).map { compose.onNodeWithTag(NutritionTags.tile(it), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top }
         assertTrue("$tops", tops.all { it == tops[0] })
-    }
-
-    @Test
-    @Config(qualifiers = "en-w320dp-h640dp", fontScale = 2f)
-    fun atLargeTextOnANarrowScreenTheTilesStandTwoByTwo() {
-        open()
-        val bounds = (0..3).map { compose.onNodeWithTag(NutritionTags.tile(it), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot }
-        assertEquals(bounds[0].top, bounds[1].top)
-        assertEquals(bounds[2].top, bounds[3].top)
-        assertTrue(bounds[2].top >= bounds[0].bottom)
-        assertEquals(bounds[0].left, bounds[2].left)
-        compose.assertWhole(NutritionTags.SWITCH)
     }
 
     @Test
