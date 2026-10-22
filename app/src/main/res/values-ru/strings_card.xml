@@ -121,8 +121,11 @@
     <string name="card_source_text_copied">Текст скопирован</string>
     <!-- Пищевая ценность на карточке (v0.40, T-293). -->
     <string name="card_nutrition">Пищевая ценность, примерно</string>
-    <string name="card_nutrition_per_serving">На порцию</string>
+    <string name="card_nutrition_100_g">100\u00A0г</string>
+    <string name="card_nutrition_serving">Порция</string>
     <string name="card_nutrition_whole">Всё блюдо</string>
+    <string name="card_nutrition_per_serving">На порцию</string>
+    <string name="card_nutrition_per_100_g_spoken">На 100 граммов готового блюда</string>
     <string name="card_nutrition_kcal_label">ккал</string>
     <string name="card_nutrition_grams">%1$s\u00A0г</string>
     <string name="card_nutrition_protein">белки</string>
@@ -140,8 +143,17 @@
     <string name="card_nutrition_no_data">нет данных</string>
     <string name="card_nutrition_no_measure">нет меры</string>
     <string name="card_nutrition_how">Посчитано по сырым продуктам: потери при готовке не учтены, вес штук — средний.</string>
+    <string name="card_nutrition_weight">На 100\u00A0г — по весу готового блюда из рецепта: %1$s.</string>
+    <string name="card_nutrition_weight_servings">%1$s\u00A0г на %2$s</string>
+    <string name="card_nutrition_no_weight">Чтобы видеть «на 100\u00A0г», укажите в рецепте вес готового блюда.</string>
     <plurals name="card_nutrition_servings">
         <item quantity="one">%1$s порция</item>
+        <item quantity="few">%1$s порции</item>
+        <item quantity="many">%1$s порций</item>
+        <item quantity="other">%1$s порции</item>
+    </plurals>
+    <plurals name="card_nutrition_servings_for">
+        <item quantity="one">%1$s порцию</item>
         <item quantity="few">%1$s порции</item>
         <item quantity="many">%1$s порций</item>
         <item quantity="other">%1$s порции</item>

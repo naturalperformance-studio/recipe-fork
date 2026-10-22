@@ -354,9 +354,9 @@ fun CardScreen(
     // The same of the equipment, which folds on its own.
     val equipmentShownAgain = rememberSaveable(recipeId) { mutableStateOf(false) }
     val shownAgain = remember(ingredientsShownAgain, equipmentShownAgain) { ShownAgain(equipmentShownAgain, ingredientsShownAgain) }
-    // Whether View's nutrition shows the whole dish rather than one serving: the card's, kept while it is open, as the
-    // reader turns to Cooking and back or the activity is recreated, and one serving each time a card opens.
-    val nutritionWhole = rememberSaveable(recipeId) { mutableStateOf(false) }
+    // What View's nutrition shows — 100 g, one serving or the whole dish: the card's, kept while it is open, as the reader
+    // turns to Cooking and back or the activity is recreated, and the one it opens on (null) each time a card opens.
+    val nutritionShown = rememberSaveable(recipeId) { mutableStateOf<NutritionShown?>(null) }
     // The recipe's timers running, or ringing, while their step is out of sight on the tab shown: in a bar at the bottom.
     val timersBar = recipe?.let { runningOutOfSight(it, scroll, places) }
     val timing = timersBar?.timers?.let { timers -> timers.held.values.any { !it.hasEnded(timers.now) || timers.rings(it.key) } } == true
@@ -547,7 +547,7 @@ fun CardScreen(
                             RecipeContent(
                                 recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                                 shownAgain, units,
-                                nutritionWhole = nutritionWhole,
+                                nutritionShown = nutritionShown,
                                 equipmentEntries = equipmentEntries,
                                 kitchen = kitchen,
                                 onOpenKitchen = onOpenKitchen,
@@ -1011,7 +1011,7 @@ private fun RecipeContent(
     places: CardPlaces,
     shownAgain: ShownAgain,
     units: UnitSystem,
-    nutritionWhole: MutableState<Boolean>,
+    nutritionShown: MutableState<NutritionShown?>,
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
     onOpenKitchen: ((Long) -> Unit)?,
@@ -1127,8 +1127,9 @@ private fun RecipeContent(
             }
             // On View, roughly what the dish holds, at the scale in force; nothing where no row can be counted.
             if (viewing) {
-                val nutrition = remember(ordered, entries, list) { dishNutrition(ordered, entries, list) }
-                nutrition?.let { NutritionSection(it, ordered, list.lines, list.servingCount, language, nutritionWhole) }
+                val weight = recipe.finishedWeightGrams
+                val nutrition = remember(ordered, entries, list, weight) { dishNutrition(ordered, entries, list, weight) }
+                nutrition?.let { NutritionSection(it, ordered, list.lines, list.servingCount, language, nutritionShown, recipe.state.editable) }
             }
             // On Cooking a step marked done brings the next into view, unless the reader is scrolling the tab themselves.
             StepsList(
