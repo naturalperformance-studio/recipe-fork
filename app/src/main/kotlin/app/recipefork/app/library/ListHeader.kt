@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -110,9 +111,9 @@ internal val FILTER_ROW_GAP = 12.dp
 private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lowercase())
 
 /**
- * The header above a view's list: its search field (FLOW-035 (4)) and, at its end, the choice of the view's order
- * (FLOW-035 (3)); under them, [FILTER_ROW_GAP] apart, the row of quick filters (FLOW-035, CAT-002, CAT-006), whose
- * "All filters" opens the sheet of every filter. The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
+ * The header above a view's list: its search field (FLOW-035 (4)) and, under it, [FILTER_ROW_GAP] apart, the row of
+ * quick filters (FLOW-035, CAT-002, CAT-006), whose "All filters" opens the sheet of every filter and whose second chip
+ * chooses the view's order (FLOW-035 (3)). The [languages] of the view's recipes are what its language filter offers (L10N-005); the entries
  * they [hold] keep an entry removed upstream offered by its ingredient filter (FLOW-001 (7)); the tags they [carries]
  * most are offered as quick filters; the sheet's equipment section is My [kitchen]'s ([SheetKitchen]), left out while
  * it is not known yet. It stands at the top of its view's page, under the tabs, and scrolls away as the list goes down
@@ -140,67 +141,83 @@ internal fun ListHeader(
         modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 8.dp).testTag(LibraryTags.HEADER),
         verticalArrangement = Arrangement.spacedBy(FILTER_ROW_GAP),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = search.value,
-                onValueChange = search::type,
-                enabled = enabled,
-                singleLine = true,
-                // A short label on one line, which the field keeps room for above its outline when it rises there; the
-                // longer words stand inside as its placeholder, cut short where they do not fit.
-                label = {
-                    Text(
-                        stringResource(R.string.library_search),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag(LibraryTags.SEARCH_LABEL),
+        OutlinedTextField(
+            value = search.value,
+            onValueChange = search::type,
+            enabled = enabled,
+            singleLine = true,
+            // What is typed and the hint are set in the working face, Golos, whose narrower letters keep the whole hint
+            // on a 360 dp phone (T-304).
+            textStyle = MaterialTheme.typography.titleSmall,
+            // A short label on one line, which the field keeps room for above its outline when it rises there; the
+            // longer words stand inside as its placeholder, cut short only where even they do not fit.
+            label = {
+                Text(
+                    stringResource(R.string.library_search),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag(LibraryTags.SEARCH_LABEL),
+                )
+            },
+            placeholder = {
+                Text(
+                    stringResource(R.string.library_search_placeholder),
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag(LibraryTags.SEARCH_PLACEHOLDER),
+                )
+            },
+            trailingIcon = if (search.value.text.isEmpty()) null else {
+                {
+                    BlockAction(
+                        R.drawable.ic_clear_search,
+                        stringResource(R.string.library_search_clear),
+                        LibraryTags.SEARCH_CLEAR,
+                        onClick = search::clear,
+                        enabled = enabled,
                     )
-                },
-                placeholder = {
-                    Text(
-                        stringResource(R.string.library_search_placeholder),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag(LibraryTags.SEARCH_PLACEHOLDER),
-                    )
-                },
-                trailingIcon = if (search.value.text.isEmpty()) null else {
-                    {
-                        BlockAction(
-                            R.drawable.ic_clear_search,
-                            stringResource(R.string.library_search_clear),
-                            LibraryTags.SEARCH_CLEAR,
-                            onClick = search::clear,
-                            enabled = enabled,
-                        )
-                    }
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
-                modifier = Modifier.weight(1f).testTag(LibraryTags.SEARCH),
-            )
-            OrderChoice(order, onOrder, enabled)
-        }
-        QuickFilters(filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true }, enabled = enabled)
+                }
+            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+            // The field ends a gutter from the screen's edge: nothing stands beside it, so the whole hint fits (T-304).
+            modifier = Modifier.fillMaxWidth().padding(end = 12.dp).testTag(LibraryTags.SEARCH),
+        )
+        QuickFilters(
+            filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true }, order = order, onOrder = onOrder,
+            enabled = enabled,
+        )
     }
     if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, kitchen, onClose = { sheetOpen = false })
 }
 
 /**
- * The view's order: a button named by the order in force, for the screen reader and in a tooltip, that opens the menu
- * of the three orders, the one in force selected.
+ * The view's order (FLOW-035 (3)): a chip reading the order in force in words, with a chevron, that opens the menu of
+ * the three orders, the one in force selected. The screen reader hears the order in force and, as the chip's click
+ * label, the action of choosing another (T-304).
  */
 @Composable
-private fun OrderChoice(order: BookOrder, onOrder: (BookOrder) -> Unit, enabled: Boolean = true) {
+private fun OrderChip(order: BookOrder, onOrder: (BookOrder) -> Unit, enabled: Boolean = true) {
     var expanded by remember { mutableStateOf(false) }
+    val action = stringResource(R.string.library_order_action)
+    val toggle = { expanded = !expanded }
     Box {
-        BlockAction(
-            R.drawable.ic_order,
-            stringResource(R.string.library_order, stringResource(orderLabel(order))),
-            LibraryTags.ORDER,
-            onClick = { expanded = !expanded },
-            action = stringResource(R.string.library_order_action),
+        AssistChip(
+            onClick = toggle,
             enabled = enabled,
+            label = { Text(stringResource(orderLabel(order))) },
+            trailingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_expand_more),
+                    contentDescription = null,
+                    modifier = Modifier.size(AssistChipDefaults.IconSize),
+                )
+            },
+            // The click label stands on the chip's own node; a chip that does not respond offers no action to name.
+            modifier = Modifier
+                .semantics { if (enabled) onClick(label = action) { toggle(); true } }
+                .chipTarget(LibraryTags.ORDER),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             BookOrder.entries.forEach { choice ->
@@ -318,10 +335,9 @@ internal fun mostUsedTags(carries: Map<String, List<Long>>, excluded: Set<Long> 
         .map { it.key }
 
 /**
- * The row of quick filters under the search field, scrolled sideways: "All filters", which opens [FiltersSheet]; a
- * selected chip for each filter in force — the ingredient, each tag, the language, then "Enough equipment" — which
- * removes it when tapped,
- * and, while any is, the one control that clears them all; then the quick offers, each applied by one tap: the other
+ * The row of quick filters under the search field, scrolled sideways: "All filters", which opens [FiltersSheet]; the
+ * view's [order] in words ([OrderChip]); a selected chip for each filter in force — the ingredient, each tag, the
+ * language, then "Enough equipment" — which removes it when tapped, and, while any is, the one control that clears them all; then the quick offers, each applied by one tap: the other
  * languages of the view while it holds more than one, and the tags its recipes carry most, up to [QUICK_TAGS].
  */
 @Composable
@@ -332,6 +348,8 @@ private fun QuickFilters(
     languages: List<BookLanguage>,
     carries: Map<String, List<Long>>,
     onAll: () -> Unit,
+    order: BookOrder,
+    onOrder: (BookOrder) -> Unit,
     enabled: Boolean = true,
 ) {
     val popular = remember(carries, filters.tags) { mostUsedTags(carries, filters.tags) }
@@ -354,6 +372,7 @@ private fun QuickFilters(
             },
             modifier = Modifier.chipTarget(LibraryTags.FILTER_ADD),
         )
+        OrderChip(order, onOrder, enabled)
         filters.ingredient?.let { id ->
             val name = choices.ingredients?.firstOrNull { it.id == id }?.label(language)
                 ?: stringResource(R.string.library_filter_unknown_ingredient)
