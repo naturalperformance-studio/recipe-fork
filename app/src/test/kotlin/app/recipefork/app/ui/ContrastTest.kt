@@ -144,6 +144,9 @@ class ContrastTest {
         graphic("the card's nutrition — the switch's boundary", c.outline, c.surface),
         text("the nutrition sheet — its title, captions and counted rows", c.onSurface, c.surfaceContainerLow),
         text("the nutrition sheet — the rows not counted and how it is counted", c.onSurfaceVariant, c.surfaceContainerLow),
+        // Beet: the tertiary colour marks provenance and nothing else (the redesign, T-296).
+        text("a fork's provenance line on the card — \"Forked from …\"", c.tertiary, c.surface),
+        text("a fork's provenance line on the container tint", c.tertiary, c.surfaceContainer),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }
