@@ -4,15 +4,15 @@ import android.util.LruCache
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -23,12 +23,10 @@ import androidx.compose.ui.unit.IntSize
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.PhotoStore
 import app.recipefork.app.media.decodeFilling
+import app.recipefork.app.recipe.RecipeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-
-/** The frame every cover is shown in: 4:3 landscape, as every photograph is cropped to (MEDIA-014). */
-const val COVER_RATIO = 4f / 3f
 
 /**
  * The covers the entries of the book show, each decoded once, off the main thread and no larger than it is shown,
@@ -63,11 +61,24 @@ class CoverThumbnails(
 @Composable
 fun rememberCoverThumbnails(): CoverThumbnails = remember { CoverThumbnails() }
 
+/** Shows an entry's cover, given its media identity (null for none) and the picture's tag, or [absent] without one. */
+internal typealias EntryCover = @Composable (mediaId: String?, tag: String, absent: @Composable () -> Unit) -> Unit
+
+/** The covers of the active book's entries, read from where its media is kept (MEDIA-001). */
+@Composable
+internal fun coverOf(recipes: RecipeRepository, thumbnails: CoverThumbnails): EntryCover {
+    val book = recipes.bookName()
+    val files = recipes.filesDirectory
+    return remember(book, files, thumbnails) {
+        { mediaId, tag, absent -> CoverThumbnail(mediaId, book, files, thumbnails, tag, absent) }
+    }
+}
+
 /**
- * The cover [mediaId] of [book] across the whole width of an entry, in the 4:3 frame, cropped about its centre. It is
- * decorative — the entry already reads its title. A cover whose file is there holds its frame from the first frame,
- * tinted until the picture is read — and stays tinted when it cannot be read — so that the entry's text never moves;
- * with no cover, or its file missing, nothing takes its place.
+ * The cover [mediaId] of [book] as a thumbnail at an entry's start: a [LEADING_SIZE] square, the picture cropped
+ * about its centre. It is decorative — the entry already reads its title. A cover whose file is there holds its frame
+ * from the first frame, tinted until the picture is read — and stays tinted when it cannot be read — so that the
+ * entry's text never moves; with no cover, or its file missing, [absent] takes its place.
  */
 @Composable
 internal fun CoverThumbnail(
@@ -76,17 +87,21 @@ internal fun CoverThumbnail(
     filesDirectory: File?,
     thumbnails: CoverThumbnails,
     tag: String,
+    absent: @Composable () -> Unit,
 ) {
-    if (mediaId == null) return
     val context = LocalContext.current
     // Whether the file is there is decided once per cover, not on every recomposition.
     val file = remember(book, mediaId, filesDirectory) {
-        PhotoStore(filesDirectory ?: context.applicationContext.filesDir).file(book, mediaId).takeIf { it.isFile }
-    } ?: return
+        mediaId?.let { PhotoStore(filesDirectory ?: context.applicationContext.filesDir).file(book, it).takeIf { file -> file.isFile } }
+    }
+    if (file == null) {
+        absent()
+        return
+    }
     BoxWithConstraints(
         Modifier
-            .fillMaxWidth()
-            .aspectRatio(COVER_RATIO)
+            .size(LEADING_SIZE)
+            .clip(MaterialTheme.shapes.extraSmall)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .testTag(LibraryTags.coverSlot(tag)),
     ) {

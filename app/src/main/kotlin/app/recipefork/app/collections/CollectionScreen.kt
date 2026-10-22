@@ -1,6 +1,5 @@
 package app.recipefork.app.collections
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -80,7 +78,8 @@ import app.recipefork.app.library.CoverThumbnails
 import app.recipefork.app.library.ENTRY_GAP
 import app.recipefork.app.library.EmptyState
 import app.recipefork.app.library.EntryAction
-import app.recipefork.app.library.EntryCard
+import app.recipefork.app.library.BookEntryRow
+import app.recipefork.app.library.EntryAuthor
 import app.recipefork.app.library.EntryCover
 import app.recipefork.app.library.EntryTitle
 import app.recipefork.app.library.LibrarySession
@@ -253,9 +252,9 @@ fun CollectionScreen(
                 .verticalScroll(scroll.state)
                 .padding(vertical = ENTRY_GAP)
                 .testTag(CollectionScreenTags.LIST),
-            verticalArrangement = Arrangement.spacedBy(ENTRY_GAP),
         ) {
-            author?.let { StatedAuthor(it) }
+            // The recipes' rows meet at their hairlines, as in the book; the stated author keeps a gap above them.
+            author?.let { StatedAuthor(it, Modifier.padding(bottom = ENTRY_GAP)) }
             val editable = collection.origin.editable
             val move: (Int, Int) -> Unit = { from, to ->
                 val now = rows.orEmpty()
@@ -268,7 +267,7 @@ fun CollectionScreen(
                     }
                 }
             }
-            val drag = if (editable) rememberRowDrag(scroll, ENTRY_GAP, move) else null
+            val drag = if (editable) rememberRowDrag(scroll, 0.dp, move) else null
             val cover = coverOf(recipes, thumbnails)
             CompositionLocalProvider(LocalDragColumnOnRight provides handleRight) {
                 shown.forEachIndexed { position, row ->
@@ -294,12 +293,12 @@ fun CollectionScreen(
 
 /** The line naming the author an imported collection's file states, marked as stated and not verified. */
 @Composable
-private fun StatedAuthor(author: String) {
+private fun StatedAuthor(author: String, modifier: Modifier = Modifier) {
     Text(
         stringResource(R.string.file_stated_author, author),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp).testTag(CollectionScreenTags.STATED_AUTHOR),
+        modifier = modifier.padding(horizontal = 16.dp).testTag(CollectionScreenTags.STATED_AUTHOR),
     )
 }
 
@@ -335,11 +334,11 @@ private fun CollectionEntry(
         }
         add(EntryAction(R.string.collection_remove, CollectionScreenTags.remove(row.recipeId), destructive = true, onClick = onRemove))
     }
-    val lifted = CardDefaults.cardColors().containerColor
-    EntryCard(
+    BookEntryRow(
         row.recipeId, row.title, row.coverId, cover, actions, onOpen,
         modifier = Modifier,
-        inner = drag?.row(position, lifted, CardDefaults.shape) ?: Modifier,
+        // Lifted while dragged, on the page's own colour: the row has no card of its own.
+        inner = drag?.row(position, MaterialTheme.colorScheme.surface) ?: Modifier,
         wrap = { content ->
             DragColumnBlock(drag, position, count, CollectionScreenTags.handle(row.recipeId), CollectionScreenTags.handleIcon(row.recipeId)) {
                 content()
@@ -347,9 +346,7 @@ private fun CollectionEntry(
         },
     ) {
         EntryTitle(row.recipeId, row.title)
-        row.statedAuthor?.let {
-            Text(stringResource(R.string.file_stated_author, it), style = MaterialTheme.typography.bodySmall)
-        }
+        row.statedAuthor?.let { EntryAuthor(row.recipeId, it) }
     }
 }
 

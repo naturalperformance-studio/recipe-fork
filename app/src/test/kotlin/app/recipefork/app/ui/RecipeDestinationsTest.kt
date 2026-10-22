@@ -117,13 +117,16 @@ class RecipeDestinationsTest {
         }
     }
 
-    /** The titles of the entries laid out within [view]'s list, top first. */
+    /**
+     * The titles of the entries laid out within [view]'s list, top first. An entry the list keeps composed but does not
+     * place — just scrolled out, held for reuse — is not in view, whatever bounds it last had.
+     */
     private fun inView(view: LibraryView, all: List<Recipe>): List<String> {
         val bounds = compose.onNodeWithTag(list(view)).fetchSemanticsNode().boundsInRoot
         val titles = all.associate { LibraryTags.entry(it.id.value) to it.title }
         val entry = SemanticsMatcher("an entry") { it.config.getOrNull(SemanticsProperties.TestTag) in titles }
         return compose.onAllNodes(entry).fetchSemanticsNodes()
-            .filter { it.boundsInRoot.bottom > bounds.top && it.boundsInRoot.top < bounds.bottom }
+            .filter { it.layoutInfo.isPlaced && it.boundsInRoot.bottom > bounds.top && it.boundsInRoot.top < bounds.bottom }
             .sortedBy { it.boundsInRoot.top }
             .map { titles.getValue(it.config[SemanticsProperties.TestTag]) }
     }
