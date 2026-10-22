@@ -1,5 +1,5 @@
 # Animal: meat, poultry, offal, fish, seafood, eggs, dairy and cheese.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 # Ids 1-5 are the entries shipped before the sources existed.
 # This file: the legacy entries, red meat and its cuts, game, mince. The family continues in animal-*.tsv:
 #   3000-3099 мясо's kinds · 3100-3199 beef, veal · 3200-3299 pork · 3300-3399 lamb · 3400-3449 other meat, game
@@ -8,11 +8,13 @@
 @range 3000-4999
 @range 1-5
 
-1	курица	chicken		true	g=1 pc=1500
-2	крылышки	chicken wings	1	false	g=1 pc=80		куриные крылья;куриные крылышки
+1	курица	chicken		true	g=1 pc=1500				kcal=215 protein=18.6 fat=15.06 carbs=0	fdc:171447
+2	крылышки	chicken wings	1	false	g=1 pc=80		куриные крылья;куриные крылышки		kcal=191 protein=17.52 fat=12.85 carbs=0	fdc:172390
 3	мясо	meat			g=1
-4	фарш	mince			g=1
-5	говядина	beef			g=1
+# фарш → fdc:174036 ground beef 80/20, the common mince
+4	фарш	mince			g=1				kcal=254 protein=17.17 fat=20 carbs=0	fdc:174036
+# говядина → fdc:169483 beef, composite of trimmed retail cuts, lean and fat
+5	говядина	beef			g=1				kcal=215 protein=20.01 fat=14.42 carbs=0	fdc:169483
 
 # мясо — generic meat, by how it is sold
 3001	мясо на кости	meat on the bone	3		g=1
@@ -22,13 +24,15 @@
 3005	суповой набор	soup bones	3		g=1
 
 # говядина — cuts
-3101	говяжья вырезка	beef tenderloin	5		g=1
+# говяжья вырезка → fdc:173987 tenderloin roast, boneless, trimmed to 0" fat, as Russian butchers sell it
+3101	говяжья вырезка	beef tenderloin	5		g=1				kcal=149 protein=21.67 fat=6.93 carbs=0	fdc:173987
 3102	говяжья мякоть	boneless beef	5		g=1
 3103	говяжья лопатка	beef chuck	5		g=1
 3104	говяжья шея	beef neck	5		g=1
-3105	говяжья грудинка	beef brisket	5		g=1
-3106	говяжья голяшка	beef shank	5		g=1
-3107	говяжьи рёбра	beef ribs	5		g=1
+3105	говяжья грудинка	beef brisket	5		g=1				kcal=253 protein=18.42 fat=19.06 carbs=0.56	fdc:168664
+# говяжья голяшка → fdc:169441 shank crosscuts, lean only: the only raw beef shank listed
+3106	говяжья голяшка	beef shank	5		g=1				kcal=128 protein=21.75 fat=3.85 carbs=0	fdc:169441
+3107	говяжьи рёбра	beef ribs	5		g=1				kcal=324 protein=16.15 fat=28.42 carbs=0.78	fdc:172169
 3108	говяжьи щёки	beef cheeks	5		g=1
 3109	бычий хвост	oxtail	5		g=1
 3110	огузок	beef rump	5		g=1
@@ -39,104 +43,117 @@
 3115	рибай	ribeye steak	5	true	g=1 pc=350
 3116	стриплойн	New York strip steak	5	true	g=1 pc=300
 3117	тибон	T-bone steak	5	true	g=1 pc=500
-3118	филе-миньон	filet mignon	5	true	g=1 pc=200
+3118	филе-миньон	filet mignon	5	true	g=1 pc=200				kcal=147 protein=21.72 fat=6.67 carbs=0	fdc:173988
 3119	стейк говяжий	beef steak	5	true	g=1 pc=250
 3120	антрекот	entrecote	5	true	g=1 pc=250
-3121	флэнк-стейк	flank steak	5	true	g=1 pc=500
-3122	шорт-рибс	short ribs	5		g=1
-3123	оссобуко	osso buco	5	false	g=1 pc=350
+3121	флэнк-стейк	flank steak	5	true	g=1 pc=500				kcal=155 protein=21.22 fat=7.17 carbs=0	fdc:169563
+3122	шорт-рибс	short ribs	5		g=1				kcal=390 protein=14.4 fat=36.23 carbs=0.4	fdc:169439
+# оссобуко → fdc:169441 beef shank crosscuts
+3123	оссобуко	osso buco	5	false	g=1 pc=350				kcal=128 protein=21.75 fat=3.85 carbs=0	fdc:169441
 3124	говядина на кости	bone-in beef	5		g=1
-3125	мраморная говядина	marbled beef	5		g=1
+# мраморная говядина → fdc:169503 rib, prime grade: the marbled grade
+3125	мраморная говядина	marbled beef	5		g=1				kcal=355 protein=16.15 fat=31.66 carbs=0	fdc:169503
 3126	говяжьи кости	beef bones	5		g=1
 3127	мозговая кость	marrowbone	5	false	g=1 pc=300
-3128	солонина	corned beef	5		g=1
+3128	солонина	corned beef	5		g=1				kcal=198 protein=14.68 fat=14.9 carbs=0.14	fdc:170199
 3129	ростбиф	roast beef	5		g=1
-3130	говяжья пашина	beef flank	5		g=1
+# говяжья пашина → fdc:169563 flank steak
+3130	говяжья пашина	beef flank	5		g=1				kcal=155 protein=21.22 fat=7.17 carbs=0	fdc:169563
 
 # телятина — cuts
-3150	телятина	veal			g=1
+3150	телятина	veal			g=1				kcal=144 protein=19.35 fat=6.77 carbs=0	fdc:173815
 3151	телячья вырезка	veal tenderloin	3150		g=1
-3152	телячья корейка	veal loin	3150		g=1
-3153	телячья лопатка	veal shoulder	3150		g=1
-3154	телячья голяшка	veal shank	3150		g=1
-3155	телячьи рёбрышки	veal ribs	3150		g=1
+3152	телячья корейка	veal loin	3150		g=1				kcal=177 protein=20.07 fat=10.07 carbs=0.07	fdc:173823
+3153	телячья лопатка	veal shoulder	3150		g=1				kcal=130 protein=19.27 fat=5.28 carbs=0	fdc:175277
+3154	телячья голяшка	veal shank	3150		g=1				kcal=113 protein=19.15 fat=3.48 carbs=0	fdc:172568
+3155	телячьи рёбрышки	veal ribs	3150		g=1				kcal=162 protein=18.86 fat=9.01 carbs=0	fdc:175275
 3156	телячья отбивная	veal chop	3150	true	g=1 pc=200
 3157	телячья мякоть	boneless veal	3150		g=1
-3158	телячья грудинка	veal breast	3150		g=1
+3158	телячья грудинка	veal breast	3150		g=1				kcal=208 protein=17.47 fat=14.75 carbs=0	fdc:174392
 
 # свинина — cuts
-3200	свинина	pork			g=1
-3201	свиная вырезка	pork tenderloin	3200	true	g=1 pc=500
-3202	свиная шея	pork neck	3200		g=1
-3203	свиная корейка	pork loin	3200		g=1
-3204	свиная лопатка	pork shoulder	3200		g=1
-3205	свиной окорок	pork leg	3200		g=1
-3206	свиная грудинка	pork belly	3200		g=1
-3207	свиные рёбрышки	pork ribs	3200		g=1
-3208	свиная рулька	pork knuckle	3200	true	g=1 pc=1000
-3209	свиные ножки	pig feet	3200	false	g=1 pc=400
-3210	свиная отбивная	pork chop	3200	true	g=1 pc=200
-3211	свиной стейк	pork steak	3200	true	g=1 pc=250
+3200	свинина	pork			g=1				kcal=216 protein=18.95 fat=14.95 carbs=0	fdc:167888
+3201	свиная вырезка	pork tenderloin	3200	true	g=1 pc=500				kcal=120 protein=20.65 fat=3.53 carbs=0	fdc:168312
+# свиная шея → fdc:167849 Boston butt blade steaks, the neck end of the shoulder
+3202	свиная шея	pork neck	3200		g=1				kcal=186 protein=17.42 fat=12.36 carbs=0	fdc:167849
+3203	свиная корейка	pork loin	3200		g=1				kcal=198 protein=19.74 fat=12.58 carbs=0	fdc:167818
+3204	свиная лопатка	pork shoulder	3200		g=1				kcal=236 protein=17.18 fat=17.99 carbs=0	fdc:167843
+3205	свиной окорок	pork leg	3200		g=1				kcal=245 protein=17.43 fat=18.87 carbs=0	fdc:168222
+3206	свиная грудинка	pork belly	3200		g=1				kcal=518 protein=9.34 fat=53.01 carbs=0	fdc:167812
+3207	свиные рёбрышки	pork ribs	3200		g=1				kcal=277 protein=15.47 fat=23.4 carbs=0	fdc:167853
+# свиная рулька → fdc:168226 leg, shank half
+3208	свиная рулька	pork knuckle	3200	true	g=1 pc=1000				kcal=193 protein=19.87 fat=11.96 carbs=0	fdc:168226
+3209	свиные ножки	pig feet	3200	false	g=1 pc=400				kcal=212 protein=23.16 fat=12.59 carbs=0	fdc:167859
+3210	свиная отбивная	pork chop	3200	true	g=1 pc=200				kcal=170 protein=20.71 fat=9.03 carbs=0	fdc:168238
+3211	свиной стейк	pork steak	3200	true	g=1 pc=250				kcal=186 protein=17.42 fat=12.36 carbs=0	fdc:167849
 3212	свиная мякоть	boneless pork	3200		g=1
-3213	свиная щековина	pork jowl	3200		g=1
-3214	свиные уши	pig ears	3200	false	g=1 pc=200
+3213	свиная щековина	pork jowl	3200		g=1				kcal=655 protein=6.38 fat=69.61 carbs=0	fdc:168269
+3214	свиные уши	pig ears	3200	false	g=1 pc=200				kcal=234 protein=22.45 fat=15.1 carbs=0.6	fdc:167857
 3215	свиная шкурка	pork rind	3200		g=1
-3216	эскалоп	escalope	3200	true	g=1 pc=120
-3217	карбонад	boneless pork loin	3200		g=1
-3218	молочный поросёнок	suckling pig	3200	true	g=1 pc=5000
+3216	эскалоп	escalope	3200	true	g=1 pc=120				kcal=155 protein=21.55 fat=6.94 carbs=0	fdc:167839
+3217	карбонад	boneless pork loin	3200		g=1				kcal=166 protein=21.34 fat=8.33 carbs=0	fdc:168314
+3218	молочный поросёнок	suckling pig	3200	true	g=1 pc=5000				kcal=109 protein=20.6 fat=3 carbs=0	skurikhin:Поросята
 3219	свинина на кости	bone-in pork	3200		g=1
-3220	свиные медальоны	pork medallions	3200	false	g=1 pc=80
-3221	свиные хвосты	pig tails	3200		g=1
+# свиные медальоны → fdc:168312 tenderloin, from which medallions are cut
+3220	свиные медальоны	pork medallions	3200	false	g=1 pc=80				kcal=120 protein=20.65 fat=3.53 carbs=0	fdc:168312
+3221	свиные хвосты	pig tails	3200		g=1				kcal=378 protein=17.75 fat=33.5 carbs=0	fdc:168291
 
 # баранина — cuts
-3300	баранина	lamb			g=1
+3300	баранина	lamb			g=1				kcal=243 protein=17.54 fat=18.66 carbs=0	fdc:172545
 3301	ягнятина	young lamb	3300		g=1
 3302	баранья нога	leg of lamb	3300	true	g=1 pc=2000
 3303	баранья лопатка	lamb shoulder	3300		g=1
-3304	бараньи рёбрышки	lamb ribs	3300		g=1
+3304	бараньи рёбрышки	lamb ribs	3300		g=1				kcal=342 protein=15.32 fat=30.71 carbs=0	fdc:174377
 3305	каре ягнёнка	rack of lamb	3300	true	g=1 pc=600
 3306	баранья корейка	lamb loin	3300		g=1
 3307	баранья шея	lamb neck	3300		g=1
 3308	баранья мякоть	boneless lamb	3300		g=1
 3309	баранина на кости	bone-in lamb	3300		g=1
-3310	курдюк	lamb tail fat	3300		g=1		курдючный жир
+# курдюк → fdc:174309 lamb separable fat, raw: no tail fat listed
+3310	курдюк	lamb tail fat	3300		g=1		курдючный жир		kcal=665 protein=6.65 fat=70.61 carbs=0	fdc:174309
 3311	баранья отбивная	lamb chop	3300	false	g=1 pc=100
-3312	баранья голяшка	lamb shank	3300	false	g=1 pc=400
-3313	баранья грудинка	lamb breast	3300		g=1
+3312	баранья голяшка	lamb shank	3300	false	g=1 pc=400				kcal=201 protein=18.91 fat=13.38 carbs=0	fdc:172547
+# баранья грудинка → fdc:172631 New Zealand lamb flap, the breast
+3313	баранья грудинка	lamb breast	3300		g=1				kcal=337 protein=16.17 fat=30.14 carbs=0.27	fdc:172631
 
 # other meat and game
-3400	козлятина	goat meat			g=1
-3401	конина	horse meat			g=1
-3410	кролик	rabbit		true	g=1 pc=1500
+3400	козлятина	goat meat			g=1				kcal=109 protein=20.6 fat=2.31 carbs=0	fdc:175303
+3401	конина	horse meat			g=1				kcal=133 protein=21.39 fat=4.6 carbs=0	fdc:175086
+3410	кролик	rabbit		true	g=1 pc=1500				kcal=136 protein=20.05 fat=5.55 carbs=0	fdc:172521
 3411	ножки кролика	rabbit legs	3410	false	g=1 pc=200
 3412	филе кролика	rabbit fillet	3410		g=1
 3413	спинка кролика	rabbit saddle	3410		g=1
 3420	дичь	game			g=1
-3421	оленина	venison	3420		g=1
-3422	лосятина	elk meat	3420		g=1
-3423	кабанятина	wild boar	3420		g=1
-3424	мясо косули	roe deer meat	3420		g=1
-3425	заяц	hare	3420	true	g=1 pc=3000
-3426	фазан	pheasant	3420	true	g=1 pc=1000
+3421	оленина	venison	3420		g=1				kcal=120 protein=22.96 fat=2.42 carbs=0	fdc:173855
+3422	лосятина	elk meat	3420		g=1				kcal=102 protein=22.24 fat=0.74 carbs=0	fdc:174344
+3423	кабанятина	wild boar	3420		g=1				kcal=122 protein=21.51 fat=3.33 carbs=0	fdc:175297
+# мясо косули → fdc:173855 deer: no roe deer listed
+3424	мясо косули	roe deer meat	3420		g=1				kcal=120 protein=22.96 fat=2.42 carbs=0	fdc:173855
+# заяц → fdc:174347 wild rabbit: no hare listed
+3425	заяц	hare	3420	true	g=1 pc=3000				kcal=114 protein=21.79 fat=2.32 carbs=0	fdc:174347
+3426	фазан	pheasant	3420	true	g=1 pc=1000				kcal=181 protein=22.7 fat=9.29 carbs=0	fdc:174472
 3427	куропатка	partridge	3420	true	g=1 pc=400
 3428	рябчик	hazel grouse	3420	true	g=1 pc=350
-3429	дикая утка	wild duck	3420	true	g=1 pc=1000
-3430	медвежатина	bear meat	3420		g=1
+3429	дикая утка	wild duck	3420	true	g=1 pc=1000				kcal=211 protein=17.42 fat=15.2 carbs=0	fdc:174468
+3430	медвежатина	bear meat	3420		g=1				kcal=161 protein=20.1 fat=8.3 carbs=0	fdc:173845
 
 # фарш — kinds
-3451	фарш говяжий	ground beef	4		g=1			ground chuck
-3452	фарш свиной	ground pork	4		g=1
-3453	фарш куриный	ground chicken	4		g=1
-3454	фарш из индейки	ground turkey	4		g=1
-3455	фарш бараний	ground lamb	4		g=1
-3457	фарш телячий	ground veal	4		g=1
-3458	фарш рыбный	ground fish	4		g=1
-3459	фарш из кролика	ground rabbit	4		g=1
+3451	фарш говяжий	ground beef	4		g=1			ground chuck	kcal=254 protein=17.17 fat=20 carbs=0	fdc:174036
+3452	фарш свиной	ground pork	4		g=1				kcal=263 protein=16.88 fat=21.19 carbs=0	fdc:167902
+3453	фарш куриный	ground chicken	4		g=1				kcal=143 protein=17.44 fat=8.1 carbs=0.04	fdc:171116
+3454	фарш из индейки	ground turkey	4		g=1				kcal=148 protein=19.66 fat=7.66 carbs=0	fdc:171505
+3455	фарш бараний	ground lamb	4		g=1				kcal=282 protein=16.56 fat=23.41 carbs=0	fdc:174370
+3457	фарш телячий	ground veal	4		g=1				kcal=197 protein=18.58 fat=13.06 carbs=0	fdc:175290
+# фарш рыбный → fdc:173725 Alaska pollock: the fish mince sold is mostly pollock
+3458	фарш рыбный	ground fish	4		g=1				kcal=76 protein=17.17 fat=0.82 carbs=0	fdc:173725
+# фарш из кролика → fdc:172521 rabbit meat
+3459	фарш из кролика	ground rabbit	4		g=1				kcal=136 protein=20.05 fat=5.55 carbs=0	fdc:172521
 3460	фарш свино-говяжий	ground pork and beef	4		g=1
 
 # added in fix round 1
 3132	сирлойн	sirloin steak	5	true	g=1 pc=300
 3133	ромштекс	rump steak	5	true	g=1 pc=200
-3134	говядина для тушения	beef stew meat	5		g=1
+3134	говядина для тушения	beef stew meat	5		g=1				kcal=128 protein=21.75 fat=4.48 carbs=0.16	fdc:171206
 3131	говяжьи ноги	beef feet	5		g=1		говяжьи ножки
-3222	стейк из свиной шеи	pork neck steak	3200	true	g=1 pc=250
+# стейк из свиной шеи → fdc:167849 Boston butt blade steaks
+3222	стейк из свиной шеи	pork neck steak	3200	true	g=1 pc=250				kcal=186 protein=17.42 fat=12.36 carbs=0	fdc:167849

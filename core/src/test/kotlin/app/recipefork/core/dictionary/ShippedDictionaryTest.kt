@@ -87,7 +87,8 @@ class ShippedDictionaryTest {
     @Test
     fun theEntriesShippedBeforeTheSourcesKeepTheirIdsLabelsFlagsAndFactors() {
         val dictionaries = built().dictionaries
-        val legacy = dictionaries.ingredients.filter { it.id <= 5 }
+        // Nutrition is added by the data tasks; ids, labels, flags and factors stay as shipped.
+        val legacy = dictionaries.ingredients.filter { it.id <= 5 }.map { it.copy(nutrition = null) }
         assertEquals(
             listOf(
                 IngredientEntryDto(1, "курица", "chicken", null, true, mapOf("g" to 1.0, "pc" to 1500.0)),

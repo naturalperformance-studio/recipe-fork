@@ -55,7 +55,8 @@ class ShippedSnapshotTest {
                 IngredientEntryDto(4, "фарш", "mince", factors = mapOf("g" to 1.0)),
                 IngredientEntryDto(5, "говядина", "beef", factors = mapOf("g" to 1.0)),
             ),
-            (1L..5L).map { byId[it] },
+            // Nutrition is added by the data tasks; ids, labels, flags and factors stay as shipped.
+            (1L..5L).map { byId[it]?.copy(nutrition = null) },
         )
         val tags = snapshot.tags.associateBy { it.id }
         assertEquals(listOf(TagDto(10, "итальянская", "Italian"), TagDto(11, "грузинская", "Georgian")), listOf(tags[10], tags[11]))
