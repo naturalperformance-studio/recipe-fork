@@ -7,16 +7,20 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -52,7 +56,8 @@ import java.time.Instant
 /**
  * FLOW-035 (3), T-304: the book's order is a chip placed second in the filter row, after "All filters", reading the
  * order in force in words and opening the same menu of the same three orders; its click label names its action for
- * the screen reader. The search field keeps no icon at its end, and its hint stands whole on a 360 dp phone.
+ * the screen reader. The search field keeps no icon at its end, is set wholly in Golos, and its hint stands whole on a
+ * 360 dp phone.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -187,6 +192,37 @@ class OrderChipTest {
         assertEquals(1, shown.lineCount)
         assertFalse("the hint is cut short", shown.isLineEllipsized(0))
         assertEquals("the hint is set in the working face", WorkingFamily, shown.layoutInput.style.fontFamily)
+        assertEquals(FontWeight.Normal, shown.layoutInput.style.fontWeight)
+    }
+
+    /** The layout of the one text found by [matcher] in the unmerged tree. */
+    private fun layoutOf(matcher: SemanticsMatcher): TextLayoutResult {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNode(matcher, useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!.invoke(layouts)
+        return layouts.single()
+    }
+
+    /**
+     * The whole search field is set in Golos: its label resting and risen, and what is typed at regular weight, as the
+     * hint is.
+     */
+    @Test
+    @Config(qualifiers = "ru-w360dp-h800dp")
+    fun theSearchFieldIsWhollyInGolosRegular() {
+        show()
+        val label = hasTestTag(LibraryTags.SEARCH_LABEL)
+        assertEquals("the resting label", WorkingFamily, layoutOf(label).layoutInput.style.fontFamily)
+        assertEquals(FontWeight.Normal, hint().layoutInput.style.fontWeight)
+        assertEquals("the risen label", WorkingFamily, layoutOf(label).layoutInput.style.fontFamily)
+
+        compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("кускус")
+        compose.waitForIdle()
+        val typed = layoutOf(hasTestTag(LibraryTags.SEARCH) and hasSetTextAction())
+        assertEquals("кускус", typed.layoutInput.text.text)
+        assertEquals("the typed text", WorkingFamily, typed.layoutInput.style.fontFamily)
+        assertEquals(FontWeight.Normal, typed.layoutInput.style.fontWeight)
+        assertEquals("the risen label", WorkingFamily, layoutOf(label).layoutInput.style.fontFamily)
     }
 
     @Test
