@@ -1187,6 +1187,9 @@ private sealed interface ParentContent {
  *
  * A parent the recipe names in text, [stated] — the one a found recipe's file states, or the found recipe a fork was
  * made from — is named by that title, and by that author marked as not verified (FLOW-065 (4, 5)), held or not.
+ *
+ * The line is drawn in the scheme's tertiary colour, beet in the redesign: provenance is the one thing in the app
+ * that colour marks, held or not.
  */
 @Composable
 private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeRepository, onOpenParent: (RecipeId) -> Unit) {
@@ -1198,6 +1201,7 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
         ParentContent.Loading -> Unit
         ParentContent.Unavailable -> Text(
             provenanceText(resources, stated, held = null),
+            color = MaterialTheme.colorScheme.tertiary,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.testTag(CardTags.PROVENANCE),
         )
@@ -1215,7 +1219,7 @@ private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeR
         ) {
             Text(
                 provenanceText(resources, stated, shown.title),
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.tertiary,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
