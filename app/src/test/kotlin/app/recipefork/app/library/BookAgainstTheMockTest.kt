@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.toSize
@@ -58,7 +59,7 @@ import kotlin.math.abs
  *   hint as its placeholder, with no floating label; the screen reader hears it named "Search"; it is 56 dp high.
  * - W2: the book's floating actions ("New recipe", "Import") are `primary` with `onPrimary`, as the mock's `.fab`.
  * - W4: the book's empty sections and its no-result states stand centred in the space below the header, clear of the
- *   floating action.
+ *   floating action; an empty section that shows no floating action keeps no room for one.
  * - W5: a no-result state's way out is an outlined button with its words in `primary`.
  * (W3, the spine's name in Literata Medium 15 sp, is asserted in CollectionSpinesTest.)
  */
@@ -250,6 +251,65 @@ class BookAgainstTheMockTest {
         assertCentred(LibraryTags.NOTHING_FOUND, LibraryTags.NOTHING_FOUND_CLEAR, above = LibraryTags.HEADER)
         await(LibraryTags.NEW)
         assertTrue("the state ends above New recipe", bounds(LibraryTags.NOTHING_FOUND).bottom <= bounds(LibraryTags.NEW).top)
+    }
+
+    /**
+     * An empty section that shows no floating action keeps no room for one: it reaches down to 8 dp above the screen's
+     * bottom edge (no navigation bar in these tests), and its way out tagged [last] stands within it unscrolled.
+     */
+    private fun assertNoRoomForAnAction(state: String, last: String, absent: String) {
+        await(state)
+        await(last)
+        assertFalse("no floating action is shown", exists(hasTestTag(absent)))
+        val root = compose.onRoot().fetchSemanticsNode().size.height.toFloat()
+        val region = bounds(state)
+        assertEquals("the section reaches 8 dp above the bottom (${region.bottom} of $root)", root - dp(8f), region.bottom, 1f)
+        val way = bounds(last)
+        assertTrue("the way out ($way) stands within the section ($region) without scrolling", way.bottom <= region.bottom + 0.5f)
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
+    fun atTwiceTheFontScaleNothingWrittenKeepsNoRoomForAnAction() {
+        show(LibraryView.OWN)
+        assertNoRoomForAnAction(LibraryTags.OWN_EMPTY, LibraryTags.WRITE, absent = LibraryTags.NEW)
+    }
+
+    /**
+     * In Russian at twice the font scale on a 320 × 640 dp phone the words of a book with nothing written are taller
+     * than the space: the section still reaches the bottom, and its way out is reached by scrolling it.
+     */
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun inRussianAtTwiceTheFontScaleNothingWrittenReachesTheBottomAndScrollsToItsWayOut() {
+        show(LibraryView.OWN)
+        await(LibraryTags.OWN_EMPTY)
+        await(LibraryTags.WRITE)
+        val root = compose.onRoot().fetchSemanticsNode().size.height.toFloat()
+        val region = bounds(LibraryTags.OWN_EMPTY)
+        assertEquals("the section reaches 8 dp above the bottom", root - dp(8f), region.bottom, 1f)
+        compose.onNodeWithTag(LibraryTags.WRITE).performScrollTo()
+        compose.waitForIdle()
+        val way = bounds(LibraryTags.WRITE)
+        assertTrue("scrolled, the way out ($way) stands within the section ($region)", way.bottom <= region.bottom + 0.5f)
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
+    fun atTwiceTheFontScaleAnEmptyImportedViewKeepsNoRoomForAnAction() {
+        show(LibraryView.MARKED, Mode.Serverless)
+        await(LibraryTags.MARKED_EMPTY)
+        val root = compose.onRoot().fetchSemanticsNode().size.height.toFloat()
+        assertEquals("the section reaches 8 dp above the bottom", root - dp(8f), bounds(LibraryTags.MARKED_EMPTY).bottom, 1f)
+    }
+
+    @Test
+    fun anEmptyImportedViewKeepsNoRoomForAnAction() {
+        show(LibraryView.MARKED, Mode.Serverless)
+        await(LibraryTags.MARKED_EMPTY)
+        val imports = compose.onAllNodes(hasTestTag(LibraryTags.IMPORT), useUnmergedTree = true).fetchSemanticsNodes()
+        assertEquals("only the section's own import, no floating one", 1, imports.size)
+        assertNoRoomForAnAction(LibraryTags.MARKED_EMPTY, LibraryTags.IMPORT, absent = LibraryTags.NEW)
     }
 
     // --- W5: the way out of a no-result state -----------------------------------------------------------------------

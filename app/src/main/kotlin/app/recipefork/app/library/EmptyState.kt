@@ -173,12 +173,14 @@ private fun EmptyLayout(
     headlineGap: Dp = 0.dp,
 ) {
     // Centred, the state fills the space it is given and stands in its middle, as the redesign draws it (`.empty`,
-    // T-309), kept above the keyboard where one is open so that its way out stays in reach.
+    // T-309), kept above the keyboard where one is open so that its way out stays in reach. The middle needs no margin
+    // above and below, only a narrow one where a large font fills the space.
     val placed = if (centred) modifier.fillMaxSize().imePadding() else modifier.fillMaxWidth()
+    val margin = if (centred) 8.dp else 24.dp
     Column(
         // At a large font scale the state scrolls rather than clipping its action; the scroll keeps the space's height
         // as the least the state takes, so that a short one is centred in it.
-        placed.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 24.dp).testTag(tag),
+        placed.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = margin).testTag(tag),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = if (centred) Arrangement.spacedBy(8.dp, Alignment.CenterVertically) else Arrangement.spacedBy(8.dp),
     ) {
