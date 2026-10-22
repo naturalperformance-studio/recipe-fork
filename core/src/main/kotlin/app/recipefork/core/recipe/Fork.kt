@@ -8,8 +8,8 @@ import java.util.UUID
  * AUTH-026).
  *
  * The fork is a new recipe in `local`, never sent, never published and not a replacement (FORK-008 sets that mark
- * only by the author's hand), whose parent is this recipe. Title, tags, language, serving count, equipment,
- * ingredients — with their notes and groups (DOM-022, DOM-023) — and steps travel whole (FORK-001 (1–5)), so a step's references, which name ingredient positions, resolve within the
+ * only by the author's hand), whose parent is this recipe. Title, tags, language, serving count, the finished dish's
+ * weight ([Recipe.finishedWeightGrams]), equipment, ingredients — with their notes and groups (DOM-022, DOM-023) — and steps travel whole (FORK-001 (1–5)), so a step's references, which name ingredient positions, resolve within the
  * fork (DOM-007), and a timer keeps its duration and its own name or the lack of one (FLOW-016).
  *
  * [byAuthor] says whose fork it is. The owner's own fork carries the description, the steps' notes, the text the recipe

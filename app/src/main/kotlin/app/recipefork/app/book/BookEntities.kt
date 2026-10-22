@@ -38,6 +38,8 @@ data class RecipeEntity(
     @ColumnInfo(name = "content_changed_at") val contentChangedAt: Instant,
     /** The text the recipe was made from, exactly as pasted; null for none (version 10). */
     @ColumnInfo(name = "source_text") val sourceText: String? = null,
+    /** What the finished dish weighs at its servings, in whole grams; null for none (version 11). */
+    @ColumnInfo(name = "finished_weight_grams") val finishedWeightGrams: Int? = null,
 )
 
 private const val CASCADE = ForeignKey.CASCADE

@@ -82,7 +82,7 @@ class RecipeFileUsUnitsTest {
         assertEquals(6, versionOf(written))
         assertEquals(RecipeFile.LAST_FORMAT_WITHOUT_US_UNITS, versionOf(written))
         assertEquals(content, RecipeFile.decode(written))
-        val later = RecipeFile.encode(RecipeFileContent.of(recipe, null, null)).replace("\"format_version\": 7", "\"format_version\": 9")
-        assertEquals(9, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
+        val later = RecipeFile.encode(RecipeFileContent.of(recipe, null, null)).replace("\"format_version\": 7", "\"format_version\": 10")
+        assertEquals(10, assertFailsWith<LaterRecipeFile> { RecipeFile.decode(later) }.formatVersion)
     }
 }

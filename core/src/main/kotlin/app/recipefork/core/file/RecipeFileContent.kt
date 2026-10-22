@@ -41,6 +41,8 @@ data class RecipeFileContent(
     val equipmentLabels: Map<Long, EntryLabels> = emptyMap(),
     /** The text the recipe was made from, exactly as it was pasted ([Recipe.sourceText]); null for none. */
     val sourceText: String? = null,
+    /** What the finished dish weighs at [servings], in whole grams ([Recipe.finishedWeightGrams]); null for none. */
+    val finishedWeightGrams: Int? = null,
 ) {
     companion object {
         /**
@@ -82,6 +84,7 @@ data class RecipeFileContent(
                 author = recipe.statedAuthor ?: ownerNickname,
                 parent = parent,
                 sourceText = recipe.sourceText,
+                finishedWeightGrams = recipe.finishedWeightGrams,
             )
         }
     }

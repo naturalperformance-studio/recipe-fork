@@ -40,7 +40,6 @@ class RecipeFileSourceTextTest {
 
     @Test
     fun `a source text is written as format 8 and reads back exactly`() {
-        assertEquals(8, RecipeFile.FORMAT_VERSION)
         val content = RecipeFileContent.of(recipe.withSourceText(pasted), null, null)
         assertEquals(pasted, content.sourceText)
         val written = RecipeFile.encode(content)

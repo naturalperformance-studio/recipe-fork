@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -239,6 +240,64 @@ class BookMigrationTest {
         }
     }
 
+    /** A book file of version 10, its tables exactly as that version created them, holding an own recipe and a found one. */
+    private fun writeVersion10() {
+        val file = context.getDatabasePath(book.fileName).also { it.parentFile?.mkdirs() }
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            VERSION_10.forEach(db::execSQL)
+            db.execSQL(
+                "insert into recipe values ('r10', null, null, 'NEVER', null, null, null, 'Pilaf', 'Slow', 'EN', 2, " +
+                    "'LOCAL', 0, 0, 0, 1000, 10000, 'Pilaf\nRice 300 g')",
+            )
+            db.execSQL("insert into ingredient values ('r10', 0, null, null, 'rice', 'EXACT', 'GRAM', '300', null, null, null, null)")
+            db.execSQL("insert into step values ('r10', 0, 'Simmer', null)")
+            db.execSQL(
+                "insert into recipe values ('f10', null, null, 'NEVER', 'anna', null, null, 'Found pie', '', null, 6, " +
+                    "'LINK_SHARED', 0, 0, 0, 2000, 2000, null)",
+            )
+            db.version = 10
+        }
+    }
+
+    // v0.44, T-318: a version-10 book, written before a recipe said what its finished dish weighs, opens with every
+    // recipe intact — own and found — and none weighed; then the own one is given a weight, and the book reopens with it.
+    @Test
+    fun aVersion10BookOpensWithEveryRecipeIntactAndNoFinishedWeight() = runBlocking {
+        writeVersion10()
+        val expected = Recipe.create(Instant.ofEpochMilli(1000), null, id = RecipeId("r10")).copy(
+            title = "Pilaf",
+            description = "Slow",
+            language = RecipeLanguage.EN,
+            servings = 2,
+            ingredients = listOf(Ingredient(0, null, null, "rice", UnitType.EXACT, QuantityUnit.GRAM, Rational.of(300))),
+            steps = listOf(Step(0, "Simmer")),
+            contentChangedAt = Instant.ofEpochMilli(10000),
+            sourceText = "Pilaf\nRice 300 g",
+        )
+        val database = BookDatabase.open(context, book) { error("a book of version 10 reads no dictionary") }
+        try {
+            assertEquals(11, database.openHelper.readableDatabase.version)
+            val repository = RecipeRepository(ActiveBook(book, database))
+            assertEquals(expected, repository.get(RecipeId("r10")))
+            assertNull(repository.get(RecipeId("r10"))!!.finishedWeightGrams)
+            val found = repository.get(RecipeId("f10"))!!
+            assertEquals("Found pie", found.title)
+            assertEquals(6, found.servings)
+            assertNull(found.finishedWeightGrams)
+            repository.save(expected.copy(finishedWeightGrams = 560))
+        } finally {
+            database.close()
+        }
+        val reopened = BookDatabase.open(context, book)
+        try {
+            val repository = RecipeRepository(ActiveBook(book, reopened))
+            assertEquals(expected.copy(finishedWeightGrams = 560), repository.get(RecipeId("r10")))
+            assertNull(repository.get(RecipeId("f10"))!!.finishedWeightGrams)
+        } finally {
+            reopened.close()
+        }
+    }
+
     // v0.39, T-279: a version-9 book, written before a recipe kept the text it was made from, opens with every recipe
     // intact and none keeping one; then one is given a text, and the book reopens with it exactly.
     @Test
@@ -255,7 +314,7 @@ class BookMigrationTest {
         val pasted = "Pancakes\n\n  200 g flour\r\n\t500 ml milk\n"
         val database = BookDatabase.open(context, book) { error("a book of version 9 reads no dictionary") }
         try {
-            assertEquals(10, database.openHelper.readableDatabase.version)
+            assertEquals(BookDatabase.VERSION, database.openHelper.readableDatabase.version)
             val repository = RecipeRepository(ActiveBook(book, database))
             assertEquals(expected, repository.get(RecipeId("r9")))
             repository.save(expected.withSourceText(pasted))
@@ -677,6 +736,15 @@ class BookMigrationTest {
     }
 
     internal companion object {
+        /**
+         * What Room generated for the book at version 10: version 9 with the text a recipe was made from. The identity
+         * hash stands in for that version's, which an upgrade does not read.
+         */
+        val VERSION_10: List<String> get() = VERSION_9.dropLast(1) + listOf(
+            "ALTER TABLE `recipe` ADD COLUMN `source_text` TEXT",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '00000000000000000000000000000010')",
+        )
+
         /**
          * What Room generated for the book at version 9: version 8 with the book's collections. The identity hash stands
          * in for that version's, which an upgrade does not read.
