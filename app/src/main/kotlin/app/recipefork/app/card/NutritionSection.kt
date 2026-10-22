@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -207,11 +208,30 @@ private fun NutritionSwitch(offered: List<NutritionShown>, shown: NutritionShown
                     onClick = { onChoose(choice) },
                     shape = SegmentedButtonDefaults.itemShape(index, offered.size),
                     modifier = Modifier.fillMaxHeight().padding(vertical = SWITCH_GAP).testTag(NutritionTags.segment(choice)),
-                    label = { Text(stringResource(labelOf(choice)), style = MaterialTheme.typography.labelLarge) },
+                    label = {
+                        Text(stringResource(labelOf(choice)), style = MaterialTheme.typography.labelLarge, modifier = Modifier.besideTheCheck())
+                    },
                 )
             }
         }
     }
+}
+
+/**
+ * A segment's label within the room its content leaves it: Material places the label after the check's room — the
+ * icon's size and its gap, kept whether the segment is chosen or not — yet measures it as wide as the whole content, so
+ * that a label wide enough to fill it would run under the segment's end. Measured in what remains, it wraps instead.
+ */
+private fun Modifier.besideTheCheck(): Modifier = layout { measurable, constraints ->
+    val room = (SegmentedButtonDefaults.IconSize + ButtonDefaults.IconSpacing).roundToPx()
+    val narrowed = if (constraints.hasBoundedWidth) {
+        val width = (constraints.maxWidth - room).coerceAtLeast(0)
+        constraints.copy(minWidth = minOf(constraints.minWidth, width), maxWidth = width)
+    } else {
+        constraints
+    }
+    val placeable = measurable.measure(narrowed)
+    layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
 }
 
 /** The switch's label for [shown]. */

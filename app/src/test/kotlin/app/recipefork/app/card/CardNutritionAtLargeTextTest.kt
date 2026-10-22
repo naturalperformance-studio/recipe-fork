@@ -2,7 +2,11 @@ package app.recipefork.app.card
 
 import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -14,6 +18,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -184,6 +190,47 @@ class CardNutritionAtLargeTextTest {
         assertTrue("segments as tall: $sizes", sizes.all { it.height == sizes[0].height })
     }
 
+    /**
+     * Each segment's label lies within its segment's content — inside the content padding at both ends, so never under
+     * the rounded end of the first or last segment nor against a divider — and its lines within the label.
+     */
+    private fun assertLabelsWithinTheirSegments() {
+        listOf(NutritionTags.SWITCH_PER_100_G, NutritionTags.SWITCH_PER_SERVING, NutritionTags.SWITCH_WHOLE).forEach { tag ->
+            val segment = compose.onNodeWithTag(tag).fetchSemanticsNode()
+            val density = segment.layoutInfo.density.density
+            val padding = ButtonDefaults.TextButtonContentPadding
+            val start = segment.boundsInRoot.left + padding.calculateStartPadding(LayoutDirection.Ltr).value * density
+            val end = segment.boundsInRoot.right - padding.calculateEndPadding(LayoutDirection.Ltr).value * density
+            val label = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and hasText("", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().single()
+            val bounds = label.boundsInRoot
+            assertTrue("$tag: the label ends at ${bounds.right}, past the content's end at $end", bounds.right <= end + 0.5f)
+            assertTrue("$tag: the label starts at ${bounds.left}, before the content's start at $start", bounds.left >= start - 0.5f)
+            val layouts = mutableListOf<TextLayoutResult>().also { label.config[SemanticsActions.GetTextLayoutResult].action!!(it) }
+            layouts.forEach { layout ->
+                assertTrue("$tag: a line runs past its label", (0 until layout.lineCount).all { layout.getLineRight(it) <= layout.size.width + 0.5f })
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h640dp")
+    fun onANarrowScreenTheChosenWholeDishWrapsWithinItsSegment() {
+        open(withNames("Sour cream", "Spice", weight = 560))
+        compose.scrollClearOfFork(NutritionTags.SWITCH)
+        compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).assertIsSelected()
+        assertLabelsWithinTheirSegments()
+        assertNotCut(NutritionTags.SWITCH)
+        assertThreeEqualSegments()
+        val (above, below) = switchGaps("Пищевая ценность, примерно")
+        assertEquals(8f, above, 0.5f)
+        assertEquals(8f, below, 0.5f)
+        val whole = compose.onNodeWithTag(NutritionTags.SWITCH_WHOLE).fetchSemanticsNode()
+        assertEquals(CardTarget.value, dp(whole, whole.touchBoundsInRoot.height), 0.5f)
+    }
+
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp")
     fun onANarrowScreenTheThreeSegmentsStayEqualAndTheirLabelsBreakRatherThanBeCut() {
@@ -191,6 +238,7 @@ class CardNutritionAtLargeTextTest {
         compose.onNodeWithTag(NutritionTags.SWITCH_PER_SERVING).assertIsSelected()
         assertThreeEqualSegments()
         assertNotCut(NutritionTags.SWITCH)
+        assertLabelsWithinTheirSegments()
         val (above, below) = switchGaps("Пищевая ценность, примерно")
         assertEquals(8f, above, 0.5f)
         assertEquals(8f, below, 0.5f)
