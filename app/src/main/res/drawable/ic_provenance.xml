@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The provenance glyph: a hollow node (the parent), a line with one knee, a filled node (this recipe).
+  Geometry of the redesign's g-prov symbol (24 x 24): hollow node r 3 at (6, 5) stroked 1.8; line from (6, 8) down to
+  14.5, a 4.5 knee to (10.5, 19), on to (14, 19), stroked 1.8 with round caps; filled node r 3.4 at (18, 19).
+  One colour throughout, so the icon tints with its container's content colour.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:name="parent"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:pathData="M3,5a3,3 0,1 0,6 0a3,3 0,1 0,-6 0z" />
+    <path
+        android:name="line"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M6,8V14.5A4.5,4.5 0,0 0,10.5 19H14" />
+    <path
+        android:name="recipe"
+        android:fillColor="#FF000000"
+        android:pathData="M14.6,19a3.4,3.4 0,1 0,6.8 0a3.4,3.4 0,1 0,-6.8 0z" />
+</vector>

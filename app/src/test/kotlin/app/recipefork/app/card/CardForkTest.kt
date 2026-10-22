@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -141,6 +143,18 @@ class CardForkTest {
             compose.forkFromTheCard()
             assertEquals("$state", before + 1, forks)
         }
+    }
+
+    // Scenario 4 of v0.41: the fork action draws the provenance glyph, once and unread; its words say what it does.
+    @Test
+    fun theForkActionDrawsTheProvenanceGlyph() {
+        show(save(recipe("Soup")).id)
+        val glyphs = compose.onAllNodes(
+            hasAnyAncestor(hasTestTag(CardTags.FORK)) and SemanticsMatcher.expectValue(DrawnIcon, R.drawable.ic_provenance),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()
+        assertEquals(1, glyphs.size)
+        assertNull(glyphs.single().config.getOrElseNullable(SemanticsProperties.ContentDescription) { null })
     }
 
     // A card of a recipe the book does not hold has nothing to fork.
