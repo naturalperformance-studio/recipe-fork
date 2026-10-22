@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The launcher icon's background: the theme's primary container (app_theme.xml), so the icon follows the theme. -->
-    <color name="ic_launcher_background">@color/theme_light_primaryContainer</color>
+    <!-- The launcher icon's colours (docs/brand/identity/mark-2.html, mark 2b): the mark in ink with its bent tine in
+         beet, on paper. Fixed, not the theme's: the icon looks the same whatever the theme. -->
+    <color name="ic_launcher_background">#FFF6F0E4</color>
+    <color name="ic_launcher_ink">#FF2B241E</color>
+    <color name="ic_launcher_beet">#FF8E3B46</color>
 </resources>
