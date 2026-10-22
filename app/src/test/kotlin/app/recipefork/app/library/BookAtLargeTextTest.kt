@@ -333,46 +333,43 @@ class BookAtLargeTextTest {
     // --- The search field -------------------------------------------------------------------------------------------
 
     /**
-     * The search field's label reads [label] on one line; focused, it rises onto the outline and stands whole below the
-     * tabs, and the field shows [placeholder] on one line.
+     * The search field at rest holds no label: the screen reader hears it named [name], and inside it, after the
+     * magnifier, stands [placeholder] whole — on more lines where a large font needs them, never cut — wholly below the
+     * tabs (T-309).
      */
-    private fun assertSearchField(label: String, placeholder: String) {
+    private fun assertSearchField(name: String, placeholder: String) {
         own("Soup")
         show(LibraryView.OWN)
-        await(LibraryTags.SEARCH_LABEL)
-        assertEquals(label, layoutOf(LibraryTags.SEARCH_LABEL).layoutInput.text.text)
-        assertEquals(1, layoutOf(LibraryTags.SEARCH_LABEL).lineCount)
-        compose.onNodeWithTag(LibraryTags.SEARCH).performClick()
-        compose.waitUntil(PATIENCE_MS) {
-            compose.onAllNodes(hasTestTag(LibraryTags.SEARCH_PLACEHOLDER), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-        }
+        await(LibraryTags.SEARCH_PLACEHOLDER)
         compose.waitForIdle()
+        val field = compose.onNodeWithTag(LibraryTags.SEARCH).fetchSemanticsNode().config
+        assertEquals(listOf(name), field[SemanticsProperties.ContentDescription])
         val shown = layoutOf(LibraryTags.SEARCH_PLACEHOLDER)
         assertEquals(placeholder, shown.layoutInput.text.text)
-        assertEquals(1, shown.lineCount)
-        assertEquals(1, layoutOf(LibraryTags.SEARCH_LABEL).lineCount)
-        // The pages of the views clip what stands above them: the risen label stands wholly below their top, under the tabs.
-        val risen = unclipped(hasTestTag(LibraryTags.SEARCH_LABEL))
-        val pages = unclipped(hasTestTag(LibraryTags.PAGER))
+        assertFalse("the hint is cut short", (0 until shown.lineCount).any(shown::isLineEllipsized) || shown.didOverflowHeight)
+        val hint = unclipped(hasTestTag(LibraryTags.SEARCH_PLACEHOLDER))
+        val magnifier = unclipped(hasTestTag(LibraryTags.SEARCH_ICON))
+        assertTrue("the magnifier ($magnifier) before the hint ($hint)", magnifier.right <= hint.left + 0.5f)
+        val search = unclipped(hasTestTag(LibraryTags.SEARCH))
         val tabs = unclipped(hasTestTag(LibraryTags.SWITCH))
-        assertTrue("the label ($risen) stands below the top of the page ($pages)", risen.top >= pages.top - 0.5f)
-        assertTrue("the label ($risen) stands below the tabs ($tabs)", risen.top >= tabs.bottom - 0.5f)
+        assertTrue("the field ($search) stands below the tabs ($tabs)", search.top >= tabs.bottom - 0.5f)
+        assertTrue("the hint ($hint) inside the field ($search)", hint.top >= search.top && hint.bottom <= search.bottom)
     }
 
     @Test
-    fun theSearchFieldHasAShortLabel() = assertSearchField("Search", "Search by title or ingredient")
+    fun theSearchFieldIsNamedAndShowsItsHint() = assertSearchField("Search", "Search by title or ingredient")
 
     @Test
     @Config(qualifiers = "w320dp-h640dp", fontScale = 2f)
-    fun theSearchFieldHasAShortLabelAtTwiceTheFontScale() = assertSearchField("Search", "Search by title or ingredient")
+    fun theSearchFieldIsNamedAndShowsItsHintAtTwiceTheFontScale() = assertSearchField("Search", "Search by title or ingredient")
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp")
-    fun inRussianTheSearchFieldHasAShortLabel() = assertSearchField("Поиск", "Поиск по названию или ингредиенту")
+    fun inRussianTheSearchFieldIsNamedAndShowsItsHint() = assertSearchField("Поиск", "Поиск по названию или ингредиенту")
 
     @Test
     @Config(qualifiers = "ru-w320dp-h640dp", fontScale = 2f)
-    fun inRussianTheSearchFieldHasAShortLabelAtTwiceTheFontScale() =
+    fun inRussianTheSearchFieldIsNamedAndShowsItsHintAtTwiceTheFontScale() =
         assertSearchField("Поиск", "Поиск по названию или ингредиенту")
 
     // --- The empty and nothing-found states and the view's action ---------------------------------------------------

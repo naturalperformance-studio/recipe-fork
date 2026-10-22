@@ -3,6 +3,7 @@ package app.recipefork.app.library
 import android.os.Bundle
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -174,7 +175,8 @@ class LibrarySessionTest {
 
     private fun assertOwnSearch(query: String, order: String) {
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(LibraryTags.SEARCH)).fetchSemanticsNodes().size == 1 }
-        assertEquals(listOf(query), compose.textsOf(LibraryTags.SEARCH).drop(1))
+        // What is typed in the field — its hint stands in it while it is empty (T-309).
+        assertEquals(query, compose.onNodeWithTag(LibraryTags.SEARCH).fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
         assertEquals(listOf(order), compose.textsOf(LibraryTags.ORDER))
     }
 

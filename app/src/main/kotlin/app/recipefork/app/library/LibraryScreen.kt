@@ -915,6 +915,9 @@ private fun FloatingAction(
         icon = { Icon(painterResource(icon), contentDescription = null) },
         onClick = onClick,
         expanded = expanded,
+        // The book's one action in the action colour, as the redesign draws it (`.fab`, T-309).
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         // The action reads its words to the screen reader, shrunk to its icon or not: the button keeps its shown words
         // from the screen reader, so they are given to the button itself.
         modifier = modifier
@@ -1097,6 +1100,7 @@ private fun NothingWritten(onWrite: () -> Unit, modifier: Modifier = Modifier) {
         action = EmptyAction(stringResource(R.string.library_own_new), R.drawable.ic_new_recipe, LibraryTags.WRITE, onWrite),
         tag = LibraryTags.OWN_EMPTY,
         modifier = modifier,
+        centred = true,
     )
 }
 
@@ -1361,6 +1365,7 @@ private fun MarkedList(
                     },
                     tag = LibraryTags.MARKED_EMPTY,
                     modifier = Modifier.padding(bottom = bottom),
+                    centred = true,
                 )
             }
             // An empty view with no query keeps its empty state, with no header to search nothing with.
@@ -1552,8 +1557,8 @@ object LibraryTags {
     const val HEADER_AREA = "library-header-area"
     const val SEARCH = "library-search"
     const val SEARCH_CLEAR = "library-search-clear"
-    /** The search field's short label, and the longer words inside it, shown while it is focused and empty. */
-    const val SEARCH_LABEL = "library-search-label"
+    /** The magnifier at the search field's start, and the words inside it, shown while it is empty (T-309). */
+    const val SEARCH_ICON = "library-search-icon"
     const val SEARCH_PLACEHOLDER = "library-search-placeholder"
     const val ORDER = "library-order"
     fun order(order: BookOrder) = "library-order-${order.name.lowercase()}"

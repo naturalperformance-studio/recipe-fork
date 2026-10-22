@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A magnifier: the decorative mark at the start of the recipe book's search field.
+  Geometry of the redesign's i-search symbol (24 x 24): a ring r 6 at (10.5, 10.5) and a handle from (15, 15) to
+  (20, 20), both stroked 2, the handle with round caps. One colour, so the icon tints with its container.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:name="ring"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:pathData="M4.5,10.5a6,6 0,1 0,12 0a6,6 0,1 0,-12 0z" />
+    <path
+        android:name="handle"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M15,15L20,20" />
+</vector>

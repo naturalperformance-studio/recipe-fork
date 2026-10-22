@@ -30,8 +30,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
 import app.recipefork.app.book.CollectionRow
 import app.recipefork.app.ui.appColors
@@ -67,8 +70,8 @@ internal fun CollectionsRow(collections: List<CollectionRow>, onOpen: (String) -
 
 /**
  * One collection of the shelf, as a book's spine on raised paper, lighter than the page in both schemes (T-308): a 3 dp
- * stripe at its start, its name on one line — a long one ending with an ellipsis — and its count of recipes under it;
- * at least 48 dp high, growing with the text. Tapping it opens it.
+ * stripe at its start, its name on one line — a long one ending with an ellipsis — in the reading face ([spineNameStyle])
+ * and its count of recipes under it; at least 48 dp high, growing with the text. Tapping it opens it.
  */
 @Composable
 private fun CollectionSpine(collection: CollectionRow, onOpen: (String) -> Unit, enabled: Boolean) {
@@ -111,7 +114,7 @@ private fun CollectionSpine(collection: CollectionRow, onOpen: (String) -> Unit,
             Column {
                 Text(
                     collection.name,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = spineNameStyle(),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.testTag(CollectionScreenTags.cardName(collection.collectionId)),
@@ -126,6 +129,17 @@ private fun CollectionSpine(collection: CollectionRow, onOpen: (String) -> Unit,
         }
     }
 }
+
+/**
+ * A spine's name is read: Literata Medium at 15 sp, as the redesign sets a spine's name (`.spine .a`, 14.5 px Medium,
+ * T-309), on a 20 sp line that keeps the face's tall letters whole and the spine at 48 dp with its count.
+ */
+@Composable
+internal fun spineNameStyle(): TextStyle =
+    MaterialTheme.typography.titleMedium.copy(fontSize = SPINE_NAME_SIZE, lineHeight = SPINE_NAME_LINE, fontWeight = FontWeight.Medium)
+
+internal val SPINE_NAME_SIZE = 15.sp
+private val SPINE_NAME_LINE = 20.sp
 
 /** A spine is at least this high, and this wide — a touch target — and grows with its words. */
 internal val SPINE_MIN_HEIGHT = 48.dp
