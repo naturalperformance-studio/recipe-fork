@@ -7,11 +7,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -19,9 +23,14 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -47,8 +56,9 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +81,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
@@ -86,14 +98,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import app.recipefork.app.Mode
 import app.recipefork.app.R
@@ -137,6 +152,7 @@ import app.recipefork.app.timer.rememberCardTimers
 import app.recipefork.app.ui.SnackbarAction
 import app.recipefork.app.ui.FittedText
 import app.recipefork.app.ui.FittedWords
+import app.recipefork.app.ui.LineFitText
 import app.recipefork.app.ui.fitWordsTogether
 import app.recipefork.app.ui.widestWord
 import app.recipefork.app.ui.isLargeText
@@ -146,6 +162,7 @@ import app.recipefork.core.recipe.RecipeState
 import app.recipefork.core.recipe.SentStatus
 import app.recipefork.core.search.BookOrder
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -172,9 +189,9 @@ const val OWN_PAGE = 30
  * serving count the reader usually cooks for (FLOW-017), the side the editor's drag column stands on, and the clearing
  * of saved media (FLOW-060). The shopping list's action, before it, opens the shopping list ([onOpenShopping], FLOW-074).
  *
- * The title and the settings action stand in a top bar that scrolls away as a list goes down and returns as it goes
- * up; the tabs of the two views stay beneath it, and each view's search field and filters scroll away and return the
- * same way ([ScrollAwayHeader], v0.38). The views are pages swiped between, the tabs following; each keeps its own place
+ * The title, on its own row under the shopping list's and the settings' actions ([BookTitleBar], v0.42), scrolls away
+ * with them as a list goes down and returns as it goes up; the tabs of the two views — the own recipes first — stay
+ * beneath it, and each view's search field and filters scroll away and return the same way ([ScrollAwayHeader], v0.38). The views are pages swiped between, the tabs following; each keeps its own place
  * in its list. A view's action — a new recipe, or the import of a file — floats at the bottom right, shrinking to its
  * icon while the list goes down, and kept to its icon at large text. The screen is drawn edge to edge: the bar stands
  * below the status bar, the action above the navigation bar, and the lists run under the navigation bar, their last
@@ -204,7 +221,7 @@ fun LibraryScreen(
     val bookKitchen = rememberBookKitchen(kitchen)
     val timers = rememberCardTimers()
     // The session holds the view shown; the pager follows it, and tells it the view a swipe settles on.
-    val pager = remember { PagerState(currentPage = view.ordinal) { VIEWS.size } }
+    val pager = remember { PagerState(currentPage = pageOf(view)) { VIEWS.size } }
     val focus = LocalFocusManager.current
     val snackbars = remember { SnackbarHostState() }
     // The reader shows a view: one shown in place of another ends the notice the book was giving (v0.38).
@@ -219,7 +236,7 @@ fun LibraryScreen(
     }
     // A field left focused on the view moved away from would keep its page composed beside the one shown.
     LaunchedEffect(pager) { snapshotFlow { pager.isScrollInProgress }.collect { if (it) focus.clearFocus() } }
-    LaunchedEffect(view) { if (pager.currentPage != view.ordinal) pager.animateScrollToPage(view.ordinal) }
+    LaunchedEffect(view) { if (pager.currentPage != pageOf(view)) pager.animateScrollToPage(pageOf(view)) }
     // Each view's place in its list, kept here so that the view's action knows which way its list last moved.
     val markedList = rememberLazyListState()
     val ownList = rememberLazyListState()
@@ -277,55 +294,58 @@ fun LibraryScreen(
                                 onSelectAll = { session.selectAll(chosen.view, selectables[chosen.view].orEmpty().map { it.recipeId }) },
                                 onClose = session::endSelection,
                             )
-                        } else TopAppBar(
-                            title = {
-                                Text(
-                                    text = stringResource(R.string.library_title),
-                                    // Material sets the title in 12 dp past the room it is measured for: a title wrapped
-                                    // at a large font scale would reach under the first action.
-                                    modifier = Modifier.padding(end = TITLE_CLEARANCE).semantics { heading() }.testTag(LibraryTags.TITLE),
-                                )
-                            },
-                            actions = {
-                                BlockAction(
-                                    R.drawable.ic_shopping_cart,
-                                    stringResource(R.string.shopping_open),
-                                    LibraryTags.SHOPPING,
-                                    onClick = onOpenShopping,
-                                    action = stringResource(R.string.shopping_open_action),
-                                )
-                                BlockAction(
-                                    R.drawable.ic_settings,
-                                    stringResource(R.string.settings_open),
-                                    LibraryTags.SETTINGS,
-                                    onClick = onOpenSettings,
-                                    modifier = Modifier.padding(end = 4.dp),
-                                    action = stringResource(R.string.settings_open_action),
-                                )
-                            },
+                        } else BookTitleBar(
                             scrollBehavior = bar,
                             modifier = Modifier.testTag(LibraryTags.TOP_BAR),
-                        )
+                        ) {
+                            BlockAction(
+                                R.drawable.ic_shopping_cart,
+                                stringResource(R.string.shopping_open),
+                                LibraryTags.SHOPPING,
+                                onClick = onOpenShopping,
+                                action = stringResource(R.string.shopping_open_action),
+                            )
+                            BlockAction(
+                                R.drawable.ic_settings,
+                                stringResource(R.string.settings_open),
+                                LibraryTags.SETTINGS,
+                                onClick = onOpenSettings,
+                                action = stringResource(R.string.settings_open_action),
+                            )
+                        }
                     }
                 }
-                // The switch of views stays above the list and never scrolls with it (FLOW-034 (1)).
-                // The width each tab's words have: the row's share less the tab's margins, the window's width until the
-                // row is laid out (the row asks its tabs' intrinsic height, so the words cannot wait on their constraints).
+                // The switch of views stays above the list and never scrolls with it (FLOW-034 (1)); the own recipes
+                // first (decisions.md #1). Its tabs stand inside the screen's margins, a hairline under them.
+                // The width each tab's words have: the row's share less the tab's margins, the window's width less the
+                // row's margins until the row is laid out (the row asks its tabs' intrinsic height, so the words cannot
+                // wait on their constraints).
                 var rowWidth by remember { mutableIntStateOf(0) }
-                val words = (rowWidth.takeIf { it > 0 } ?: LocalWindowInfo.current.containerSize.width) / VIEWS.size -
-                    with(LocalDensity.current) { (TAB_TEXT_PADDING * 2).roundToPx() }
+                val density = LocalDensity.current
+                val window = LocalWindowInfo.current.containerSize.width - with(density) { (TAB_ROW_MARGIN * 2).roundToPx() }
+                val words = (rowWidth.takeIf { it > 0 } ?: window) / VIEWS.size - with(density) { (TAB_TEXT_PADDING * 2).roundToPx() }
                 // In [Mode.Serverless] the marked view holds only the recipes imported from files, and is named for them.
                 val markedLabel = if (mode == Mode.Serverless) R.string.library_view_marked_serverless else R.string.library_view_marked
-                val labelSize = rememberTabLabelSize(listOf(stringResource(markedLabel), stringResource(R.string.library_view_own)), words)
+                val labelSize = rememberTabLabelSize(listOf(stringResource(R.string.library_view_own), stringResource(markedLabel)), words)
+                val page = pager.currentPage
                 PrimaryTabRow(
-                    selectedTabIndex = pager.currentPage,
-                    modifier = Modifier.onSizeChanged { rowWidth = it.width }.testTag(LibraryTags.SWITCH),
+                    selectedTabIndex = page,
+                    modifier = Modifier
+                        .padding(horizontal = TAB_ROW_MARGIN)
+                        .onSizeChanged { rowWidth = it.width }
+                        .testTag(LibraryTags.SWITCH),
+                    indicator = { ViewIndicator(Modifier.tabIndicatorOffset(page, matchContentSize = false)) },
                 ) {
                     val markedAction =
                         if (mode == Mode.Serverless) R.string.library_view_marked_action_serverless else R.string.library_view_marked_action
                     // While entries are chosen the view does not change: the tabs do not respond (v0.38).
-                    ViewTab(LibraryView.MARKED, shown, markedLabel, markedAction, choose, words, labelSize, enabled = !selecting)
-                    ViewTab(LibraryView.OWN, shown, R.string.library_view_own, R.string.library_view_own_action, choose, words, labelSize, enabled = !selecting)
+                    VIEWS.forEach { tab ->
+                        if (tab == LibraryView.OWN) {
+                            ViewTab(tab, shown, R.string.library_view_own, R.string.library_view_own_action, choose, words, labelSize, enabled = !selecting)
+                        } else {
+                            ViewTab(tab, shown, markedLabel, markedAction, choose, words, labelSize, enabled = !selecting)
+                        }
+                    }
                 }
             }
         },
@@ -632,8 +652,14 @@ private fun RevealRestored(
 /** The key of the row of collections among a list's items: no recipe's identity is it. */
 private const val COLLECTIONS_KEY = "collections"
 
-/** The views in the order of their tabs and pages: a view's page is its ordinal. */
-private val VIEWS = LibraryView.entries
+/**
+ * The views in the order of their tabs and pages: the reader's own recipes first, then the marked ones — those from
+ * files in [Mode.Serverless] (decisions.md #1, v0.42). The book opens on the view last shown, kept by name (FLOW-058).
+ */
+private val VIEWS = listOf(LibraryView.OWN, LibraryView.MARKED)
+
+/** The page, and the tab, of [view]. */
+private fun pageOf(view: LibraryView): Int = VIEWS.indexOf(view)
 
 /** The room kept under a list's last entry for the view's action: the action's usual height and its margins. */
 private val ACTION_ROOM = 88.dp
@@ -643,6 +669,100 @@ private val ACTION_MARGINS = 32.dp
 
 /** How long a view waits on its list before it shows that the list is coming, so that a quick one shows no flash. */
 internal const val LOADING_DELAY_MS = 300L
+
+/**
+ * The book's title bar (redesign-1 § 5 «Титул книги»): a row of its actions, 48 dp, at its end — the shopping list and
+ * the settings — and under them, on a row of its own, the title «Моя книга рецептов» in Literata 28 sp; at a large font
+ * scale it is fitted to its row ([LineFitText]), never cut. It scrolls away whole as a list goes down and returns as it
+ * goes up, as Material's top bar does with [scrollBehavior] ("enter always"): its height is what has not scrolled away,
+ * the rest clipped above. Its ground is the top bar's, the scrolled colour while a list runs beneath it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BookTitleBar(
+    scrollBehavior: TopAppBarScrollBehavior,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit,
+) {
+    val state = scrollBehavior.state
+    val colours = TopAppBarDefaults.topAppBarColors()
+    val overlapped by remember(state) { derivedStateOf { state.overlappedFraction > 0.01f } }
+    val ground by animateColorAsState(if (overlapped) colours.scrolledContainerColor else colours.containerColor)
+    // The bar's whole height, so that the scroll knows how far it may take it: read here, so that a new height
+    // recomposes the bar and sets the limit anew.
+    var whole by remember { mutableIntStateOf(0) }
+    val limit = -whole.toFloat()
+    SideEffect { if (limit < 0f && state.heightOffsetLimit != limit) state.heightOffsetLimit = limit }
+    Surface(modifier, color = ground, contentColor = colours.titleContentColor) {
+        Layout(
+            content = {
+                Column(Modifier.fillMaxWidth().onSizeChanged { whole = it.height }) {
+                    Row(
+                        Modifier.fillMaxWidth().height(BAR_ROW).padding(horizontal = BAR_ROW_PADDING),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = actions,
+                    )
+                    // At a large font scale it keeps to one line as far as its size at the usual scale allows, else takes
+                    // two, as the other bars' titles do (T-297), so that the first screen still reaches the recipes.
+                    BoxWithConstraints(Modifier.padding(start = BOOK_TITLE_MARGIN, end = BOOK_TITLE_MARGIN, bottom = BOOK_TITLE_BOTTOM)) {
+                        LineFitText(
+                            stringResource(R.string.library_title),
+                            bookTitleStyle(),
+                            constraints.maxWidth,
+                            Modifier.semantics { heading() }.testTag(LibraryTags.TITLE),
+                        )
+                    }
+                }
+            },
+            modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets).clipToBounds(),
+        ) { measurables, constraints ->
+            val bar = measurables.single().measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+            val shown = (bar.height + state.heightOffset).roundToInt().coerceIn(0, bar.height)
+            layout(bar.width, shown) { bar.place(0, shown - bar.height) }
+        }
+    }
+}
+
+/** The book's title: Literata, Medium, 28 sp, its lines 1.1 apart (redesign-1 § 4.1 «Книга · «Мои рецепты»»). */
+@Composable
+private fun bookTitleStyle(): TextStyle =
+    MaterialTheme.typography.headlineSmall.copy(fontSize = BOOK_TITLE_SIZE, lineHeight = BOOK_TITLE_SIZE * 1.1f, fontWeight = FontWeight.Medium)
+
+/**
+ * The mark under the tab of the view shown (redesign-1 § 5 «Разделы-закладки»): a 2.5 dp bar in `primary`, its top
+ * corners rounded, across the middle 68 % of the tab. [modifier] places it under the tab and gives it the tab's width.
+ */
+@Composable
+private fun ViewIndicator(modifier: Modifier) {
+    Box(modifier) {
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(INDICATOR_SHARE)
+                .height(INDICATOR_HEIGHT)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = INDICATOR_CORNER, topEnd = INDICATOR_CORNER))
+                .testTag(LibraryTags.TAB_INDICATOR),
+        )
+    }
+}
+
+/** The height of the bar's row of actions, and the room at its ends. */
+private val BAR_ROW = 48.dp
+private val BAR_ROW_PADDING = 4.dp
+
+/** The book's title: its size, the room at its sides, and under it, above the tabs. */
+private val BOOK_TITLE_SIZE = 28.sp
+private val BOOK_TITLE_MARGIN = 20.dp
+private val BOOK_TITLE_BOTTOM = 8.dp
+
+/** The margins of the row of tabs, the screen's. */
+private val TAB_ROW_MARGIN = 16.dp
+
+/** The indicator of the tab shown: its share of the tab's width, its height and the rounding of its top corners. */
+private const val INDICATOR_SHARE = 0.68f
+private val INDICATOR_HEIGHT = 2.5.dp
+private val INDICATOR_CORNER = 2.dp
 
 @Composable
 private fun ViewTab(
@@ -661,6 +781,8 @@ private fun ViewTab(
         onClick = { choose(tab) },
         text = { TabLabel(stringResource(label), width, size) },
         enabled = enabled,
+        // The words of the tab shown in the ink, the others muted; the indicator alone carries the accent.
+        selectedContentColor = MaterialTheme.colorScheme.onSurface,
         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .heightIn(min = 48.dp)
@@ -1373,7 +1495,7 @@ object LibraryTags {
     const val CLEAR_MEDIA_STATEMENT = SettingsTags.CLEAR_MEDIA_STATEMENT
     const val CLEAR_MEDIA_CONFIRM = SettingsTags.CLEAR_MEDIA_CONFIRM
     const val CLEAR_MEDIA_DECLINE = SettingsTags.CLEAR_MEDIA_DECLINE
-    /** The book's top bar: its title and its settings action, which scrolls away as a list goes down. */
+    /** The book's title bar: its actions and, under them, its title; it scrolls away as a list goes down. */
     const val TOP_BAR = "library-top-bar"
     const val SWITCH = "library-switch"
     /** The pages of the two views, swiped between. */
@@ -1447,6 +1569,8 @@ object LibraryTags {
     fun tab(view: LibraryView) = "library-tab-${view.name.lowercase()}"
     /** The words of a tab, found inside the node tagged with [tab]. */
     const val TAB_LABEL = "library-tab-label"
+    /** The mark under the tab of the view shown. */
+    const val TAB_INDICATOR = "library-tab-indicator"
     /** The parts of an empty state tagged [state]: its picture, its headline and its sentence. */
     fun emptyPicture(state: String) = "$state-picture"
     fun emptyHeadline(state: String) = "$state-headline"

@@ -240,11 +240,14 @@ class MenuOrderTest {
         )
     }
 
+    // On a phone of the usual height: under the book's title on its own row (v0.42), a 470 dp window leaves an entry's
+    // menu no room beside its ⋮.
     @Test
+    @Config(qualifiers = "w360dp-h640dp")
     fun everyMenuListsItsItemsInOneOrder() = assertEveryMenuInOneOrder(english)
 
     @Test
-    @Config(qualifiers = "ru")
+    @Config(qualifiers = "ru-w360dp-h640dp")
     fun inRussianEveryMenuListsItsItemsInOneOrder() = assertEveryMenuInOneOrder(russian)
 
     /**

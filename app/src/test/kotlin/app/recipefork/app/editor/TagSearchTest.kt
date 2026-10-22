@@ -82,7 +82,7 @@ class TagSearchTest {
         compose.setContent { MaterialTheme { LibraryOrEditor(session, recipes, environment, opened) } }
         compose.onNodeWithTag(LibraryTags.tab(LibraryView.OWN)).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(LibraryTags.WRITE), PATIENCE_MS)
-        compose.onNodeWithTag(LibraryTags.WRITE).performClick()
+        compose.onNodeWithTag(LibraryTags.WRITE).performScrollTo().performClick()
         compose.onNodeWithTag(LibraryTags.FROM_SCRATCH).performClick()
         compose.waitUntilExactlyOneExists(hasTestTag(EditorTags.TAG_SEARCH), PATIENCE_MS)
         return RecipeId(requireNotNull(session.editing.value))
