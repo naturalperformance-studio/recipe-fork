@@ -1,98 +1,131 @@
 # Animal: meat products — sausages, ham, bacon, smoked and cured meats, pâté, canned meat (3800-3999).
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 3000-4999
 
 # колбаса
-3800	колбаса	sausage			g=1
-3801	колбаса варёная	cooked sausage	3800		g=1
-3802	докторская колбаса	Doktorskaya sausage	3800		g=1
-3803	колбаса копчёная	smoked sausage	3800		g=1
-3804	колбаса сырокопчёная	dry-cured sausage	3800		g=1
-3805	колбаса полукопчёная	semi-smoked sausage	3800		g=1
-3806	колбаса варёно-копчёная	cooked smoked sausage	3800		g=1
-3807	салями	salami	3800		g=1
-3808	пепперони	pepperoni	3800		g=1
-3809	чорисо	chorizo	3800		g=1
-3810	сервелат	cervelat	3800		g=1
-3811	ливерная колбаса	liverwurst	3800		g=1
-3812	кровяная колбаса	blood sausage	3800		g=1
-3813	охотничьи колбаски	hunter's sausages	3800	false	g=1 pc=50
+# колбаса → Skurikhin «Докторская» (3.6.1.5, p. 72-73): boiled sausage, what колбаса means in a recipe
+3800	колбаса	sausage			g=1				kcal=257 protein=12.8 fat=22.2 carbs=1.5	skurikhin:Докторская
+# колбаса варёная → Skurikhin «Докторская» (3.6.1.5, p. 72-73)
+3801	колбаса варёная	cooked sausage	3800		g=1				kcal=257 protein=12.8 fat=22.2 carbs=1.5	skurikhin:Докторская
+# Skurikhin 3.6.1.5, p. 72-73
+3802	докторская колбаса	Doktorskaya sausage	3800		g=1				kcal=257 protein=12.8 fat=22.2 carbs=1.5	skurikhin:Докторская
+# колбаса копчёная → Skurikhin «Московская» cooked smoked (3.6.5.2, p. 76-77)
+3803	колбаса копчёная	smoked sausage	3800		g=1				kcal=406 protein=19.1 fat=36.6 carbs=0.2	skurikhin:Московская
+# колбаса сырокопчёная → Skurikhin «Брауншвейгская» (3.6.7.1, p. 76-77)
+3804	колбаса сырокопчёная	dry-cured sausage	3800		g=1				kcal=491 protein=27.7 fat=42.2 carbs=0.2	skurikhin:Брауншвейгская
+# колбаса полукопчёная → Skurikhin «Таллинская» (3.6.6.4, p. 76-77)
+3805	колбаса полукопчёная	semi-smoked sausage	3800		g=1				kcal=373 protein=17.1 fat=33.8 carbs=0.2	skurikhin:Таллинская
+# колбаса варёно-копчёная → Skurikhin «Московская» (3.6.5.2, p. 76-77)
+3806	колбаса варёно-копчёная	cooked smoked sausage	3800		g=1				kcal=406 protein=19.1 fat=36.6 carbs=0.2	skurikhin:Московская
+3807	салями	salami	3800		g=1				kcal=378 protein=21.07 fat=31.65 carbs=0.72	fdc:174582
+3808	пепперони	pepperoni	3800		g=1				kcal=504 protein=19.25 fat=46.28 carbs=1.18	fdc:174575
+# чорисо → fdc:172938 dry or hard pork salami: Spanish chorizo is a dry-cured pork sausage; FoodData Central lists only fresh Mexican chorizo
+3809	чорисо	chorizo	3800		g=1				kcal=407 protein=22.58 fat=33.72 carbs=1.6	fdc:172938
+# Skurikhin 3.6.7.6, p. 78-79
+3810	сервелат	cervelat	3800		g=1				kcal=461 protein=24 fat=40.5 carbs=0.2	skurikhin:Сервелат
+3811	ливерная колбаса	liverwurst	3800		g=1				kcal=326 protein=14.1 fat=28.5 carbs=2.2	fdc:173870
+3812	кровяная колбаса	blood sausage	3800		g=1				kcal=379 protein=14.6 fat=34.5 carbs=1.29	fdc:171618
+# Skurikhin 3.6.6.3, p. 76-77
+3813	охотничьи колбаски	hunter's sausages	3800	false	g=1 pc=50				kcal=463 protein=25.3 fat=40 carbs=0.3	skurikhin:Охотничьи колбаски
 3814	суджук	sujuk	3800		g=1
 3815	казы	kazy	3800		g=1
-3816	мортаделла	mortadella	3800		g=1
+3816	мортаделла	mortadella	3800		g=1				kcal=311 protein=16.37 fat=25.39 carbs=3.05	fdc:174573
 3817	купаты	kupaty	3800	false	g=1 pc=100
-3818	колбаски для гриля	grilling sausages	3800	false	g=1 pc=100
+# колбаски для гриля → fdc:171622 bratwurst, pork and beef
+3818	колбаски для гриля	grilling sausages	3800	false	g=1 pc=100				kcal=323 protein=14.3 fat=27.8 carbs=2.98	fdc:171622
 3819	баварские колбаски	Bavarian sausages	3800	false	g=1 pc=80
-3820	колбаса молочная	milk sausage	3800		g=1
-3821	колбаса куриная	chicken sausage	3800		g=1
-3822	фуэт	fuet	3800		g=1
-3823	колбаса краковская	Krakowska sausage	3800		g=1
+# Skurikhin 3.6.1.7, p. 72-73
+3820	колбаса молочная	milk sausage	3800		g=1				kcal=252 protein=11.7 fat=22.8 carbs=0.2	skurikhin:Молочная
+# колбаса куриная → Skurikhin «Подмосковная (с куриным мясом)» boiled sausage (3.6.1.15, p. 74-75)
+3821	колбаса куриная	chicken sausage	3800		g=1				kcal=180 protein=17.2 fat=11.6 carbs=1.7	skurikhin:Подмосковная (с куриным мясом)
+# фуэт → fdc:172938 dry or hard pork salami: fuet is a thin dry-cured pork sausage
+3822	фуэт	fuet	3800		g=1				kcal=407 protein=22.58 fat=33.72 carbs=1.6	fdc:172938
+# колбаса краковская → fdc:174577 Polish sausage, pork
+3823	колбаса краковская	Krakowska sausage	3800		g=1				kcal=326 protein=14.1 fat=28.72 carbs=1.63	fdc:174577
 3824	колбаса домашняя	homemade sausage	3800		g=1
 3825	чевапчичи	ćevapi	3800	false	g=1 pc=40
 
 # сосиски, сардельки
-3830	сосиски	frankfurters		false	g=1 pc=50
-3831	сосиски молочные	milk frankfurters	3830	false	g=1 pc=50
-3832	сосиски куриные	chicken frankfurters	3830	false	g=1 pc=50
-3834	сосиски для хот-догов	hot dog sausages	3830	false	g=1 pc=60
+# сосиски → Skurikhin, СОСИСКИ «Молочные» (3.6.3.2, p. 74-75), the standard frankfurter
+3830	сосиски	frankfurters		false	g=1 pc=50				kcal=261 protein=11 fat=23.9 carbs=0.4	skurikhin:Сосиски молочные
+# Skurikhin 3.6.3.2, p. 74-75
+3831	сосиски молочные	milk frankfurters	3830	false	g=1 pc=50				kcal=261 protein=11 fat=23.9 carbs=0.4	skurikhin:Сосиски молочные
+3832	сосиски куриные	chicken frankfurters	3830	false	g=1 pc=50				kcal=223 protein=15.51 fat=16.19 carbs=2.74	fdc:171624
+3834	сосиски для хот-догов	hot dog sausages	3830	false	g=1 pc=60				kcal=290 protein=10.26 fat=25.76 carbs=4.17	fdc:172968
 3835	мини-сосиски	cocktail sausages	3830	false	g=1 pc=15
 3836	сосиски с сыром	cheese frankfurters	3830	false	g=1 pc=50
-3840	сардельки	thick sausages		false	g=1 pc=100
+# сардельки → Skurikhin, САРДЕЛЬКИ «1 сорта» (3.6.2.2, p. 74-75)
+3840	сардельки	thick sausages		false	g=1 pc=100				kcal=202 protein=10.3 fat=17.2 carbs=1.5	skurikhin:Сардельки 1 сорта
 
 # ветчина
-3850	ветчина	ham			g=1
+# ветчина → fdc:168295 cured ham, boneless, unheated: sliced ham as sold
+3850	ветчина	ham			g=1				kcal=162 protein=18.26 fat=8.39 carbs=2.28	fdc:168295
 3851	ветчина варёная	cooked ham	3850		g=1
-3852	ветчина копчёная	smoked ham	3850		g=1
+3852	ветчина копчёная	smoked ham	3850		g=1				kcal=246 protein=18.49 fat=18.52 carbs=0.06	fdc:167875
 3853	хамон	jamón	3850		g=1
 3854	прошутто	prosciutto	3850		g=1
 3855	пармская ветчина	Parma ham	3850		g=1
-3856	ветчина из индейки	turkey ham	3850		g=1
+3856	ветчина из индейки	turkey ham	3850		g=1				kcal=134 protein=19.6 fat=5.8 carbs=0.93	fdc:168092
 3857	ветчина куриная	chicken ham	3850		g=1
-3858	окорок копчёный	smoked bone-in ham	3850		g=1
-3859	окорок варёный	boiled bone-in ham	3850		g=1
+3858	окорок копчёный	smoked bone-in ham	3850		g=1				kcal=246 protein=18.49 fat=18.52 carbs=0.06	fdc:167875
+# окорок варёный → Skurikhin «Окорок тамбовский вареный» (3.6.8.5, p. 78-79)
+3859	окорок варёный	boiled bone-in ham	3850		g=1				kcal=288 protein=14.3 fat=25.6 carbs=0	skurikhin:Окорок тамбовский вареный
 
 # бекон
-3870	бекон	bacon		true	g=1 pc=15
+3870	бекон	bacon		true	g=1 pc=15				kcal=393 protein=13.66 fat=37.13 carbs=0	fdc:168277
 3871	панчетта	pancetta	3870		g=1
 3872	гуанчиале	guanciale	3870		g=1
-3873	бекон из индейки	turkey bacon	3870	true	g=1 pc=15
+3873	бекон из индейки	turkey bacon	3870	true	g=1 pc=15				kcal=226 protein=15.94 fat=16.93 carbs=1.89	fdc:174592
 3874	бекон сырокопчёный	dry-cured bacon	3870	true	g=1 pc=15
 3875	бекон варёно-копчёный	cooked smoked bacon	3870	true	g=1 pc=15
 
 # smoked and cured meats, standing alone
-3880	грудинка копчёная	smoked pork belly			g=1
-3881	корейка копчёная	smoked pork loin			g=1
+# грудинка копчёная → Skurikhin «Грудинка копчено-запеченная» (3.6.8.1, p. 78-79)
+3880	грудинка копчёная	smoked pork belly			g=1				kcal=514 protein=10 fat=52.7 carbs=0	skurikhin:Грудинка копчено-запеченная
+# корейка копчёная → Skurikhin «Корейка копчено-запеченная» (3.6.8.3, p. 78-79)
+3881	корейка копчёная	smoked pork loin			g=1				kcal=475 protein=10.2 fat=48.2 carbs=0	skurikhin:Корейка копчено-запеченная
 3882	шейка копчёная	smoked pork neck			g=1
-3883	буженина	cold roast pork			g=1
-3884	бастурма	basturma			g=1
+# буженина → fdc:168223 pork leg, roasted: буженина is baked pork leg
+3883	буженина	cold roast pork			g=1				kcal=273 protein=26.83 fat=17.61 carbs=0	fdc:168223
+# бастурма → fdc:170604 dried cured beef
+3884	бастурма	basturma			g=1				kcal=153 protein=31.1 fat=1.94 carbs=2.76	fdc:170604
 3885	свиной балык	pork balyk			g=1
-3887	вяленое мясо	jerky			g=1
+3887	вяленое мясо	jerky			g=1				kcal=410 protein=33.2 fat=25.6 carbs=11	fdc:167536
 3888	рёбрышки копчёные	smoked ribs			g=1		копчёные рёбра
-3890	зельц	head cheese			g=1
+3890	зельц	head cheese			g=1				kcal=157 protein=13.83 fat=10.9 carbs=0	fdc:171630
 3891	шкварки	pork cracklings			g=1
-3892	брезаола	bresaola			g=1
-3826	копчёные колбаски	small smoked sausages	3800	false	g=1 pc=50
+# брезаола → fdc:170604 dried cured beef
+3892	брезаола	bresaola			g=1				kcal=153 protein=31.1 fat=1.94 carbs=2.76	fdc:170604
+# копчёные колбаски → Skurikhin «Охотничьи колбаски» (3.6.6.3, p. 76-77)
+3826	копчёные колбаски	small smoked sausages	3800	false	g=1 pc=50				kcal=463 protein=25.3 fat=40 carbs=0.3	skurikhin:Охотничьи колбаски
 
 # паштет, тушёнка, other ready meat
-3900	паштет	pâté			g=1
-3901	паштет печёночный	liver pâté	3900		g=1
-3902	паштет из куриной печени	chicken liver pâté	3900		g=1
+3900	паштет	pâté			g=1				kcal=319 protein=14.2 fat=28 carbs=1.5	fdc:172930
+3901	паштет печёночный	liver pâté	3900		g=1				kcal=319 protein=14.2 fat=28 carbs=1.5	fdc:172930
+3902	паштет из куриной печени	chicken liver pâté	3900		g=1				kcal=201 protein=13.45 fat=13.1 carbs=6.55	fdc:172928
 3903	паштет из утки	duck pâté	3900		g=1
-3904	паштет из гусиной печени	goose liver pâté	3900		g=1
-3910	тушёнка	canned stewed meat			g=1
-3911	тушёнка говяжья	canned stewed beef	3910		g=1
-3912	тушёнка свиная	canned stewed pork	3910		g=1
-3913	тушёнка куриная	canned stewed chicken	3910		g=1
-3920	фрикадельки	meatballs		false	g=1 pc=15
+3904	паштет из гусиной печени	goose liver pâté	3900		g=1				kcal=462 protein=11.4 fat=43.84 carbs=4.67	fdc:172929
+# тушёнка → Skurikhin «Говядина тушеная» (3.3.4, p. 54-55)
+3910	тушёнка	canned stewed meat			g=1				kcal=220 protein=16.8 fat=17 carbs=0.2	skurikhin:Говядина тушеная
+# Skurikhin 3.3.4, p. 54-55
+3911	тушёнка говяжья	canned stewed beef	3910		g=1				kcal=220 protein=16.8 fat=17 carbs=0.2	skurikhin:Говядина тушеная
+# Skurikhin 3.3.16, p. 56-57
+3912	тушёнка свиная	canned stewed pork	3910		g=1				kcal=349 protein=14.9 fat=32.2 carbs=0.2	skurikhin:Свинина тушеная
+# тушёнка куриная → Skurikhin «Курица в собственном соку» (3.3.11, p. 56-57)
+3913	тушёнка куриная	canned stewed chicken	3910		g=1				kcal=183 protein=23.2 fat=9.9 carbs=0.4	skurikhin:Курица в собственном соку
+# фрикадельки → fdc:171638 frozen meatballs
+3920	фрикадельки	meatballs		false	g=1 pc=15				kcal=286 protein=14.4 fat=22.21 carbs=8.06	fdc:171638
 
 # added in fix round 1
-3827	свиные колбаски	pork sausages	3800	false	g=1 pc=60
-3828	колбаски для завтрака	breakfast sausages	3800	false	g=1 pc=30
-3829	чиполата	chipolatas	3800	false	g=1 pc=30
-3833	итальянские колбаски	Italian sausage	3800	false	g=1 pc=100
-3876	канадский бекон	Canadian bacon	3870	true	g=1 pc=25
+3827	свиные колбаски	pork sausages	3800	false	g=1 pc=60				kcal=288 protein=15.39 fat=24.8 carbs=0.93	fdc:172934
+3828	колбаски для завтрака	breakfast sausages	3800	false	g=1 pc=30				kcal=288 protein=15.39 fat=24.8 carbs=0.93	fdc:172934
+# чиполата → fdc:172934 pork sausage links
+3829	чиполата	chipolatas	3800	false	g=1 pc=30				kcal=288 protein=15.39 fat=24.8 carbs=0.93	fdc:172934
+3833	итальянские колбаски	Italian sausage	3800	false	g=1 pc=100				kcal=290 protein=13.9 fat=24.26 carbs=2.97	fdc:171631
+3876	канадский бекон	Canadian bacon	3870	true	g=1 pc=25				kcal=110 protein=20.31 fat=2.62 carbs=1.34	fdc:167869
 3877	бекон кубиками	lardons	3870		g=1
-3940	сало	salo			g=1
+# сало → Skurikhin «Шпик свиной» (5.2.5, p. 104-105)
+3940	сало	salo			g=1				kcal=841 protein=1.4 fat=92.8 carbs=0	skurikhin:Шпик свиной
 3941	шпик	cured fatback	3940		g=1
 3942	сало солёное	salted salo	3940		g=1
 3943	сало копчёное	smoked salo	3940		g=1

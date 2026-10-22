@@ -5,189 +5,267 @@
 
 # яйцо
 4400	яйцо	egg		false	g=1 pc=55				kcal=143 protein=12.56 fat=9.51 carbs=0.72	fdc:171287
-4401	яйцо перепелиное	quail egg	4400	false	g=1 pc=10
-4402	яичный желток	egg yolk	4400	false	g=1 pc=18
-4403	яичный белок	egg white	4400	false	g=1 pc=33 ml=1.04 tbsp=15
-4404	яйцо утиное	duck egg	4400	false	g=1 pc=70
-4405	яйцо гусиное	goose egg	4400	false	g=1 pc=150
-4406	яйцо варёное	boiled egg	4400	false	g=1 pc=50			hard-boiled egg
+4401	яйцо перепелиное	quail egg	4400	false	g=1 pc=10				kcal=158 protein=13.05 fat=11.09 carbs=0.41	fdc:172191
+4402	яичный желток	egg yolk	4400	false	g=1 pc=18				kcal=322 protein=15.86 fat=26.54 carbs=3.59	fdc:172184
+4403	яичный белок	egg white	4400	false	g=1 pc=33 ml=1.04 tbsp=15				kcal=52 protein=10.9 fat=0.17 carbs=0.73	fdc:172183
+4404	яйцо утиное	duck egg	4400	false	g=1 pc=70				kcal=185 protein=12.81 fat=13.77 carbs=1.45	fdc:172189
+4405	яйцо гусиное	goose egg	4400	false	g=1 pc=150				kcal=185 protein=13.87 fat=13.27 carbs=1.35	fdc:172190
+4406	яйцо варёное	boiled egg	4400	false	g=1 pc=50			hard-boiled egg	kcal=155 protein=12.58 fat=10.61 carbs=1.12	fdc:173424
 4407	яйцо крупное	large egg	4400	false	g=1 pc=65
-4408	яичный порошок	egg powder	4400		g=1 tsp=3 tbsp=8
-4409	меланж	liquid egg	4400		g=1 ml=1.03 tbsp=15 cup=258
-4410	яйцо индюшиное	turkey egg	4400	false	g=1 pc=80
+4408	яичный порошок	egg powder	4400		g=1 tsp=3 tbsp=8				kcal=592 protein=48.05 fat=43.9 carbs=1.13	fdc:172188
+# меланж → fdc:172202 whole egg, frozen, pasteurized
+4409	меланж	liquid egg	4400		g=1 ml=1.03 tbsp=15 cup=258				kcal=147 protein=12.33 fat=9.95 carbs=1.01	fdc:172202
+4410	яйцо индюшиное	turkey egg	4400	false	g=1 pc=80				kcal=171 protein=13.68 fat=11.88 carbs=1.15	fdc:172192
 4411	яйцо страусиное	ostrich egg	4400	true	g=1 pc=1500
 
 # молоко
-4450	молоко	milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4451	молоко цельное	whole milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4452	молоко обезжиренное	skim milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4453	молоко 1,5%	milk 1.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4454	молоко 2,5%	milk 2.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4455	молоко 3,2%	milk 3.2%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4456	молоко топлёное	baked milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4457	молоко козье	goat milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+4450	молоко	milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=61 protein=3.15 fat=3.25 carbs=4.8	fdc:171265
+4451	молоко цельное	whole milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=61 protein=3.15 fat=3.25 carbs=4.8	fdc:171265
+4452	молоко обезжиренное	skim milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=34 protein=3.37 fat=0.08 carbs=4.96	fdc:171269
+# Skurikhin 1.2.1.1, p. 28-29
+4453	молоко 1,5%	milk 1.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=45 protein=3 fat=1.5 carbs=4.8	skurikhin:Молоко пастеризованное, 1,5% жирности
+# Skurikhin 1.2.1.2, p. 28-29
+4454	молоко 2,5%	milk 2.5%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=54 protein=2.9 fat=2.5 carbs=4.8	skurikhin:Молоко пастеризованное, 2,5% жирности
+# Skurikhin 1.3.1.1, p. 32-33
+4455	молоко 3,2%	milk 3.2%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=60 protein=2.9 fat=3.2 carbs=4.7	skurikhin:Молоко пастеризованное 3,2% жирности
+# Skurikhin 1.3.1.5, p. 32-33
+4456	молоко топлёное	baked milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=67 protein=2.9 fat=4 carbs=4.7	skurikhin:Молоко топленое 4,0% жирности
+4457	молоко козье	goat milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=69 protein=3.56 fat=4.14 carbs=4.45	fdc:171278
 4458	молоко безлактозное	lactose-free milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4459	молоко сухое	powdered milk	4450		g=1 tsp=3 tbsp=8 cup=120
-4460	молоко сухое обезжиренное	nonfat dry milk	4450		g=1 tsp=3 tbsp=8 cup=120
-4461	сгущённое молоко	sweetened condensed milk	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325		сгущёнка
-4462	варёная сгущёнка	boiled condensed milk	4450		g=1 ml=1.35 tsp=7 tbsp=20 cup=340
-4463	сгущённое молоко без сахара	evaporated milk	4450		g=1 ml=1.07 tsp=5 tbsp=16 cup=265
+4459	молоко сухое	powdered milk	4450		g=1 tsp=3 tbsp=8 cup=120				kcal=496 protein=26.32 fat=26.71 carbs=38.42	fdc:170876
+4460	молоко сухое обезжиренное	nonfat dry milk	4450		g=1 tsp=3 tbsp=8 cup=120				kcal=362 protein=36.16 fat=0.77 carbs=51.98	fdc:170877
+# Skurikhin 1.3.4.2, p. 38-39
+4461	сгущённое молоко	sweetened condensed milk	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325		сгущёнка		kcal=328 protein=7.2 fat=8.5 carbs=55.5	skurikhin:Молоко сгущенное с сахаром 8,5% жирности
+# варёная сгущёнка → Skurikhin «Молоко сгущенное с сахаром 8,5%» (1.3.4.2, p. 38-39): the same milk boiled in its can
+4462	варёная сгущёнка	boiled condensed milk	4450		g=1 ml=1.35 tsp=7 tbsp=20 cup=340				kcal=328 protein=7.2 fat=8.5 carbs=55.5	skurikhin:Молоко сгущенное с сахаром 8,5% жирности
+# Skurikhin 1.3.4.3, p. 38-39
+4463	сгущённое молоко без сахара	evaporated milk	4450		g=1 ml=1.07 tsp=5 tbsp=16 cup=265				kcal=138 protein=6.4 fat=7.8 carbs=10.3	skurikhin:Молоко сгущенное стерилизованное 7,8% жирности
 4464	молоко 6%	milk 6%	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4465	молоко овечье	sheep milk	4450		g=1 ml=1.04 tsp=5 tbsp=15 cup=260
+4465	молоко овечье	sheep milk	4450		g=1 ml=1.04 tsp=5 tbsp=15 cup=260				kcal=108 protein=5.98 fat=7 carbs=5.36	fdc:170882
 4466	молоко домашнее	farm milk	4450		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4467	сгущёнка с какао	condensed milk with cocoa	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325
+# сгущёнка с какао → Skurikhin «Какао со сгущенным молоком и сахаром» (1.3.4.4, p. 38-39)
+4467	сгущёнка с какао	condensed milk with cocoa	4450		g=1 ml=1.3 tsp=7 tbsp=20 cup=325				kcal=321 protein=8.2 fat=7.5 carbs=51.6	skurikhin:Какао со сгущенным молоком и сахаром
 
 # сливки
-4480	сливки	cream			g=1 ml=1 tsp=5 tbsp=15 cup=250
-4481	сливки 10%	half-and-half	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253
-4482	сливки 20%	light cream 20%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
-4483	сливки 33%	heavy cream 33%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
-4484	сливки 35%	heavy cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
-4485	сливки для взбивания	whipping cream	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248
+# сливки → Skurikhin «Сливки пастеризованные 20,0%» (1.4.1.1, p. 38-39), the common cooking cream
+4480	сливки	cream			g=1 ml=1 tsp=5 tbsp=15 cup=250				kcal=207 protein=2.5 fat=20 carbs=4	skurikhin:Сливки пастеризованные 20,0% жирности
+# Skurikhin 1.3.1.7, p. 34-35
+4481	сливки 10%	half-and-half	4480		g=1 ml=1.01 tsp=5 tbsp=15 cup=253				kcal=119 protein=2.7 fat=10 carbs=4.5	skurikhin:Сливки пастеризованные 10,0% жирности
+# Skurikhin 1.4.1.1, p. 38-39
+4482	сливки 20%	light cream 20%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250				kcal=207 protein=2.5 fat=20 carbs=4	skurikhin:Сливки пастеризованные 20,0% жирности
+# сливки 33% → Skurikhin «Сливки пастеризованные 35,0%» (1.4.1.2, p. 38-39), the nearest fat content listed
+4483	сливки 33%	heavy cream 33%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248				kcal=337 protein=2.2 fat=35 carbs=3.2	skurikhin:Сливки пастеризованные 35,0% жирности
+# Skurikhin 1.4.1.2, p. 38-39
+4484	сливки 35%	heavy cream 35%	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248				kcal=337 protein=2.2 fat=35 carbs=3.2	skurikhin:Сливки пастеризованные 35,0% жирности
+# сливки для взбивания → Skurikhin «Сливки пастеризованные 35,0%» (1.4.1.2, p. 38-39)
+4485	сливки для взбивания	whipping cream	4480		g=1 ml=0.99 tsp=5 tbsp=15 cup=248				kcal=337 protein=2.2 fat=35 carbs=3.2	skurikhin:Сливки пастеризованные 35,0% жирности
 4486	двойные сливки	extra-heavy cream	4480		g=1 ml=0.98 tsp=5 tbsp=15 cup=245
-4487	взбитые сливки	whipped cream	4480		g=1 tbsp=4 cup=60
-4488	сливки сухие	powdered cream	4480		g=1 tsp=3 tbsp=7
-4489	сливки 22%	light cream 22%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250
+4487	взбитые сливки	whipped cream	4480		g=1 tbsp=4 cup=60				kcal=257 protein=3.2 fat=22.22 carbs=12.49	fdc:170860
+# Skurikhin 1.4.4.4, p. 42-43
+4488	сливки сухие	powdered cream	4480		g=1 tsp=3 tbsp=7				kcal=577 protein=19 fat=42 carbs=30.2	skurikhin:Сливки сухие 42,0% жирности
+# сливки 22% → Skurikhin «Сливки пастеризованные 20,0%» (1.4.1.1, p. 38-39)
+4489	сливки 22%	light cream 22%	4480		g=1 ml=1 tsp=5 tbsp=15 cup=250				kcal=207 protein=2.5 fat=20 carbs=4	skurikhin:Сливки пастеризованные 20,0% жирности
 
 # сметана
-4500	сметана	sour cream			g=1 ml=1.02 tsp=5 tbsp=16 cup=245
-4501	сметана 10%	sour cream 10%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
-4502	сметана 15%	sour cream 15%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
-4503	сметана 20%	sour cream 20%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245
-4504	сметана 25%	sour cream 25%	4500		g=1 ml=1.01 tsp=5 tbsp=16 cup=245
-4505	сметана 30%	sour cream 30%	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240
+# сметана → Skurikhin «Сметана 20,0%» (1.4.2.2, p. 40-41)
+4500	сметана	sour cream			g=1 ml=1.02 tsp=5 tbsp=16 cup=245				kcal=206 protein=2.5 fat=20 carbs=3.4	skurikhin:Сметана 20,0% жирности
+# Skurikhin 1.3.2.12, p. 36-37
+4501	сметана 10%	sour cream 10%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245				kcal=119 protein=2.7 fat=10 carbs=3.9	skurikhin:Сметана 10,0% жирности
+# Skurikhin 1.4.2.1, p. 40-41
+4502	сметана 15%	sour cream 15%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245				kcal=162 protein=2.6 fat=15 carbs=3.6	skurikhin:Сметана 15,0% жирности
+# Skurikhin 1.4.2.2, p. 40-41
+4503	сметана 20%	sour cream 20%	4500		g=1 ml=1.02 tsp=5 tbsp=16 cup=245				kcal=206 protein=2.5 fat=20 carbs=3.4	skurikhin:Сметана 20,0% жирности
+# Skurikhin 1.4.2.3, p. 40-41
+4504	сметана 25%	sour cream 25%	4500		g=1 ml=1.01 tsp=5 tbsp=16 cup=245				kcal=250 protein=2.4 fat=25 carbs=3.2	skurikhin:Сметана 25,0% жирности
+# Skurikhin 1.4.2.4, p. 40-41
+4505	сметана 30%	sour cream 30%	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240				kcal=293 protein=2.3 fat=30 carbs=3.1	skurikhin:Сметана 30,0% жирности
 4506	сметана домашняя	farm sour cream	4500		g=1 ml=1 tsp=5 tbsp=16 cup=240
-4507	крем-фреш	crème fraîche	4500		g=1 ml=1 tsp=5 tbsp=15 cup=240
+# крем-фреш → Skurikhin «Сметана 30,0%» (1.4.2.4, p. 40-41): cultured cream of the same fat content
+4507	крем-фреш	crème fraîche	4500		g=1 ml=1 tsp=5 tbsp=15 cup=240				kcal=293 protein=2.3 fat=30 carbs=3.1	skurikhin:Сметана 30,0% жирности
 
 # кефир и кисломолочное
-4520	кефир	kefir			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4521	кефир 1%	kefir 1%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+# кефир → Skurikhin «Кефир 2,5%» (1.2.2.4, p. 30-31)
+4520	кефир	kefir			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=53 protein=2.9 fat=2.5 carbs=4	skurikhin:Кефир 2,5% жирности
+# Skurikhin 1.1.2.4, p. 24-25
+4521	кефир 1%	kefir 1%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=40 protein=3 fat=1 carbs=4	skurikhin:Кефир 1,0% жирности
 4522	кефир 2,5%	kefir 2.5%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
 4523	кефир 3,2%	kefir 3.2%	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4524	кефир обезжиренный	fat-free kefir	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4530	ряженка	ryazhenka			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4531	простокваша	prostokvasha			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4532	варенец	varenets			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4533	мацони	matsoni			g=1 ml=1.03 tsp=5 tbsp=16 cup=255
+# Skurikhin 1.1.2.3, p. 24-25
+4524	кефир обезжиренный	fat-free kefir	4520		g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=31 protein=3 fat=0.05 carbs=4	skurikhin:Кефир нежирный
+# ряженка → Skurikhin «Ряженка 4,0%» (1.3.2.10, p. 34-35)
+4530	ряженка	ryazhenka			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=67 protein=2.8 fat=4 carbs=4.2	skurikhin:Ряженка 4,0% жирности
+# простокваша → Skurikhin «Простокваша 2,5%» (1.2.2.11, p. 30-31)
+4531	простокваша	prostokvasha			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=53 protein=2.9 fat=2.5 carbs=4.1	skurikhin:Простокваша 2,5% жирности
+# Skurikhin 1.2.2.1, p. 28-29
+4532	варенец	varenets			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=53 protein=2.9 fat=2.5 carbs=4.1	skurikhin:Варенец 2,5% жирности
+# мацони → fdc:171284 plain whole-milk yogurt
+4533	мацони	matsoni			g=1 ml=1.03 tsp=5 tbsp=16 cup=255				kcal=61 protein=3.47 fat=3.25 carbs=4.66	fdc:171284
 4534	айран	ayran			g=1 ml=1.02 tsp=5 tbsp=15 cup=255
 4535	тан	tan			g=1 ml=1.02 tsp=5 tbsp=15 cup=255
 4536	катык	katyk			g=1 ml=1.03 tsp=5 tbsp=16 cup=255
-4537	ацидофилин	acidophilus milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4538	пахта	buttermilk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4539	сыворотка	whey			g=1 ml=1.02 tsp=5 tbsp=15 cup=255
-4540	кумыс	kumis			g=1 ml=1.01 tsp=5 tbsp=15 cup=252
-4541	снежок	snezhok			g=1 ml=1.05 tsp=5 tbsp=16 cup=262
-4542	бифидок	bifidok			g=1 ml=1.03 tsp=5 tbsp=15 cup=258
+# ацидофилин → Skurikhin «Ацидофилин 3,2%» (1.3.2.1, p. 34-35)
+4537	ацидофилин	acidophilus milk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=59 protein=2.9 fat=3.2 carbs=3.8	skurikhin:Ацидофилин 3,2% жирности
+# пахта → Skurikhin «Пахта «Идеал» пастеризованная» (1.1.1.5, p. 24-25): the by-product of butter, not cultured buttermilk
+4538	пахта	buttermilk			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=41 protein=3.3 fat=1 carbs=4.7	skurikhin:Пахта «Идеал» пастеризованная
+# сыворотка → fdc:170885 acid whey, the whey of творог
+4539	сыворотка	whey			g=1 ml=1.02 tsp=5 tbsp=15 cup=255				kcal=24 protein=0.76 fat=0.09 carbs=5.12	fdc:170885
+# Skurikhin 1.2.2.5, p. 30-31
+4540	кумыс	kumis			g=1 ml=1.01 tsp=5 tbsp=15 cup=252				kcal=50 protein=2.1 fat=1.9 carbs=5	skurikhin:Кумыс из кобыльего молока
+# Skurikhin 1.2.2.7, p. 30-31
+4541	снежок	snezhok			g=1 ml=1.05 tsp=5 tbsp=16 cup=262				kcal=79 protein=2.7 fat=2.5 carbs=10.8	skurikhin:Напиток «Снежок» 2,5% жирности
+# бифидок → Skurikhin «Напиток кисломолочный «Бифидин» 2,5%» (1.2.2.6, p. 30-31), a bifidus kefir of the same kind
+4542	бифидок	bifidok			g=1 ml=1.03 tsp=5 tbsp=15 cup=258				kcal=61 protein=3.4 fat=2.5 carbs=5.5	skurikhin:Напиток кисломолочный «Бифидин» 2,5% жирности
 
 # йогурт
-4560	йогурт	yogurt			g=1 ml=1.03 tsp=5 tbsp=16 cup=250
-4561	йогурт натуральный	plain yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250
-4562	греческий йогурт	Greek yogurt	4560		g=1 tsp=6 tbsp=17 cup=280
+# йогурт → fdc:171284 plain whole-milk yogurt
+4560	йогурт	yogurt			g=1 ml=1.03 tsp=5 tbsp=16 cup=250				kcal=61 protein=3.47 fat=3.25 carbs=4.66	fdc:171284
+4561	йогурт натуральный	plain yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250				kcal=61 protein=3.47 fat=3.25 carbs=4.66	fdc:171284
+4562	греческий йогурт	Greek yogurt	4560		g=1 tsp=6 tbsp=17 cup=280				kcal=97 protein=9 fat=5 carbs=3.98	fdc:171304
 4563	йогурт питьевой	drinking yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=15 cup=258
-4564	йогурт фруктовый	fruit yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255
-4565	йогурт обезжиренный	fat-free yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250
+# Skurikhin 1.2.2.3, p. 28-29
+4564	йогурт фруктовый	fruit yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255				kcal=90 protein=4 fat=1.5 carbs=14.3	skurikhin:Йогурт плодово-ягодный, 1,5% жирности
+4565	йогурт обезжиренный	fat-free yogurt	4560		g=1 ml=1.03 tsp=5 tbsp=16 cup=250				kcal=56 protein=5.73 fat=0.18 carbs=7.68	fdc:170887
 4566	лабне	labneh	4560		g=1 tsp=6 tbsp=17 cup=280
 4567	сузьма	suzma	4560		g=1 tsp=6 tbsp=17 cup=280
-4568	скир	skyr	4560		g=1 tsp=6 tbsp=17 cup=280
-4569	йогурт ванильный	vanilla yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255
+# скир → fdc:170894 Greek yogurt, plain, nonfat: a strained skim-milk yogurt like skyr
+4568	скир	skyr	4560		g=1 tsp=6 tbsp=17 cup=280				kcal=59 protein=10.19 fat=0.39 carbs=3.6	fdc:170894
+4569	йогурт ванильный	vanilla yogurt	4560		g=1 ml=1.05 tsp=5 tbsp=16 cup=255				kcal=85 protein=4.93 fat=1.25 carbs=13.8	fdc:170888
 
 # творог
-4580	творог	quark			g=1 tsp=6 tbsp=17 cup=230
-4581	творог обезжиренный	fat-free quark	4580		g=1 tsp=6 tbsp=17 cup=230
-4582	творог 2%	quark 2%	4580		g=1 tsp=6 tbsp=17 cup=230
-4583	творог 5%	quark 5%	4580		g=1 tsp=6 tbsp=17 cup=230
-4584	творог 9%	quark 9%	4580		g=1 tsp=6 tbsp=17 cup=230
-4585	творог 18%	quark 18%	4580		g=1 tsp=6 tbsp=17 cup=230
-4586	творог зернистый	cottage cheese	4580		g=1 tsp=6 tbsp=17 cup=225
+# творог → Skurikhin «Творог полужирный 9,0%» (1.3.3.9, p. 36-37)
+4580	творог	quark			g=1 tsp=6 tbsp=17 cup=230				kcal=169 protein=18 fat=9 carbs=3	skurikhin:Творог полужирный 9,0% жирности
+# Skurikhin 1.1.3.1, p. 26-27
+4581	творог обезжиренный	fat-free quark	4580		g=1 tsp=6 tbsp=17 cup=230				kcal=110 protein=22 fat=0.6 carbs=3.3	skurikhin:Творог нежирный
+# Skurikhin 1.2.3.1, p. 30-31
+4582	творог 2%	quark 2%	4580		g=1 tsp=6 tbsp=17 cup=230				kcal=114 protein=20 fat=2 carbs=3	skurikhin:Творог «Столовый» 2,0% жирности
+# творог 5% → Skurikhin «Творог «Крестьянский» 5,0%» (1.3.3.5, p. 36-37)
+4583	творог 5%	quark 5%	4580		g=1 tsp=6 tbsp=17 cup=230				kcal=145 protein=21 fat=5 carbs=3	skurikhin:Творог «Крестьянский» 5,0% жирности
+# Skurikhin 1.3.3.9, p. 36-37
+4584	творог 9%	quark 9%	4580		g=1 tsp=6 tbsp=17 cup=230				kcal=169 protein=18 fat=9 carbs=3	skurikhin:Творог полужирный 9,0% жирности
+# Skurikhin 1.4.3.2, p. 40-41
+4585	творог 18%	quark 18%	4580		g=1 tsp=6 tbsp=17 cup=230				kcal=236 protein=15 fat=18 carbs=2.8	skurikhin:Творог жирный 18,0% жирности
+# творог зернистый → fdc:172179 creamed cottage cheese
+4586	творог зернистый	cottage cheese	4580		g=1 tsp=6 tbsp=17 cup=225				kcal=98 protein=11.12 fat=4.3 carbs=3.38	fdc:172179
 4587	творог домашний	farm quark	4580		g=1 tsp=6 tbsp=17 cup=230
-4588	творожная масса	sweet curd spread	4580		g=1 tsp=6 tbsp=18 cup=250
-4589	творожный сырок	glazed curd snack	4580	false	g=1 pc=45
-4590	творог мягкий	soft quark	4580		g=1 tsp=6 tbsp=17 cup=240
+# творожная масса → Skurikhin «Сырки и масса творожная сладкая с ванилином, 16,5%» (1.4.3.3, p. 40-41)
+4588	творожная масса	sweet curd spread	4580		g=1 tsp=6 tbsp=18 cup=250				kcal=238 protein=12 fat=16.5 carbs=9.5	skurikhin:Сырки и масса творожная сладкая с ванилином, 16,5% жирности
+# творожный сырок → Skurikhin «Сырки глазированные с ванилином 27,7%» (1.4.3.8, p. 42-43)
+4589	творожный сырок	glazed curd snack	4580	false	g=1 pc=45				kcal=413 protein=7.9 fat=27.7 carbs=32.6	skurikhin:Сырки глазированные с ванилином 27,7% жирности
+# творог мягкий → Skurikhin «Творог мягкий диетический 4,0%» (1.3.3.1, p. 36-37)
+4590	творог мягкий	soft quark	4580		g=1 tsp=6 tbsp=17 cup=240				kcal=136 protein=21 fat=4 carbs=3	skurikhin:Творог мягкий диетический 4,0% жирности
 
 # масло сливочное
 4600	масло сливочное	butter			g=1 tsp=5 tbsp=14 cup=227		масло		kcal=717 protein=0.85 fat=81.11 carbs=0.06	fdc:173430
 4601	масло сливочное несолёное	unsalted butter	4600		g=1 tsp=5 tbsp=14 cup=227				kcal=717 protein=0.85 fat=81.11 carbs=0.06	fdc:173430
 4602	масло сливочное солёное	salted butter	4600		g=1 tsp=5 tbsp=14 cup=227				kcal=717 protein=0.85 fat=81.11 carbs=0.06	fdc:173410
-4603	масло топлёное	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225
+# Skurikhin 5.1.8, p. 102-103
+4603	масло топлёное	ghee	4600		g=1 ml=0.91 tsp=4.5 tbsp=13 cup=225				kcal=892 protein=0.2 fat=99 carbs=0	skurikhin:Масло топленое
 4605	масло сливочное 82,5%	butter 82.5%	4600		g=1 tsp=5 tbsp=14 cup=227
-4606	масло сливочное 72,5%	butter 72.5%	4600		g=1 tsp=5 tbsp=14 cup=227
+# масло сливочное 72,5% → Skurikhin «Масло сливочное несоленое «Крестьянское»» (5.1.5, p. 102-103)
+4606	масло сливочное 72,5%	butter 72.5%	4600		g=1 tsp=5 tbsp=14 cup=227				kcal=661 protein=0.8 fat=72.5 carbs=1.3	skurikhin:Масло сливочное несоленое «Крестьянское»
 4607	масло шоколадное	chocolate butter	4600		g=1 tsp=5 tbsp=14
-4608	масло крестьянское	farmer's butter	4600		g=1 tsp=5 tbsp=14 cup=227
+# Skurikhin 5.1.5, p. 102-103
+4608	масло крестьянское	farmer's butter	4600		g=1 tsp=5 tbsp=14 cup=227				kcal=661 protein=0.8 fat=72.5 carbs=1.3	skurikhin:Масло сливочное несоленое «Крестьянское»
 
 # мороженое
-4650	мороженое	ice cream			g=1
-4651	пломбир	plombir ice cream	4650		g=1
+# мороженое → Skurikhin, МОРОЖЕНОЕ «Сливочное» (1.5.6, p. 42-43)
+4650	мороженое	ice cream			g=1				kcal=183 protein=3.7 fat=10 carbs=19.4	skurikhin:Мороженое сливочное
+# Skurikhin 1.5.11, p. 44-45
+4651	пломбир	plombir ice cream	4650		g=1				kcal=232 protein=3.7 fat=15 carbs=20.4	skurikhin:Пломбир
 4652	мороженое ванильное	vanilla ice cream	4650		g=1
 4653	мороженое сливочное	dairy ice cream	4650		g=1
 4654	мороженое шоколадное	chocolate ice cream	4650		g=1
 4655	мороженое крем-брюле	crème brûlée ice cream	4650		g=1
 
 # сыр
-4700	сыр	cheese			g=1 tbsp=7 cup=100
-4701	сыр твёрдый	hard cheese	4700		g=1 tbsp=7 cup=100
-4702	сыр полутвёрдый	semi-hard cheese	4700		g=1 tbsp=7 cup=100
-4703	сыр мягкий	fresh soft cheese	4700		g=1
-4704	сыр плавленый	processed cheese	4700		g=1 tsp=5 tbsp=15
-4705	плавленый сырок	processed cheese bar	4700	true	g=1 pc=90
+# сыр → Skurikhin «Российский» (1.6.1.8, p. 44-45), the everyday hard cheese
+4700	сыр	cheese			g=1 tbsp=7 cup=100				kcal=364 protein=23.2 fat=29.5 carbs=0	skurikhin:Российский
+# сыр твёрдый → Skurikhin «Российский» (1.6.1.8, p. 44-45)
+4701	сыр твёрдый	hard cheese	4700		g=1 tbsp=7 cup=100				kcal=364 protein=23.2 fat=29.5 carbs=0	skurikhin:Российский
+# сыр полутвёрдый → Skurikhin «Голландский (брусковый)» (1.6.1.6, p. 44-45)
+4702	сыр полутвёрдый	semi-hard cheese	4700		g=1 tbsp=7 cup=100				kcal=350 protein=26.3 fat=26.6 carbs=0	skurikhin:Голландский (брусковый)
+# сыр мягкий → Skurikhin «Адыгейский» (1.6.3.1, p. 46-47), a fresh soft cheese
+4703	сыр мягкий	fresh soft cheese	4700		g=1				kcal=264 protein=19.8 fat=19.8 carbs=1.5	skurikhin:Адыгейский
+# сыр плавленый → Skurikhin «Российский» of the processed cheeses, ПЛАВЛЕНЫЕ (1.6.5.3, p. 48-49)
+4704	сыр плавленый	processed cheese	4700		g=1 tsp=5 tbsp=15				kcal=300 protein=20.5 fat=23 carbs=2.5	skurikhin:Российский плавленый
+# плавленый сырок → Skurikhin «Российский» of the processed cheeses, ПЛАВЛЕНЫЕ (1.6.5.3, p. 48-49)
+4705	плавленый сырок	processed cheese bar	4700	true	g=1 pc=90				kcal=300 protein=20.5 fat=23 carbs=2.5	skurikhin:Российский плавленый
 4706	сыр копчёный	smoked cheese	4700		g=1
-4707	сыр рассольный	brined cheese	4700		g=1
+# сыр рассольный → Skurikhin «Брынза (из коровьего молока)» (1.6.4.2, p. 46-47)
+4707	сыр рассольный	brined cheese	4700		g=1				kcal=262 protein=22.1 fat=19.2 carbs=0.4	skurikhin:Брынза (из коровьего молока)
 4708	сыр тёртый	grated cheese	4700		g=1 tbsp=7 cup=100
-4709	сливочный сыр	cream cheese	4700		g=1 tsp=5 tbsp=15 cup=230
-4710	творожный сыр	cream cheese spread	4700		g=1 tsp=5 tbsp=15 cup=230
-4711	сыр тостовый	American cheese slices	4700	false	g=1 pc=20
-4712	сыр колбасный	smoked processed cheese	4700		g=1
-4713	сыр с голубой плесенью	blue cheese	4700		g=1 cup=135
-4714	сыр с белой плесенью	bloomy-rind cheese	4700		g=1
-4715	козий сыр	goat cheese	4700		g=1
+4709	сливочный сыр	cream cheese	4700		g=1 tsp=5 tbsp=15 cup=230				kcal=350 protein=6.15 fat=34.44 carbs=5.52	fdc:173418
+4710	творожный сыр	cream cheese spread	4700		g=1 tsp=5 tbsp=15 cup=230				kcal=295 protein=7.1 fat=28.6 carbs=3.5	fdc:169081
+4711	сыр тостовый	American cheese slices	4700	false	g=1 pc=20				kcal=366 protein=18.13 fat=30.71 carbs=4.78	fdc:170853
+# Skurikhin 1.6.5.2, p. 48-49
+4712	сыр колбасный	smoked processed cheese	4700		g=1				kcal=275 protein=21.2 fat=19.4 carbs=3.7	skurikhin:Колбасный (копченый)
+4713	сыр с голубой плесенью	blue cheese	4700		g=1 cup=135				kcal=353 protein=21.4 fat=28.74 carbs=2.34	fdc:172175
+# сыр с белой плесенью → fdc:172178 Camembert
+4714	сыр с белой плесенью	bloomy-rind cheese	4700		g=1				kcal=300 protein=19.8 fat=24.26 carbs=0.46	fdc:172178
+# козий сыр → fdc:173435 soft goat cheese
+4715	козий сыр	goat cheese	4700		g=1				kcal=264 protein=18.52 fat=21.08 carbs=0	fdc:173435
 4716	овечий сыр	sheep milk cheese	4700		g=1
-4717	сыр российский	Rossiysky cheese	4700		g=1 tbsp=7 cup=100
-4718	сыр голландский	Dutch cheese	4700		g=1 tbsp=7 cup=100
-4719	сыр пошехонский	Poshekhonsky cheese	4700		g=1 tbsp=7 cup=100
-4721	сулугуни	suluguni	4700		g=1 tbsp=7 cup=100
-4722	сулугуни копчёный	smoked suluguni	4700		g=1
+# Skurikhin 1.6.1.8, p. 44-45
+4717	сыр российский	Rossiysky cheese	4700		g=1 tbsp=7 cup=100				kcal=364 protein=23.2 fat=29.5 carbs=0	skurikhin:Российский
+# Skurikhin 1.6.1.6, p. 44-45
+4718	сыр голландский	Dutch cheese	4700		g=1 tbsp=7 cup=100				kcal=350 protein=26.3 fat=26.6 carbs=0	skurikhin:Голландский (брусковый)
+# Skurikhin 1.6.1.4, p. 44-45
+4719	сыр пошехонский	Poshekhonsky cheese	4700		g=1 tbsp=7 cup=100				kcal=344 protein=26 fat=26.1 carbs=0	skurikhin:Пошехонский
+# Skurikhin 1.6.4.3, p. 48-49
+4721	сулугуни	suluguni	4700		g=1 tbsp=7 cup=100				kcal=286 protein=20.5 fat=22 carbs=0.4	skurikhin:Сулугуни
+# сулугуни копчёный → Skurikhin «Сулугуни» (1.6.4.3, p. 48-49)
+4722	сулугуни копчёный	smoked suluguni	4700		g=1				kcal=286 protein=20.5 fat=22 carbs=0.4	skurikhin:Сулугуни
 4723	имеретинский сыр	Imeretian cheese	4700		g=1
-4724	адыгейский сыр	Adyghe cheese	4700		g=1
-4725	брынза	brynza	4700		g=1 tbsp=10 cup=150
-4726	фета	feta	4700		g=1 tbsp=10 cup=150
+# Skurikhin 1.6.3.1, p. 46-47
+4724	адыгейский сыр	Adyghe cheese	4700		g=1				kcal=264 protein=19.8 fat=19.8 carbs=1.5	skurikhin:Адыгейский
+# брынза → Skurikhin «Брынза (из коровьего молока)» (1.6.4.2, p. 46-47)
+4725	брынза	brynza	4700		g=1 tbsp=10 cup=150				kcal=262 protein=22.1 fat=19.2 carbs=0.4	skurikhin:Брынза (из коровьего молока)
+4726	фета	feta	4700		g=1 tbsp=10 cup=150				kcal=265 protein=14.21 fat=21.49 carbs=3.88	fdc:173420
 4727	чечил	chechil	4700		g=1
 4728	осетинский сыр	Ossetian cheese	4700		g=1
 4729	чанах	chanakh	4700		g=1
 4730	панир	paneer	4700		g=1
 4731	халуми	halloumi	4700		g=1
-4732	пармезан	Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90		пармиджано реджано	Parmigiano Reggiano
-4733	грана падано	Grana Padano	4700		g=1 tsp=2 tbsp=5 cup=90
-4734	пекорино	Pecorino	4700		g=1 tsp=2 tbsp=5 cup=90
-4735	моцарелла	mozzarella	4700	true	g=1 pc=125
-4736	моцарелла для пиццы	pizza mozzarella	4700		g=1 tbsp=7 cup=110
-4737	мини-моцарелла	mini mozzarella balls	4700	false	g=1 pc=10
+4732	пармезан	Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90		пармиджано реджано	Parmigiano Reggiano	kcal=392 protein=35.75 fat=25 carbs=3.22	fdc:170848
+# грана падано → fdc:170848 Parmesan, hard
+4733	грана падано	Grana Padano	4700		g=1 tsp=2 tbsp=5 cup=90				kcal=392 protein=35.75 fat=25 carbs=3.22	fdc:170848
+# пекорино → fdc:171249 Romano
+4734	пекорино	Pecorino	4700		g=1 tsp=2 tbsp=5 cup=90				kcal=387 protein=31.8 fat=26.94 carbs=3.63	fdc:171249
+4735	моцарелла	mozzarella	4700	true	g=1 pc=125				kcal=299 protein=22.17 fat=22.14 carbs=2.4	fdc:170845
+# моцарелла для пиццы → fdc:170846 low-moisture whole-milk mozzarella
+4736	моцарелла для пиццы	pizza mozzarella	4700		g=1 tbsp=7 cup=110				kcal=318 protein=21.6 fat=24.64 carbs=2.47	fdc:170846
+4737	мини-моцарелла	mini mozzarella balls	4700	false	g=1 pc=10				kcal=299 protein=22.17 fat=22.14 carbs=2.4	fdc:170845
 4738	буррата	burrata	4700	true	g=1 pc=150
 4739	страчателла	stracciatella	4700		g=1 tbsp=15
-4740	рикотта	ricotta	4700		g=1 tsp=5 tbsp=15 cup=245
+4740	рикотта	ricotta	4700		g=1 tsp=5 tbsp=15 cup=245				kcal=150 protein=7.54 fat=10.18 carbs=7.27	fdc:170851
 4741	маскарпоне	mascarpone	4700		g=1 tsp=5 tbsp=15 cup=240
 4742	скаморца	scamorza	4700		g=1
-4743	проволоне	provolone	4700		g=1
+4743	проволоне	provolone	4700		g=1				kcal=351 protein=25.58 fat=26.62 carbs=2.14	fdc:170850
 4744	качокавалло	caciocavallo	4700		g=1
-4745	горгонзола	Gorgonzola	4700		g=1 cup=135
+# горгонзола → fdc:172175 blue cheese
+4745	горгонзола	Gorgonzola	4700		g=1 cup=135				kcal=353 protein=21.4 fat=28.74 carbs=2.34	fdc:172175
 4746	таледжо	Taleggio	4700		g=1
-4747	фонтина	Fontina	4700		g=1
+4747	фонтина	Fontina	4700		g=1				kcal=389 protein=25.6 fat=31.14 carbs=1.55	fdc:170843
 4748	азиаго	Asiago	4700		g=1 tbsp=7 cup=100
-4749	чеддер	cheddar	4700		g=1 tbsp=7 cup=113
-4750	эмменталь	Emmental	4700		g=1 tbsp=7 cup=100			Swiss cheese
-4751	грюйер	Gruyère	4700		g=1 tbsp=7 cup=100
-4752	гауда	Gouda	4700		g=1 tbsp=7 cup=100
-4753	эдам	Edam	4700		g=1 tbsp=7 cup=100
+4749	чеддер	cheddar	4700		g=1 tbsp=7 cup=113				kcal=403 protein=22.87 fat=33.31 carbs=3.37	fdc:173414
+# эмменталь → fdc:171251 Swiss cheese
+4750	эмменталь	Emmental	4700		g=1 tbsp=7 cup=100			Swiss cheese	kcal=393 protein=26.96 fat=30.99 carbs=1.44	fdc:171251
+4751	грюйер	Gruyère	4700		g=1 tbsp=7 cup=100				kcal=413 protein=29.81 fat=32.34 carbs=0.36	fdc:171242
+4752	гауда	Gouda	4700		g=1 tbsp=7 cup=100				kcal=356 protein=24.94 fat=27.44 carbs=2.22	fdc:171241
+4753	эдам	Edam	4700		g=1 tbsp=7 cup=100				kcal=357 protein=24.99 fat=28.57 carbs=1.43	fdc:173419
 4754	маасдам	Maasdam	4700		g=1 tbsp=7 cup=100
-4755	тильзитер	Tilsiter	4700		g=1 tbsp=7 cup=100
-4756	бри	Brie	4700		g=1
-4757	камамбер	Camembert	4700	true	g=1 pc=250
-4758	рокфор	Roquefort	4700		g=1 cup=135
-4759	стилтон	Stilton	4700		g=1 cup=135
+4755	тильзитер	Tilsiter	4700		g=1 tbsp=7 cup=100				kcal=340 protein=24.41 fat=25.98 carbs=1.88	fdc:170852
+4756	бри	Brie	4700		g=1				kcal=334 protein=20.75 fat=27.68 carbs=0.45	fdc:172177
+4757	камамбер	Camembert	4700	true	g=1 pc=250				kcal=300 protein=19.8 fat=24.26 carbs=0.46	fdc:172178
+4758	рокфор	Roquefort	4700		g=1 cup=135				kcal=369 protein=21.54 fat=30.64 carbs=2	fdc:171250
+# стилтон → fdc:172175 blue cheese
+4759	стилтон	Stilton	4700		g=1 cup=135				kcal=353 protein=21.4 fat=28.74 carbs=2.34	fdc:172175
 4760	манчего	Manchego	4700		g=1 tbsp=7 cup=100
 4761	комте	Comté	4700		g=1 tbsp=7 cup=100
 4762	раклет	raclette cheese	4700		g=1
-4763	монтерей джек	Monterey Jack	4700		g=1 tbsp=7 cup=113
-4765	кесо фреско	queso fresco	4700		g=1
-4766	пармезан тёртый	grated Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90
+4763	монтерей джек	Monterey Jack	4700		g=1 tbsp=7 cup=113				kcal=373 protein=24.48 fat=30.28 carbs=0.68	fdc:170844
+4765	кесо фреско	queso fresco	4700		g=1				kcal=299 protein=18.09 fat=23.82 carbs=2.98	fdc:172223
+4766	пармезан тёртый	grated Parmesan	4700		g=1 tsp=2 tbsp=5 cup=90				kcal=420 protein=28.42 fat=27.84 carbs=13.91	fdc:171247
 4768	сыр шавли	Shavli cheese	4700		g=1
 4769	сыр с травами	herb cheese	4700		g=1
 4772	рикотта салата	ricotta salata	4700		g=1
@@ -197,10 +275,11 @@
 4777	сыр лёгкий	reduced-fat cheese	4700		g=1 tbsp=7 cup=100
 4779	эпуас	Époisses	4700		g=1
 4783	сыр гриль	grilling cheese	4700		g=1
-4785	сыр-спагетти	string cheese	4700		g=1
-4787	мюнстер	Munster	4700		g=1
-4789	пекорино романо	Pecorino Romano	4700		g=1 tsp=2 tbsp=5 cup=90
+# сыр-спагетти → fdc:171244 low-moisture part-skim mozzarella, the string cheese
+4785	сыр-спагетти	string cheese	4700		g=1				kcal=295 protein=23.75 fat=19.78 carbs=5.58	fdc:171244
+4787	мюнстер	Munster	4700		g=1				kcal=368 protein=23.41 fat=30.04 carbs=1.12	fdc:171245
+4789	пекорино романо	Pecorino Romano	4700		g=1 tsp=2 tbsp=5 cup=90				kcal=387 protein=31.8 fat=26.94 carbs=3.63	fdc:171249
 4790	бофор	Beaufort	4700		g=1
-4791	лимбургский сыр	Limburger	4700		g=1
-4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90	removed
+4791	лимбургский сыр	Limburger	4700		g=1				kcal=327 protein=20.05 fat=27.25 carbs=0.49	fdc:171243
+4792	пармиджано реджано	Parmigiano Reggiano	4700		g=1 tsp=2 tbsp=5 cup=90	removed			kcal=392 protein=35.75 fat=25 carbs=3.22	fdc:170848
 4491	девонширские сливки	clotted cream	4480		g=1 tsp=5 tbsp=15 cup=240
