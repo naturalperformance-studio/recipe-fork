@@ -62,6 +62,9 @@ object RecipeFileCheck {
         check(content.ingredients.size <= MAX_INGREDIENTS) { "more than $MAX_INGREDIENTS ingredients" }
         check(content.steps.size <= MAX_STEPS) { "more than $MAX_STEPS steps" }
         check(content.servings == null || content.servings >= 1) { "a serving count below one" }
+        check(content.finishedWeightGrams == null || RecipeBounds.holdsFinishedWeight(content.finishedWeightGrams)) {
+            "a finished weight outside ${RecipeBounds.MIN_FINISHED_WEIGHT_GRAMS} to ${RecipeBounds.MAX_FINISHED_WEIGHT_GRAMS} g"
+        }
         check(content.tags.size <= MAX_TAGS) { "more than $MAX_TAGS tags" }
         check(content.tags.all { it >= 0 }) { "a tag that is none" }
         // The text the recipe was made from: never empty, and within its limit, which reading a file cuts it at.

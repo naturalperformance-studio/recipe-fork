@@ -148,6 +148,9 @@ class BookFileTest {
             val pancakes = RecipeRepository(ActiveBook(name, it.database)).get(RecipeId("r7"))!!
             assertEquals("Pancakes", pancakes.title)
             assertEquals(listOf(null, null), pancakes.steps.map { step -> step.note })
+            // A book saved before a recipe said what its finished dish weighs opens with none weighed (v0.44).
+            assertNull(pancakes.finishedWeightGrams)
+            assertEquals(3, pancakes.servings)
             assertEquals(listOf("m7"), it.mediaDirectory.list()!!.toList())
         }
         assertNothingUnpacked()

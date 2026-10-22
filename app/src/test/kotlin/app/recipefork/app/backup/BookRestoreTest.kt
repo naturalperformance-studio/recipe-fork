@@ -190,6 +190,19 @@ class BookRestoreTest {
         assertNull(bookRecipes.get(plain.id)!!.sourceText)
     }
 
+    // v0.44, T-318: a saved book carries what each recipe's finished dish weighs, and its restore brings it back.
+    @Test
+    fun aSavedBookCarriesTheFinishedWeight() = runBlocking {
+        val recipe = Recipe.create(now, null).copy(title = "Pilaf", servings = 2, steps = listOf(Step(0, "Simmer.")), finishedWeightGrams = 560)
+        sourceRecipes.save(recipe)
+        val plain = Recipe.create(now, null).copy(title = "Plain")
+        sourceRecipes.save(plain)
+        assertEquals(Restored(added = 2, alreadyHeld = 0), restore(RestoreMode.ADD))
+        assertEquals(560, bookRecipes.get(recipe.id)!!.finishedWeightGrams)
+        assertEquals(recipe, bookRecipes.get(recipe.id))
+        assertNull(bookRecipes.get(plain.id)!!.finishedWeightGrams)
+    }
+
     @Test
     fun addIntoAnEmptyBookCopiesEveryRecipeExactly() = runBlocking {
         val saved = fill()

@@ -63,7 +63,7 @@ abstract class BookDatabase : RoomDatabase() {
             Room.databaseBuilder(context, BookDatabase::class.java, name).addMigrations(*migrations(equipment)).build()
 
         /** The schema version of a book this application writes; an older book is migrated up to it as it is opened. */
-        const val VERSION = 10
+        const val VERSION = 11
 
         /** The equipment dictionary the application ships (decisions/20260928-dictionaries-ship-with-the-application.md). */
         fun shippedEquipment(context: Context): List<DictionaryEntry> =
@@ -161,6 +161,12 @@ abstract class BookDatabase : RoomDatabase() {
             object : Migration(9, 10) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("alter table recipe add column source_text text")
+                }
+            },
+            // 10 → 11: a recipe may say what its finished dish weighs (v0.44); every recipe already in the book says nothing.
+            object : Migration(10, 11) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("alter table recipe add column finished_weight_grams integer")
                 }
             },
         )

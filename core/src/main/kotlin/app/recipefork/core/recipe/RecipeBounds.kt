@@ -68,6 +68,13 @@ object RecipeBounds {
     const val MAX_EQUIPMENT_NAME = 40
     /** The text a recipe was made from ([Recipe.sourceText]): longer is cut here, never refused. */
     const val MAX_SOURCE_TEXT = 20_000
+    /** The least a finished dish weighs ([Recipe.finishedWeightGrams]), in whole grams. */
+    const val MIN_FINISHED_WEIGHT_GRAMS = 1
+    /** The most a finished dish weighs ([Recipe.finishedWeightGrams]), in whole grams. */
+    const val MAX_FINISHED_WEIGHT_GRAMS = 100_000
+
+    /** Whether [grams] is a weight a finished dish may be given: whole grams, from 1 to 100 000. */
+    fun holdsFinishedWeight(grams: Int): Boolean = grams in MIN_FINISHED_WEIGHT_GRAMS..MAX_FINISHED_WEIGHT_GRAMS
 
     /**
      * How [part] of [recipe] stands against its bound; null where it is within it, or where the recipe has no such part.

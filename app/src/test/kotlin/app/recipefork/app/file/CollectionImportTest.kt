@@ -161,6 +161,18 @@ class CollectionImportTest {
         )
     }
 
+    // v0.44, T-318: a recipe of a collection file arrives with what its finished dish weighs, as its own file brings it;
+    // one with none arrives with none.
+    @Test
+    fun aRecipeOfACollectionKeepsItsFinishedWeight() = runBlocking {
+        val weighed = recipe("r-pilaf", "Pilaf").copy(finishedWeightGrams = 560)
+        val plain = recipe("r-salad", "Olivier")
+        val outcome = import(collectionFile(listOf(weighed, plain)))
+        assertEquals(CollectionImportOutcome.Imported(menu, "New Year's menu", recipes = 2, held = 0, updated = false), outcome)
+        assertEquals(560, recipes.get(weighed.id)!!.finishedWeightGrams)
+        assertNull(recipes.get(plain.id)!!.finishedWeightGrams)
+    }
+
     // The notice as the criterion states it, and with nothing held.
     @Test
     fun theNoticeSaysWhatCameAndWhatWasHeld() {

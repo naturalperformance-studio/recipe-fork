@@ -40,6 +40,8 @@ internal data class DocumentRecipe(
     val steps: List<DocumentStep>,
     /** The text the recipe was made from, exactly as it was pasted; added in format 8, absent for none. */
     @SerialName("source_text") val sourceText: String? = null,
+    /** What the finished dish weighs at [servings], in whole grams; added in format 9, absent for none. */
+    @SerialName("finished_weight_grams") val finishedWeightGrams: Int? = null,
 )
 
 /**

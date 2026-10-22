@@ -313,9 +313,18 @@ data class Recipe(
      * only: it is the owner's own paste, and nothing sends it to the server.
      */
     val sourceText: String? = null,
+    /**
+     * What the finished dish weighs, in whole grams, for the recipe at its [servings] as written; null while the author
+     * has not weighed it. From [RecipeBounds.MIN_FINISHED_WEIGHT_GRAMS] to [RecipeBounds.MAX_FINISHED_WEIGHT_GRAMS]. It
+     * is part of the recipe, as the servings are: a fork carries it, and so do a saved book and a recipe file.
+     */
+    val finishedWeightGrams: Int? = null,
 ) {
     init {
         require(servings == null || servings >= 1) { "servings must be 1 or more" }
+        require(finishedWeightGrams == null || RecipeBounds.holdsFinishedWeight(finishedWeightGrams)) {
+            "the finished weight must be from ${RecipeBounds.MIN_FINISHED_WEIGHT_GRAMS} to ${RecipeBounds.MAX_FINISHED_WEIGHT_GRAMS} g"
+        }
         require(!contentChangedAt.isBefore(createdAt)) { "content cannot change before creation" }
     }
 
