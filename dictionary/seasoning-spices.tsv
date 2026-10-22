@@ -1,9 +1,9 @@
 # Seasoning: salt, pepper, dried spices, spice blends, dried herbs.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 7000-8999
 
 # Salt (7000-7099). Level measures: fine salt tsp 7 g, coarse and flaky salts lighter.
-7000	соль	salt			g=1 tsp=7 tbsp=20 pinch=0.5
+7000	соль	salt			g=1 tsp=7 tbsp=20 pinch=0.5				kcal=0 protein=0 fat=0 carbs=0	fdc:173468
 7001	соль каменная	rock salt	7000		g=1 tsp=6 tbsp=18 pinch=0.5
 7002	соль мелкая	fine salt	7000		g=1 tsp=7 tbsp=20 pinch=0.5
 7003	соль крупная	coarse salt	7000		g=1 tsp=6 tbsp=18 pinch=0.5
@@ -24,74 +24,84 @@
 7018	соль сельдерейная	celery salt	7000		g=1 tsp=5 pinch=0.4
 
 # Pepper and chili (7100-7199). Peppercorns and allspice berries are counted (pc) and never halved.
-7100	перец чёрный	black pepper			g=1 tsp=2.3 tbsp=7 pinch=0.2		перец	pepper
+7100	перец чёрный	black pepper			g=1 tsp=2.3 tbsp=7 pinch=0.2		перец	pepper	kcal=251 protein=10.39 fat=3.26 carbs=63.95	fdc:170931
 7101	перец чёрный молотый	ground black pepper	7100		g=1 tsp=2.3 tbsp=7 pinch=0.2
 7102	перец чёрный горошком	black peppercorns	7100	false	g=1 pc=0.06 tsp=3 tbsp=9		перец горошком
 7103	перец чёрный крупного помола	coarsely ground black pepper	7100		g=1 tsp=2.3 tbsp=7 pinch=0.2
-7110	перец белый	white pepper			g=1 tsp=2.4 tbsp=7 pinch=0.2
+7110	перец белый	white pepper			g=1 tsp=2.4 tbsp=7 pinch=0.2				kcal=296 protein=10.4 fat=2.12 carbs=68.61	fdc:170933
 7111	перец белый молотый	ground white pepper	7110		g=1 tsp=2.4 tbsp=7 pinch=0.2
 7112	перец белый горошком	white peppercorns	7110	false	g=1 pc=0.06 tsp=3 tbsp=9
-7120	перец душистый	allspice			g=1 tsp=1.9 tbsp=6 pinch=0.2
+7120	перец душистый	allspice			g=1 tsp=1.9 tbsp=6 pinch=0.2				kcal=263 protein=6.09 fat=8.69 carbs=72.12	fdc:171315
 7121	перец душистый горошком	allspice berries	7120	false	g=1 pc=0.2 tsp=2 tbsp=6
 7122	перец душистый молотый	ground allspice	7120		g=1 tsp=1.9 tbsp=6 pinch=0.2
 7130	перец розовый	pink peppercorns			g=1 tsp=1.5 tbsp=4.5
-7131	смесь перцев	mixed peppercorns			g=1 tsp=3 tbsp=9
+# смесь перцев → fdc:170931 black pepper: a peppercorn mix is mostly black and white pepper
+7131	смесь перцев	mixed peppercorns			g=1 tsp=3 tbsp=9				kcal=251 protein=10.39 fat=3.26 carbs=63.95	fdc:170931
 7132	перец сычуаньский	Sichuan peppercorns			g=1 tsp=1.5 tbsp=4.5 pinch=0.1
 7133	перец длинный	long pepper			g=1 tsp=2
 7134	перец кубеба	cubeb pepper			g=1 tsp=2
-7140	перец красный молотый	ground red chili pepper			g=1 tsp=2.5 tbsp=7.5 pinch=0.2		красный перец
+7140	перец красный молотый	ground red chili pepper			g=1 tsp=2.5 tbsp=7.5 pinch=0.2		красный перец		kcal=318 protein=12.01 fat=17.27 carbs=56.63	fdc:170932
 7141	перец кайенский	cayenne pepper	7140		g=1 tsp=1.8 tbsp=5.3 pinch=0.2
 7157	перец чили молотый	ground chili	7140		g=1 tsp=2.5 tbsp=7.5 pinch=0.2
-7142	хлопья чили	red pepper flakes			g=1 tsp=1.8 tbsp=5.4 pinch=0.1
-7143	перец чили сушёный	dried chili pepper		true	g=1 pc=0.5
-7144	чипотле молотый	ground chipotle			g=1 tsp=2.3 tbsp=7 pinch=0.2
+# хлопья чили → fdc:170932 ground red (cayenne) pepper: the flakes are the same dried red chili, crushed
+7142	хлопья чили	red pepper flakes			g=1 tsp=1.8 tbsp=5.4 pinch=0.1				kcal=318 protein=12.01 fat=17.27 carbs=56.63	fdc:170932
+7143	перец чили сушёный	dried chili pepper		true	g=1 pc=0.5				kcal=324 protein=10.58 fat=5.81 carbs=69.86	fdc:168570
+# чипотле молотый → fdc:168570 sun-dried hot chile: chipotle is a dried (smoked) hot chile
+7144	чипотле молотый	ground chipotle			g=1 tsp=2.3 tbsp=7 pinch=0.2				kcal=324 protein=10.58 fat=5.81 carbs=69.86	fdc:168570
 7145	чипотле в соусе адобо	chipotles in adobo		true	g=1 pc=15 tbsp=15
-7146	анчо сушёный	dried ancho chile		true	g=1 pc=14
-7147	гочугару	gochugaru			g=1 tsp=2 tbsp=6
-7148	перец алеппо	Aleppo pepper			g=1 tsp=2 tbsp=6
-7149	перец эспелет	Espelette pepper			g=1 tsp=2 pinch=0.2
-7150	паприка	paprika			g=1 tsp=2.3 tbsp=7 pinch=0.2
+7146	анчо сушёный	dried ancho chile		true	g=1 pc=14				kcal=281 protein=11.86 fat=8.2 carbs=51.42	fdc:169396
+# гочугару → fdc:170932 ground red pepper: Korean ground dried red chili
+7147	гочугару	gochugaru			g=1 tsp=2 tbsp=6				kcal=318 protein=12.01 fat=17.27 carbs=56.63	fdc:170932
+# перец алеппо → fdc:170932 ground red pepper: ground dried red chili
+7148	перец алеппо	Aleppo pepper			g=1 tsp=2 tbsp=6				kcal=318 protein=12.01 fat=17.27 carbs=56.63	fdc:170932
+# перец эспелет → fdc:170932 ground red pepper: ground dried red chili
+7149	перец эспелет	Espelette pepper			g=1 tsp=2 pinch=0.2				kcal=318 protein=12.01 fat=17.27 carbs=56.63	fdc:170932
+7150	паприка	paprika			g=1 tsp=2.3 tbsp=7 pinch=0.2				kcal=282 protein=14.14 fat=12.89 carbs=53.99	fdc:171329
 7151	паприка сладкая	sweet paprika	7150		g=1 tsp=2.3 tbsp=7 pinch=0.2
 7152	паприка копчёная	smoked paprika	7150		g=1 tsp=2.3 tbsp=7 pinch=0.2
 7153	паприка острая	hot paprika	7150		g=1 tsp=2.3 tbsp=7 pinch=0.2
 7154	паприка хлопьями	paprika flakes	7150		g=1 tsp=1.5 tbsp=4.5
-7155	перец гуахильо сушёный	dried guajillo chile		true	g=1 pc=6
-7156	перец кашмирский	Kashmiri chili powder			g=1 tsp=2.5 tbsp=7.5
+# перец гуахильо сушёный → fdc:168570 sun-dried hot chile: guajillo is a dried hot chile
+7155	перец гуахильо сушёный	dried guajillo chile		true	g=1 pc=6				kcal=324 protein=10.58 fat=5.81 carbs=69.86	fdc:168570
+# перец кашмирский → fdc:170932 ground red pepper: ground dried red chili
+7156	перец кашмирский	Kashmiri chili powder			g=1 tsp=2.5 tbsp=7.5				kcal=318 protein=12.01 fat=17.27 carbs=56.63	fdc:170932
 
 # Spices, ground and whole (7200-7399).
 7200	специи	spices			g=1 tsp=2 tbsp=6 pinch=0.2
-7201	кориандр	coriander			g=1 tsp=1.8 tbsp=5.4 pinch=0.2
+7201	кориандр	coriander			g=1 tsp=1.8 tbsp=5.4 pinch=0.2				kcal=298 protein=12.37 fat=17.77 carbs=54.99	fdc:170922
 7202	кориандр молотый	ground coriander	7201		g=1 tsp=1.8 tbsp=5.4 pinch=0.2
 7203	кориандр в зёрнах	coriander seeds	7201		g=1 tsp=1.8 tbsp=5.4
-7205	зира	cumin			g=1 tsp=2.1 tbsp=6 pinch=0.2
+7205	зира	cumin			g=1 tsp=2.1 tbsp=6 pinch=0.2				kcal=375 protein=17.81 fat=22.27 carbs=44.24	fdc:170923
 7206	зира молотая	ground cumin	7205		g=1 tsp=2.1 tbsp=6 pinch=0.2
 7207	зира в зёрнах	cumin seeds	7205		g=1 tsp=2.1 tbsp=6
 7208	зира чёрная	black cumin	7205		g=1 tsp=2 tbsp=6
-7209	тмин	caraway seeds			g=1 tsp=2.1 tbsp=6 pinch=0.2
-7210	куркума	turmeric			g=1 tsp=3 tbsp=9 pinch=0.3
-7211	имбирь молотый	ground ginger			g=1 tsp=1.8 tbsp=5.4 pinch=0.2
-7212	корица	cinnamon			g=1 tsp=2.6 tbsp=7.8 pinch=0.3
+7209	тмин	caraway seeds			g=1 tsp=2.1 tbsp=6 pinch=0.2				kcal=333 protein=19.77 fat=14.59 carbs=49.9	fdc:170918
+7210	куркума	turmeric			g=1 tsp=3 tbsp=9 pinch=0.3				kcal=312 protein=9.68 fat=3.25 carbs=67.14	fdc:172231
+7211	имбирь молотый	ground ginger			g=1 tsp=1.8 tbsp=5.4 pinch=0.2				kcal=335 protein=8.98 fat=4.24 carbs=71.62	fdc:170926
+7212	корица	cinnamon			g=1 tsp=2.6 tbsp=7.8 pinch=0.3				kcal=247 protein=3.99 fat=1.24 carbs=80.59	fdc:171320
 7213	корица молотая	ground cinnamon	7212		g=1 tsp=2.6 tbsp=7.8 pinch=0.3
 7214	палочка корицы	cinnamon stick	7212	true	g=1 pc=3
 7215	корица цейлонская	Ceylon cinnamon	7212		g=1 tsp=2.6 tbsp=7.8 pinch=0.3
-7216	гвоздика	cloves		false	g=1 pc=0.1 tsp=2.1 pinch=0.2
+7216	гвоздика	cloves		false	g=1 pc=0.1 tsp=2.1 pinch=0.2				kcal=274 protein=5.97 fat=13 carbs=65.53	fdc:171321
 7217	гвоздика молотая	ground cloves	7216		g=1 tsp=2.1 tbsp=6.5 pinch=0.2
-7218	мускатный орех	nutmeg		true	g=1 pc=6 tsp=2.2 pinch=0.2
+7218	мускатный орех	nutmeg		true	g=1 pc=6 tsp=2.2 pinch=0.2				kcal=525 protein=5.84 fat=36.31 carbs=49.29	fdc:171326
 7219	мускатный орех молотый	ground nutmeg	7218		g=1 tsp=2.2 tbsp=7 pinch=0.2
-7220	мускатный цвет	mace			g=1 tsp=1.7 pinch=0.2
-7221	кардамон	cardamom			g=1 tsp=2 tbsp=6 pinch=0.2
+7220	мускатный цвет	mace			g=1 tsp=1.7 pinch=0.2				kcal=475 protein=6.71 fat=32.38 carbs=50.5	fdc:170927
+7221	кардамон	cardamom			g=1 tsp=2 tbsp=6 pinch=0.2				kcal=311 protein=10.76 fat=6.7 carbs=68.47	fdc:170919
 7222	кардамон молотый	ground cardamom	7221		g=1 tsp=2 tbsp=6 pinch=0.2
 7223	коробочка кардамона	cardamom pod	7221	false	g=1 pc=0.15
 7224	кардамон чёрный	black cardamom	7221	false	g=1 pc=1
 7225	бадьян	star anise		false	g=1 pc=1 tsp=2
-7226	анис	anise seed			g=1 tsp=2.1 tbsp=6.3
-7227	семена фенхеля	fennel seeds			g=1 tsp=2 tbsp=6
-7228	семена горчицы	mustard seeds			g=1 tsp=3.3 tbsp=10
+7226	анис	anise seed			g=1 tsp=2.1 tbsp=6.3				kcal=337 protein=17.6 fat=15.9 carbs=50.02	fdc:171316
+7227	семена фенхеля	fennel seeds			g=1 tsp=2 tbsp=6				kcal=345 protein=15.8 fat=14.87 carbs=52.29	fdc:171323
+# семена горчицы → fdc:170929 ground mustard seed: the same seed, whole
+7228	семена горчицы	mustard seeds			g=1 tsp=3.3 tbsp=10				kcal=508 protein=26.08 fat=36.24 carbs=28.09	fdc:170929
 7229	семена горчицы чёрные	black mustard seeds	7228		g=1 tsp=3.3 tbsp=10
-7230	горчица сухая (порошок)	mustard powder			g=1 tsp=2.5 tbsp=7.5			dry mustard;ground mustard
-7231	пажитник	fenugreek seeds			g=1 tsp=3.7 tbsp=11
+# горчица сухая → Skurikhin «Порошок горчичный»: the Russian powder is milled from defatted seed, unlike the US ground seed (Skurikhin 12.2.16, p. 192-193)
+7230	горчица сухая (порошок)	mustard powder			g=1 tsp=2.5 tbsp=7.5			dry mustard;ground mustard	kcal=378 protein=37.1 fat=11.1 carbs=32.6	skurikhin:Порошок горчичный
+7231	пажитник	fenugreek seeds			g=1 tsp=3.7 tbsp=11				kcal=323 protein=23 fat=6.41 carbs=58.35	fdc:171324
 7232	уцхо-сунели	blue fenugreek			g=1 tsp=2 tbsp=6 pinch=0.2
-7233	шафран	saffron			g=1 pinch=0.05
+7233	шафран	saffron			g=1 pinch=0.05				kcal=310 protein=11.43 fat=5.85 carbs=65.37	fdc:170934
 7234	имеретинский шафран	Imeretian saffron			g=1 tsp=1.2 tbsp=3.6 pinch=0.1
 7235	сумах	sumac			g=1 tsp=2.5 tbsp=7.5
 7236	ягоды можжевельника	juniper berries		false	g=1 pc=0.1 tsp=2
@@ -99,34 +109,36 @@
 7238	ажгон	ajwain			g=1 tsp=2.5
 7239	асафетида	asafetida			g=1 tsp=2 pinch=0.1
 7240	амчур	amchur			g=1 tsp=2
-7241	семена укропа	dill seeds			g=1 tsp=2.1 tbsp=6.3
-7242	семена сельдерея	celery seeds			g=1 tsp=2 tbsp=6
+7241	семена укропа	dill seeds			g=1 tsp=2.1 tbsp=6.3				kcal=305 protein=15.98 fat=14.54 carbs=55.17	fdc:170925
+7242	семена сельдерея	celery seeds			g=1 tsp=2 tbsp=6				kcal=392 protein=18.07 fat=25.27 carbs=41.35	fdc:170920
 7243	галангал молотый	ground galangal			g=1 tsp=2
-7244	чеснок сушёный	dried garlic			g=1 tsp=3.1 tbsp=9.3 pinch=0.3
+# чеснок сушёный → fdc:171325 garlic powder: the same dehydrated garlic
+7244	чеснок сушёный	dried garlic			g=1 tsp=3.1 tbsp=9.3 pinch=0.3				kcal=331 protein=16.55 fat=0.73 carbs=72.73	fdc:171325
 7266	чесночный порошок	garlic powder	7244		g=1 tsp=3.1 tbsp=9.3 pinch=0.3
 7245	чеснок гранулированный	granulated garlic	7244		g=1 tsp=3.1 tbsp=9.3
-7246	лук сушёный	dried minced onion			g=1 tsp=2 tbsp=6
-7247	луковый порошок	onion powder			g=1 tsp=2.4 tbsp=7.2 pinch=0.2
+7246	лук сушёный	dried minced onion			g=1 tsp=2 tbsp=6				kcal=349 protein=8.95 fat=0.46 carbs=83.28	fdc:170002
+7247	луковый порошок	onion powder			g=1 tsp=2.4 tbsp=7.2 pinch=0.2				kcal=341 protein=10.41 fat=1.04 carbs=79.12	fdc:171327
 7248	лук жареный	crispy fried onions			g=1 tbsp=4 cup=60
 7249	цедра лимона сушёная	dried lemon peel			g=1 tsp=2 tbsp=6
 7250	цедра апельсина сушёная	dried orange peel			g=1 tsp=2 tbsp=6
-7251	лавровый лист	bay leaf		false	g=1 pc=0.2
-7252	лавровый лист молотый	ground bay leaf			g=1 tsp=1.8 pinch=0.1
+7251	лавровый лист	bay leaf		false	g=1 pc=0.2				kcal=313 protein=7.61 fat=8.36 carbs=74.97	fdc:170917
+7252	лавровый лист молотый	ground bay leaf			g=1 tsp=1.8 pinch=0.1				kcal=313 protein=7.61 fat=8.36 carbs=74.97	fdc:170917
 7253	листья кафир-лайма сушёные	dried makrut lime leaves		false	g=1 pc=0.1
 7254	лемонграсс сушёный	dried lemongrass			g=1 tsp=1 tbsp=3
 7255	барбарис	barberries			g=1 tsp=2 tbsp=6
-7256	тамаринд	tamarind			g=1
+7256	тамаринд	tamarind			g=1				kcal=239 protein=2.8 fat=0.6 carbs=62.5	fdc:167763
 7257	паста тамаринда	tamarind paste	7256		g=1 tsp=6 tbsp=18
 7260	глутамат натрия	MSG			g=1 tsp=4 pinch=0.3
 7261	лимонная кислота	citric acid			g=1 tsp=5 pinch=0.3
 7263	чеснок сушёный хлопьями	dried garlic flakes	7244		g=1 tsp=1.5 tbsp=4.5
-7264	имбирь сушёный ломтиками	dried ginger slices			g=1
+# имбирь сушёный ломтиками → fdc:170926 ground ginger: the same dried ginger
+7264	имбирь сушёный ломтиками	dried ginger slices			g=1				kcal=335 protein=8.98 fat=4.24 carbs=71.62	fdc:170926
 7265	хрен сушёный	horseradish powder			g=1 tsp=2
 
 # Spice blends and seasonings (7400-7499).
 7400	приправа	seasoning			g=1 tsp=2.5 tbsp=7.5 pinch=0.2
 7401	хмели-сунели	khmeli suneli	7400		g=1 tsp=1.5 tbsp=4.5 pinch=0.2
-7402	карри	curry powder	7400		g=1 tsp=2 tbsp=6.3 pinch=0.2
+7402	карри	curry powder	7400		g=1 tsp=2 tbsp=6.3 pinch=0.2				kcal=325 protein=14.29 fat=14.01 carbs=55.83	fdc:170924
 7403	гарам масала	garam masala	7400		g=1 tsp=2 tbsp=6 pinch=0.2
 7404	приправа для плова	plov seasoning	7400		g=1 tsp=2.5 tbsp=7.5
 7405	итальянские травы	Italian seasoning	7400		g=1 tsp=1 tbsp=3 pinch=0.1
@@ -139,11 +151,11 @@
 7412	дукка	dukkah	7400		g=1 tsp=2.5 tbsp=7.5
 7413	тандури масала	tandoori masala	7400		g=1 tsp=2.5 tbsp=7.5
 7414	чат масала	chaat masala	7400		g=1 tsp=2.5
-7415	приправа чили	chili powder	7400		g=1 tsp=2.7 tbsp=8
+7415	приправа чили	chili powder	7400		g=1 tsp=2.7 tbsp=8				kcal=282 protein=13.46 fat=14.28 carbs=49.7	fdc:171319
 7416	каджунская приправа	Cajun seasoning	7400		g=1 tsp=2.5 tbsp=7.5
-7417	приправа для тако	taco seasoning	7400		g=1 tsp=2.8 tbsp=8.5
+7417	приправа для тако	taco seasoning	7400		g=1 tsp=2.8 tbsp=8.5				kcal=322 protein=4.5 fat=0 carbs=58	fdc:172243
 7418	лимонный перец	lemon pepper	7400		g=1 tsp=2.5 tbsp=7.5
-7419	приправа для курицы	poultry seasoning	7400		g=1 tsp=2 tbsp=6
+7419	приправа для курицы	poultry seasoning	7400		g=1 tsp=2 tbsp=6				kcal=307 protein=9.59 fat=7.53 carbs=65.59	fdc:171331
 7420	приправа для рыбы	seafood seasoning	7400		g=1 tsp=2.5 tbsp=7.5
 7421	приправа для мяса	meat seasoning	7400		g=1 tsp=2.5 tbsp=7.5
 7422	приправа для шашлыка	kebab seasoning	7400		g=1 tsp=2.5 tbsp=7.5
@@ -153,35 +165,36 @@
 7426	приправа для гриля	grill seasoning	7400		g=1 tsp=3 tbsp=9
 7427	приправа для глинтвейна	mulled wine spices	7400		g=1 tsp=2
 7428	приправа для пряников	gingerbread spice	7400		g=1 tsp=2 tbsp=6
-7429	приправа для тыквенного пирога	pumpkin pie spice	7400		g=1 tsp=1.7 tbsp=5
+7429	приправа для тыквенного пирога	pumpkin pie spice	7400		g=1 tsp=1.7 tbsp=5				kcal=342 protein=5.76 fat=12.6 carbs=69.28	fdc:171332
 7430	аджика сухая	dry adjika	7400		g=1 tsp=4 tbsp=12
 7431	приправа для фарша	ground meat seasoning	7400		g=1 tsp=2.5 tbsp=7.5
 7432	приправа для супа	soup seasoning	7400		g=1 tsp=3 tbsp=9
 7433	приправа для свинины	pork seasoning	7400		g=1 tsp=2.5 tbsp=7.5
 7434	приправа для засолки	pickling spice	7400		g=1 tsp=2 tbsp=6
 7440	приправа ранч	ranch seasoning	7400		g=1 tsp=2.5 tbsp=7.5
-7441	смесь для лукового супа	onion soup mix	7400	true	g=1 pc=28 tbsp=8
+7441	смесь для лукового супа	onion soup mix	7400	true	g=1 pc=28 tbsp=8				kcal=293 protein=7.48 fat=0.34 carbs=65.07	fdc:171165
 7436	самбар масала	sambar powder	7400		g=1 tsp=2.5
 7437	шичими тогараши	shichimi togarashi	7400		g=1 tsp=2.5
 7438	фурикакэ	furikake	7400		g=1 tsp=2 tbsp=6
 
 # Dried herbs (7500-7599). The fresh herbs are produce («укроп свежий»…); here only what is sold dry.
 7500	травы сушёные	dried herbs			g=1 tsp=1 tbsp=3 pinch=0.1
-7501	базилик сушёный	dried basil	7500		g=1 tsp=0.7 tbsp=2.1 pinch=0.1
-7502	орегано сушёный	dried oregano	7500		g=1 tsp=1 tbsp=3 pinch=0.1
-7503	укроп сушёный	dried dill	7500		g=1 tsp=1 tbsp=3 pinch=0.1
-7504	петрушка сушёная	dried parsley	7500		g=1 tsp=0.5 tbsp=1.5 pinch=0.1
-7505	тимьян (чабрец) сушёный	dried thyme	7500		g=1 tsp=1 tbsp=3 pinch=0.1
-7506	розмарин сушёный	dried rosemary	7500		g=1 tsp=1.2 tbsp=3.6 pinch=0.1
-7507	майоран сушёный	dried marjoram	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1
-7508	шалфей сушёный	dried sage	7500		g=1 tsp=0.7 tbsp=2 pinch=0.1
-7509	эстрагон сушёный	dried tarragon	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1
-7510	мята сушёная	dried mint	7500		g=1 tsp=0.5 tbsp=1.5 pinch=0.1
-7511	чабер сушёный	dried savory	7500		g=1 tsp=1.4 tbsp=4 pinch=0.1
-7512	кинза сушёная	dried cilantro	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1
+7501	базилик сушёный	dried basil	7500		g=1 tsp=0.7 tbsp=2.1 pinch=0.1				kcal=233 protein=22.98 fat=4.07 carbs=47.75	fdc:171317
+7502	орегано сушёный	dried oregano	7500		g=1 tsp=1 tbsp=3 pinch=0.1				kcal=265 protein=9 fat=4.28 carbs=68.92	fdc:171328
+7503	укроп сушёный	dried dill	7500		g=1 tsp=1 tbsp=3 pinch=0.1				kcal=253 protein=19.96 fat=4.36 carbs=55.82	fdc:171322
+7504	петрушка сушёная	dried parsley	7500		g=1 tsp=0.5 tbsp=1.5 pinch=0.1				kcal=292 protein=26.63 fat=5.48 carbs=50.64	fdc:170930
+7505	тимьян (чабрец) сушёный	dried thyme	7500		g=1 tsp=1 tbsp=3 pinch=0.1				kcal=276 protein=9.11 fat=7.43 carbs=63.94	fdc:170938
+7506	розмарин сушёный	dried rosemary	7500		g=1 tsp=1.2 tbsp=3.6 pinch=0.1				kcal=331 protein=4.88 fat=15.22 carbs=64.06	fdc:171333
+7507	майоран сушёный	dried marjoram	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1				kcal=271 protein=12.66 fat=7.04 carbs=60.56	fdc:170928
+7508	шалфей сушёный	dried sage	7500		g=1 tsp=0.7 tbsp=2 pinch=0.1				kcal=315 protein=10.63 fat=12.75 carbs=60.73	fdc:170935
+7509	эстрагон сушёный	dried tarragon	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1				kcal=295 protein=22.77 fat=7.24 carbs=50.22	fdc:170937
+# мята сушёная → fdc:172239 dried spearmint
+7510	мята сушёная	dried mint	7500		g=1 tsp=0.5 tbsp=1.5 pinch=0.1				kcal=285 protein=19.93 fat=6.03 carbs=52.04	fdc:172239
+7511	чабер сушёный	dried savory	7500		g=1 tsp=1.4 tbsp=4 pinch=0.1				kcal=272 protein=6.73 fat=5.91 carbs=68.73	fdc:170936
+7512	кинза сушёная	dried cilantro	7500		g=1 tsp=0.6 tbsp=1.8 pinch=0.1				kcal=279 protein=21.93 fat=4.78 carbs=52.1	fdc:170921
 7514	мелисса сушёная	dried lemon balm	7500		g=1 tsp=0.5 tbsp=1.5
-7515	шнитт-лук сушёный	dried chives	7500		g=1 tsp=0.3 tbsp=1
-7516	кервель сушёный	dried chervil	7500		g=1 tsp=0.6 tbsp=1.8
+7515	шнитт-лук сушёный	dried chives	7500		g=1 tsp=0.3 tbsp=1				kcal=311 protein=21.2 fat=3.5 carbs=64.29	fdc:170075
+7516	кервель сушёный	dried chervil	7500		g=1 tsp=0.6 tbsp=1.8				kcal=237 protein=23.2 fat=3.9 carbs=49.1	fdc:171318
 7517	любисток сушёный	dried lovage	7500		g=1 tsp=0.6 tbsp=1.8
 7518	сельдерей сушёный	dried celery leaves	7500		g=1 tsp=0.6 tbsp=1.8
 7519	пажитник сушёный	dried fenugreek leaves	7500		g=1 tsp=0.6 tbsp=1.8

@@ -3,81 +3,103 @@
 @range 7000-8999
 
 # Stocks and bouillon (8600-8649). A bouillon cube is counted and may be halved.
-8600	бульон	stock			g=1 ml=1 tbsp=15 cup=250
+# бульон → fdc:172884 home-prepared chicken stock: the stock a cook makes
+8600	бульон	stock			g=1 ml=1 tbsp=15 cup=250				kcal=36 protein=2.52 fat=1.2 carbs=3.53	fdc:172884
 8601	бульон куриный	chicken stock	8600		g=1 ml=1 tbsp=15 cup=250			chicken broth
-8602	бульон говяжий	beef stock	8600		g=1 ml=1 tbsp=15 cup=250			beef broth
-8603	бульон овощной	vegetable stock	8600		g=1 ml=1 tbsp=15 cup=250			vegetable broth
-8604	бульон рыбный	fish stock	8600		g=1 ml=1 tbsp=15 cup=250
-8605	бульон грибной	mushroom stock	8600		g=1 ml=1 tbsp=15 cup=250
-8606	бульон костный	bone broth	8600		g=1 ml=1 tbsp=15 cup=250
-8607	бульон мясной	meat stock	8600		g=1 ml=1 tbsp=15 cup=250
-8608	бульон сухой	bouillon powder	8600		g=1 tsp=4 tbsp=12
+8602	бульон говяжий	beef stock	8600		g=1 ml=1 tbsp=15 cup=250			beef broth	kcal=13 protein=1.97 fat=0.09 carbs=1.2	fdc:172883
+8603	бульон овощной	vegetable stock	8600		g=1 ml=1 tbsp=15 cup=250			vegetable broth	kcal=5 protein=0.24 fat=0.07 carbs=0.93	fdc:171583
+8604	бульон рыбный	fish stock	8600		g=1 ml=1 tbsp=15 cup=250				kcal=16 protein=2.26 fat=0.81 carbs=0	fdc:172885
+# бульон грибной → fdc:171583 ready-to-serve vegetable broth: a meatless broth of the same strength
+8605	бульон грибной	mushroom stock	8600		g=1 ml=1 tbsp=15 cup=250				kcal=5 protein=0.24 fat=0.07 carbs=0.93	fdc:171583
+# бульон костный → fdc:172883 home-prepared beef stock: a stock simmered from bones
+8606	бульон костный	bone broth	8600		g=1 ml=1 tbsp=15 cup=250				kcal=13 protein=1.97 fat=0.09 carbs=1.2	fdc:172883
+# бульон мясной → fdc:172883 home-prepared beef stock
+8607	бульон мясной	meat stock	8600		g=1 ml=1 tbsp=15 cup=250				kcal=13 protein=1.97 fat=0.09 carbs=1.2	fdc:172883
+# бульон сухой → fdc:171562 dry chicken broth or bouillon (powder)
+8608	бульон сухой	bouillon powder	8600		g=1 tsp=4 tbsp=12				kcal=267 protein=16.66 fat=13.88 carbs=18.01	fdc:171562
 8609	даши	dashi	8600		g=1 ml=1 tbsp=15 cup=250
 8610	бульон из индейки	turkey stock	8600		g=1 ml=1 tbsp=15 cup=250
-8620	бульонный кубик	bouillon cube		true	g=1 pc=10
+8620	бульонный кубик	bouillon cube		true	g=1 pc=10				kcal=198 protein=14.6 fat=4.7 carbs=23.5	fdc:171563
 8621	бульонный кубик куриный	chicken bouillon cube	8620	true	g=1 pc=10
-8622	бульонный кубик говяжий	beef bouillon cube	8620	true	g=1 pc=10
+8622	бульонный кубик говяжий	beef bouillon cube	8620	true	g=1 pc=10				kcal=170 protein=17.3 fat=4 carbs=16.1	fdc:171561
 8623	бульонный кубик овощной	vegetable bouillon cube	8620	true	g=1 pc=10
 8624	бульонный кубик грибной	mushroom bouillon cube	8620	true	g=1 pc=10
 8625	бульонный кубик рыбный	fish bouillon cube	8620	true	g=1 pc=10
 8630	даши порошок	dashi powder			g=1 tsp=3
 8631	концентрат бульона	bouillon base			g=1 tsp=6 tbsp=18
-8632	крем-суп грибной концентрированный	condensed cream of mushroom soup		true	g=1 pc=300
-8633	крем-суп куриный концентрированный	condensed cream of chicken soup		true	g=1 pc=300
+8632	крем-суп грибной концентрированный	condensed cream of mushroom soup		true	g=1 pc=300				kcal=79 protein=1.35 fat=5.3 carbs=6.8	fdc:171155
+8633	крем-суп куриный концентрированный	condensed cream of chicken soup		true	g=1 pc=300				kcal=90 protein=2.38 fat=5.77 carbs=7.16	fdc:171146
 
 # Wine, beer and spirits for cooking (8700-8799).
-8700	вино	wine			g=1 ml=0.99 tbsp=15 cup=248
-8701	вино белое	white wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8700	вино	wine			g=1 ml=0.99 tbsp=15 cup=248				kcal=83 protein=0.07 fat=0 carbs=2.72	fdc:173185
+8701	вино белое	white wine	8700		g=1 ml=0.99 tbsp=15 cup=248				kcal=82 protein=0.07 fat=0 carbs=2.6	fdc:174837
 8702	вино белое сухое	dry white wine	8700		g=1 ml=0.99 tbsp=15 cup=248
-8703	вино красное	red wine	8700		g=1 ml=0.99 tbsp=15 cup=248
+8703	вино красное	red wine	8700		g=1 ml=0.99 tbsp=15 cup=248				kcal=85 protein=0.07 fat=0 carbs=2.61	fdc:173190
 8704	вино красное сухое	dry red wine	8700		g=1 ml=0.99 tbsp=15 cup=248
-8705	вино розовое	rose wine	8700		g=1 ml=0.99 tbsp=15 cup=248
-8706	вино полусладкое	semi-sweet wine	8700		g=1 ml=1.01 tbsp=15 cup=252
-8707	вино десертное	dessert wine	8700		g=1 ml=1.04 tbsp=16 cup=260
+8705	вино розовое	rose wine	8700		g=1 ml=0.99 tbsp=15 cup=248				kcal=83 protein=0.36 fat=0 carbs=3.8	fdc:171908
+# вино полусладкое → Skurikhin «Вина полусладкие»: USDA has no semi-sweet table wine (Skurikhin 11.2.2.3, p. 186-187)
+8706	вино полусладкое	semi-sweet wine	8700		g=1 ml=1.01 tbsp=15 cup=252				kcal=88 protein=0.2 fat=0 carbs=5	skurikhin:Вина полусладкие белые и красные (в т. ч. шампанское)
+8707	вино десертное	dessert wine	8700		g=1 ml=1.04 tbsp=16 cup=260				kcal=160 protein=0.2 fat=0 carbs=13.69	fdc:173176
 8708	вино игристое	sparkling wine	8700		g=1 ml=0.99 tbsp=15 cup=248
 8709	шампанское	Champagne	8700		g=1 ml=0.99 tbsp=15 cup=248
 8710	просекко	prosecco	8700		g=1 ml=0.99 tbsp=15 cup=248
-8711	херес	sherry	8700		g=1 ml=1 tbsp=15 cup=250			dry sherry
-8712	портвейн	port	8700		g=1 ml=1.02 tbsp=15 cup=255
-8713	марсала	Marsala	8700		g=1 ml=1.02 tbsp=15 cup=255
-8714	мадера	Madeira	8700		g=1 ml=1.02 tbsp=15 cup=255
-8715	кагор	Kagor wine	8700		g=1 ml=1.04 tbsp=16 cup=260
-8716	вермут	vermouth	8700		g=1 ml=1 tbsp=15 cup=250
-8717	вино шаосин	Shaoxing wine	8700		g=1 ml=0.99 tsp=5 tbsp=15
+# херес → fdc:175112 dry dessert wine: a dry fortified wine
+8711	херес	sherry	8700		g=1 ml=1 tbsp=15 cup=250			dry sherry	kcal=152 protein=0.2 fat=0 carbs=11.67	fdc:175112
+# портвейн → fdc:173176 sweet dessert wine: a sweet fortified wine
+8712	портвейн	port	8700		g=1 ml=1.02 tbsp=15 cup=255				kcal=160 protein=0.2 fat=0 carbs=13.69	fdc:173176
+# марсала → fdc:173176 sweet dessert wine: a sweet fortified wine
+8713	марсала	Marsala	8700		g=1 ml=1.02 tbsp=15 cup=255				kcal=160 protein=0.2 fat=0 carbs=13.69	fdc:173176
+# мадера → fdc:175112 dry dessert wine: a fortified wine
+8714	мадера	Madeira	8700		g=1 ml=1.02 tbsp=15 cup=255				kcal=152 protein=0.2 fat=0 carbs=11.67	fdc:175112
+# кагор → Skurikhin «Вина десертные»: кагор is a Russian dessert wine (Skurikhin 11.2.2.7, p. 186-187)
+8715	кагор	Kagor wine	8700		g=1 ml=1.04 tbsp=16 cup=260				kcal=172 protein=0.5 fat=0 carbs=20	skurikhin:Вина десертные
+# вермут → fdc:175112 dry dessert wine: vermouth is a fortified wine of the same strength
+8716	вермут	vermouth	8700		g=1 ml=1 tbsp=15 cup=250				kcal=152 protein=0.2 fat=0 carbs=11.67	fdc:175112
+# вино шаосин → fdc:167723 sake: a rice wine of the same kind
+8717	вино шаосин	Shaoxing wine	8700		g=1 ml=0.99 tsp=5 tbsp=15				kcal=134 protein=0.5 fat=0 carbs=5	fdc:167723
 8718	вино для глинтвейна	mulled wine	8700		g=1 ml=1.02 cup=255
 8720	мирин	mirin			g=1 ml=1.05 tsp=5 tbsp=16 cup=260
-8721	саке	sake			g=1 ml=0.99 tsp=5 tbsp=15 cup=248
-8725	пиво	beer			g=1 ml=1.01 cup=252
+8721	саке	sake			g=1 ml=0.99 tsp=5 tbsp=15 cup=248				kcal=134 protein=0.5 fat=0 carbs=5	fdc:167723
+8725	пиво	beer			g=1 ml=1.01 cup=252				kcal=43 protein=0.46 fat=0 carbs=3.55	fdc:168746
 8726	пиво светлое	lager	8725		g=1 ml=1.01 cup=252
 8727	пиво тёмное	dark beer	8725		g=1 ml=1.01 cup=252
-8728	пиво безалкогольное	non-alcoholic beer	8725		g=1 ml=1.01 cup=252
+8728	пиво безалкогольное	non-alcoholic beer	8725		g=1 ml=1.01 cup=252				kcal=37 protein=0.21 fat=0.12 carbs=8.05	fdc:174863
 8729	эль	ale	8725		g=1 ml=1.01 cup=252
 8730	стаут	stout	8725		g=1 ml=1.01 cup=252
-8731	сидр	hard cider			g=1 ml=1.01 cup=252
-8735	коньяк	cognac			g=1 ml=0.95 tsp=4.7 tbsp=14
-8736	бренди	brandy			g=1 ml=0.95 tsp=4.7 tbsp=14
-8737	ром	rum			g=1 ml=0.95 tsp=4.7 tbsp=14
+# сидр → fdc:174146 hard cider (the only one SR Legacy holds)
+8731	сидр	hard cider			g=1 ml=1.01 cup=252				kcal=56 protein=0 fat=0 carbs=5.92	fdc:174146
+# Skurikhin 11.2.6.1, p. 188-189
+8735	коньяк	cognac			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=239 protein=0 fat=0 carbs=1.5	skurikhin:Коньяк ординарный «три звездочки»
+# бренди → fdc:174815 distilled spirits, 80 proof: brandy is a 40% spirit
+8736	бренди	brandy			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174815
+8737	ром	rum			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174817
 8738	ром тёмный	dark rum	8737		g=1 ml=0.95 tsp=4.7 tbsp=14
 8739	ром белый	white rum	8737		g=1 ml=0.95 tsp=4.7 tbsp=14
-8740	водка	vodka			g=1 ml=0.95 tsp=4.7 tbsp=14
-8741	виски	whiskey			g=1 ml=0.95 tsp=4.7 tbsp=14
+8740	водка	vodka			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174818
+8741	виски	whiskey			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=250 protein=0 fat=0 carbs=0.1	fdc:174819
 8742	бурбон	bourbon	8741		g=1 ml=0.95 tsp=4.7 tbsp=14
-8743	джин	gin			g=1 ml=0.95 tsp=4.7 tbsp=14
-8744	текила	tequila			g=1 ml=0.95 tsp=4.7 tbsp=14
-8745	кальвадос	Calvados			g=1 ml=0.95 tsp=4.7 tbsp=14
-8746	чача	chacha			g=1 ml=0.95 tsp=4.7 tbsp=14
-8747	граппа	grappa			g=1 ml=0.95 tsp=4.7 tbsp=14
-8748	кирш	kirsch			g=1 ml=0.95 tsp=4.7 tbsp=14
+8743	джин	gin			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174815
+# текила → fdc:174815 distilled spirits, 80 proof: tequila is a 40% spirit
+8744	текила	tequila			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174815
+# кальвадос → fdc:174815 distilled spirits, 80 proof: Calvados is a 40% spirit
+8745	кальвадос	Calvados			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174815
+# чача → fdc:173664 distilled spirits, 100 proof: chacha is a strong (about 50%) spirit
+8746	чача	chacha			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=295 protein=0 fat=0 carbs=0	fdc:173664
+# граппа → fdc:174815 distilled spirits, 80 proof: grappa is a 40% spirit
+8747	граппа	grappa			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174815
+# кирш → fdc:174815 distilled spirits, 80 proof: kirsch is a 40% spirit
+8748	кирш	kirsch			g=1 ml=0.95 tsp=4.7 tbsp=14				kcal=231 protein=0 fat=0 carbs=0	fdc:174815
 8749	спирт	grain alcohol			g=1 ml=0.81 tsp=4 tbsp=12
-8750	ликёр	liqueur			g=1 ml=1.08 tsp=5.4 tbsp=16
+# ликёр → Skurikhin «Ликер «Вишневый»»: a typical 25% sweet liqueur (Skurikhin 11.2.5.1, p. 188-189)
+8750	ликёр	liqueur			g=1 ml=1.08 tsp=5.4 tbsp=16				kcal=299 protein=0 fat=0 carbs=40	skurikhin:Ликер «Вишневый»
 8751	ликёр апельсиновый	orange liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
 8752	ликёр кофейный	coffee liqueur	8750		g=1 ml=1.1 tsp=5.5 tbsp=16.5
-8753	ликёр сливочный	Irish cream liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
+8753	ликёр сливочный	Irish cream liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16				kcal=327 protein=2.8 fat=15.7 carbs=20.9	fdc:175098
 8754	амаретто	amaretto	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8755	ликёр вишнёвый	cherry liqueur	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8756	ликёр кокосовый	coconut liqueur	8750		g=1 ml=1.06 tsp=5.3 tbsp=16
 8757	ликёр ореховый	hazelnut liqueur	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
-8758	ликёр мятный	creme de menthe	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
+8758	ликёр мятный	creme de menthe	8750		g=1 ml=1.08 tsp=5.4 tbsp=16				kcal=371 protein=0 fat=0.3 carbs=41.6	fdc:173168
 8759	ликёр лимонный	limoncello	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8760	самбука	sambuca	8750		g=1 ml=1.08 tsp=5.4 tbsp=16
 8761	абсент	absinthe			g=1 ml=0.93 tsp=4.7 tbsp=14
@@ -92,19 +114,25 @@
 8805	вода тёплая	warm water	8800		g=1 ml=1 tsp=5 tbsp=15 cup=250
 8806	вода кипячёная	boiled water	8800		g=1 ml=1 tbsp=15 cup=250
 8807	содовая	club soda	8800		g=1 ml=1 cup=250
-8808	тоник	tonic water	8800		g=1 ml=1.03 cup=258
-8810	лёд	ice			g=1 cup=150
-8811	кубик льда	ice cube		false	g=1 pc=25
+8808	тоник	tonic water	8800		g=1 ml=1.03 cup=258				kcal=34 protein=0 fat=0 carbs=8.8	fdc:171869
+# лёд → fdc:173647 tap water: ice is frozen water
+8810	лёд	ice			g=1 cup=150				kcal=0 protein=0 fat=0 carbs=0	fdc:173647
+# кубик льда → fdc:173647 tap water: ice is frozen water
+8811	кубик льда	ice cube		false	g=1 pc=25				kcal=0 protein=0 fat=0 carbs=0	fdc:173647
 8812	лёд колотый	crushed ice	8810		g=1 cup=150
-8820	кофе	coffee			g=1 ml=1 tbsp=15 cup=250
-8821	кофе молотый	ground coffee	8820		g=1 tsp=2 tbsp=6
-8822	кофе растворимый	instant coffee	8820		g=1 tsp=2 tbsp=5
-8823	кофе в зёрнах	coffee beans	8820		g=1 cup=85
-8824	эспрессо	espresso	8820		g=1 ml=1 tbsp=15
+# кофе → fdc:171890 brewed coffee: what кофе in a recipe means
+8820	кофе	coffee			g=1 ml=1 tbsp=15 cup=250				kcal=1 protein=0.12 fat=0.02 carbs=0	fdc:171890
+# кофе молотый → Skurikhin «Кофе жареный в зернах»: the same roasted coffee, ground (Skurikhin 11.1.8.1, p. 184-185)
+8821	кофе молотый	ground coffee	8820		g=1 tsp=2 tbsp=6				kcal=331 protein=13.9 fat=14.4 carbs=29.5	skurikhin:Кофе жареный в зернах
+8822	кофе растворимый	instant coffee	8820		g=1 tsp=2 tbsp=5				kcal=353 protein=12.2 fat=0.5 carbs=75.4	fdc:171893
+# Skurikhin 11.1.8.1, p. 184-185
+8823	кофе в зёрнах	coffee beans	8820		g=1 cup=85				kcal=331 protein=13.9 fat=14.4 carbs=29.5	skurikhin:Кофе жареный в зернах
+8824	эспрессо	espresso	8820		g=1 ml=1 tbsp=15				kcal=9 protein=0.12 fat=0.18 carbs=1.67	fdc:171891
 8825	кофе сваренный	brewed coffee	8820		g=1 ml=1 tbsp=15 cup=250
-8826	кофе без кофеина	decaf coffee	8820		g=1 ml=1 cup=250
+8826	кофе без кофеина	decaf coffee	8820		g=1 ml=1 cup=250				kcal=0 protein=0.1 fat=0 carbs=0	fdc:171889
 8827	цикорий	chicory			g=1 tsp=2
-8830	чай	tea			g=1 ml=1 cup=250
+# чай → fdc:173227 brewed black tea: what чай in a recipe means
+8830	чай	tea			g=1 ml=1 cup=250				kcal=1 protein=0 fat=0 carbs=0.3	fdc:173227
 8831	чай чёрный	black tea	8830		g=1 tsp=2.5
 8832	чай зелёный	green tea	8830		g=1 tsp=2
 8833	пакетик чая	tea bag	8830	false	g=1 pc=2
@@ -119,60 +147,84 @@
 8842	ромашковый чай	chamomile tea	8830		g=1 tsp=1
 8843	чай масала	masala chai	8830		g=1 tsp=2.5
 8850	сок	juice			g=1 ml=1.04 tbsp=16 cup=260
-8851	сок томатный	tomato juice	8850		g=1 ml=1.03 tbsp=15 cup=258
-8852	сок яблочный	apple juice	8850		g=1 ml=1.04 tbsp=16 cup=260
-8853	сок гранатовый	pomegranate juice	8850		g=1 ml=1.05 tbsp=16 cup=262
-8854	сок виноградный	grape juice	8850		g=1 ml=1.06 tbsp=16 cup=265
-8855	сок вишнёвый	cherry juice	8850		g=1 ml=1.05 tbsp=16 cup=262
-8856	сок ананасовый	pineapple juice	8850		g=1 ml=1.05 tbsp=16 cup=262
-8857	сок грейпфрутовый	grapefruit juice	8850		g=1 ml=1.04 tbsp=16 cup=260
-8858	сок клюквенный	cranberry juice	8850		g=1 ml=1.04 tbsp=16 cup=260
-8859	сок морковный	carrot juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8851	сок томатный	tomato juice	8850		g=1 ml=1.03 tbsp=15 cup=258				kcal=17 protein=0.85 fat=0.29 carbs=3.53	fdc:170458
+8852	сок яблочный	apple juice	8850		g=1 ml=1.04 tbsp=16 cup=260				kcal=46 protein=0.1 fat=0.13 carbs=11.3	fdc:173933
+8853	сок гранатовый	pomegranate juice	8850		g=1 ml=1.05 tbsp=16 cup=262				kcal=54 protein=0.15 fat=0.29 carbs=13.13	fdc:167787
+8854	сок виноградный	grape juice	8850		g=1 ml=1.06 tbsp=16 cup=265				kcal=60 protein=0.37 fat=0.13 carbs=14.77	fdc:173042
+# сок вишнёвый → fdc:167807 tart cherry juice: вишня is the sour cherry
+8855	сок вишнёвый	cherry juice	8850		g=1 ml=1.05 tbsp=16 cup=262				kcal=59 protein=0.31 fat=0.54 carbs=13.7	fdc:167807
+8856	сок ананасовый	pineapple juice	8850		g=1 ml=1.05 tbsp=16 cup=262				kcal=53 protein=0.36 fat=0.12 carbs=12.87	fdc:169947
+8857	сок грейпфрутовый	grapefruit juice	8850		g=1 ml=1.04 tbsp=16 cup=260				kcal=37 protein=0.55 fat=0.66 carbs=7.54	fdc:174678
+8858	сок клюквенный	cranberry juice	8850		g=1 ml=1.04 tbsp=16 cup=260				kcal=46 protein=0.39 fat=0.13 carbs=12.2	fdc:168117
+8859	сок морковный	carrot juice	8850		g=1 ml=1.04 tbsp=16 cup=260				kcal=40 protein=0.95 fat=0.15 carbs=9.28	fdc:170491
 8860	сок мультифрукт	mixed fruit juice	8850		g=1 ml=1.04 tbsp=16 cup=260
-8861	сок персиковый	peach nectar	8850		g=1 ml=1.05 tbsp=16 cup=262
-8862	сок манговый	mango nectar	8850		g=1 ml=1.05 tbsp=16 cup=262
-8863	сок свекольный	beet juice	8850		g=1 ml=1.04 tbsp=16 cup=260
+8861	сок персиковый	peach nectar	8850		g=1 ml=1.05 tbsp=16 cup=262				kcal=50 protein=0.21 fat=0.51 carbs=11.93	fdc:168185
+8862	сок манговый	mango nectar	8850		g=1 ml=1.05 tbsp=16 cup=262				kcal=51 protein=0.11 fat=0.06 carbs=13.12	fdc:167785
+# сок свекольный → Skurikhin 11.1.2.2 «Свекольный» (Соки овощные. Консервы) (Skurikhin 11.1.2.2, p. 176-177)
+8863	сок свекольный	beet juice	8850		g=1 ml=1.04 tbsp=16 cup=260				kcal=61 protein=1 fat=0 carbs=14.1	skurikhin:Сок свекольный
 8864	сок берёзовый	birch sap	8850		g=1 ml=1 cup=250
-8870	квас	kvass			g=1 ml=1.01 cup=252
-8871	морс	berry drink			g=1 ml=1.03 cup=258
-8872	лимонад	lemonade			g=1 ml=1.04 cup=260
-8873	кола	cola			g=1 ml=1.04 cup=260
-8874	кокосовая вода	coconut water			g=1 ml=1.02 cup=255
-8875	кисель	kissel			g=1 ml=1.05 cup=262
-8876	компот	compote drink			g=1 ml=1.03 cup=258
-8877	газировка сладкая	soda			g=1 ml=1.04 cup=260
-8878	имбирный эль	ginger ale			g=1 ml=1.04 cup=260
-8879	холодный чай	iced tea			g=1 ml=1.03 cup=258
+# квас → Skurikhin 11.1.6.1 «Хлебный» (Квас); kcal includes its alcohol (Skurikhin 11.1.6.1, p. 182-183)
+8870	квас	kvass			g=1 ml=1.01 cup=252				kcal=27 protein=0.2 fat=0 carbs=5.2	skurikhin:Квас хлебный
+# морс → Skurikhin «Напиток клюквенный по 2-160»: the cranberry морс (Skurikhin 11.1.3.7, p. 178-179)
+8871	морс	berry drink			g=1 ml=1.03 cup=258				kcal=51 protein=0.1 fat=0 carbs=12.4	skurikhin:Напиток клюквенный по 2-160
+# лимонад → Skurikhin 11.1.10.1 «На цитрусовых настоях» (Напитки газированные): the carbonated лимонад Russian shops sell (Skurikhin 11.1.10.1, p. 184-185)
+8872	лимонад	lemonade			g=1 ml=1.04 cup=260				kcal=33 protein=0 fat=0 carbs=7.5	skurikhin:Напитки газированные на цитрусовых настоях
+8873	кола	cola			g=1 ml=1.04 cup=260				kcal=42 protein=0 fat=0.25 carbs=10.36	fdc:174852
+8874	кокосовая вода	coconut water			g=1 ml=1.02 cup=255				kcal=19 protein=0.72 fat=0.2 carbs=3.71	fdc:170174
+# кисель → Skurikhin «Кисель из клюквы по 2-126» (Skurikhin 11.1.5.2, p. 182-183)
+8875	кисель	kissel			g=1 ml=1.05 cup=262				kcal=53 protein=0 fat=0 carbs=13	skurikhin:Кисель из клюквы по 2-126
+# компот → Skurikhin «Компот яблочный по 2-118» (Skurikhin 11.1.4.14, p. 180-181)
+8876	компот	compote drink			g=1 ml=1.03 cup=258				kcal=55 protein=0.1 fat=0.1 carbs=13.6	skurikhin:Компот яблочный по 2-118
+# газировка сладкая → fdc:173205 lemon-lime soda
+8877	газировка сладкая	soda			g=1 ml=1.04 cup=260				kcal=41 protein=0.09 fat=0 carbs=10.42	fdc:173205
+8878	имбирный эль	ginger ale			g=1 ml=1.04 cup=260				kcal=34 protein=0 fat=0 carbs=8.76	fdc:174846
+# холодный чай → fdc:171888 ready-to-drink sweetened black tea with lemon
+8879	холодный чай	iced tea			g=1 ml=1.03 cup=258				kcal=45 protein=0 fat=0.22 carbs=10.8	fdc:171888
 
 # Sweets used as ingredients, snacks (8900-8999).
-8900	зефир	zefir		true	g=1 pc=35
-8901	маршмеллоу	marshmallows		false	g=1 pc=7 cup=50
+# Skurikhin 10.6.3, p. 164-165
+8900	зефир	zefir		true	g=1 pc=35				kcal=326 protein=0.8 fat=0.1 carbs=79.8	skurikhin:Зефир
+8901	маршмеллоу	marshmallows		false	g=1 pc=7 cup=50				kcal=318 protein=1.8 fat=0.2 carbs=81.3	fdc:167995
 8902	маршмеллоу мини	mini marshmallows	8901		g=1 cup=50
 8903	безе	meringues		false	g=1 pc=5
-8904	мармелад	fruit jelly candies			g=1
+# мармелад → Skurikhin «Мармелад желейный» (Skurikhin 10.5.1, p. 164-165)
+8904	мармелад	fruit jelly candies			g=1				kcal=321 protein=0.1 fat=0 carbs=79.4	skurikhin:Мармелад желейный
 8905	мармелад жевательный	gummy candies	8904		g=1
-8906	халва	halva			g=1
+# халва → Skurikhin «Халва тахинно-арахисовая»: the only halva the table holds; sunflower and tahini halva are of the same make (Skurikhin 10.7.1, p. 164-165)
+8906	халва	halva			g=1				kcal=502 protein=12.7 fat=29.2 carbs=47	skurikhin:Халва тахинно-арахисовая
 8907	халва подсолнечная	sunflower halva	8906		g=1
 8908	халва тахинная	tahini halva	8906		g=1
-8909	пряники	spice cookies		false	g=1 pc=35
-8910	пряник тульский	Tula gingerbread		true	g=1 pc=140
-8911	вафли	wafer cookies		true	g=1 pc=15
-8912	карамель	caramels		false	g=1 pc=6
-8913	ирис	toffee		false	g=1 pc=6
-8914	конфеты	candies			g=1
+# пряники → Skurikhin «Пряники заварные» (Skurikhin 6.1.3.2.17, p. 112-113)
+8909	пряники	spice cookies		false	g=1 pc=35				kcal=366 protein=5.9 fat=4.7 carbs=75	skurikhin:Пряники заварные
+# пряник тульский → Skurikhin «Пряники заварные»: the Tula gingerbread is a заварной пряник (Skurikhin 6.1.3.2.17, p. 112-113)
+8910	пряник тульский	Tula gingerbread		true	g=1 pc=140				kcal=366 protein=5.9 fat=4.7 carbs=75	skurikhin:Пряники заварные
+# вафли → Skurikhin «Вафли с жировыми начинками»: the usual filled wafers (Skurikhin 10.10.1.1, p. 168-169)
+8911	вафли	wafer cookies		true	g=1 pc=15				kcal=542 protein=3.9 fat=30.6 carbs=62.5	skurikhin:Вафли с жировыми начинками
+8912	карамель	caramels		false	g=1 pc=6				kcal=382 protein=4.6 fat=8.1 carbs=77	fdc:167974
+# Skurikhin 10.4.1, p. 162-163
+8913	ирис	toffee		false	g=1 pc=6				kcal=408 protein=3.3 fat=7.6 carbs=81.5	skurikhin:Ирис полутвердый
+# конфеты → Skurikhin 10.9.2.5 «Пралине» (конфеты, глазированные шоколадом): конфеты without a kind are chocolate candies (Skurikhin 10.9.2.5, p. 168-169)
+8914	конфеты	candies			g=1				kcal=533 protein=6.9 fat=30.8 carbs=56.9	skurikhin:Конфеты глазированные шоколадом с корпусами пралине
 8915	конфеты шоколадные	chocolate candies	8914	false	g=1 pc=12
-8916	леденцы	hard candies	8914	false	g=1 pc=4
-8917	нуга	nougat			g=1
-8918	пастила	pastila			g=1
+8916	леденцы	hard candies	8914	false	g=1 pc=4				kcal=394 protein=0 fat=0.2 carbs=98	fdc:167990
+8917	нуга	nougat			g=1				kcal=398 protein=3.33 fat=1.67 carbs=92.39	fdc:169060
+# Skurikhin 10.6.1, p. 164-165
+8918	пастила	pastila			g=1				kcal=324 protein=0.5 fat=0 carbs=80	skurikhin:Пастила
 8919	рахат-лукум	Turkish delight			g=1
-8920	козинаки	seed brittle			g=1
+# козинаки → fdc:169588 sesame crunch: a seed brittle of the same make
+8920	козинаки	seed brittle			g=1				kcal=516 protein=11.6 fat=33.3 carbs=50.3	fdc:169588
 8921	чурчхела	churchkhela		true	g=1 pc=80
-8923	грильяж	nut brittle			g=1
-8924	трюфели шоколадные	chocolate truffles		false	g=1 pc=12
-8925	конфеты вафельные	wafer candies	8914	false	g=1 pc=18
-8926	драже	candy-coated chocolates	8914		g=1
-8927	батончик шоколадный	candy bar		true	g=1 pc=50
-8940	чипсы	potato chips			g=1 cup=30
-8941	чипсы кукурузные	tortilla chips	8940		g=1 cup=30
+# грильяж → fdc:169586 peanut brittle
+8923	грильяж	nut brittle			g=1				kcal=486 protein=7.57 fat=18.98 carbs=71.24	fdc:169586
+8924	трюфели шоколадные	chocolate truffles		false	g=1 pc=12				kcal=510 protein=6.21 fat=33.76 carbs=44.88	fdc:169580
+# конфеты вафельные → Skurikhin 10.9.2.6 «Пралине со слоями вафель» (конфеты, глазированные шоколадом) (Skurikhin 10.9.2.6, p. 168-169)
+8925	конфеты вафельные	wafer candies	8914	false	g=1 pc=18				kcal=533 protein=6.6 fat=31 carbs=56.6	skurikhin:Конфеты глазированные шоколадом с корпусами пралине со слоями вафель
+# драже → fdc:169583 M&M's milk chocolate candies: sugar-coated chocolate drops
+8926	драже	candy-coated chocolates	8914		g=1				kcal=492 protein=4.33 fat=21.13 carbs=71.19	fdc:169583
+# батончик шоколадный → fdc:169589 SNICKERS bar: the usual chocolate-coated candy bar
+8927	батончик шоколадный	candy bar		true	g=1 pc=50				kcal=491 protein=7.53 fat=23.85 carbs=61.51	fdc:169589
+8940	чипсы	potato chips			g=1 cup=30				kcal=532 protein=6.39 fat=33.98 carbs=53.83	fdc:169677
+8941	чипсы кукурузные	tortilla chips	8940		g=1 cup=30				kcal=472 protein=7.1 fat=20.68 carbs=67.78	fdc:167558
 8942	кукурузные палочки	corn puffs			g=1 cup=20
-8943	попкорн	popcorn			g=1 cup=10
+# попкорн → fdc:167959 air-popped popcorn: plain popped corn
+8943	попкорн	popcorn			g=1 cup=10				kcal=387 protein=12.94 fat=4.54 carbs=77.78	fdc:167959

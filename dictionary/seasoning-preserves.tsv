@@ -1,40 +1,50 @@
 # Seasoning and the rest: pickles, olives, canned vegetables and fruit, seaweed, jams and preserves.
-# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn (dictionary/README.md).
+# Columns, tab-separated: id, labelRu, labelEn, parentId, divisible, factors, removed, synonymsRu, synonymsEn, nutrition, nutritionSource (dictionary/README.md).
 @range 7000-8999
 
 # Pickles and fermented vegetables (8400-8449). A pickle counts as one medium piece; small ones are never halved.
 8400	соленья	pickled vegetables			g=1
-8401	огурец солёный	salt-brined pickle	8400	true	g=1 pc=70
-8402	огурец маринованный	dill pickle	8400	true	g=1 pc=60
-8403	огурец малосольный	half-sour pickle	8400	true	g=1 pc=70
-8404	корнишоны	cornichons	8400	false	g=1 pc=8
-8429	релиш огуречный	sweet pickle relish	8400		g=1 tsp=5 tbsp=15
+# огурец солёный → Skurikhin «Огурцы соленые» (kcal includes its organic acids) (Skurikhin 8.1.6.4, p. 142-143)
+8401	огурец солёный	salt-brined pickle	8400	true	g=1 pc=70				kcal=13 protein=0.8 fat=0.1 carbs=1.7	skurikhin:Огурцы соленые
+8402	огурец маринованный	dill pickle	8400	true	g=1 pc=60				kcal=12 protein=0.5 fat=0.3 carbs=2.41	fdc:168558
+# огурец малосольный → Skurikhin «Огурцы соленые»: the same brined cucumber, salted for a shorter time (kcal includes its organic acids) (Skurikhin 8.1.6.4, p. 142-143)
+8403	огурец малосольный	half-sour pickle	8400	true	g=1 pc=70				kcal=13 protein=0.8 fat=0.1 carbs=1.7	skurikhin:Огурцы соленые
+# корнишоны → fdc:168558 dill pickles: cornichons are small pickled cucumbers
+8404	корнишоны	cornichons	8400	false	g=1 pc=8				kcal=12 protein=0.5 fat=0.3 carbs=2.41	fdc:168558
+8429	релиш огуречный	sweet pickle relish	8400		g=1 tsp=5 tbsp=15				kcal=130 protein=0.37 fat=0.47 carbs=35.06	fdc:168561
 8405	помидор солёный	brined tomato	8400	true	g=1 pc=80
 8406	помидор маринованный	pickled tomato	8400	true	g=1 pc=80
-8407	капуста квашеная	sauerkraut	8400		g=1 cup=150
+# капуста квашеная → Skurikhin «Капуста квашеная» (kcal includes its organic acids) (Skurikhin 8.1.2.1.13, p. 132-133)
+8407	капуста квашеная	sauerkraut	8400		g=1 cup=150				kcal=23 protein=1.8 fat=0.1 carbs=3	skurikhin:Капуста квашеная
 8408	капуста маринованная	pickled cabbage	8400		g=1 cup=150
 8409	перец маринованный	pickled peppers	8400	true	g=1 pc=40
-8410	халапеньо маринованный	pickled jalapenos	8400		g=1 tbsp=9 cup=140
-8411	пепперончини	pepperoncini	8400	false	g=1 pc=10
+# халапеньо маринованный → fdc:170080 canned jalapeno peppers, solids and liquids
+8410	халапеньо маринованный	pickled jalapenos	8400		g=1 tbsp=9 cup=140				kcal=27 protein=0.92 fat=0.94 carbs=4.74	fdc:170080
+8411	пепперончини	pepperoncini	8400	false	g=1 pc=10				kcal=22 protein=0.8 fat=0.4 carbs=4.56	fdc:169766
 8412	чеснок маринованный	pickled garlic	8400	true	g=1 pc=40
 8413	черемша маринованная	pickled wild garlic	8400		g=1
-8414	лук маринованный	pickled onions	8400		g=1 tbsp=10
-8415	свёкла маринованная	pickled beets	8400		g=1 cup=170
+# лук маринованный → Skurikhin «Лук маринованный по 2-56» (the recipe adds a little oil) (Skurikhin 8.1.3.6, p. 134-135)
+8414	лук маринованный	pickled onions	8400		g=1 tbsp=10				kcal=79 protein=1.2 fat=4.7 carbs=7.6	skurikhin:Лук маринованный по 2-56
+8415	свёкла маринованная	pickled beets	8400		g=1 cup=170				kcal=65 protein=0.8 fat=0.08 carbs=16.28	fdc:170480
 8416	яблоки мочёные	brined apples	8400	true	g=1 pc=120
 8417	лимон консервированный	preserved lemon	8400	true	g=1 pc=80
-8418	кимчи	kimchi	8400		g=1 cup=150
+8418	кимчи	kimchi	8400		g=1 cup=150				kcal=15 protein=1.1 fat=0.5 carbs=2.4	fdc:170392
 8419	морковь по-корейски	Korean-style carrot salad	8400		g=1 cup=110
-8420	каперсы	capers			g=1 tsp=3 tbsp=9
-8421	каперсовые ягоды	caperberries		false	g=1 pc=4
-8422	помидоры вяленые	sun-dried tomatoes		true	g=1 pc=6 tbsp=8 cup=110
+8420	каперсы	capers			g=1 tsp=3 tbsp=9				kcal=23 protein=2.36 fat=0.86 carbs=4.89	fdc:172238
+# каперсовые ягоды → fdc:172238 canned capers: the caper bush's fruit, pickled the same way
+8421	каперсовые ягоды	caperberries		false	g=1 pc=4				kcal=23 protein=2.36 fat=0.86 carbs=4.89	fdc:172238
+# помидоры вяленые → fdc:169384 sun-dried tomatoes packed in oil, drained: the form shops sell
+8422	помидоры вяленые	sun-dried tomatoes		true	g=1 pc=6 tbsp=8 cup=110				kcal=213 protein=5.06 fat=14.08 carbs=23.33	fdc:169384
 8423	артишоки маринованные	marinated artichoke hearts		true	g=1 pc=30
-8424	перец печёный	roasted red peppers		true	g=1 pc=50
+# перец печёный → fdc:168546 canned sweet red peppers, solids and liquids: the jarred roasted kind
+8424	перец печёный	roasted red peppers		true	g=1 pc=50				kcal=18 protein=0.8 fat=0.3 carbs=3.9	fdc:168546
 8425	умэбоси	umeboshi		false	g=1 pc=10
 8427	патиссоны маринованные	pickled pattypan squash	8400	true	g=1 pc=30
 8426	рассол огуречный	pickle brine			g=1 ml=1 tbsp=15 cup=250		рассол	pickle juice
 
 # Pickled and canned mushrooms (8440-8449).
-8440	грибы маринованные	marinated mushrooms			g=1 cup=150
+# грибы маринованные → fdc:169254 canned mushrooms, drained solids: mushrooms preserved in liquid
+8440	грибы маринованные	marinated mushrooms			g=1 cup=150				kcal=25 protein=1.87 fat=0.29 carbs=5.09	fdc:169254
 8441	опята маринованные	pickled honey mushrooms	8440		g=1 cup=150
 8442	шампиньоны маринованные	marinated button mushrooms	8440		g=1 cup=150
 8443	маслята маринованные	pickled slippery jacks	8440		g=1 cup=150
@@ -42,12 +52,12 @@
 8445	грибы солёные	salted mushrooms			g=1 cup=150
 8446	грузди солёные	salted milk caps	8445		g=1 cup=150
 8447	рыжики солёные	salted saffron milk caps	8445		g=1 cup=150
-8448	шампиньоны консервированные	canned button mushrooms		true	g=1 pc=400
+8448	шампиньоны консервированные	canned button mushrooms		true	g=1 pc=400				kcal=25 protein=1.87 fat=0.29 carbs=5.09	fdc:169254
 
 # Olives (8450-8469). One olive is counted whole.
-8450	оливки	olives		false	g=1 pc=4 cup=135
+8450	оливки	olives		false	g=1 pc=4 cup=135				kcal=145 protein=1.03 fat=15.32 carbs=3.84	fdc:169096
 8451	оливки зелёные	green olives	8450	false	g=1 pc=4 cup=135
-8452	маслины	black olives	8450	false	g=1 pc=3.5 cup=135
+8452	маслины	black olives	8450	false	g=1 pc=3.5 cup=135				kcal=116 protein=0.84 fat=10.9 carbs=6.04	fdc:169094
 8453	оливки без косточек	pitted olives	8450	false	g=1 pc=3.5 cup=135
 8454	оливки фаршированные	stuffed olives	8450	false	g=1 pc=5 cup=140
 8455	оливки каламата	Kalamata olives	8450	false	g=1 pc=5 cup=140
@@ -55,39 +65,44 @@
 8457	маслины вяленые	dry-cured black olives	8450	false	g=1 pc=3
 
 # Canned vegetables, fruit and coconut (8470-8519). pc is one standard can (whole contents, as sold); a can may be used in halves.
-8470	кукуруза консервированная	canned corn		true	g=1 pc=340 cup=165
-8471	горошек зелёный консервированный	canned peas		true	g=1 pc=400 cup=160
-8472	фасоль в томатном соусе	beans in tomato sauce		true	g=1 pc=400 cup=260
-8503	томаты консервированные	canned tomatoes		true	g=1 pc=400 cup=240
+8470	кукуруза консервированная	canned corn		true	g=1 pc=340 cup=165				kcal=61 protein=1.95 fat=0.77 carbs=13.86	fdc:170409
+8471	горошек зелёный консервированный	canned peas		true	g=1 pc=400 cup=160				kcal=58 protein=3.01 fat=0.48 carbs=10.6	fdc:170421
+# фасоль в томатном соусе → fdc:175182 canned vegetarian baked beans in tomato sauce
+8472	фасоль в томатном соусе	beans in tomato sauce		true	g=1 pc=400 cup=260				kcal=94 protein=4.75 fat=0.37 carbs=21.14	fdc:175182
+8503	томаты консервированные	canned tomatoes		true	g=1 pc=400 cup=240				kcal=16 protein=0.79 fat=0.25 carbs=3.47	fdc:170051
 8473	томаты в собственном соку	canned whole tomatoes	8503	true	g=1 pc=400 cup=240
 8474	томаты резаные консервированные	canned diced tomatoes	8503	true	g=1 pc=400 cup=240
 8475	томаты черри консервированные	canned cherry tomatoes	8503	true	g=1 pc=400
-8504	томаты протёртые	crushed tomatoes	8503	true	g=1 pc=400 tbsp=15 cup=245
-8505	перец чили зелёный консервированный	diced green chiles		true	g=1 pc=113 tbsp=15
-8506	вишня мараскино	maraschino cherries		false	g=1 pc=5
-8476	кокосовое молоко	coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240
-8477	кокосовые сливки	coconut cream			g=1 ml=1 tbsp=15 cup=250
+8504	томаты протёртые	crushed tomatoes	8503	true	g=1 pc=400 tbsp=15 cup=245				kcal=32 protein=1.64 fat=0.28 carbs=7.29	fdc:170501
+8505	перец чили зелёный консервированный	diced green chiles		true	g=1 pc=113 tbsp=15				kcal=21 protein=0.72 fat=0.27 carbs=4.6	fdc:168577
+8506	вишня мараскино	maraschino cherries		false	g=1 pc=5				kcal=165 protein=0.22 fat=0.21 carbs=41.97	fdc:167766
+8476	кокосовое молоко	coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240				kcal=197 protein=2.02 fat=21.33 carbs=2.81	fdc:170173
+# кокосовые сливки → fdc:170580 coconut cream (liquid expressed from grated meat), unsweetened like the canned kind
+8477	кокосовые сливки	coconut cream			g=1 ml=1 tbsp=15 cup=250				kcal=330 protein=3.63 fat=34.68 carbs=6.65	fdc:170580
 8478	кокосовое молоко лёгкое	light coconut milk		true	g=1 ml=0.98 pc=400 tbsp=15 cup=240
-8479	ананасы консервированные	canned pineapple		true	g=1 pc=580 cup=245			crushed pineapple
-8480	персики консервированные	canned peaches		true	g=1 pc=820 cup=250
-8481	абрикосы консервированные	canned apricots		true	g=1 pc=820 cup=250
-8482	груши консервированные	canned pears		true	g=1 pc=820 cup=250
-8483	вишня консервированная	canned cherries		true	g=1 pc=425 cup=250
-8484	мандарины консервированные	canned mandarin oranges		true	g=1 pc=310 cup=250
-8485	фруктовый коктейль консервированный	canned fruit cocktail		true	g=1 pc=425 cup=250
-8486	бамбуковые побеги	bamboo shoots		true	g=1 pc=225
-8487	водяной каштан	water chestnuts		true	g=1 pc=225
-8488	пальмовая сердцевина	hearts of palm		true	g=1 pc=400
-8489	тыквенное пюре	pumpkin puree		true	g=1 pc=425 cup=245
-8490	яблочное пюре	applesauce			g=1 tbsp=16 cup=255
+8479	ананасы консервированные	canned pineapple		true	g=1 pc=580 cup=245			crushed pineapple	kcal=52 protein=0.36 fat=0.12 carbs=13.45	fdc:169127
+8480	персики консервированные	canned peaches		true	g=1 pc=820 cup=250				kcal=54 protein=0.45 fat=0.03 carbs=14.55	fdc:169111
+8481	абрикосы консервированные	canned apricots		true	g=1 pc=820 cup=250				kcal=63 protein=0.53 fat=0.05 carbs=16.49	fdc:173939
+8482	груши консервированные	canned pears		true	g=1 pc=820 cup=250				kcal=57 protein=0.19 fat=0.03 carbs=15.17	fdc:169938
+# вишня консервированная → fdc:173956 canned sour cherries in light syrup: вишня is the sour cherry
+8483	вишня консервированная	canned cherries		true	g=1 pc=425 cup=250				kcal=75 protein=0.74 fat=0.1 carbs=19.3	fdc:173956
+8484	мандарины консервированные	canned mandarin oranges		true	g=1 pc=310 cup=250				kcal=61 protein=0.45 fat=0.1 carbs=16.19	fdc:169924
+8485	фруктовый коктейль консервированный	canned fruit cocktail		true	g=1 pc=425 cup=250				kcal=57 protein=0.4 fat=0.07 carbs=14.93	fdc:173027
+8486	бамбуковые побеги	bamboo shoots		true	g=1 pc=225				kcal=19 protein=1.72 fat=0.4 carbs=3.22	fdc:169212
+8487	водяной каштан	water chestnuts		true	g=1 pc=225				kcal=50 protein=0.88 fat=0.06 carbs=12.3	fdc:170067
+8488	пальмовая сердцевина	hearts of palm		true	g=1 pc=400				kcal=28 protein=2.52 fat=0.62 carbs=4.62	fdc:168569
+8489	тыквенное пюре	pumpkin puree		true	g=1 pc=425 cup=245				kcal=34 protein=1.1 fat=0.28 carbs=8.09	fdc:168450
+8490	яблочное пюре	applesauce			g=1 tbsp=16 cup=255				kcal=42 protein=0.17 fat=0.1 carbs=11.27	fdc:171695
 8491	лечо	lecho			g=1 cup=250
-8492	икра кабачковая	zucchini spread			g=1 tbsp=16
-8493	икра баклажанная	eggplant spread			g=1 tbsp=16
-8494	свёкла консервированная	canned beets		true	g=1 pc=425
-8495	морковь консервированная	canned carrots		true	g=1 pc=400
-8496	фасоль стручковая консервированная	canned green beans		true	g=1 pc=400
-8497	кукуруза сливочная	cream-style corn		true	g=1 pc=425 cup=255
-8498	шпинат консервированный	canned spinach		true	g=1 pc=400
+# Skurikhin 8.1.6.28, p. 146-147
+8492	икра кабачковая	zucchini spread			g=1 tbsp=16				kcal=119 protein=1.9 fat=8.9 carbs=7.7	skurikhin:Икра из кабачков. Консервы
+# Skurikhin 8.1.6.19, p. 144-145
+8493	икра баклажанная	eggplant spread			g=1 tbsp=16				kcal=148 protein=1.7 fat=13.3 carbs=5.1	skurikhin:Икра из баклажанов. Консервы
+8494	свёкла консервированная	canned beets		true	g=1 pc=425				kcal=30 protein=0.73 fat=0.09 carbs=7.14	fdc:169147
+8495	морковь консервированная	canned carrots		true	g=1 pc=400				kcal=23 protein=0.58 fat=0.14 carbs=5.37	fdc:170395
+8496	фасоль стручковая консервированная	canned green beans		true	g=1 pc=400				kcal=15 protein=0.72 fat=0.17 carbs=3.27	fdc:169142
+8497	кукуруза сливочная	cream-style corn		true	g=1 pc=425 cup=255				kcal=72 protein=1.74 fat=0.42 carbs=18.13	fdc:169215
+8498	шпинат консервированный	canned spinach		true	g=1 pc=400				kcal=19 protein=2.11 fat=0.37 carbs=2.92	fdc:169285
 8501	ананасы кольцами	canned pineapple rings	8479	false	g=1 pc=40
 
 # Seaweed (8520-8529).
@@ -102,7 +117,8 @@
 8528	нори хлопьями	nori flakes	8520		g=1 tsp=0.5 tbsp=1.5
 
 # Jams, preserves and fruit spreads (8540-8599). Thick, dense: tbsp about 20 g.
-8540	варенье	preserves			g=1 tsp=7 tbsp=20 cup=320
+# варенье → fdc:169641 jams and preserves
+8540	варенье	preserves			g=1 tsp=7 tbsp=20 cup=320				kcal=278 protein=0.37 fat=0.07 carbs=68.86	fdc:169641
 8541	варенье клубничное	strawberry preserves	8540		g=1 tsp=7 tbsp=20 cup=320
 8542	варенье малиновое	raspberry preserves	8540		g=1 tsp=7 tbsp=20 cup=320
 8543	варенье вишнёвое	cherry preserves	8540		g=1 tsp=7 tbsp=20 cup=320
@@ -116,7 +132,7 @@
 8551	варенье брусничное	lingonberry preserves	8540		g=1 tsp=7 tbsp=20 cup=320
 8552	варенье яблочное	apple preserves	8540		g=1 tsp=7 tbsp=20 cup=320
 8553	варенье сливовое	plum preserves	8540		g=1 tsp=7 tbsp=20 cup=320
-8560	джем	jam			g=1 tsp=7 tbsp=20 cup=320
+8560	джем	jam			g=1 tsp=7 tbsp=20 cup=320				kcal=278 protein=0.37 fat=0.07 carbs=68.86	fdc:169641
 8561	джем абрикосовый	apricot jam	8560		g=1 tsp=7 tbsp=20 cup=320
 8562	джем клубничный	strawberry jam	8560		g=1 tsp=7 tbsp=20 cup=320
 8563	джем малиновый	raspberry jam	8560		g=1 tsp=7 tbsp=20 cup=320
@@ -128,11 +144,13 @@
 8569	джем из инжира	fig jam	8560		g=1 tsp=7 tbsp=20
 8570	желе из красной смородины	red currant jelly	8560		g=1 tsp=7 tbsp=20
 8571	желе виноградное	grape jelly	8560		g=1 tsp=7 tbsp=20 cup=320
-8575	повидло	fruit butter			g=1 tsp=7 tbsp=20 cup=320
+# повидло → Skurikhin «Повидло яблочное»: повидло without a kind is apple (Skurikhin 9.4.13, p. 160-161)
+8575	повидло	fruit butter			g=1 tsp=7 tbsp=20 cup=320				kcal=250 protein=0.4 fat=0 carbs=65	skurikhin:Повидло яблочное
 8576	повидло яблочное	apple butter	8575		g=1 tsp=7 tbsp=20 cup=320
 8577	повидло сливовое	plum butter	8575		g=1 tsp=7 tbsp=20 cup=320
 8578	повидло абрикосовое	apricot butter	8575		g=1 tsp=7 tbsp=20 cup=320
-8580	конфитюр	fruit spread			g=1 tsp=7 tbsp=20 cup=320
+# конфитюр → fdc:169641 jams and preserves
+8580	конфитюр	fruit spread			g=1 tsp=7 tbsp=20 cup=320				kcal=278 protein=0.37 fat=0.07 carbs=68.86	fdc:169641
 8581	конфитюр из ягод	berry fruit spread	8580		g=1 tsp=7 tbsp=20
 8585	лимонный курд	lemon curd			g=1 tsp=6 tbsp=18 cup=290
 8586	айвовый мармелад	quince paste			g=1
