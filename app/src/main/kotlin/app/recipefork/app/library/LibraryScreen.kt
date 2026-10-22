@@ -390,6 +390,8 @@ fun LibraryScreen(
         // never one under them.
         val actionsBelow = if (selecting) padding.calculateBottomPadding() else 0.dp
         val bottom = padding.calculateBottomPadding() - actionsBelow + room
+        // An empty section offers its way out itself and shows no view's action: it keeps no room for one (T-309).
+        val emptyBottom = padding.calculateBottomPadding() - actionsBelow + EMPTY_MARGIN
         val layout = LocalLayoutDirection.current
         HorizontalPager(
             state = pager,
@@ -417,6 +419,7 @@ fun LibraryScreen(
                     restored = restored,
                     header = markedHeader,
                     onListed = { if (selectables[LibraryView.MARKED] != it) selectables[LibraryView.MARKED] = it },
+                    emptyBottom = emptyBottom,
                 )
                 LibraryView.OWN -> OwnList(
                     recipes, session, editor, timers, card.marks, mode, thumbnails, card.ingredients, bookKitchen,
@@ -427,6 +430,7 @@ fun LibraryScreen(
                     restored = restored,
                     header = ownHeader,
                     onListed = { if (selectables[LibraryView.OWN] != it) selectables[LibraryView.OWN] = it },
+                    emptyBottom = emptyBottom,
                 )
             }
         }
@@ -713,6 +717,9 @@ private val SELECTING_ROOM = 8.dp
 /** The margins of the view's action: below it, to the bottom of the screen, and above it, to what it must not cover. */
 private val ACTION_MARGINS = 32.dp
 
+/** The margin an empty section with no view's action keeps above the navigation bar (T-309). */
+private val EMPTY_MARGIN = 8.dp
+
 /** How long a view waits on its list before it shows that the list is coming, so that a quick one shows no flash. */
 internal const val LOADING_DELAY_MS = 300L
 
@@ -946,6 +953,9 @@ private fun FloatingAction(
         icon = { Icon(painterResource(icon), contentDescription = null) },
         onClick = onClick,
         expanded = expanded,
+        // The book's one action in the action colour, as the redesign draws it (`.fab`, T-309).
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         // The action reads its words to the screen reader, shrunk to its icon or not: the button keeps its shown words
         // from the screen reader, so they are given to the button itself.
         modifier = modifier
@@ -1010,6 +1020,7 @@ private fun OwnList(
     restored: String? = null,
     header: HeaderScroll = rememberHeaderScroll(),
     onListed: (List<Selectable>) -> Unit = {},
+    emptyBottom: Dp = EMPTY_MARGIN,
 ) {
     val search = rememberSearchField(LibraryView.OWN, session)
     val params = rememberListingParams(LibraryView.OWN, session)
@@ -1053,7 +1064,8 @@ private fun OwnList(
         // A book with no recipe written in it may still hold collections of found ones: they stand above.
         Column(Modifier.fillMaxSize()) {
             CollectionsRow(collections, session::openCollection, Modifier.padding(top = ENTRY_GAP).muted(selecting), enabled = !selecting)
-            NothingWritten(onWrite, Modifier.padding(bottom = bottom))
+            // No view's action floats over it: it reaches down to the navigation bar, [emptyBottom] above the edge.
+            NothingWritten(onWrite, Modifier.padding(bottom = emptyBottom))
         }
         return
     }
@@ -1128,6 +1140,7 @@ private fun NothingWritten(onWrite: () -> Unit, modifier: Modifier = Modifier) {
         action = EmptyAction(stringResource(R.string.library_own_new), R.drawable.ic_new_recipe, LibraryTags.WRITE, onWrite),
         tag = LibraryTags.OWN_EMPTY,
         modifier = modifier,
+        centred = true,
     )
 }
 
@@ -1343,6 +1356,7 @@ private fun MarkedList(
     restored: String? = null,
     header: HeaderScroll = rememberHeaderScroll(),
     onListed: (List<Selectable>) -> Unit = {},
+    emptyBottom: Dp = EMPTY_MARGIN,
 ) {
     val search = rememberSearchField(LibraryView.MARKED, session)
     val params = rememberListingParams(LibraryView.MARKED, session)
@@ -1391,7 +1405,9 @@ private fun MarkedList(
                         null
                     },
                     tag = LibraryTags.MARKED_EMPTY,
-                    modifier = Modifier.padding(bottom = bottom),
+                    // No view's action floats over it: it reaches down to the navigation bar, [emptyBottom] above the edge.
+                    modifier = Modifier.padding(bottom = emptyBottom),
+                    centred = true,
                 )
             }
             // An empty view with no query keeps its empty state, with no header to search nothing with.
@@ -1583,8 +1599,8 @@ object LibraryTags {
     const val HEADER_AREA = "library-header-area"
     const val SEARCH = "library-search"
     const val SEARCH_CLEAR = "library-search-clear"
-    /** The search field's short label, and the longer words inside it, shown while it is focused and empty. */
-    const val SEARCH_LABEL = "library-search-label"
+    /** The magnifier at the search field's start, and the words inside it, shown while it is empty (T-309). */
+    const val SEARCH_ICON = "library-search-icon"
     const val SEARCH_PLACEHOLDER = "library-search-placeholder"
     const val ORDER = "library-order"
     fun order(order: BookOrder) = "library-order-${order.name.lowercase()}"

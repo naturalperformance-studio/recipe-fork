@@ -6,7 +6,6 @@ import android.content.res.Resources
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -27,7 +26,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
@@ -52,6 +53,7 @@ import app.recipefork.app.ui.AppColors
 import app.recipefork.app.ui.AppTheme
 import app.recipefork.app.ui.appColorScheme
 import app.recipefork.app.ui.appColors
+import app.recipefork.app.ui.ReadingFamily
 import app.recipefork.app.ui.WorkingFamily
 import app.recipefork.core.recipe.CollectionId
 import app.recipefork.core.recipe.CollectionOrigin
@@ -73,8 +75,8 @@ import kotlin.math.abs
 
 /**
  * The book's collections as narrow spines (v0.42, T-303): a sideways lazy row above the recipes, each spine at least
- * 48 dp high with a 3 dp stripe at its start, its name in Golos (titleSmall) on one line — a long one ending with an
- * ellipsis — and its count under it; tapping one opens the collection; at twice the font scale a spine grows and
+ * 48 dp high with a 3 dp stripe at its start, its name in the reading face, Literata Medium 15 sp, on one line — a long
+ * one ending with an ellipsis (T-309, as the redesign's `.spine .a`) — and its count under it in Golos 12; tapping one opens the collection; at twice the font scale a spine grows and
  * nothing in it is cut. With the spines, at least four recipe rows still fit the first screen of a 360 × 780 dp phone.
  * A spine stands on the theme's raised paper, lighter than the page, in the light theme and the dark one (T-308).
  */
@@ -104,8 +106,6 @@ class CollectionSpinesTest {
         },
     ) { now }
 
-    private lateinit var type: Typography
-
     @Before
     fun setUp() = compose.registerIdlingResource(book.idling)
 
@@ -133,7 +133,6 @@ class CollectionSpinesTest {
         session.choose(LibraryView.OWN)
         compose.setContent {
             AppTheme(dark = dark) {
-                type = MaterialTheme.typography
                 scheme = MaterialTheme.colorScheme
                 extra = MaterialTheme.appColors
                 AppNavHost(session, recipes, mode, editor = editor, collections = collections)
@@ -209,10 +208,13 @@ class CollectionSpinesTest {
         assertWholeInside(breakfasts)
         val name = layoutOf(CollectionScreenTags.cardName(breakfasts.value))
         assertEquals("Breakfasts", name.layoutInput.text.text)
-        assertEquals("the name in Golos", WorkingFamily, name.layoutInput.style.fontFamily)
-        assertEquals("the name as titleSmall", type.titleSmall.fontSize, name.layoutInput.style.fontSize)
-        assertEquals("the name as titleSmall", type.titleSmall.fontWeight, name.layoutInput.style.fontWeight)
-        assertEquals("3 recipes", layoutOf(CollectionScreenTags.cardCount(breakfasts.value)).layoutInput.text.text)
+        assertEquals("the name in Literata", ReadingFamily, name.layoutInput.style.fontFamily)
+        assertEquals("the name at 15 sp", 15.sp, name.layoutInput.style.fontSize)
+        assertEquals("the name Medium", FontWeight.Medium, name.layoutInput.style.fontWeight)
+        val count = layoutOf(CollectionScreenTags.cardCount(breakfasts.value))
+        assertEquals("3 recipes", count.layoutInput.text.text)
+        assertEquals("the count in Golos", WorkingFamily, count.layoutInput.style.fontFamily)
+        assertEquals("the count at 12 sp", 12.sp, count.layoutInput.style.fontSize)
         assertEquals("1 recipe", layoutOf(CollectionScreenTags.cardCount(quickOnes.value)).layoutInput.text.text)
         AccessibilityChecks.assertTouchTargets(compose)
         AccessibilityChecks.assertInteractiveElementsLabelled(compose, except = AccessibilityChecks.snackbarPane)

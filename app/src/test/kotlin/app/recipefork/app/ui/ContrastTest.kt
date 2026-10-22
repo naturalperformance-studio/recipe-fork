@@ -31,7 +31,7 @@ class ContrastTest {
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
         text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", a heading's \"Unnamed group\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's timer line on the card's View (its clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
-        text("a filled button's label, a step's number in its circle on the card", c.onPrimary, c.primary),
+        text("a filled button's label, a step's number in its circle on the card, the book's floating action", c.onPrimary, c.primary),
         text("a problem said under a field — the title's and the description's marks and counters among them — an ingredient row's mark of an amount its field does not hold", c.error, c.surface),
         text("a reference in a step, on its tint", c.onSurface, c.secondaryContainer),
         text("a reference that exceeds its ingredient, on the warning tint", c.onSurface, c.errorContainer),

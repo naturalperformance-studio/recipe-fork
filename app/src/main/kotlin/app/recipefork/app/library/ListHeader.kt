@@ -37,7 +37,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,6 +60,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -61,12 +69,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.editor.interfaceLanguage
-import app.recipefork.app.ui.WorkingFamily
 import app.recipefork.app.recipe.ListingParams
 import app.recipefork.core.recipe.RecipeLanguage
 import app.recipefork.core.search.BookOrder
@@ -111,6 +117,9 @@ internal fun rememberListingParams(view: LibraryView, session: LibrarySession): 
 /** The gap between the line of the search field and the row of filter chips under it. */
 internal val FILTER_ROW_GAP = 12.dp
 
+/** The magnifier at the start of the search field, as the redesign draws its `i-search` (T-309). */
+internal val SEARCH_ICON = 22.dp
+
 private val RUSSIAN: Locale = Locale.forLanguageTag(RecipeLanguage.RU.name.lowercase())
 
 /**
@@ -144,51 +153,7 @@ internal fun ListHeader(
         modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 8.dp).testTag(LibraryTags.HEADER),
         verticalArrangement = Arrangement.spacedBy(FILTER_ROW_GAP),
     ) {
-        OutlinedTextField(
-            value = search.value,
-            onValueChange = search::type,
-            enabled = enabled,
-            singleLine = true,
-            // The field is set wholly in the working face, Golos, regular: what is typed and the hint in its 14 sp role,
-            // whose narrower letters keep the whole hint on a 360 dp phone; the label in its face at the sizes the field
-            // gives it, resting and risen (T-304).
-            textStyle = searchStyle(),
-            // A short label on one line, which the field keeps room for above its outline when it rises there; the
-            // longer words stand inside as its placeholder, cut short only where even they do not fit.
-            label = {
-                Text(
-                    stringResource(R.string.library_search),
-                    fontFamily = WorkingFamily,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.testTag(LibraryTags.SEARCH_LABEL),
-                )
-            },
-            placeholder = {
-                Text(
-                    stringResource(R.string.library_search_placeholder),
-                    style = searchStyle(),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.testTag(LibraryTags.SEARCH_PLACEHOLDER),
-                )
-            },
-            trailingIcon = if (search.value.text.isEmpty()) null else {
-                {
-                    BlockAction(
-                        R.drawable.ic_clear_search,
-                        stringResource(R.string.library_search_clear),
-                        LibraryTags.SEARCH_CLEAR,
-                        onClick = search::clear,
-                        enabled = enabled,
-                    )
-                }
-            },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
-            // The field ends a gutter from the screen's edge: nothing stands beside it, so the whole hint fits (T-304).
-            modifier = Modifier.fillMaxWidth().padding(end = 12.dp).testTag(LibraryTags.SEARCH),
-        )
+        SearchBox(search, enabled, onSearch = { focus.clearFocus() })
         QuickFilters(
             filters, onFilters, choices, languages, carries, onAll = { sheetOpen = true }, order = order, onOrder = onOrder,
             enabled = enabled,
@@ -196,6 +161,89 @@ internal fun ListHeader(
     }
     if (sheetOpen) FiltersSheet(filters, onFilters, choices, languages, hold, kitchen, onClose = { sheetOpen = false })
 }
+
+/**
+ * The view's search field, as the redesign draws it (T-309): an outlined field 56 dp high with a magnifier at its start,
+ * decorative, and no label — the whole hint stands inside the empty field at rest, on as many lines as a large font
+ * needs; the screen reader hears the field's short name instead. It ends a gutter from the screen's edge, and its
+ * words keep only a narrow margin at its end, so that the whole hint fits a 360 dp phone beside the magnifier. Set
+ * wholly in the working face, Golos, regular: what is typed and the hint in its 14 sp role (T-304). Once something is
+ * typed, a cross at its end clears it.
+ */
+@Composable
+private fun SearchBox(search: SearchField, enabled: Boolean, onSearch: () -> Unit) {
+    val name = stringResource(R.string.library_search)
+    val colours = OutlinedTextFieldDefaults.colors()
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    val ink = when {
+        !enabled -> colours.disabledTextColor
+        focused -> colours.focusedTextColor
+        else -> colours.unfocusedTextColor
+    }
+    CompositionLocalProvider(LocalTextSelectionColors provides colours.textSelectionColors) {
+        BasicTextField(
+            value = search.value,
+            onValueChange = search::type,
+            enabled = enabled,
+            singleLine = true,
+            textStyle = searchStyle().copy(color = ink),
+            cursorBrush = SolidColor(colours.cursorColor),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+            interactionSource = interaction,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 12.dp)
+                .heightIn(min = OutlinedTextFieldDefaults.MinHeight)
+                .semantics { contentDescription = name }
+                .testTag(LibraryTags.SEARCH),
+        ) { field ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = search.value.text,
+                innerTextField = field,
+                enabled = enabled,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interaction,
+                leadingIcon = {
+                    Icon(
+                        painterResource(R.drawable.ic_search),
+                        contentDescription = null,
+                        modifier = Modifier.size(SEARCH_ICON).testTag(LibraryTags.SEARCH_ICON),
+                    )
+                },
+                placeholder = {
+                    // Never cut: where even the whole hint does not fit on one line — at a large font scale — it takes
+                    // the lines it needs, and the field grows with it.
+                    Text(
+                        stringResource(R.string.library_search_placeholder),
+                        style = searchStyle(),
+                        modifier = Modifier.testTag(LibraryTags.SEARCH_PLACEHOLDER),
+                    )
+                },
+                trailingIcon = if (search.value.text.isEmpty()) null else {
+                    {
+                        BlockAction(
+                            R.drawable.ic_clear_search,
+                            stringResource(R.string.library_search_clear),
+                            LibraryTags.SEARCH_CLEAR,
+                            onClick = search::clear,
+                            enabled = enabled,
+                        )
+                    }
+                },
+                colors = colours,
+                contentPadding = OutlinedTextFieldDefaults.contentPadding(start = SEARCH_START, end = SEARCH_END),
+                container = { OutlinedTextFieldDefaults.Container(enabled, isError = false, interaction, colors = colours) },
+            )
+        }
+    }
+}
+
+/** The search field's inner margins: beside the magnifier, and at the end of its words (T-309). */
+private val SEARCH_START = 12.dp
+private val SEARCH_END = 8.dp
 
 /** What the search field's text and hint are set in: the working face's 14 sp role, Golos, at regular weight. */
 @Composable
@@ -255,6 +303,7 @@ private fun orderLabel(order: BookOrder): Int = when (order) {
  * A view narrowed to nothing says so — naming the query, when one was searched — and offers one way out of it
  * (FLOW-035 (4), FLOW-042 (1)): clearing the search, the filters, or both when both are on. Narrowed by the filter
  * "Enough equipment" alone, it says the kitchen lacks something for every recipe, and offers to switch that filter off.
+ * The state stands centred in the space it is given; its way out is an outlined button, as the redesign draws it (T-309).
  */
 @Composable
 internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearFilters: () -> Unit, modifier: Modifier = Modifier) {
@@ -266,22 +315,28 @@ internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearF
             headline = stringResource(R.string.library_nothing_equipment),
             sentence = null,
             action = EmptyAction(
-                stringResource(R.string.library_filter_equipment_off), null, LibraryTags.NOTHING_FOUND_EQUIPMENT_OFF, onClearFilters,
+                stringResource(R.string.library_filter_equipment_off), null, LibraryTags.NOTHING_FOUND_EQUIPMENT_OFF, outlined = true,
+                onClearFilters,
             ),
             tag = LibraryTags.NOTHING_FOUND,
             modifier = modifier,
+            centred = true,
         )
         return
     }
     val action = when {
         searched && filtered -> EmptyAction(
-            stringResource(R.string.library_search_and_filters_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_ALL,
+            stringResource(R.string.library_search_and_filters_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_ALL, outlined = true,
         ) {
             onClearFilters()
             onClearSearch()
         }
-        searched -> EmptyAction(stringResource(R.string.library_search_clear), null, LibraryTags.NOTHING_FOUND_CLEAR, onClearSearch)
-        else -> EmptyAction(stringResource(R.string.library_filter_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_FILTERS, onClearFilters)
+        searched -> EmptyAction(
+            stringResource(R.string.library_search_clear), null, LibraryTags.NOTHING_FOUND_CLEAR, outlined = true, onClearSearch,
+        )
+        else -> EmptyAction(
+            stringResource(R.string.library_filter_clear), null, LibraryTags.NOTHING_FOUND_CLEAR_FILTERS, outlined = true, onClearFilters,
+        )
     }
     EmptyState(
         picture = if (searched) R.drawable.ic_search_off else R.drawable.ic_filter,
@@ -294,6 +349,7 @@ internal fun NothingFound(listed: Listed<*>, onClearSearch: () -> Unit, onClearF
         action = action,
         tag = LibraryTags.NOTHING_FOUND,
         modifier = modifier,
+        centred = true,
     )
 }
 

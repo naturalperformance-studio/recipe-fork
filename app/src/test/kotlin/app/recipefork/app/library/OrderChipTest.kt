@@ -203,18 +203,14 @@ class OrderChipTest {
         return layouts.single()
     }
 
-    /**
-     * The whole search field is set in Golos: its label resting and risen, and what is typed at regular weight, as the
-     * hint is.
-     */
+    /** The whole search field is set in Golos regular: its hint, and what is typed, as the hint is. */
     @Test
     @Config(qualifiers = "ru-w360dp-h800dp")
     fun theSearchFieldIsWhollyInGolosRegular() {
         show()
-        val label = hasTestTag(LibraryTags.SEARCH_LABEL)
-        assertEquals("the resting label", WorkingFamily, layoutOf(label).layoutInput.style.fontFamily)
-        assertEquals(FontWeight.Normal, hint().layoutInput.style.fontWeight)
-        assertEquals("the risen label", WorkingFamily, layoutOf(label).layoutInput.style.fontFamily)
+        val hint = hint()
+        assertEquals("the hint", WorkingFamily, hint.layoutInput.style.fontFamily)
+        assertEquals(FontWeight.Normal, hint.layoutInput.style.fontWeight)
 
         compose.onNodeWithTag(LibraryTags.SEARCH).performTextReplacement("кускус")
         compose.waitForIdle()
@@ -222,7 +218,6 @@ class OrderChipTest {
         assertEquals("кускус", typed.layoutInput.text.text)
         assertEquals("the typed text", WorkingFamily, typed.layoutInput.style.fontFamily)
         assertEquals(FontWeight.Normal, typed.layoutInput.style.fontWeight)
-        assertEquals("the risen label", WorkingFamily, layoutOf(label).layoutInput.style.fontFamily)
     }
 
     @Test
