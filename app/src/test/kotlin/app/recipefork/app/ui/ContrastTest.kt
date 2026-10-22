@@ -97,6 +97,8 @@ class ContrastTest {
         graphic("the restore question's ways — the icon of \"Replace the book\"", c.error, c.surfaceContainerHigh),
         graphic("a step's sheet — the icons of \"Insert ingredient\", \"Add timer\" and \"Add photo or clip\"", c.primary, c.surfaceContainerLow),
         graphic("an empty view's picture — the book with nothing in it, a search that found nothing, a card whose recipe is gone", c.onSurfaceVariant, c.surface),
+        graphic("the engraved mark of an empty section of the book, in ink", c.onSurface, c.background),
+        graphic("the engraved cart of the empty shopping list", c.onSurfaceVariant, c.background),
         graphic("an outlined field's and a fixing option's boundary", c.outline, c.surface),
         graphic("a focused field's and a chosen option's boundary, the chosen view's bar", c.primary, c.surface),
         graphic("a checkbox's and a radio button's boundary, the free-text warning's icon", c.onSurfaceVariant, c.surface),
@@ -148,6 +150,7 @@ class ContrastTest {
         text("a fork's provenance line on the card — \"Forked from …\"", c.tertiary, c.surface),
         text("a fork's provenance line on the container tint", c.tertiary, c.surfaceContainer),
         graphic("the provenance glyph heading the held-fork dialog", c.tertiary, c.surfaceContainerHigh),
+        graphic("the engraved mark's bent tine in an empty section of the book", c.tertiary, c.background),
     )
 
     private fun failing(c: ColorScheme) = pairs(c).filter { ratio(it.foreground, it.background) < it.least }
