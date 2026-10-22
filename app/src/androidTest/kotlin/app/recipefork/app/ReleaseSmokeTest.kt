@@ -1290,12 +1290,9 @@ class ReleaseSmokeTest {
         throw AssertionError("the selection did not end on $what; on screen: ${onScreen()}", e)
     }
 
-    /** Takes the selection's action [label]: its icon in the bar where it stands there, else the item of the bar's ⋮. */
+    /** Takes the selection's action [label], at the bottom by its word (v0.42). */
     private fun onTheSelection(label: String) {
-        if (clickable(label) == null) {
-            tap(SELECTION_MORE)
-            awaitShown(label)
-        }
+        awaitShown(label)
         tap(label)
     }
 
@@ -1379,7 +1376,7 @@ class ReleaseSmokeTest {
 
         // Into a collection made in the sheet.
         select(recipes)
-        onTheSelection(ADD_TO_COLLECTION)
+        onTheSelection(SELECTION_TO_COLLECTION)
         awaitShown(NEW_COLLECTION)
         tap(NEW_COLLECTION)
         typeFocused(COLLECTION_NAME, name)
@@ -1391,7 +1388,7 @@ class ReleaseSmokeTest {
 
         // On the shopping list, each once; the notice's Open shows them there, and Back returns to the book.
         select(recipes)
-        onTheSelection(ADD_TO_SHOPPING)
+        onTheSelection(SELECTION_TO_SHOPPING)
         awaitShown("Added 3 recipes")
         tap(OPEN)
         awaitShown(ADD_ITEM)
@@ -1405,13 +1402,12 @@ class ReleaseSmokeTest {
             throw AssertionError("the shopping list did not return to the book; on screen: ${onScreen()}", e)
         }
 
-        // Shared as one PDF from the bar's ⋮, which offers "Select all" first: a contents page, then each from a new
-        // page. The selection ends once the sheet is handed the file.
+        // Shared as one PDF from the action at the bottom, "Select all" in the bar above: a contents page, then each
+        // from a new page. The selection ends once the sheet is handed the file.
         select(recipes)
         sharesAPdf(SELECTION_PDF, pages = 1 + recipes.size) {
-            tap(SELECTION_MORE)
-            awaitShown(SELECT_ALL)
-            tap(SHARE_AS_PDF)
+            awaitShownWithin(SELECT_ALL)
+            onTheSelection(SELECTION_SHARE_PDF)
         }
         awaitSelectionEnded("the PDF handed over")
 
@@ -1533,12 +1529,14 @@ class ReleaseSmokeTest {
         const val DELETE_COLLECTION = "Delete collection"
         const val OPEN = "Open"
         /**
-         * The book's selection's bar: ✕, the ⋮, its "Select all", its actions as the bar and an entry's ⋮
-         * name them, and the title of the document of the recipes chosen, which names its PDF.
+         * The book's selection's bar: ✕ and "Select all"; its actions at the bottom by their words (v0.42); the actions as
+         * an entry's ⋮ names them; and the title of the document of the recipes chosen, which names its PDF.
          */
         const val CLOSE_SELECTION = "Close selection"
-        const val SELECTION_MORE = "More actions on the selection"
         const val SELECT_ALL = "Select all"
+        const val SELECTION_TO_COLLECTION = "To collection"
+        const val SELECTION_TO_SHOPPING = "To shopping"
+        const val SELECTION_SHARE_PDF = "PDF"
         const val ADD_TO_SHOPPING = "Add to shopping list"
         const val SHARE_AS_PDF = "Share as PDF"
         const val SELECTION_PDF = "Recipes.pdf"

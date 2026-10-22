@@ -66,6 +66,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -330,7 +331,8 @@ class BookSelectionHoldsTest {
     }
 
     // The selection's bar fading out after it ends takes no touch: with the book's bar scrolled away, nothing stands
-    // over the leaving bar, and its ⋮ — a selection's "Select all" — must not open.
+    // over the leaving bar, and its "Select all" must not choose anything; nor may its actions at the bottom, fading out
+    // with it, take anything out of the book (v0.42).
     @Test
     fun theBarFadingOutTakesNoTouch() {
         val all = (0 until 20).map { own("Recipe $it", minutesAgo = it.toLong()) }
@@ -340,26 +342,30 @@ class BookSelectionHoldsTest {
         compose.waitUntil(PATIENCE_MS) { compose.onNodeWithTag(LibraryTags.TOP_BAR).getBoundsInRoot().let { it.bottom - it.top } < 1.dp }
         val chosen = all[10]
         longPress(chosen)
-        await(LibraryTags.SELECTION_MENU)
+        await(LibraryTags.SELECT_ALL)
+        await(LibraryTags.SELECTION_DELETE)
         compose.waitForIdle()
-        val at = compose.onNodeWithTag(LibraryTags.SELECTION_MENU).getBoundsInRoot().let { bounds ->
+        fun centre(tag: String) = compose.onNodeWithTag(tag).getBoundsInRoot().let { bounds ->
             with(compose.density) { Offset(((bounds.left + bounds.right) / 2).toPx(), ((bounds.top + bounds.bottom) / 2).toPx()) }
         }
+        val selectAll = centre(LibraryTags.SELECT_ALL)
+        val delete = centre(LibraryTags.SELECTION_DELETE)
         compose.mainClock.autoAdvance = false
         compose.runOnUiThread { session.endSelection() }
         compose.mainClock.advanceTimeByFrame()
         compose.mainClock.advanceTimeByFrame()
         compose.mainClock.advanceTimeBy(30)
-        assertTrue("the selection's bar fades out", exists(LibraryTags.SELECTION_MENU))
-        compose.onRoot().performTouchInput { click(at) }
-        // Looked for at once: the leaving bar, menu and all, is gone once it has faded.
-        compose.mainClock.advanceTimeByFrame()
-        compose.mainClock.advanceTimeByFrame()
-        assertFalse("the leaving bar's ⋮ opened", exists(LibraryTags.SELECT_ALL))
+        assertTrue("the selection's bar fades out", exists(LibraryTags.SELECT_ALL))
+        assertTrue("its actions fade out", exists(LibraryTags.SELECTION_DELETE))
+        compose.onRoot().performTouchInput { click(selectAll) }
+        compose.onRoot().performTouchInput { click(delete) }
         compose.mainClock.advanceTimeBy(2_000)
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()
-        assertNull(session.selection.value)
+        assertNull("the leaving bar's Select all chose", session.selection.value)
+        assertFalse(exists(LibraryTags.SELECTION_ACTIONS))
+        assertNull("the leaving actions deleted", session.removal.value)
+        assertNotNull(runBlocking { recipes.get(chosen.id) })
     }
 
     // A long press is felt once, as the application's confirmation: the platform's own long-press feedback is off.

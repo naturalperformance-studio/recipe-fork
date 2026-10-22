@@ -145,8 +145,12 @@
     </plurals>
     <string name="library_selection_close">Close selection</string>
     <string name="library_selection_close_action">Leave the selection</string>
-    <string name="library_selection_more">More actions on the selection</string>
-    <string name="library_selection_more_action">Show the selection\'s actions</string>
+    <!-- The selection's actions at the bottom (v0.42): the word under each icon; the screen reader hears the action. -->
+    <string name="library_selection_to_collection">To collection</string>
+    <string name="library_selection_to_shopping">To shopping</string>
+    <string name="library_selection_print">Print</string>
+    <string name="library_selection_print_action">Print</string>
+    <string name="library_selection_pdf">PDF</string>
     <string name="library_selection_all">Select all</string>
     <!-- FLOW-053: several recipes gone from the book at once, said with the action that brings them all back. -->
     <plurals name="library_recipes_deleted">

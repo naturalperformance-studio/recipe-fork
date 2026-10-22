@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A cart: the book's selection puts the recipes chosen on the shopping list. The redesign's i-cart symbol (redesign-1-recipe-fork.html), stroked 1.8, its wheels filled circles r 1.6. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.8"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M3,4h2.5l2.2,10.5h10L20,7.5H6.4" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7.4,19a1.6,1.6 0,1 0,3.2 0a1.6,1.6 0,1 0,-3.2 0zM14.9,19a1.6,1.6 0,1 0,3.2 0a1.6,1.6 0,1 0,-3.2 0z" />
+</vector>

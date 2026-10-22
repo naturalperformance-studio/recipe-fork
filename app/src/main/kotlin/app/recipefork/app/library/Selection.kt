@@ -2,25 +2,37 @@ package app.recipefork.app.library
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -32,14 +44,19 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
 import app.recipefork.app.editor.BlockAction
 import app.recipefork.app.ui.Haptic
 import app.recipefork.app.ui.WordFitText
+import app.recipefork.app.ui.fitWords
 import app.recipefork.app.ui.rememberHaptics
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -59,62 +76,53 @@ data class BookSelection(val view: LibraryView, val ids: Set<String>) {
 data class Selectable(val recipeId: String, val removable: Boolean, val holds: Boolean = true)
 
 /**
- * One action of the selection's bar, on the recipes chosen: what it reads, its tag, its icon — an action with one stands
- * in the bar while there is room, the rest in the bar's ⋮ — and whether it takes recipes out of the book, which keeps it
- * in the ⋮, drawn in the error colour, as an entry's menu draws it.
+ * One action of the selection's bar at the bottom, on the recipes chosen: the word under its icon ([label]), what the
+ * screen reader hears it does ([action]), its tag and icon; whether it applies to one of the recipes chosen at least
+ * ([enabled]) — one that applies to none stands in its place, not responding; and whether it takes recipes out of the
+ * book, which draws it in the error colour.
  */
 internal class SelectionAction(
     @StringRes val label: Int,
+    @StringRes val action: Int,
     val tag: String,
-    @DrawableRes val icon: Int? = null,
+    @DrawableRes val icon: Int,
+    val enabled: Boolean,
     val destructive: Boolean = false,
     val onClick: () -> Unit,
 )
 
-/** How many actions stand in the bar as icons at most; the others go in its ⋮. */
-private const val BAR_ICONS = 2
+/** The space that keeps the words beside it together. */
+private const val NO_BREAK = '\u00A0'
+
+/** How much of the bar's width "Select all" takes at most, so that the count keeps room beside it at large text. */
+private const val SELECT_ALL_SHARE = 0.4f
+
+/** The count's size: the redesign's 18 sp, in the working type (redesign-1 § 4.1 «выбрано несколько рецептов»). */
+private val COUNT_SIZE = 18.sp
+private val COUNT_LINE = 24.sp
 
 /**
- * What the bar holds besides its count and its icons: ✕ and ⋮ with their margins, the title's insets and its clearance
- * ([TITLE_CLEARANCE]) — a little more than Material lays out, so that the count is never short of it.
- */
-private val BAR_FIXED = 132.dp
-
-/** The room an icon takes in the bar. */
-private val BAR_ICON = 48.dp
-
-/**
- * The book's bar while its selection is on, in place of its title: ✕, which ends the selection, how many entries are
- * chosen ("3 selected"), and the [actions] on them — those with an icon in the bar, as far as [BAR_ICONS] allows and the
- * count leaves room for, every other in its ⋮ after "Select all", which chooses every entry the view lists. The count is
- * drawn on one line, made smaller as far as it needs to fit at a large font scale on a narrow phone, never below its
- * size at a font scale of 1: where it would not fit even so beside the icons, an icon goes to the ⋮ instead. The bar is
- * tinted — the theme's secondary container — so that it never reads as the book's own bar (v0.38).
+ * The book's bar while its selection is on, in place of its title (redesign-1 § 4.1, decisions.md #5): ✕, which ends
+ * the selection, how many entries are chosen ("3 selected"), and "Select all", which chooses every entry the view lists.
+ * The selection's actions stand at the bottom ([SelectionActionBar]). The count is drawn on one line, made smaller as
+ * far as it needs to fit at a large font scale on a narrow phone, never below its size at a font scale of 1; "Select
+ * all" keeps to one line the same way, taking at most [SELECT_ALL_SHARE] of the bar. The bar is tinted — the theme's
+ * secondary container — so that it never reads as the book's own bar (v0.38).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SelectionBar(
     count: Int,
-    actions: List<SelectionAction>,
     onSelectAll: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) = BoxWithConstraints {
-    // One word to fitting: the count never wraps away from what it counts.
-    val text = pluralStringResource(R.plurals.library_selection_count, count, count).replace(' ', ' ')
-    val style = MaterialTheme.typography.titleLarge
-    val measurer = rememberTextMeasurer()
-    val density = LocalDensity.current
-    val width = maxWidth
-    val icons = remember(text, style, width, measurer, density) {
-        // The count at the least size it is drawn at: as many pixels as its size in dp.
-        val least = with(density) { style.fontSize.value.dp.toSp() }
-        val drawn = with(density) { measurer.measure(text, style.copy(fontSize = least), softWrap = false, maxLines = 1).size.width.toDp() }
-        ((width - BAR_FIXED - drawn) / BAR_ICON).toInt().coerceIn(0, BAR_ICONS)
-    }
-    val (inBar, inMenu) = actions.partition { it.icon != null && !it.destructive }.let { (iconed, rest) ->
-        iconed.take(icons) to (iconed.drop(icons) + rest)
-    }
+    // One word to fitting: the count never wraps away from what it counts; nor "Select all" onto two lines.
+    val text = pluralStringResource(R.plurals.library_selection_count, count, count).replace(' ', NO_BREAK)
+    val all = stringResource(R.string.library_selection_all).replace(' ', NO_BREAK)
+    val colours = MaterialTheme.colorScheme
+    val style = MaterialTheme.typography.titleSmall.copy(fontSize = COUNT_SIZE, lineHeight = COUNT_LINE)
+    val allWidth = maxWidth * SELECT_ALL_SHARE
     TopAppBar(
         navigationIcon = {
             BlockAction(
@@ -130,28 +138,123 @@ internal fun SelectionBar(
             BoxWithConstraints(Modifier.padding(end = TITLE_CLEARANCE)) {
                 WordFitText(
                     text,
-                    MaterialTheme.typography.titleLarge,
+                    style,
                     constraints.maxWidth,
                     Modifier.semantics { heading() }.testTag(LibraryTags.SELECTION_COUNT),
                 )
             }
         },
         actions = {
-            inBar.forEach { action ->
-                BlockAction(action.icon!!, stringResource(action.label), action.tag, onClick = action.onClick)
+            TextButton(
+                onClick = onSelectAll,
+                colors = ButtonDefaults.textButtonColors(contentColor = colours.onSecondaryContainer),
+                modifier = Modifier.padding(end = 4.dp).widthIn(max = allWidth).heightIn(min = 48.dp).testTag(LibraryTags.SELECT_ALL),
+            ) {
+                BoxWithConstraints { WordFitText(all, LocalTextStyle.current, constraints.maxWidth) }
             }
-            SelectionMenu(inMenu, onSelectAll, Modifier.padding(end = 4.dp))
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            scrolledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-            navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            containerColor = colours.secondaryContainer,
+            scrolledContainerColor = colours.secondaryContainer,
+            navigationIconContentColor = colours.onSecondaryContainer,
+            titleContentColor = colours.onSecondaryContainer,
+            actionIconContentColor = colours.onSecondaryContainer,
         ),
         modifier = modifier.testTag(LibraryTags.SELECTION_BAR),
     )
 }
+
+/** The width of one action at the bottom, as the redesign draws five on a 360 dp phone (§ 5 «Панель действий выбора»). */
+internal val SELECTION_ACTION_WIDTH = 72.dp
+
+/** The least height of one action at the bottom: the redesign's 64 dp. */
+internal val SELECTION_ACTION_HEIGHT = 64.dp
+
+/** Where an action's icon stands below its top: its icon and a one-line word centred in its 64 dp. */
+private val ACTION_TOP = 10.dp
+
+/**
+ * The selection's actions, at the bottom of the book under the thumb (decisions.md #5; redesign-1 § 4.1, § 5): each an
+ * icon over its word in Golos 12 ([SelectionAction]), [SELECTION_ACTION_WIDTH] wide — narrower, sharing the width
+ * equally, on a phone too narrow for them all — on the secondary container, a hairline above. A word too wide for its
+ * action is made smaller, never cut ([ActionLabel]), and wraps only between words. It stands above the navigation bar.
+ */
+@Composable
+internal fun SelectionActionBar(actions: List<SelectionAction>, modifier: Modifier = Modifier) {
+    val colours = MaterialTheme.colorScheme
+    Surface(color = colours.secondaryContainer, contentColor = colours.onSecondaryContainer, modifier = modifier.testTag(LibraryTags.SELECTION_ACTIONS)) {
+        Column {
+            HorizontalDivider(color = colours.outlineVariant)
+            BoxWithConstraints(
+                Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                    .padding(top = 6.dp),
+            ) {
+                val width = minOf(SELECTION_ACTION_WIDTH, maxWidth / actions.size.coerceAtLeast(1))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    actions.forEach { SelectionActionButton(it, Modifier.width(width)) }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One of the selection's actions: a text button holding its icon over its word; named by its word, its click named for
+ * what it does. Not applying to any recipe chosen, it is drawn and announced as not responding.
+ */
+@Composable
+private fun SelectionActionButton(action: SelectionAction, modifier: Modifier = Modifier) {
+    val said = stringResource(action.action)
+    val colour = if (action.destructive) MaterialTheme.colorScheme.error else LocalContentColor.current
+    TextButton(
+        onClick = action.onClick,
+        enabled = action.enabled,
+        shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.textButtonColors(contentColor = colour),
+        // The icons stand level along the bar, where they stand in the redesign's 64 dp, whether a word takes one line
+        // or two.
+        contentPadding = PaddingValues(top = ACTION_TOP, bottom = 4.dp),
+        modifier = modifier
+            .heightIn(min = SELECTION_ACTION_HEIGHT)
+            .semantics { if (action.enabled) onClick(label = said, action = null) }
+            .testTag(action.tag),
+    ) {
+        Column(Modifier.align(Alignment.Top), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(painterResource(action.icon), contentDescription = null, modifier = Modifier.size(24.dp))
+            // Set close, as the redesign draws it, so that «коллекцию» stands whole in its 72 dp.
+            ActionLabel(stringResource(action.label), MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Center, letterSpacing = 0.sp))
+        }
+    }
+}
+
+/**
+ * An action's word under its icon, in [style], centred, wrapping only between words: made smaller as far as its widest
+ * word needs to stand whole in the action's width ([fitWords]) — and, on a phone so narrow that the actions are less
+ * than [SELECTION_ACTION_WIDTH] wide, below its size at a font scale of 1 as far as that word needs, never cut.
+ */
+@Composable
+private fun ActionLabel(text: String, style: TextStyle) = BoxWithConstraints(contentAlignment = Alignment.TopCenter) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val width = constraints.maxWidth
+    val fitted = remember(text, style, width, measurer, density) {
+        val words = fitWords(text, style, width, measurer, density)
+        if (!words.overflows) return@remember words.style
+        val widest = text.split(' ').maxOf { measurer.measure(it, words.style, softWrap = false, maxLines = 1).size.width }
+        val ratio = width.toFloat() / widest * LABEL_MARGIN
+        words.style.copy(
+            fontSize = words.style.fontSize * ratio,
+            lineHeight = if (words.style.lineHeight.isSp) words.style.lineHeight * ratio else words.style.lineHeight,
+        )
+    }
+    // As wide as the action, the word centred in it.
+    Text(text, style = fitted, modifier = Modifier.fillMaxWidth())
+}
+
+/** How much of the width a word made smaller to fit takes, so that rounding never leaves it a pixel short. */
+private const val LABEL_MARGIN = 0.97f
 
 /**
  * Starting the book's selection — a long press on an entry — is felt: the application's confirmation ([Haptic.CONFIRM],
@@ -165,65 +268,6 @@ internal fun SelectionStartFeedback(session: LibrarySession) {
         session.selection.map { it != null }.distinctUntilChanged().drop(1).collect { on ->
             if (on) haptics.perform(Haptic.CONFIRM)
         }
-    }
-}
-
-/**
- * The selection bar's ⋮: "Select all", then [actions], a destructive one in the error colour — by their words alone, as
- * every other ⋮'s items are: an action's icon is for the bar, and the ⋮'s labels line up whichever went there (v0.38).
- */
-@Composable
-private fun SelectionMenu(actions: List<SelectionAction>, onSelectAll: () -> Unit, modifier: Modifier = Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier) {
-        BlockAction(
-            R.drawable.ic_row_menu,
-            stringResource(R.string.library_selection_more),
-            LibraryTags.SELECTION_MENU,
-            onClick = { expanded = !expanded },
-            action = stringResource(R.string.library_selection_more_action),
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.library_selection_all)) },
-                onClick = {
-                    expanded = false
-                    onSelectAll()
-                },
-                modifier = Modifier.testTag(LibraryTags.SELECT_ALL),
-            )
-            actions.forEach { action ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(action.label)) },
-                    onClick = {
-                        expanded = false
-                        action.onClick()
-                    },
-                    colors = if (action.destructive) {
-                        MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.error)
-                    } else {
-                        MenuDefaults.itemColors()
-                    },
-                    modifier = Modifier.testTag(action.tag),
-                )
-            }
-        }
-    }
-}
-
-/**
- * Where an entry's ⋮ stands, while the selection is on: whether the entry is chosen, drawn — a filled circle with a
- * check, or an empty circle — so that it never rests on colour alone (A11Y-008). The entry itself says it to the screen
- * reader; the mark is a picture of it, said by nothing.
- */
-@Composable
-internal fun SelectionMark(recipeId: String, selected: Boolean, modifier: Modifier = Modifier) {
-    Box(modifier.size(48.dp).clearAndSetSemantics { testTag = LibraryTags.selectionMark(recipeId) }, contentAlignment = Alignment.Center) {
-        Icon(
-            painterResource(if (selected) R.drawable.ic_selected else R.drawable.ic_not_selected),
-            contentDescription = null,
-            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

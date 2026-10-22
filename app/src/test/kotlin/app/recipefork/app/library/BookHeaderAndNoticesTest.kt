@@ -523,7 +523,6 @@ class BookHeaderAndNoticesTest {
         compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECTION_BAR) }
         compose.onNodeWithTag(LibraryTags.entry(second.id.value)).performClick()
         compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 2 }
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
         await(LibraryTags.SELECTION_DELETE)
         compose.onNodeWithTag(LibraryTags.SELECTION_DELETE).performClick()
         compose.awaitRemovalNotice("2 recipes deleted", "Undo")

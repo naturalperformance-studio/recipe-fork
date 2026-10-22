@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -248,13 +249,14 @@ class BookAddingTest {
         show(LibraryView.OWN)
 
         choose(bread, pie, soup)
-        // Both adding actions stand in the bar, as icons named for what they do; the removal stays in its ⋮.
+        // Both adding actions stand first at the bottom (v0.42), named by their words, their clicks by what they do.
         assertTrue(exists(LibraryTags.SELECTION_ADD_TO_SHOPPING))
-        assertFalse(exists(LibraryTags.SELECTION_DELETE))
         assertTrue(bounds(LibraryTags.SELECTION_ADD_TO_COLLECTION).right <= bounds(LibraryTags.SELECTION_ADD_TO_SHOPPING).left)
-        assertTrue(bounds(LibraryTags.SELECTION_ADD_TO_SHOPPING).right <= bounds(LibraryTags.SELECTION_MENU).left)
-        assertEquals("Add to collection", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
-        assertEquals("Add to shopping list", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
+        assertTrue(bounds(LibraryTags.SELECTION_ADD_TO_SHOPPING).right <= bounds(LibraryTags.SELECTION_DELETE).left)
+        assertEquals("To collection", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
+        assertEquals("To shopping", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
+        assertEquals("Add to collection", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
+        assertEquals("Add to shopping list", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
         AccessibilityChecks.assertTouchTargets(compose)
 
         openChooser()
@@ -356,7 +358,7 @@ class BookAddingTest {
     }
 
     // Among the imported, the adding actions take the recipes whose content the book holds; one only marked is chosen
-    // all the same and left out, and a selection of none such is offered neither.
+    // all the same and left out, and for a selection of none such neither responds.
     @Test
     fun amongTheImportedOnlyRecipesTheBookHoldsAreAdded() {
         val borscht = found("Borscht", minutesAgo = 1)
@@ -366,8 +368,8 @@ class BookAddingTest {
         show(LibraryView.MARKED)
 
         longPress("server-1", LibraryView.MARKED)
-        assertFalse(exists(LibraryTags.SELECTION_ADD_TO_COLLECTION))
-        assertFalse(exists(LibraryTags.SELECTION_ADD_TO_SHOPPING))
+        compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).assertIsNotEnabled()
+        compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).assertIsNotEnabled()
         tap(pelmeni, LibraryView.MARKED)
         tap(borscht, LibraryView.MARKED)
         compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 3 }
@@ -518,7 +520,6 @@ class BookAddingTest {
         val cake = withCover(recipe("Cake", 2, 0), "cake-cover").also { runBlocking { recipes.save(it) } }
         show(LibraryView.OWN)
         choose(cake, pie, soup)
-        compose.awaitAndChoose(LibraryTags.SELECTION_MENU)
         compose.awaitAndChoose(LibraryTags.SELECTION_DELETE)
         compose.awaitRemovalNotice(deleted, undo)
         listOf(soup, pie, cake).forEach { compose.waitUntil(PATIENCE_MS) { stored(it) == null } }
@@ -570,7 +571,6 @@ class BookAddingTest {
         val dinner = collection("Ужин", *dishes.toTypedArray())
         show(LibraryView.OWN)
         longPress(dishes.first())
-        compose.awaitAndChoose(LibraryTags.SELECTION_MENU)
         compose.awaitAndChoose(LibraryTags.SELECT_ALL)
         compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 21 }
         openChooser()
@@ -587,8 +587,10 @@ class BookAddingTest {
         show(LibraryView.OWN)
 
         choose(*dishes.take(2).toTypedArray())
-        assertEquals("Добавить в коллекцию", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
-        assertEquals("Добавить в список покупок", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
+        assertEquals("В коллекцию", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
+        assertEquals("В покупки", AccessibilityChecks.announcedLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
+        assertEquals("Добавить в коллекцию", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_COLLECTION).fetchSemanticsNode()))
+        assertEquals("Добавить в список покупок", AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(LibraryTags.SELECTION_ADD_TO_SHOPPING).fetchSemanticsNode()))
         openChooser()
         assertEquals(listOf("Добавить 2 рецепта в…"), compose.textsOf(AddToCollectionTags.TITLE))
         assertEquals(listOf("Новая коллекция…"), compose.textsOf(AddToCollectionTags.NEW))

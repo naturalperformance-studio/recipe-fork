@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -40,9 +43,9 @@ import java.time.Instant
 
 /**
  * The selection's bar at twice the font scale on a 320 dp phone (T-261), in English and Russian: the count of chosen
- * entries stands whole on one line, between ✕ and ⋮, overlapping neither — an action's icon gives way to the ⋮ where it
- * would not leave the count room, and Print and Share as PDF (T-264) stand in the ⋮; ✕, ⋮, the bar's actions and menu
- * items and an entry's mark of being chosen are each at least 48 dp.
+ * entries stands whole, between ✕ and "Select all", overlapping neither, and "Select all" on one line; the five actions
+ * at the bottom (v0.42, T-305) share the narrow width, each at least 56 dp high, their words whole, never cut; ✕ and
+ * "Select all" are at least 48 dp, and an entry's mark of being chosen is a 26 dp picture over its cover.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -100,48 +103,66 @@ class BookSelectionAtLargeTextTest {
             }
         }
         compose.onNodeWithTag(LibraryTags.entry(first)).performTouchInput { longClick() }
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECTION_MENU) }
-        // Print and Share as PDF (T-264) are no icons of the bar: they stand in its ⋮ alone.
-        assertFalse(exists(LibraryTags.SELECTION_PRINT))
-        assertFalse(exists(LibraryTags.SELECTION_SHARE_PDF))
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECT_ALL) }
-        assertAtLeast48(LibraryTags.SELECT_ALL)
-        assertAtLeast48(LibraryTags.SELECTION_DELETE)
-        // The adding actions (T-263) stay offered — in the bar while the count leaves room, else in its ⋮.
-        assertAtLeast48(LibraryTags.SELECTION_ADD_TO_COLLECTION)
-        assertAtLeast48(LibraryTags.SELECTION_ADD_TO_SHOPPING)
-        assertAtLeast48(LibraryTags.SELECTION_PRINT)
-        assertAtLeast48(LibraryTags.SELECTION_SHARE_PDF)
-        // Every item of the ⋮ stands whole within the window's width.
-        val window = bounds(LibraryTags.SELECTION_BAR).width
-        listOf(LibraryTags.SELECTION_PRINT, LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE).forEach {
-            val item = bounds(it)
-            assertTrue("$it ($item) inside the window ($window)", item.left >= -0.5f && item.right <= window + 0.5f)
-        }
+        compose.waitUntil(PATIENCE_MS) { exists(LibraryTags.SELECT_ALL) && exists(LibraryTags.SELECTION_DELETE) }
         compose.onNodeWithTag(LibraryTags.SELECT_ALL).performClick()
-        compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 12 && !exists(LibraryTags.SELECT_ALL) }
+        compose.waitUntil(PATIENCE_MS) { session.selection.value?.count == 12 }
         compose.waitForIdle()
 
         val layout = layoutOf(LibraryTags.SELECTION_COUNT)
-        assertEquals(expected, layout.layoutInput.text.text.replace(' ', ' '))
+        assertEquals(expected, layout.layoutInput.text.text.replace('\u00A0', ' '))
         assertEquals("the count on one line", 1, layout.lineCount)
-        val drawn = layout.getLineRight(0) - layout.getLineLeft(0)
-        assertTrue("the count, $drawn wide, cut short in ${layout.layoutInput.constraints.maxWidth}", drawn <= layout.layoutInput.constraints.maxWidth + 0.5f)
-        assertFalse("the count cut short below", layout.didOverflowHeight)
+        assertFalse("the count cut short", layout.didOverflowWidth || layout.didOverflowHeight)
         val count = bounds(LibraryTags.SELECTION_COUNT)
         val close = bounds(LibraryTags.SELECTION_CLOSE)
-        val menu = bounds(LibraryTags.SELECTION_MENU)
+        val all = bounds(LibraryTags.SELECT_ALL)
         val bar = bounds(LibraryTags.SELECTION_BAR)
         assertTrue("the count ($count) after ✕ ($close)", count.left >= close.right - 0.5f)
-        assertTrue("the count ($count) before ⋮ ($menu)", count.right <= menu.left + 0.5f)
+        assertTrue("the count ($count) before Select all ($all)", count.right <= all.left + 0.5f)
         assertTrue("the count ($count) inside the bar ($bar)", count.top >= bar.top - 0.5f && count.bottom <= bar.bottom + 0.5f)
+        assertTrue("Select all ($all) inside the bar ($bar)", all.right <= bar.right + 0.5f && all.bottom <= bar.bottom + 0.5f)
+        val allWords = textLayoutWithin(LibraryTags.SELECT_ALL)
+        assertEquals("Select all on one line", 1, allWords.lineCount)
+        assertFalse("Select all cut short", allWords.didOverflowWidth || allWords.didOverflowHeight)
         assertAtLeast48(LibraryTags.SELECTION_CLOSE)
-        assertAtLeast48(LibraryTags.SELECTION_MENU)
+        assertAtLeast48(LibraryTags.SELECT_ALL)
+
+        // The five actions at the bottom share the narrow width, side by side within the window, none of their words cut.
+        val actions = listOf(
+            LibraryTags.SELECTION_ADD_TO_COLLECTION, LibraryTags.SELECTION_ADD_TO_SHOPPING, LibraryTags.SELECTION_PRINT,
+            LibraryTags.SELECTION_SHARE_PDF, LibraryTags.SELECTION_DELETE,
+        )
+        val boxes = actions.map { bounds(it) }
+        boxes.zipWithNext().forEach { (a, b) -> assertTrue("$a before $b", a.right <= b.left + 0.5f) }
+        assertTrue("within the window", boxes.first().left >= -0.5f && boxes.last().right <= bar.right + 0.5f)
+        actions.zip(boxes).forEach { (tag, box) ->
+            assertTrue("$tag is $box, at least 56 dp high", box.height >= 55.5f)
+            assertTrue("$tag is $box, at least 48 dp wide", box.width >= 47.5f)
+            val words = textLayoutWithin(tag)
+            assertFalse("$tag's words cut short", words.didOverflowWidth || words.didOverflowHeight)
+            val drawn = textBoundsWithin(tag)
+            assertTrue("$tag's words ($drawn) inside it ($box)", drawn.left >= box.left - 0.5f && drawn.right <= box.right + 0.5f && drawn.bottom <= box.bottom + 0.5f)
+        }
+
         // The mark of being chosen is a picture over the cover (T-301), 26 dp; the row is what is pressed.
         val mark = bounds(LibraryTags.selectionMark(first))
         assertEquals(26f, mark.width, 0.5f)
         assertTrue(48.dp.value <= bounds(LibraryTags.entry(first)).height)
+    }
+
+    private fun textWithin(tag: String) = compose.onNode(
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.Text) and hasAnyAncestor(hasTestTag(tag)),
+        useUnmergedTree = true,
+    )
+
+    /** The layout of the words inside the node tagged [tag]. */
+    private fun textLayoutWithin(tag: String): TextLayoutResult {
+        val layouts = mutableListOf<TextLayoutResult>()
+        textWithin(tag).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!.invoke(layouts)
+        return layouts.single()
+    }
+
+    private fun textBoundsWithin(tag: String): Rect = textWithin(tag).getUnclippedBoundsInRoot().let {
+        Rect(it.left.value, it.top.value, it.right.value, it.bottom.value)
     }
 
     @Test

@@ -428,14 +428,12 @@ class PreLaunchSweepTest {
         compose.openEntryMenu(cake.id.value)
         checkScreen("the book, own, an entry's menu")
         compose.closeEntryMenu(cake.id.value)
-        // The selection: one entry chosen, the others not, the bar's ⋮ open.
+        // The selection: one entry chosen, the others not, its actions at the bottom (v0.42).
         compose.onNodeWithTag(LibraryTags.entry(cake.id.value)).performTouchInput { longClick() }
-        await(LibraryTags.SELECTION_MENU)
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
+        await(LibraryTags.SELECTION_ACTIONS)
         await(LibraryTags.SELECT_ALL)
-        checkScreen("the book, own, selecting, the bar's menu open")
-        compose.onNodeWithTag(LibraryTags.SELECTION_MENU).performClick()
-        awaitGone(LibraryTags.SELECT_ALL)
+        compose.waitForIdle()
+        checkScreen("the book, own, selecting, its actions at the bottom")
         compose.onNodeWithTag(LibraryTags.SELECTION_CLOSE).performClick()
         awaitGone(LibraryTags.SELECTION_BAR)
         compose.runOnIdle { session.choose(LibraryView.MARKED) }
