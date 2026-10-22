@@ -109,9 +109,9 @@ citation stays in these sources and is not written into the asset, which carries
 - **USDA FoodData Central** (https://fdc.nal.usda.gov/), public domain, cited as `fdc:<id>` — the food's FDC id
   (SR Legacy where it has the product: energy is nutrient 208, protein 203, total lipid 204, carbohydrate by
   difference 205);
-- **I. M. Skurikhin's tables of the chemical composition of Russian food products** («Химический состав российских
-  пищевых продуктов»), for what FoodData Central does not hold as Russian cooks buy it, cited as
-  `skurikhin:<the product's name in the table>`, the name exactly as the table prints it.
+- **I. M. Skurikhin's tables of the composition of Russian food products**, for what FoodData Central does not hold as
+  Russian cooks buy it, cited as `skurikhin:<the product's name in the table>`, the name exactly as the table prints
+  it.
 
 ```
 4400	яйцо	egg		false	g=1 pc=55				kcal=143 protein=12.56 fat=9.51 carbs=0.72	fdc:171287
