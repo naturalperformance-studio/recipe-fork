@@ -48,7 +48,7 @@ import java.time.Instant
 
 /**
  * T-205, scenario 3 of v0.28: with My kitchen holding an item that counts, an item of equipment naming an entry the
- * kitchen lacks says "Not in your kitchen" under its name, on View and on Cooking — in words, read with the line; free
+ * kitchen lacks says "Not in your kitchen" — at its row's end on View, under its name on Cooking — in words, read with the line; free
  * text, what does not count and an empty kitchen mark nothing; ticking or unticking in My kitchen marks an open card
  * afresh.
  */
@@ -131,8 +131,11 @@ class CardKitchenTest {
         // In words, muted as a note; the colour adds nothing the words do not say.
         val mark = compose.textLayoutsWithin(EquipmentTags.lacking(1)).single()
         assertEquals(scheme.onSurfaceVariant, mark.layoutInput.style.color)
-        val name = compose.textLayoutsWithin(item(1)).first { it.layoutInput.text.text == "Saucepan 3 l" }
-        assertTrue("the mark stands under the name", node(EquipmentTags.lacking(1)).boundsInRoot.top >= node(item(1)).boundsInRoot.top + name.size.height)
+        // On View the words stand at the row's end, beside the name (redesign-1 § 4.2).
+        val words = node(EquipmentTags.lacking(1)).boundsInRoot
+        val row = node(item(1)).boundsInRoot
+        assertTrue("the mark stands beside the name, on its line", words.top < row.center.y && words.bottom > row.center.y)
+        assertEquals("the mark stands at the row's end", row.right, words.right, 1f)
     }
 
     @Test

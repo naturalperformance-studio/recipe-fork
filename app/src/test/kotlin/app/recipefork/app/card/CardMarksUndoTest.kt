@@ -106,6 +106,9 @@ class CardMarksUndoTest {
 
     private val parts = listOf(CardTags.equipment(0), CardTags.ingredient(0), CardTags.ingredient(1), CardTags.step(0), CardTags.step(1), CardTags.step(2))
 
+    /** What View says of the part [tag] besides its mark: an item of equipment not lacking is in the kitchen (T-317). */
+    private fun kitchen(tag: String): String? = "In your kitchen".takeIf { tag == CardTags.equipment(0) }
+
     /** The parts of the pilaf marked done, as held. */
     private fun held(): Set<DoneMark> = marks.held(BookName.Pool, pilaf.id)
 
@@ -235,7 +238,8 @@ class CardMarksUndoTest {
         parts.forEach { tag ->
             val config = node(tag).config
             assertNull("$tag carries no state while nothing is marked", config.getOrNull(SemanticsProperties.ToggleableState))
-            assertNull(config.getOrNull(SemanticsProperties.StateDescription))
+            // An item of equipment says only whether it is in the kitchen (T-317).
+            assertEquals(kitchen(tag), config.getOrNull(SemanticsProperties.StateDescription))
         }
         compose.chooseCardTab(CardMode.COOKING)
         tap(CardTags.step(1))
@@ -243,7 +247,8 @@ class CardMarksUndoTest {
         parts.forEach { tag ->
             val config = node(tag).config
             val on = tag == CardTags.step(1)
-            assertEquals("$tag's state, in words", if (on) "Done" else "Not done", config.getOrNull(SemanticsProperties.StateDescription))
+            val said = if (on) "Done" else "Not done"
+            assertEquals("$tag's state, in words", kitchen(tag)?.let { "$it, $said" } ?: said, config.getOrNull(SemanticsProperties.StateDescription))
             assertNull("$tag is not toggleable on View", config.getOrNull(SemanticsProperties.ToggleableState))
             assertNull("$tag is no check box on View", config.getOrNull(SemanticsProperties.Role))
             assertNull("$tag answers no tap on View", config.getOrNull(SemanticsActions.OnClick))
