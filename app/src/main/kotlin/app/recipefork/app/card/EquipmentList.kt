@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.timer.BesideOrUnder
@@ -158,7 +159,7 @@ private fun EquipmentLine(
     ) {
         Column {
             Text(item, style = MaterialTheme.typography.bodyLarge.done(done))
-            if (lacking) NotInKitchen(index, chevron = false)
+            if (lacking) NotInKitchen(index, MaterialTheme.typography.bodyMedium, chevron = false)
         }
     }
 }
@@ -211,19 +212,22 @@ private fun ViewEquipmentLine(
         BesideOrUnder(
             Modifier.weight(1f),
             main = { Text(item, style = MaterialTheme.typography.bodyLarge.done(done)) },
-            trailing = if (lacking) ({ NotInKitchen(index, chevron = onOpenKitchen != null) }) else null,
+            trailing = if (lacking) ({ NotInKitchen(index, MaterialTheme.typography.labelLarge, chevron = onOpenKitchen != null) }) else null,
         )
     }
 }
 
-/** "Not in your kitchen", muted, in the working face; with [chevron], a chevron after it hinting that the row opens My kitchen. */
+/**
+ * "Not in your kitchen", muted, in [style] — the reading face's bodyMedium on Cooking, as before the redesign, the
+ * working face's labelLarge on View; with [chevron], a chevron after it hinting that the row opens My kitchen.
+ */
 @Composable
-private fun NotInKitchen(index: Int, chevron: Boolean) {
+private fun NotInKitchen(index: Int, style: TextStyle, chevron: Boolean) {
     val color = MaterialTheme.colorScheme.onSurfaceVariant
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CHEVRON_GAP)) {
         Text(
             stringResource(R.string.card_equipment_not_in_kitchen),
-            style = MaterialTheme.typography.labelLarge,
+            style = style,
             color = color,
             modifier = Modifier.testTag(EquipmentTags.lacking(index)),
         )

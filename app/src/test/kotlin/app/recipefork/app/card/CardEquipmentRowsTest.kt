@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
@@ -31,6 +32,7 @@ import app.recipefork.app.editor.textsOf
 import app.recipefork.app.ui.AccessibilityChecks
 import app.recipefork.app.ui.AppTheme
 import app.recipefork.app.ui.appColorScheme
+import app.recipefork.app.ui.appTypography
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -64,13 +66,15 @@ class CardEquipmentRowsTest {
     private val equipment = listOf(ShownEquipment("Frying pan", had = true), ShownEquipment("Saucepan 3 l", lackedEntry = 10002))
 
     private var dark by mutableStateOf(false)
+    private var tab by mutableStateOf(CardMode.VIEW)
     private val opened = mutableListOf<Long>()
 
     private fun show(items: List<ShownEquipment> = equipment, mode: CardMode = CardMode.VIEW, opens: Boolean = true) {
+        tab = mode
         compose.setContent {
             AppTheme(dark = dark) {
                 Column(Modifier.padding(horizontal = GUTTER)) {
-                    EquipmentList(items, marks = null, mode = mode, onOpenKitchen = if (opens) ({ opened += it }) else null)
+                    EquipmentList(items, marks = null, mode = tab, onOpenKitchen = if (opens) ({ opened += it }) else null)
                 }
             }
         }
@@ -245,6 +249,19 @@ class CardEquipmentRowsTest {
         val name = compose.textLayoutsWithin(row(1)).first { it.layoutInput.text.text == "Saucepan 3 l" }
         assertTrue("the words under the name", bounds(EquipmentTags.lacking(1)).top >= bounds(row(1)).top + name.size.height)
         assertNull("no kitchen state on Cooking", state(0))
+        // Cooking's words in the reading face's bodyMedium, as before the redesign; View's in the working face's labelLarge.
+        assertWordsIn("Cooking", appTypography(context.resources).bodyMedium)
+        tab = CardMode.VIEW
+        compose.waitForIdle()
+        assertWordsIn("View", appTypography(context.resources).labelLarge)
+    }
+
+    /** The lacking item's words are set in [expected]'s family, weight and size. */
+    private fun assertWordsIn(tab: String, expected: TextStyle) {
+        val words = compose.textLayoutsWithin(EquipmentTags.lacking(1)).single().layoutInput.style
+        assertEquals("$tab: the words' family", expected.fontFamily, words.fontFamily)
+        assertEquals("$tab: the words' weight", expected.fontWeight, words.fontWeight)
+        assertEquals("$tab: the words' size", expected.fontSize, words.fontSize)
     }
 
     private fun density() = compose.density.density
