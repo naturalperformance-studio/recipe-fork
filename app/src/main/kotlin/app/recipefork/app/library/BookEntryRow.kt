@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -63,10 +64,12 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -320,26 +323,48 @@ internal fun DropCap(recipeId: String, title: String) {
 internal fun EntryTitle(recipeId: String, title: String) {
     // The middle of the first line, as the title was last laid out; the text is laid out while it is measured.
     val firstLine = remember { FirstLine() }
-    val laid = remember { LaidTitle() }
     val text = title.ifBlank { stringResource(R.string.common_untitled_recipe) }
     val style = MaterialTheme.typography.titleLarge.copy(fontSize = TITLE_SIZE, lineHeight = TITLE_LINE)
-    val measurer = rememberTextMeasurer()
-    val density = LocalDensity.current
-    BoxWithConstraints(
+    HyphenFitText(
+        text,
+        style,
         Modifier
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 val centre = firstLine.centre.coerceIn(0, placeable.height)
                 layout(placeable.width, placeable.height, mapOf(TitleLine to centre)) { placeable.place(0, 0) }
             }
-            // The title as written is what is read out, without the places to break [breakAfterHyphens] adds.
+            .testTag(LibraryTags.entryTitle(recipeId)),
+        onTextLayout = { firstLine.centre = ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt() },
+    )
+}
+
+/**
+ * [text] in [style] and [color] within the width it is given, set as a book entry's title is: made smaller just as far
+ * as its widest word — a hyphenated word counting as its parts — needs to fit, never below its size at a font scale of 1
+ * ([fitWords]); it wraps between words, and after the hyphen of a hyphenated word ([breakAfterHyphens]). Only a word
+ * wider than the room even then is hyphenated across lines ([Hyphens.Auto]), never cut short. [modifier] is the node
+ * that reads out the text as written and answers for its layout; [onTextLayout] hears each layout of it.
+ */
+@Composable
+internal fun HyphenFitText(
+    text: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    textAlign: TextAlign? = null,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+) {
+    val laid = remember { LaidTitle() }
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(
+        modifier
+            // The text as written is what is read out, without the places to break [breakAfterHyphens] adds.
             .semantics {
                 this.text = AnnotatedString(text)
-                getTextLayoutResult { layouts ->
-                    laid.result?.let(layouts::add) != null
-                }
-            }
-            .testTag(LibraryTags.entryTitle(recipeId)),
+                getTextLayoutResult { layouts -> laid.result?.let(layouts::add) != null }
+            },
     ) {
         val width = constraints.maxWidth
         val fitted = remember(text, style, width, measurer, density) {
@@ -349,10 +374,12 @@ internal fun EntryTitle(recipeId: String, title: String) {
             Text(
                 breakAfterHyphens(text),
                 style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
+                color = color,
+                textAlign = textAlign,
                 softWrap = true,
                 onTextLayout = {
                     laid.result = it
-                    firstLine.centre = ((it.getLineTop(0) + it.getLineBottom(0)) / 2).roundToInt()
+                    onTextLayout(it)
                 },
             )
         }
@@ -441,37 +468,13 @@ internal fun EntryProvenance(recipeId: String, parentTitle: String?) {
         )
         // As the row's title: the words wrap between words and after hyphens, never inside one; at a large font they
         // are made only as small as their widest word needs, never below their size at a font scale of 1.
-        val style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
-        val measurer = rememberTextMeasurer()
-        val density = LocalDensity.current
-        val laid = remember { LaidTitle() }
-        BoxWithConstraints(
-            Modifier
-                .weight(1f)
-                // The words as written are what is read out, without the places to break [breakAfterHyphens] adds.
-                .semantics {
-                    this.text = AnnotatedString(text)
-                    getTextLayoutResult { layouts -> laid.result?.let(layouts::add) != null }
-                }
-                .testTag(BookEntryRowTags.provenanceWords(recipeId)),
-        ) {
-            val width = constraints.maxWidth
-            val fitted = remember(text, style, width, measurer, density) {
-                fitWords(text, style, width, measurer, density, hyphenParts = true)
-            }
-            Box(Modifier.clearAndSetSemantics {}) {
-                Text(
-                    breakAfterHyphens(text),
-                    style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
-                    color = beet,
-                    softWrap = true,
-                    onTextLayout = {
-                        laid.result = it
-                        firstLine = (it.getLineBottom(0) - it.getLineTop(0)).roundToInt()
-                    },
-                )
-            }
-        }
+        HyphenFitText(
+            text,
+            MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+            Modifier.weight(1f).testTag(BookEntryRowTags.provenanceWords(recipeId)),
+            color = beet,
+            onTextLayout = { firstLine = (it.getLineBottom(0) - it.getLineTop(0)).roundToInt() },
+        )
     }
 }
 

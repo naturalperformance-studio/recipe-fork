@@ -50,6 +50,9 @@ import java.time.Instant
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
+// An ordinary phone: on Robolectric's default 470 dp screen a narrowed view's state does not fit under the search and
+// filters, and leaves its picture out (T-310).
+@Config(qualifiers = "w360dp-h800dp")
 class EmptyStatesTest {
     @get:Rule
     val compose = createComposeRule()
@@ -163,7 +166,7 @@ class EmptyStatesTest {
 
     // Criterion 1, in Russian.
     @Test
-    @Config(qualifiers = "ru")
+    @Config(qualifiers = "ru-w360dp-h800dp")
     fun inRussianTheEmptyViewsSpeakRussian() {
         show(LibraryView.MARKED, Mode.Serverless)
         assertEmptyState(
@@ -223,7 +226,7 @@ class EmptyStatesTest {
 
     // Criterion 2, in Russian.
     @Test
-    @Config(qualifiers = "ru")
+    @Config(qualifiers = "ru-w360dp-h800dp")
     fun inRussianTheClearingOfBothSpeaksRussian() {
         own("Суп")
         session.filter(LibraryView.OWN, BookFilters(language = BookLanguage.EN))
