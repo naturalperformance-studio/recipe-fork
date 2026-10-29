@@ -7,12 +7,18 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.Mode
@@ -50,6 +56,8 @@ import app.recipefork.core.recipe.Step
 import app.recipefork.core.recipe.Timer
 import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.Rational
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -198,27 +206,53 @@ class ExportFromTheCardTest {
             listOf(CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.EXPORT, CardTags.REMOVE),
             compose.cardMenuItems().filter { it != CardTags.COLLECTION && it != CardTags.SOURCE_TEXT },
         )
-        exportFromTheCardTitled("Export “Bean soup”") { document ->
-            val read = RecipeFile.decode(document)
-            assertEquals(id, read.id)
-            assertEquals("anna", read.author)
-        }
+        exportFromTheCard()
+        val (title, _, document) = shared()
+        assertEquals("Export “Bean soup”", title)
+        val read = RecipeFile.decode(document)
+        assertEquals(id, read.id)
+        assertEquals("anna", read.author)
     }
 
-    private fun exportFromTheCardTitled(expected: String, check: (String) -> Unit) {
+    private fun progress() = compose.onAllNodes(hasTestTag(LibraryTags.FILE_PROGRESS)).fetchSemanticsNodes()
+
+    // While the file is being written its progress shows over the top of the card, as the book shows it, shifting
+    // nothing, how far once known; it goes once the file is written. The work is the session's, which the card's
+    // Export runs through (rememberExport), held here so that it can be seen.
+    @Test
+    fun whileTheFileIsWrittenItsProgressShowsOverTheCard() {
+        val recipe = soup()
+        showCard(recipe.id)
+        assertTrue(progress().isEmpty())
+        val title = compose.onNodeWithTag(CardTags.TITLE).fetchSemanticsNode().boundsInRoot
+        var reported: ((Float) -> Unit)? = null
+        val finish = CompletableDeferred<Unit>()
+        val work = session.viewModelScope.launch {
+            session.withProgress(FileWork.Kind.EXPORT) { progress ->
+                reported = progress
+                finish.await()
+            }
+        }
+        compose.waitUntil(PATIENCE_MS) { progress().isNotEmpty() }
+        val exporting = hasTestTag(LibraryTags.FILE_PROGRESS) and hasContentDescription("Exporting the recipe")
+        val shown = compose.onNode(exporting).fetchSemanticsNode()
+        assertEquals(ProgressBarRangeInfo.Indeterminate, shown.config[SemanticsProperties.ProgressBarRangeInfo])
+        assertTrue("on the card", exists(CardTags.SCREEN))
+        val content = compose.onNodeWithTag(CardTags.PAGER).fetchSemanticsNode().boundsInRoot
+        // The 4 dp bar at the content's top edge; Material widens the bar's semantic bounds vertically, so its middle is
+        // compared.
+        val bar = with(compose.density) { 4.dp.toPx() }
+        assertEquals("over the top of the card's content", content.top + bar / 2, shown.boundsInRoot.center.y, 1f)
+        compose.runOnIdle { reported!!(0.5f) }
+        compose.waitUntil(PATIENCE_MS) { progress().singleOrNull()?.config?.getOrNull(SemanticsProperties.ProgressBarRangeInfo)?.current == 0.5f }
+        assertEquals("the card does not move", title, compose.onNodeWithTag(CardTags.TITLE).fetchSemanticsNode().boundsInRoot)
+        finish.complete(Unit)
+        compose.waitUntil(PATIENCE_MS) { work.isCompleted && progress().isEmpty() }
+
+        // A real export from the card leaves no progress behind once its sheet opens.
         exportFromTheCard()
-        val activity = shadowOf(compose.activity)
-        compose.waitUntil(PATIENCE_MS) { activity.peekNextStartedActivity() != null }
-        val sheet = activity.nextStartedActivity
-        assertEquals(expected, sheet.getCharSequenceExtra(Intent.EXTRA_TITLE).toString())
-        @Suppress("DEPRECATION")
-        val uri = sheet.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!
-        check(
-            ZipInputStream(context.contentResolver.openInputStream(uri)!!).use { zip ->
-                generateSequence { zip.nextEntry }.first { it.name == RecipeFile.DOCUMENT }
-                zip.readBytes().toString(Charsets.UTF_8)
-            },
-        )
+        shared()
+        compose.waitUntil(PATIENCE_MS) { progress().isEmpty() }
     }
 
     // FLOW-062 (8): in standard mode the card's ⋮ holds no export, as the book's entries hold none.
