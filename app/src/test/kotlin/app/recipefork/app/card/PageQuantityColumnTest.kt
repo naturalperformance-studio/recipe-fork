@@ -35,6 +35,7 @@ import app.recipefork.core.recipe.UnitType
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rational
 import app.recipefork.core.scaling.Rounding
+import app.recipefork.core.scaling.UnitLabels
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -73,6 +74,9 @@ class PageQuantityColumnTest {
     )
 
     private var muted = Color.Unspecified
+
+    /** The space between an arrow and its amount, as the decided design's `.arr` draws it. */
+    private val PAGE_ARROW_GAP_DP = 3.dp
 
     private fun show(
         lines: List<IngredientLine>,
@@ -119,8 +123,36 @@ class PageQuantityColumnTest {
     /** Where the glyphs of the first line of the quantity at [position] are drawn, not the box they are set in. */
     private fun quantityGlyphs(position: Int): Rect {
         val layout = quantityLayout(position)
-        val box = node(layout.layoutInput.text.text).boundsInRoot
+        val box = amountBox(position)
         return Rect(box.left + layout.getLineLeft(0), box.top, box.left + layout.getLineRight(0), box.bottom)
+    }
+
+    /** The box the amount of the line at [position] is set in: its text node, read as the amount as written. */
+    private fun amountBox(position: Int): Rect =
+        compose.onAllNodes(androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag(IngredientTags.quantity(position))), useUnmergedTree = true)
+            .fetchSemanticsNodes().single { it.config.getOrNull(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) != null }.boundsInRoot
+
+    /** Every unit label of more than one word, in either language. */
+    private val spacedUnits = QuantityUnit.entries.flatMap { unit -> InterfaceLanguage.entries.map { UnitLabels.of(unit, it) } }.filter { ' ' in it }.distinct()
+
+    /** No line of the amount at [position] ends inside a unit's label: each label it holds stands whole on one line. */
+    private fun assertUnitsWhole(position: Int) {
+        val layout = quantityLayout(position)
+        val shown = layout.layoutInput.text.text
+        val plain = shown.replace('\u00A0', ' ')
+        spacedUnits.forEach { label ->
+            var at = plain.indexOf(label)
+            while (at >= 0) {
+                assertEquals("«$label» in «$plain» stands on one line", layout.getLineForOffset(at), layout.getLineForOffset(at + label.length - 1))
+                at = plain.indexOf(label, at + 1)
+            }
+        }
+    }
+
+    /** The arrow of the line at [position] stands [3 dp][PAGE_ARROW_GAP_DP] before the first line of its amount. */
+    private fun assertArrowBesideTheFirstLine(position: Int) {
+        assertEquals("the arrow of line $position stands 3 dp before its amount's first line",
+            quantityGlyphs(position).left, arrowBounds(position).right + px(PAGE_ARROW_GAP_DP), 1.5f)
     }
 
     private fun nameBounds(position: Int) = unmerged(IngredientTags.name(position)).boundsInRoot
@@ -269,18 +301,46 @@ class PageQuantityColumnTest {
             assertEquals("the name of line $position stands beside the column", columnEnd + px(12.dp), nameBounds(position).left, 0.5f)
             assertTrue("the name of line $position is on its amount's first line", nameBounds(position).top < quantityGlyphs(position).bottom)
             val layout = quantityLayout(position)
-            val box = node(layout.layoutInput.text.text).boundsInRoot
+            val box = amountBox(position)
             (0 until layout.lineCount).forEach { line ->
                 assertEquals("line $line of ${layout.layoutInput.text} ends at the column's edge", columnEnd, box.left + layout.getLineRight(line), 2f)
             }
             // Whole: nothing cut, broken only between words.
             compose.assertWhole(CardTags.ingredient(position))
         }
-        listOf(0, 1).forEach { assertTrue("${list.lines[it].quantity} wraps in the column", quantityLayout(it).lineCount > 1) }
+        assertTrue("${list.lines[0].quantity} wraps in the column", quantityLayout(0).lineCount > 1)
         val arrow = arrowBounds(1)
         assertTrue("the arrow stands in the column: $arrow", arrow.left >= start - 0.5f)
-        assertTrue("the arrow stands before its amount", arrow.right <= quantityGlyphs(1).left + 0.5f)
         assertEquals("округлено вверх, точное значение меньше", text(unmerged(IngredientTags.rounding(1))))
+        // No break inside a unit: «ст. л.» stands whole, a break falling only between the number and the unit; the
+        // arrow stands beside the first line however the amount wraps.
+        list.lines.indices.forEach(::assertUnitsWhole)
+        assertArrowBesideTheFirstLine(1)
+        // Read exactly as the formatter wrote it, the unit's words apart: the name, the amount, the arrow's words.
+        assertEquals(listOf("Масло оливковое", scaled.lines[1].quantity, "округлено вверх, точное значение меньше"),
+            compose.textsOf(CardTags.ingredient(1)))
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h640dp")
+    fun theArrowStandsBesideTheFirstLineOfItsAmountInEnglish() {
+        val lines = listOf(
+            IngredientLine("Salt", "1½ pinch", derived = true, rounding = Rounding.UP),
+            IngredientLine("Cream", "1½ fl oz", derived = true, rounding = Rounding.DOWN),
+            IngredientLine("Flour", "1,250 g"),
+        )
+        show(lines)
+        // "↑ 1½ pinch" is wider than the column: it breaks between the number and the unit, the arrow beside "1½".
+        val pinch = quantityLayout(0)
+        assertEquals(2, pinch.lineCount)
+        assertEquals("1½", pinch.layoutInput.text.text.substring(pinch.getLineStart(0), pinch.getLineEnd(0)).trim())
+        // "↓ 1½ fl oz" fits beside its arrow on one line, "fl oz" whole.
+        assertEquals(1, quantityLayout(1).lineCount)
+        listOf(0, 1).forEach { position ->
+            assertArrowBesideTheFirstLine(position)
+            assertUnitsWhole(position)
+            compose.assertWhole(CardTags.ingredient(position))
+        }
     }
 
     @Test

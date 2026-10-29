@@ -73,6 +73,11 @@ import app.recipefork.core.recipe.Ingredient
 import app.recipefork.core.recipe.IngredientGroup
 import app.recipefork.core.scaling.InterfaceLanguage
 import app.recipefork.core.scaling.Rounding
+import androidx.compose.ui.semantics.getTextLayoutResult
+import androidx.compose.ui.text.TextLayoutResult
+import app.recipefork.core.scaling.UnitLabels
+import app.recipefork.core.recipe.QuantityUnit
+import kotlin.math.roundToInt
 
 /**
  * The card's ingredients, on a tonal surface of the theme, in order, at the scale in force — a requested serving count (SCALE-001) or the amount the
@@ -662,37 +667,39 @@ private fun pageColumn(lines: List<IngredientLine>): PageColumn {
 }
 
 /**
- * The width of the quantity column, in pixels: [PAGE_COLUMN], unless a word of a quantity, with a pixel's slack as in
- * the cooking column, is wider; or, on a line whose arrow finds no room before the quantity's first line
- * ([arrowHangs]), unless the arrow and a word together are.
+ * The width of the quantity column, in pixels: [PAGE_COLUMN], unless a word of a quantity ([unitsKeptWhole]), with a
+ * pixel's slack as in the cooking column, is wider; or, on a line with an arrow, unless the arrow and the quantity's
+ * first word together are, as they stand on its first line.
  */
 private fun pageColumnWidth(lines: List<IngredientLine>, measurer: TextMeasurer, style: TextStyle, arrowStyle: TextStyle, density: Density): Int {
-    val column = with(density) { PAGE_COLUMN.roundToPx() }
     fun width(text: String, of: TextStyle) = measurer.measure(text, of, softWrap = false, maxLines = 1).size.width
     val needed = lines.maxOfOrNull { line ->
-        val quantity = line.quantity ?: return@maxOfOrNull 0
-        val word = quantity.split(' ').maxOf { width(it, style) } + 1
-        val arrow = roundingMark(line.rounding)?.takeIf { line.derived }?.first ?: return@maxOfOrNull word
-        val before = arrowRoom(arrow, measurer, arrowStyle, density)
-        if (arrowHangs(quantity, before, column, measurer, style)) word else before + word
+        val words = unitsKeptWhole(line.quantity ?: return@maxOfOrNull 0).split(' ').map { width(it, style) + 1 }
+        val arrow = roundingMark(line.rounding)?.takeIf { line.derived }?.first
+        maxOf(words.max(), arrow?.let { arrowRoom(it, measurer, arrowStyle, density) + words.first() } ?: 0)
     } ?: 0
-    return maxOf(column, needed)
+    return maxOf(with(density) { PAGE_COLUMN.roundToPx() }, needed)
 }
 
 /** The room an [arrow] takes before a quantity: its width and [PAGE_ARROW_GAP], in pixels. */
 private fun arrowRoom(arrow: String, measurer: TextMeasurer, arrowStyle: TextStyle, density: Density): Int =
     measurer.measure(arrow, arrowStyle, softWrap = false, maxLines = 1).size.width + with(density) { PAGE_ARROW_GAP.roundToPx() }
 
-/**
- * Where the first line of [quantity] begins, in pixels, set against the end of a [column] it wraps in; at [before] or
- * further, the arrow stands before that line within the column ([arrowHangs]).
- */
-private fun firstLineStart(quantity: String, column: Int, measurer: TextMeasurer, style: TextStyle): Int =
-    measurer.measure(quantity, style.copy(textAlign = TextAlign.End), constraints = Constraints.fixedWidth(column)).getLineLeft(0).toInt()
+/** Every unit label of more than one word, in either interface language, longest first («жидк. унц.», «ст. л.», "fl oz"). */
+private val SPACED_UNIT_LABELS: List<String> = QuantityUnit.entries
+    .flatMap { unit -> InterfaceLanguage.entries.map { UnitLabels.of(unit, it) } }
+    .filter { ' ' in it }
+    .distinct()
+    .sortedByDescending { it.length }
 
-/** Whether an arrow [before] wide finds room before the first line of [quantity] set in a [column]. */
-private fun arrowHangs(quantity: String, before: Int, column: Int, measurer: TextMeasurer, style: TextStyle): Boolean =
-    firstLineStart(quantity, column, measurer, style) >= before
+/**
+ * [quantity] with the words of each unit label in it joined by no-break spaces, so that a quantity wrapping in the
+ * column breaks between its number and its unit, never inside the unit («1½» / «ст. л.», not «1½ ст.» / «л.»).
+ */
+internal fun unitsKeptWhole(quantity: String): String =
+    SPACED_UNIT_LABELS.fold(quantity) { text, label -> text.replace(label, label.replace(' ', NO_BREAK_SPACE)) }
+
+private const val NO_BREAK_SPACE = '\u00A0'
 
 /**
  * A quantity on [CardMode.VIEW]: the body line's size in the working face — the theme's label face, Golos Text Medium
@@ -753,51 +760,85 @@ private fun PageLine(line: IngredientLine, position: Int, page: PageColumn, done
 }
 
 /**
- * A quantity on [CardMode.VIEW] in the [pageQuantityStyle], with the arrow rounding gave it ([roundingMark]) before it,
- * on its first line's baseline, read as its words after the quantity. In a [column] the quantity is set against its
- * end, wrapping between words, each line ending at the column's edge, and the arrow stands just before the first line
- * where that leaves it room ([arrowHangs]), else at the column's start, the quantity then wrapping in what the arrow
- * leaves. Without a column, the two are as wide as they are, at the start.
+ * A quantity on [CardMode.VIEW] in the [pageQuantityStyle], its units kept whole ([unitsKeptWhole]), with the arrow
+ * rounding gave it ([roundingMark]) [PAGE_ARROW_GAP] before its first line, on that line's baseline, however it wraps;
+ * read as the quantity as written, then the words of its arrow. In a [column] the quantity is set against its end,
+ * each line ending at the column's edge ([inColumn]). Without a column, the two are as wide as they are, at the start.
  */
 @Composable
 private fun PageQuantity(quantity: String, line: IngredientLine, position: Int, done: Boolean, column: Int?) {
     val mark = roundingMark(line.rounding)?.takeIf { line.derived }
-    val style = pageQuantityStyle().done(done).copy(textAlign = if (column != null) TextAlign.End else TextAlign.Start)
     val arrowStyle = MaterialTheme.typography.labelMedium
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    // In a column with an arrow: where its first line begins and the room the arrow takes, or null where it finds none.
-    val hanging = remember(quantity, mark, style, arrowStyle, column, density) {
-        if (column == null || mark == null) return@remember null
-        val before = arrowRoom(mark.first, measurer, arrowStyle, density)
-        firstLineStart(quantity, column, measurer, style).takeIf { it >= before }?.let { it - before }
+    val base = pageQuantityStyle().done(done)
+    val style = if (column == null) base else base.copy(textAlign = TextAlign.End)
+    val set = remember(quantity, mark, style, arrowStyle, column, density) {
+        val kept = unitsKeptWhole(quantity)
+        if (column == null) InColumn(kept, firstLine = 0) else {
+            val before = mark?.let { arrowRoom(it.first, measurer, arrowStyle, density) } ?: 0
+            inColumn(kept, before, column, measurer, style)
+        }
     }
-    val arrow: @Composable () -> Unit = { mark?.let { (shown, spoken) -> RoundingArrowText(shown, stringResource(spoken), IngredientTags.rounding(position)) } }
-    val amount: @Composable () -> Unit = { Text(quantity, style = style) }
+    // The text as laid out, offered to the semantics tree, since its own semantics give way to the quantity as written.
+    val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
+    val arrow: @Composable () -> Unit = { mark?.let { (sign, spoken) -> RoundingArrowText(sign, stringResource(spoken), IngredientTags.rounding(position)) } }
+    val amount: @Composable () -> Unit = {
+        Text(
+            set.text,
+            style = style,
+            onTextLayout = { laidOut[0] = it },
+            modifier = Modifier.clearAndSetSemantics {
+                text = AnnotatedString(quantity)
+                shownText = set.text
+                getTextLayoutResult { results -> laidOut[0]?.let { results.add(it); true } ?: false }
+            },
+        )
+    }
     Layout(contents = listOf(amount, arrow), modifier = Modifier.testTag(IngredientTags.quantity(position))) { (amounts, arrows), constraints ->
         val shownArrow = arrows.firstOrNull()?.measure(Constraints())
-        val before = shownArrow?.let { it.width + PAGE_ARROW_GAP.roundToPx() } ?: 0
+        val room = shownArrow?.let { it.width + PAGE_ARROW_GAP.roundToPx() } ?: 0
         val width: Int
-        val textWidth: Int
-        if (column != null) {
-            // The column's whole width; or, where the arrow finds no room before the first line, what it leaves.
+        val textStart: Int
+        val shownAmount = if (column != null) {
             width = constraints.maxWidth
-            textWidth = if (shownArrow == null || hanging != null) width else (width - before).coerceAtLeast(0)
+            textStart = 0
+            amounts.single().measure(Constraints.fixedWidth(width))
         } else {
-            textWidth = minOf(amounts.single().maxIntrinsicWidth(Constraints.Infinity), (constraints.maxWidth - before).coerceAtLeast(0))
-            width = before + textWidth
+            val textWidth = minOf(amounts.single().maxIntrinsicWidth(Constraints.Infinity), (constraints.maxWidth - room).coerceAtLeast(0))
+            width = room + textWidth
+            textStart = room
+            amounts.single().measure(Constraints.fixedWidth(textWidth))
         }
-        val shownAmount = amounts.single().measure(Constraints.fixedWidth(textWidth))
         val arrowTop = shownArrow?.let { shownAmount[FirstBaseline] - it[FirstBaseline] } ?: 0
         val top = (-arrowTop).coerceAtLeast(0)
         val height = maxOf(top + shownAmount.height, top + arrowTop + (shownArrow?.height ?: 0))
         layout(width, height) {
-            val textStart = width - textWidth
             // Placed in the order they read: the quantity, then the words of its arrow.
             shownAmount.place(textStart, top)
-            shownArrow?.place(hanging ?: (textStart - before), top + arrowTop)
+            shownArrow?.place((textStart + set.firstLine - room).coerceAtLeast(0), top + arrowTop)
         }
     }
+}
+
+/** A quantity's [text] as set in the column, and where its first line begins in it, in pixels. */
+private data class InColumn(val text: String, val firstLine: Int)
+
+/**
+ * [kept] set against the end of a [column], wrapping between words: as it wraps, where its first line leaves an arrow
+ * [before] wide room before it; otherwise broken after as many of its words as leave that room, so that the arrow
+ * always stands just before the first line. [pageColumnWidth] keeps the first word and the arrow within the column.
+ */
+private fun inColumn(kept: String, before: Int, column: Int, measurer: TextMeasurer, style: TextStyle): InColumn {
+    fun firstLine(text: String) = measurer.measure(text, style, constraints = Constraints.fixedWidth(column)).getLineLeft(0).roundToInt()
+    val wrapped = firstLine(kept)
+    if (wrapped >= before) return InColumn(kept, wrapped)
+    val words = kept.split(' ')
+    fun width(text: String) = measurer.measure(text, style, softWrap = false, maxLines = 1).size.width
+    val fitting = (1..words.size).lastOrNull { width(words.take(it).joinToString(" ")) <= column - before } ?: 1
+    if (fitting == words.size) return InColumn(kept, wrapped)
+    val broken = words.take(fitting).joinToString(" ") + "\n" + words.drop(fitting).joinToString(" ")
+    return InColumn(broken, firstLine(broken))
 }
 
 /** The width of the quantity column on [CardMode.VIEW], the decided design's. */
