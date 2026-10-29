@@ -9,6 +9,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -65,8 +66,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * T-312, v0.43 scenario 2: the card's title area as a page of a cookbook — the title in Literata 28, its words kept
  * whole at a large font; the stated author under it, inside the heading block; the summary in Golos under them; the
  * description in Literata; nothing kept for a cover a recipe does not have. The card's states — loading, not found,
- * not loaded — keep their words with the engraved mark in place of an icon. While the parent is asked for, the
- * provenance line keeps the place it will take, so that the title does not move.
+ * not loaded — keep their words with the engraved mark in place of an icon. A version shows once its parent is read
+ * as well, so that its provenance line and its title come together and nothing moves.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -88,11 +89,16 @@ class CardTitleAreaTest {
     @Volatile
     private var gate: Pair<RecipeId, CompletableDeferred<Unit>>? = null
 
+    /** A recipe whose every read fails. */
+    @Volatile
+    private var broken: RecipeId? = null
+
     private val recipes = object : RecipeRepository(ActiveBook(BookName.Pool, book.database)) {
         override fun observe(id: RecipeId): Flow<Recipe?> {
             val real = super.observe(id)
             return flow {
                 gate?.takeIf { it.first == id }?.second?.await()
+                if (id == broken) throw IOException("the parent does not read back")
                 if (failing.getAndUpdate { (it - 1).coerceAtLeast(0) } > 0) throw IOException("the row does not read back")
                 emitAll(real)
             }
@@ -340,38 +346,89 @@ class CardTitleAreaTest {
         assertTrue(author.bottom <= bounds(CardTags.SUMMARY).top + 0.5f)
     }
 
-    // Criterion 5: while the parent is asked for, the line keeps the place it will take — at twice the font, a parent not
-    // in the book with the author its file states is taller than the least place — so that the title does not move.
+    // Criterion 5 (fix round 1): a version is shown only once its parent is read too — until then the card's loading
+    // state — so that the provenance line and the title come together. A held parent with a long title wraps to several
+    // lines at twice the font; the title stands where it first stood as the card shows, and does not move after.
     @Test
     @Config(qualifiers = "ru-w360dp-h780dp", fontScale = 2f)
-    fun whileTheParentLoadsTheTitleDoesNotMoveAtLargeText() {
+    fun aHeldParentWithALongTitleAtTwiceTheFontOn360dpMovesNothing() = heldParentWithALongTitle()
+
+    @Test
+    @Config(qualifiers = "ru-w320dp-h711dp", fontScale = 2f)
+    fun aHeldParentWithALongTitleAtTwiceTheFontOn320dpMovesNothing() = heldParentWithALongTitle()
+
+    @Test
+    @Config(qualifiers = "w360dp-h780dp", fontScale = 2f)
+    fun aHeldParentWithALongTitleAtTwiceTheFontMovesNothingInEnglish() = heldParentWithALongTitle()
+
+    private fun heldParentWithALongTitle() {
+        val parent = save(recipe("Шакшука по-тбилисски с печёными перцами"))
+        val version = save(parent.fork(now, owner = null).copy(title = "Моя шакшука с фетой"))
+        assertNothingShownUntilTheParentArrives(version, parent.id)
+        assertTrue("the held line wraps at this size", compose.textLayoutsWithin(CardTags.PROVENANCE).first().lineCount > 1)
+    }
+
+    // Criterion 5, a parent not in the book, with the author its file states: taller than the least place at twice the
+    // font, and still nothing moves.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h780dp", fontScale = 2f)
+    fun aParentNotInTheBookAtTwiceTheFontMovesNothing() {
         val parent = RecipeId("gone")
         val version = save(
             recipe("Борщ с фасолью").copy(parent = parent, statedParent = StatedParent("Мой борщ", "Марина из соседнего подъезда")),
         )
-        assertTitleStaysWhileTheParentLoads(version, parent)
+        assertNothingShownUntilTheParentArrives(version, parent)
         assertTrue("the line is taller than the least place here", dp(bounds(CardTags.PROVENANCE).height) > CardTarget.value + 0.5f)
     }
 
-    // Criterion 5, a held parent: the line is one line, within the least place kept for it.
+    // Criterion 5, the rest: a parent whose read fails does not fail the card — the version shows, its line saying the
+    // parent is not in the book, drawn dashed and opening nothing.
     @Test
-    fun whileAHeldParentLoadsTheTitleDoesNotMove() {
+    fun aParentThatCannotBeReadShowsTheLineAsNotInTheBook() {
         val parent = save(recipe("Shakshuka"))
-        assertTitleStaysWhileTheParentLoads(save(parent.fork(now, owner = null).copy(title = "My shakshuka")), parent.id)
+        broken = parent.id
+        show(save(parent.fork(now, owner = null).copy(title = "My shakshuka")).id)
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.PROVENANCE) }
+        assertEquals(listOf("My shakshuka"), compose.textsOf(CardTags.TITLE))
+        assertEquals(listOf("after a recipe not in this book"), compose.textsOf(CardTags.PROVENANCE))
+        assertEquals(null, unmerged(CardTags.PROVENANCE).config.getOrNull(SemanticsActions.OnClick))
+        compose.waitUntil(PATIENCE_MS) { unmerged(ProvenanceTags.COLUMN).config.getOrNull(ProvenanceDrawn) != null }
+        assertTrue(unmerged(ProvenanceTags.COLUMN).config[ProvenanceDrawn].dashed)
+        assertFalse(exists(CardTags.UNREADABLE))
     }
 
-    private fun assertTitleStaysWhileTheParentLoads(version: Recipe, parent: RecipeId) {
+    // Criterion 5, live: the parent renamed, then removed, while the card is open — the line follows.
+    @Test
+    fun theLineFollowsTheParentWhileTheCardIsOpen() {
+        val parent = save(recipe("Shakshuka"))
+        show(save(parent.fork(now, owner = null).copy(title = "My shakshuka")).id)
+        compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.PROVENANCE) == listOf("after “Shakshuka”") }
+        save(parent.copy(title = "Green shakshuka"))
+        compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.PROVENANCE) == listOf("after “Green shakshuka”") }
+        runBlocking { assertTrue(recipes.delete(parent.id)) }
+        compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.PROVENANCE) == listOf("after a recipe not in this book") }
+        assertEquals(listOf("My shakshuka"), compose.textsOf(CardTags.TITLE))
+    }
+
+    /**
+     * While the parent of [version] is held back, the card shows its loading state and no title; once the parent
+     * arrives, the title and the line come together, and the title stays where it first stood.
+     */
+    private fun assertNothingShownUntilTheParentArrives(version: Recipe, parent: RecipeId) {
         val held = CompletableDeferred<Unit>()
         gate = parent to held
-        show(version.id)
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.TITLE) }
-        compose.waitForIdle()
-        assertFalse("the parent is still asked for", exists(CardTags.PROVENANCE))
-        val before = bounds(CardTags.TITLE).top
+        setCard(version.id)
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.LOADING) }
+        assertFalse("no title while the parent is asked for", exists(CardTags.TITLE))
+        assertFalse("no content while the parent is asked for", exists(CardTags.CONTENT))
         held.complete(Unit)
-        compose.waitUntil(PATIENCE_MS) { exists(CardTags.PROVENANCE) }
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.TITLE) }
+        assertTrue("the line comes with the title", exists(CardTags.PROVENANCE))
+        val first = bounds(CardTags.TITLE).top
+        compose.waitUntil(PATIENCE_MS) { unmerged(ProvenanceTags.COLUMN).config.getOrNull(ProvenanceDrawn) != null }
+        compose.mainClock.advanceTimeBy(1_000)
         compose.waitForIdle()
-        assertFalse("the unseen place is gone", exists(ProvenanceTags.SLOT))
-        assertEquals("the title stands where it stood", before, bounds(CardTags.TITLE).top, 0.5f)
+        assertFalse(exists(CardTags.LOADING))
+        assertEquals("the title stands where it first stood", first, bounds(CardTags.TITLE).top, 0.5f)
     }
 }

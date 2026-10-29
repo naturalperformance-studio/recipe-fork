@@ -180,7 +180,11 @@ import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
@@ -192,8 +196,11 @@ private sealed interface CardContent {
     data object Loading : CardContent
     data object Missing : CardContent
     data object Unreadable : CardContent
-    /** The recipe, and whether the book holds it as a found one ([RecipeRepository.isMarked]). */
-    data class Shown(val recipe: Recipe, val marked: Boolean) : CardContent
+    /**
+     * The recipe, whether the book holds it as a found one ([RecipeRepository.isMarked]), and what the book says of its
+     * parent — null for a recipe with none.
+     */
+    data class Shown(val recipe: Recipe, val marked: Boolean, val parent: ParentContent?) : CardContent
 }
 
 /** How the card's ⋮ takes a recipe out of the book: an own recipe is deleted, a found one removed. */
@@ -204,6 +211,17 @@ private fun removalOf(recipe: Recipe, marked: Boolean): Removal? = when {
     marked -> Removal.REMOVE
     recipe.state in DELETABLE -> Removal.DELETE
     else -> null
+}
+
+/**
+ * What the book says of the parent of [recipe], as it changes: held with its title, or not held; null, at once, for a
+ * recipe with no parent. A parent that cannot be read is taken as not held: the card never fails for its parent.
+ */
+private fun parentOf(recipes: RecipeRepository, recipe: Recipe): Flow<ParentContent?> {
+    val parent = recipe.parent ?: return flowOf(null)
+    return recipes.observe(parent)
+        .map<Recipe?, ParentContent?> { held -> held?.let { ParentContent.Held(it.title) } ?: ParentContent.Unavailable }
+        .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(ParentContent.Unavailable) else throw failure }
 }
 
 /** Whether the book holds [id] as a found recipe; a book that cannot say is taken to hold it as its own. */
@@ -263,7 +281,7 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalCoroutinesApi::class)
 @Composable
 fun CardScreen(
     recipeId: RecipeId,
@@ -282,11 +300,19 @@ fun CardScreen(
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
     // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
-    // until it is read.
+    // until it is read. A version is shown once its parent is read as well, so that its provenance line and its title
+    // come together and nothing under them moves as the line comes (T-312).
     var attempt by remember(recipeId, recipes) { mutableIntStateOf(0) }
     val content by remember(recipeId, recipes, attempt) {
         recipes.observe(recipeId)
-            .map<Recipe?, CardContent> { recipe -> recipe?.let { CardContent.Shown(it, markedIn(recipes, recipeId)) } ?: CardContent.Missing }
+            .flatMapLatest<Recipe?, CardContent> { recipe ->
+                if (recipe == null) {
+                    flowOf(CardContent.Missing)
+                } else {
+                    val marked = markedIn(recipes, recipeId)
+                    parentOf(recipes, recipe).map { parent -> CardContent.Shown(recipe, marked, parent) }
+                }
+            }
             .onStart { emit(CardContent.Loading) }
             .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
@@ -326,6 +352,7 @@ fun CardScreen(
     val barStates = TABS.map { rememberTopAppBarState() }
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
+    val parentShown = (shown as? CardContent.Shown)?.parent
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
     // The recipe leaves the book at once, asking nothing, and the card closes to the book, which says so with Undo.
     val remove = rememberRemoval(recipes, environment.marks, onRemoved)
@@ -548,7 +575,7 @@ fun CardScreen(
                         // A timer cancelled on a step is said in the card's notice, with Undo.
                         CompositionLocalProvider(LocalTimerCancelled provides timerCancelled) {
                             RecipeContent(
-                                recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                                recipe, parentShown, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                                 shownAgain, units,
                                 nutritionShown = nutritionShown,
                                 equipmentEntries = equipmentEntries,
@@ -1014,6 +1041,7 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit, modifier: Modifier
 @Composable
 private fun RecipeContent(
     recipe: Recipe,
+    parent: ParentContent?,
     entries: Map<Long, IngredientEntryEntity>,
     recipes: RecipeRepository,
     held: ScaleInForce,
@@ -1081,7 +1109,12 @@ private fun RecipeContent(
                     }
                 }
                 // A version's provenance stands above its title, its knee running down from the parent to this recipe.
-                recipe.parent?.let { ProvenanceLine(it, recipe.statedParent, recipes, onOpenParent, heading) } ?: heading {}
+                val parentId = recipe.parent
+                if (parentId != null && parent != null) {
+                    ProvenanceLine(parentId, parent, recipe.statedParent, onOpenParent, heading)
+                } else {
+                    heading {}
+                }
                 // The author's description stands with the title block it tells about, before the equipment and the
                 // ingredients, the card's gap from either.
                 if (recipe.description.isNotBlank()) {

@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -41,7 +39,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.AnnotatedString
@@ -50,14 +47,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
-import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.core.recipe.RecipeId
 import app.recipefork.core.recipe.StatedParent
-import kotlinx.coroutines.flow.map
 
-/** What the provenance line knows of the parent: nothing yet, its title, or that the book does not hold it. */
-private sealed interface ParentContent {
-    data object Loading : ParentContent
+/** What the book says of a version's parent: its title, or that the book does not hold it. */
+internal sealed interface ParentContent {
     data object Unavailable : ParentContent
     data class Held(val title: String) : ParentContent
 }
@@ -75,18 +69,18 @@ private sealed interface ParentContent {
  * marked as not verified. No descendant is ever listed or counted (FORK-004 (3)).
  *
  * The screen reader reads the title first and then the line, as the redesign decided (§ 6, question 2).
+ *
+ * The card reads the [parent] before it shows the version ([content], as it changes), so that the line and the title
+ * come together and nothing moves as the line comes.
  */
 @Composable
 internal fun ProvenanceLine(
     parent: RecipeId,
+    content: ParentContent,
     stated: StatedParent?,
-    recipes: RecipeRepository,
     onOpenParent: (RecipeId) -> Unit,
     heading: @Composable (onTitleLaidOut: (TextLayoutResult) -> Unit) -> Unit,
 ) {
-    val content by remember(parent, recipes) {
-        recipes.observe(parent).map { it?.let { held -> ParentContent.Held(held.title) } ?: ParentContent.Unavailable }
-    }.collectAsState(initial = ParentContent.Loading)
     val beet = MaterialTheme.colorScheme.tertiary
     val density = LocalDensity.current
     // Where, within the whole, the middle of the line's first line and of the title's first line stand, in pixels.
@@ -94,15 +88,14 @@ internal fun ProvenanceLine(
     var parentY by remember { mutableFloatStateOf(Float.NaN) }
     var titleMiddle by remember { mutableFloatStateOf(Float.NaN) }
     var headingTop by remember { mutableFloatStateOf(Float.NaN) }
-    val shown = content
-    val drawing = if (shown == ParentContent.Loading || parentY.isNaN() || headingTop.isNaN() || titleMiddle.isNaN()) {
+    val drawing = if (parentY.isNaN() || headingTop.isNaN() || titleMiddle.isNaN()) {
         null
     } else {
-        with(density) { ProvenanceDrawing.of(parentY.toDp(), (headingTop + titleMiddle).toDp(), held = shown is ParentContent.Held) }
+        with(density) { ProvenanceDrawing.of(parentY.toDp(), (headingTop + titleMiddle).toDp(), held = content is ParentContent.Held) }
     }
     Box(Modifier.fillMaxWidth().onPlaced { place.whole = it }.semantics { isTraversalGroup = true }) {
         Column(Modifier.fillMaxWidth()) {
-            Words(shown, stated, beet, onOpen = { onOpenParent(parent) }) { coordinates, middle ->
+            Words(content, stated, beet, onOpen = { onOpenParent(parent) }) { coordinates, middle ->
                 place.within(coordinates)?.let { parentY = it + middle }
             }
             Box(
@@ -143,9 +136,6 @@ private class WholePlace {
  * The line's words, and under them the stated author where the book does not hold the parent: a place at least the
  * card's target high — the 48 dp the redesign asks, raised to the card's 56 — that opens the parent while the book
  * holds it. [onFirstLine] learns where the words stand and the middle of their first line within them, in pixels.
- *
- * While the book is asked for the parent, the place is kept as high as the words will most likely stand, so that the
- * title under them does not move as they come ([expected]).
  */
 @Composable
 private fun Words(
@@ -159,18 +149,6 @@ private fun Words(
         .fillMaxWidth()
         .heightIn(min = CardTarget)
         .semantics { traversalIndex = LINE_AFTER }
-    if (content == ParentContent.Loading) {
-        val likely = expected(stated)
-        if (likely == null) {
-            Spacer(area)
-        } else {
-            // The words the line will most likely say, laid out unseen and unread, keep their place.
-            Box(area.alpha(0f).clearAndSetSemantics { testTag = ProvenanceTags.SLOT }, contentAlignment = Alignment.CenterStart) {
-                Laid(likely, stated, beet, onFirstLine = { _, _ -> })
-            }
-        }
-        return
-    }
     val held = content is ParentContent.Held
     Box(
         area
@@ -191,14 +169,6 @@ private fun Words(
         Laid(content, stated, beet, onFirstLine)
     }
 }
-
-/**
- * What the line will most likely say once the book answers, where the version itself tells: a version whose file names
- * its parent was made elsewhere, and its parent is most often not in this book — the words then known whole, the
- * author with them. Null where the version tells nothing: its parent most often held, its title not yet known, the
- * line one line high, within the least place.
- */
-private fun expected(stated: StatedParent?): ParentContent? = if (stated != null) ParentContent.Unavailable else null
 
 /** The words of the line as [content] makes them, and under them the stated author where the book does not hold the parent. */
 @Composable
@@ -309,9 +279,6 @@ private var SemanticsPropertyReceiver.provenanceDrawing by ProvenanceDrawn
 object ProvenanceTags {
     const val COLUMN = "card-provenance-column"
     const val AUTHOR = "card-provenance-author"
-
-    /** The place the line keeps, unseen, while the book is asked for the parent. */
-    const val SLOT = "card-provenance-slot"
 }
 
 /** The column the nodes and the knee are drawn in, and where the words and the title start beside it. */
