@@ -121,7 +121,7 @@ class CardEquipmentTest {
 
     /** The items read as done, as the card shows them — struck through and muted where read so. */
     private fun doneItems(): List<Int> = pilaf.equipment.indices.filter { index ->
-        // On View the state also says whether the item is in the kitchen: "In your kitchen, Done".
+        // On View the state may also say that the item is in the kitchen: "In your kitchen, Done".
         val state = node(item(index)).config.getOrNull(SemanticsProperties.StateDescription).orEmpty().split(", ")
         val read = state.any { it in setOf("Done", "Готово") }
         val struck = compose.textLayoutsWithin(item(index)).any {

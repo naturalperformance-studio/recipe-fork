@@ -138,6 +138,46 @@ class CardKitchenTest {
         assertEquals("the mark stands at the row's end", row.right, words.right, 1f)
     }
 
+    /** The items drawn with a square on View. */
+    private fun squared(): List<Int> = soup.equipment.indices.filter { existsUnmerged(EquipmentTags.square(it)) }
+
+    private fun state(index: Int): String? =
+        compose.onNodeWithTag(item(index)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
+
+    // T-317 (the owner, 2026-10-29): a square only where the kitchen is known — filled for the pan it has, empty for the
+    // saucepan it lacks; the free-text ladle and the consumable parchment have none and say nothing of the kitchen.
+    @Test
+    fun viewSquaresOnlyWhatTheKitchenIsKnownToHaveOrLack() {
+        open(CardMode.VIEW, HeldKitchen(setOf(FRYING_PAN)))
+        awaitLacking(listOf(1))
+        assertEquals(listOf(0, 1), squared())
+        assertEquals(listOf("In your kitchen", null, null, null), soup.equipment.indices.map(::state))
+    }
+
+    // With nothing ticked that counts the kitchen is not known: no square, no kitchen state, on any item.
+    @Test
+    fun anEmptyKitchenSquaresNothing() {
+        open(CardMode.VIEW, HeldKitchen(setOf(PARCHMENT)))
+        assertEquals(emptyList<Int>(), squared())
+        assertEquals(listOf<String?>(null, null, null, null), soup.equipment.indices.map(::state))
+    }
+
+    @Test
+    @Config(qualifiers = "ru")
+    fun inRussianViewSquaresOnlyWhatTheKitchenIsKnownToHaveOrLack() {
+        runBlocking { recipes.save(soup) }
+        val environment = CardEnvironment(
+            marks = marks, lastTab = HeldLastCardTab(CardMode.VIEW), equipment = EquipmentSource { KITCHEN_DICTIONARY },
+            kitchen = HeldKitchen(setOf(FRYING_PAN)), ingredients = IngredientEntries { emptyList() },
+        )
+        compose.setContent { MaterialTheme(colorScheme = scheme) { CardScreen(soup.id, recipes, environment, onBack = {}, onEdit = {}) } }
+        compose.awaitCard()
+        compose.waitUntil(PATIENCE_MS) { lacking() == listOf(1) && compose.textsOf(item(0)) == listOf("Сковорода") }
+        compose.waitForIdle()
+        assertEquals(listOf(0, 1), squared())
+        assertEquals(listOf("Есть на кухне", null, null, null), soup.equipment.indices.map(::state))
+    }
+
     @Test
     fun cookingMarksWhatTheKitchenLacksAndAMarkedItemKeepsIt() {
         open(CardMode.COOKING, HeldKitchen(setOf(FRYING_PAN)))

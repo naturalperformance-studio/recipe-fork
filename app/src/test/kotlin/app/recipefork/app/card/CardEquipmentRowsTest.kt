@@ -18,6 +18,8 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -45,8 +47,9 @@ import kotlin.math.abs
  * T-317, scenario 7 of v0.43: on View an item of equipment the kitchen has stands after a filled square, one it lacks
  * after an empty square with the words "Not in your kitchen" — shape and words, not colour alone — and the screen
  * reader says which; a lacking row still opens My kitchen, a target the card's 56 dp; a dotted rule runs under each
- * row; at twice the font scale on 320 dp nothing is cut; light and dark draw in the theme's colours only. Cooking keeps
- * its own lines.
+ * row; at twice the font scale on 320 dp nothing is cut; light and dark draw in the theme's colours only. An item the
+ * app cannot tell about has no square, keeps its indent and says nothing of the kitchen (the owner, 2026-10-29).
+ * Cooking keeps its own lines.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -58,7 +61,7 @@ class CardEquipmentRowsTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     /** The frying pan the kitchen has, and the saucepan (entry 10002) it lacks. */
-    private val equipment = listOf(ShownEquipment("Frying pan"), ShownEquipment("Saucepan 3 l", lackedEntry = 10002))
+    private val equipment = listOf(ShownEquipment("Frying pan", had = true), ShownEquipment("Saucepan 3 l", lackedEntry = 10002))
 
     private var dark by mutableStateOf(false)
     private val opened = mutableListOf<Long>()
@@ -137,6 +140,41 @@ class CardEquipmentRowsTest {
         }
     }
 
+    /** The kitchen has the pan, cannot tell of the ladle (free text, a consumable, an empty kitchen), lacks the saucepan. */
+    private val three = listOf(ShownEquipment("Frying pan", had = true), ShownEquipment("Ladle"), ShownEquipment("Saucepan 3 l", lackedEntry = 10002))
+
+    /** Where the name of the item at [index] starts. */
+    private fun nameLeft(index: Int, name: String): Float =
+        compose.onNode(hasText(name) and hasAnyAncestor(hasTestTag(row(index))), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+
+    // An item the app cannot tell about: no square, its name where the others' stand, nothing of the kitchen read.
+    @Test
+    fun anItemTheAppCannotTellAboutHasNoSquareButKeepsItsIndent() {
+        show(three)
+        assertTrue(exists(EquipmentTags.square(0)))
+        assertFalse("no square for what the app cannot tell", exists(EquipmentTags.square(1)))
+        assertTrue(exists(EquipmentTags.square(2)))
+        assertEquals(listOf("Ladle"), compose.textsOf(row(1)))
+        assertNull("nothing said of the kitchen", state(1))
+        assertEquals("In your kitchen", state(0))
+        val indent = (SQUARE_SIZE.value + SQUARE_GAP.value) * density()
+        assertEquals("the name keeps the square's indent", bounds(row(1)).left + indent, nameLeft(1, "Ladle"), 1f)
+        assertEquals(nameLeft(0, "Frying pan"), nameLeft(1, "Ladle"), 0.5f)
+        assertEquals(nameLeft(2, "Saucepan 3 l"), nameLeft(1, "Ladle"), 0.5f)
+        assertNull(node(row(1)).config.getOrNull(SemanticsActions.OnClick))
+    }
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h800dp-xxhdpi")
+    fun inRussianAnItemTheAppCannotTellAboutSaysNothingOfTheKitchen() {
+        show(three)
+        assertFalse(exists(EquipmentTags.square(1)))
+        assertNull("not «Есть на кухне»", state(1))
+        assertEquals("Есть на кухне", state(0))
+        assertEquals(listOf("Ladle"), compose.textsOf(row(1)))
+        assertEquals(nameLeft(0, "Frying pan"), nameLeft(1, "Ladle"), 0.5f)
+    }
+
     // The theme's colours only: the rows name no colour of their own.
     @Test
     fun theRowsNameNoColourOfTheirOwn() {
@@ -174,7 +212,7 @@ class CardEquipmentRowsTest {
 
     /** Names long enough to wrap at twice the font scale on 320 dp. */
     private val long = listOf(
-        ShownEquipment("Heavy cast-iron frying pan with a lid"),
+        ShownEquipment("Heavy cast-iron frying pan with a lid", had = true),
         ShownEquipment("Large enamelled saucepan of at least five litres", lackedEntry = 10002),
     )
 

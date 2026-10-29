@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,8 +52,9 @@ import app.recipefork.app.ui.Motion
  * kitchen", in words, read with the line; a tap still marks it.
  *
  * On [CardMode.VIEW] each item is a row of the page ([ViewEquipmentLine]): a square before its name, filled while the
- * kitchen does not lack it, left empty with "Not in your kitchen" at the row's end while it does; a dotted rule under
- * each row. A row is at least [VIEW_ROW_HEIGHT] tall, its mark shown but a tap leaving it as it is, and the list never
+ * kitchen has it ([ShownEquipment.had]), left empty with "Not in your kitchen" at the row's end while it lacks it, and
+ * none — its place kept, so the names stand aligned — while the app cannot tell (free text, a consumable, a kitchen with
+ * nothing ticked); a dotted rule under each row. A row is at least [VIEW_ROW_HEIGHT] tall, its mark shown but a tap leaving it as it is, and the list never
  * folds. A lacking item's row — and only such a row — is a button that opens My kitchen at the entry it names
  * ([onOpenKitchen]), at least the card's [CardTarget] tall.
  *
@@ -82,7 +85,7 @@ internal fun EquipmentList(
                         if (mode == CardMode.VIEW) {
                             val lacked = item.lackedEntry
                             ViewEquipmentLine(
-                                item.text, item.lacking, index, done,
+                                item.text, item.inKitchen, index, done,
                                 onOpenKitchen = if (lacked != null) onOpenKitchen?.let { open -> { open(lacked) } } else null,
                                 stated = marks?.any == true,
                             )
@@ -107,13 +110,24 @@ internal fun EquipmentList(
 }
 
 /**
- * An item of equipment as the card shows it: the [text] it reads as, and — when the reader's kitchen lacks it — the
- * equipment dictionary entry it names, which My kitchen opens at.
+ * An item of equipment as the card shows it: the [text] it reads as; when the reader's kitchen lacks it, the equipment
+ * dictionary entry it names, which My kitchen opens at; and whether the kitchen is known to have it ([had]). Neither —
+ * free text, a consumable, a kitchen with nothing ticked — the app cannot tell.
  */
 @Immutable
-internal data class ShownEquipment(val text: String, val lackedEntry: Long? = null) {
+internal data class ShownEquipment(val text: String, val lackedEntry: Long? = null, val had: Boolean = false) {
     val lacking: Boolean get() = lackedEntry != null
+
+    /** What the card can say of the item and the reader's kitchen. */
+    val inKitchen: InKitchen get() = when {
+        lacking -> InKitchen.LACKS
+        had -> InKitchen.HAS
+        else -> InKitchen.UNKNOWN
+    }
 }
+
+/** Whether the reader's kitchen has an item of equipment, lacks it, or the app cannot tell. */
+internal enum class InKitchen { HAS, LACKS, UNKNOWN }
 
 /**
  * One item of equipment on Cooking: its name, wrapping, never cut, and — when the kitchen is [lacking] it — "Not in
@@ -151,10 +165,11 @@ private fun EquipmentLine(
 
 /**
  * One item of equipment on View, as a row of the page (redesign-1 § 4.2): a [KitchenSquare] — filled while the kitchen
- * does not lack the item, empty while it is [lacking] — then the name in the reading face, wrapping, never cut, and for
- * a lacking item "Not in your kitchen" at the row's end, beside the name where both fit, else under it. Shape and
- * words, never colour alone: the screen reader reads the line as its name and, for an item not lacking, "In your
- * kitchen" as its state; a lacking item's words are read with the line. While the recipe has any mark ([stated]) the
+ * [has][InKitchen.HAS] the item, empty while it [lacks][InKitchen.LACKS] it, none but its place while the app cannot
+ * tell ([InKitchen.UNKNOWN]; the owner, 2026-10-29) — then the name in the reading face, wrapping, never cut, and for a
+ * lacking item "Not in your kitchen" at the row's end, beside the name where both fit, else under it. Shape and words,
+ * never colour alone: the screen reader reads the line as its name and, for an item the kitchen has, "In your kitchen"
+ * as its state; a lacking item's words are read with the line; of an item it cannot tell, nothing of the kitchen. While the recipe has any mark ([stated]) the
  * state says "Done" or "Not done" too, and a line marked [done] is struck through and muted; a tap never changes it.
  *
  * With [onOpenKitchen] — a lacking item — the row is a button "Open My kitchen" at least the card's [CardTarget] tall,
@@ -164,14 +179,15 @@ private fun EquipmentLine(
 @Composable
 private fun ViewEquipmentLine(
     item: String,
-    lacking: Boolean,
+    inKitchen: InKitchen,
     index: Int,
     done: Boolean,
     onOpenKitchen: (() -> Unit)?,
     stated: Boolean,
 ) {
+    val lacking = inKitchen == InKitchen.LACKS
     val opening = stringResource(R.string.card_equipment_open_kitchen_action)
-    val had = stringResource(R.string.card_equipment_in_kitchen).takeUnless { lacking }
+    val had = stringResource(R.string.card_equipment_in_kitchen).takeIf { inKitchen == InKitchen.HAS }
     val marked = if (stated) stringResource(if (done) R.string.card_marked_done else R.string.card_marked_not_done) else null
     val state = listOfNotNull(had, marked).joinToString(STATE_SEPARATOR)
     val opens = onOpenKitchen?.let { Modifier.clickable(onClickLabel = opening, role = Role.Button, onClick = it) } ?: Modifier
@@ -187,7 +203,11 @@ private fun ViewEquipmentLine(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(SQUARE_GAP),
     ) {
-        KitchenSquare(had = !lacking, Modifier.testTag(EquipmentTags.square(index)))
+        if (inKitchen == InKitchen.UNKNOWN) {
+            Spacer(Modifier.width(SQUARE_SIZE))
+        } else {
+            KitchenSquare(had = inKitchen == InKitchen.HAS, Modifier.testTag(EquipmentTags.square(index)))
+        }
         BesideOrUnder(
             Modifier.weight(1f),
             main = { Text(item, style = MaterialTheme.typography.bodyLarge.done(done)) },
@@ -284,6 +304,6 @@ internal object EquipmentTags {
     /** The "Not in your kitchen" of the item at [index]. */
     fun lacking(index: Int) = "card-equipment-lacking-$index"
 
-    /** The square before the item at [index] on View. */
+    /** The square before the item at [index] on View; none while the app cannot tell whether the kitchen has it. */
     fun square(index: Int) = "card-equipment-square-$index"
 }
