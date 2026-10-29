@@ -57,7 +57,12 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.em
+import app.recipefork.app.ui.isLargeText
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import app.recipefork.app.R
@@ -94,7 +99,8 @@ import app.recipefork.core.scaling.Rounding
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] a line is as tall as its text with a
  * modest space around it, its done mark is shown but a tap leaves it as it is, no line offers fixing, and the list
  * never folds; a fixing control open as the mode changes closes. The scale, the status line, the warning, groups and
- * notes are as in cooking.
+ * notes are as in cooking, set as a page of a cookbook: the quantities in a column of their own in the working face,
+ * their arrows in it, above the names at large text ([PageLine]); the group subheadings in small capitals.
  */
 @Composable
 internal fun IngredientsList(
@@ -197,6 +203,7 @@ private fun AllLines(
 ) {
     val cooking = mode == CardMode.COOKING
     val column = quantityColumn(list.lines)
+    val page = if (cooking) null else pageColumn(list.lines)
     // The status line, then the lines one against the next, with no gap between them: each line's own height is its
     // space. The warning unfolds under the status line and folds away into it, the gap above it included, so the
     // lines below move with it rather than jump; the status line itself keeps its height.
@@ -214,12 +221,12 @@ private fun AllLines(
             )
         }
         list.lines.forEachIndexed { i, line ->
-            groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name) }
+            groups.forEachIndexed { index, group -> if (group.firstPosition == i) GroupHeading(index, group.name, mode) }
             val position = ordered[i].position
             // The line and its fixing control are one part of the section, so the gap above the control unfolds with it.
             Column {
                 IngredientRow(
-                    line, position, column, cardPlace(CardPlaces.ingredient(position)),
+                    line, position, column, page, cardPlace(CardPlaces.ingredient(position)),
                     done = marks?.done(MarkedPart.INGREDIENT, position) == true,
                     onToggle = marks?.takeIf { cooking }?.let { { it.toggle(MarkedPart.INGREDIENT, position) } },
                     stated = marks?.any == true,
@@ -290,16 +297,27 @@ internal val HEADING_GAP = 4.dp
 
 /**
  * The subheading of the group at [index], over its first line (DOM-022): a heading for the screen reader, a modest
- * [GROUP_GAP] above it and nothing below it but its first line's own space.
+ * [GROUP_GAP] above it and nothing below it but its first line's own space. On [CardMode.VIEW] it is set as a
+ * cookbook sets it, in small capitals of the working face — the label style in capitals, spaced [GROUP_TRACKING] apart
+ * and muted — and read as the name as it was written, not letter by letter.
  */
 @Composable
-private fun GroupHeading(index: Int, name: String) {
-    Text(
-        name,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.fillMaxWidth().padding(top = GROUP_GAP).semantics { heading() }.testTag(IngredientTags.group(index)),
-    )
+private fun GroupHeading(index: Int, name: String, mode: CardMode) {
+    val place = Modifier.fillMaxWidth().padding(top = GROUP_GAP)
+    if (mode == CardMode.COOKING) {
+        Text(name, style = MaterialTheme.typography.titleSmall, modifier = place.semantics { heading() }.testTag(IngredientTags.group(index)))
+    } else {
+        Text(
+            name.uppercase(),
+            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = GROUP_TRACKING),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = place.semantics { heading(); contentDescription = name }.testTag(IngredientTags.group(index)),
+        )
+    }
 }
+
+/** The space between the letters of a group's subheading in small capitals on [CardMode.VIEW]. */
+internal val GROUP_TRACKING = 0.08.em
 
 /** The space above a group's subheading, apart from the line before it. */
 private val GROUP_GAP = 12.dp
@@ -421,13 +439,15 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
  *
  * In [CardMode.VIEW] the line answers no tap and offers no fixing: it is its text with [VIEW_LINE_PADDING] above and
- * below, a mark it carries shown, read-only, its state read while the recipe has any mark ([stated]).
+ * below, a mark it carries shown, read-only, its state read while the recipe has any mark ([stated]); it is set as a
+ * page of a cookbook in the [page] column ([PageLine]).
  */
 @Composable
 private fun IngredientRow(
     line: IngredientLine,
     position: Int,
     column: QuantityColumn,
+    page: PageColumn?,
     place: Modifier,
     done: Boolean,
     onToggle: (() -> Unit)?,
@@ -448,66 +468,81 @@ private fun IngredientRow(
     val tall = cooking && (onToggle != null || fixable)
     val padding = if (cooking) LINE_PADDING else VIEW_LINE_PADDING
     Column(place.fillMaxWidth().then(marking).then(fixing).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position))) {
-        val name: @Composable () -> Unit = {
-            val named = line.name ?: stringResource(R.string.card_unnamed_ingredient)
-            val muted = MaterialTheme.colorScheme.onSurfaceVariant
-            Text(
-                remember(named, line, muted) { namedLine(AnnotatedString(named), line, muted) },
-                style = MaterialTheme.typography.bodyLarge.done(done),
-                modifier = Modifier.testTag(IngredientTags.name(position)),
-            )
-        }
-        val quantity: @Composable () -> Unit = {
-            line.quantity?.let { quantity ->
-                Row(Modifier.fillMaxWidth().testTag(IngredientTags.quantity(position))) {
-                    // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
-                    Text(
-                        quantity,
-                        style = MaterialTheme.typography.bodyLarge.done(done),
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.weight(1f).alignByBaseline(),
-                    )
-                    if (line.derived) {
-                        roundingMark(line.rounding)?.let { (arrow, spoken) ->
-                            RoundingArrow(arrow, stringResource(spoken), IngredientTags.rounding(position))
-                        }
+        val name: @Composable () -> Unit = { LineName(line, position, done) }
+        if (page != null) PageLine(line, position, page, done, name) else CookingLine(line, position, column, done, tall, padding, fixable, fixLabel, name) { opening() }
+    }
+}
+
+/**
+ * One ingredient on [CardMode.COOKING]: its quantity, right-aligned in the list's quantity [column] and followed by an
+ * arrow where rounding moved it, its [name] beside it, and under the name whether it is fixed; over the amount, where the
+ * line is [fixable], its own target ([onOpen]). The line is its text with [padding] above and below, and the card's
+ * [CardTarget] tall at least where it is [tall].
+ */
+@Composable
+private fun CookingLine(
+    line: IngredientLine,
+    position: Int,
+    column: QuantityColumn,
+    done: Boolean,
+    tall: Boolean,
+    padding: Dp,
+    fixable: Boolean,
+    fixLabel: String,
+    name: @Composable () -> Unit,
+    onOpen: () -> Unit,
+) {
+    val opening by rememberUpdatedState(onOpen)
+    val quantity: @Composable () -> Unit = {
+        line.quantity?.let { quantity ->
+            Row(Modifier.fillMaxWidth().testTag(IngredientTags.quantity(position))) {
+                // The arrow is measured first, so a long quantity wraps before it squeezes the arrow away.
+                Text(
+                    quantity,
+                    style = MaterialTheme.typography.bodyLarge.done(done),
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.weight(1f).alignByBaseline(),
+                )
+                if (line.derived) {
+                    roundingMark(line.rounding)?.let { (arrow, spoken) ->
+                        RoundingArrow(arrow, stringResource(spoken), IngredientTags.rounding(position))
                     }
                 }
             }
         }
-        val fixedMark: @Composable () -> Unit = { if (line.fixed) FixedMark(stringResource(R.string.card_quantity_fixed), done) }
-        val amount: @Composable () -> Unit = { if (fixable) AmountTarget(fixLabel, CardTags.fixAmount(position)) { opening() } }
-        // The quantity stands at the line's start, the name beside it and the fixed mark under the name; the amount's
-        // target lies over the quantity, as tall as the line, and never over the name.
-        Layout(contents = listOf(name, quantity, fixedMark, amount), modifier = Modifier.fillMaxWidth()) { (names, quantities, fixedMarks, amounts), constraints ->
-            val gap = if (column.whole > 0) QUANTITY_GAP.roundToPx() else 0
-            val width = constraints.maxWidth
-            val share = maxOf((width * QUANTITY_SHARE).toInt(), column.word)
-            val fitted = minOf(column.whole, share, width)
-            // Short quantities ("2 pc", "1") still leave the amount's target its least width before the names begin:
-            // the column is then as wide as that target, less the gap, the same on every line so the names stay aligned.
-            val quantityWidth = if (column.whole > 0) maxOf(fitted, AMOUNT_TARGET.roundToPx() - gap).coerceAtMost(width) else fitted
-            // The quantity takes the column's whole width and sets itself against its end.
-            val shownQuantity = quantities.firstOrNull()?.measure(Constraints.fixedWidth(quantityWidth.coerceAtLeast(0)))
-            val nameConstraints = Constraints(maxWidth = (width - quantityWidth - gap).coerceAtLeast(0))
-            val shownName = names.first().measure(nameConstraints)
-            val shownFixed = fixedMarks.firstOrNull()?.measure(nameConstraints)
-            val content = maxOf(shownName.height + (shownFixed?.height ?: 0), shownQuantity?.height ?: 0)
-            // A line is its text with a little space above and below it, and never less than the card's target where it
-            // answers a tap: one line of text is the target's height exactly, and each line it wraps onto adds no more than itself.
-            val height = maxOf(content + 2 * padding.roundToPx(), if (tall) CardTarget.roundToPx() else 0)
-            val top = (height - content) / 2
-            // It ends where the name begins at the latest, so a tap on the name always marks the line.
-            val amountWidth = maxOf(quantityWidth + gap / 2, AMOUNT_TARGET.roundToPx()).coerceAtMost(minOf(width, quantityWidth + gap))
-            val shownAmount = amounts.firstOrNull()?.measure(Constraints.fixed(amountWidth, height))
-            layout(width, height) {
-                // Placed in the order they read: the screen reader takes a line's parts in the order they are placed.
-                shownName.place(quantityWidth + gap, top)
-                shownQuantity?.place(0, top)
-                shownFixed?.place(quantityWidth + gap, top + shownName.height)
-                // Last, so that it lies over the line and takes the taps on the amount.
-                shownAmount?.place(0, 0)
-            }
+    }
+    val fixedMark: @Composable () -> Unit = { if (line.fixed) FixedMark(stringResource(R.string.card_quantity_fixed), done) }
+    val amount: @Composable () -> Unit = { if (fixable) AmountTarget(fixLabel, CardTags.fixAmount(position)) { opening() } }
+    // The quantity stands at the line's start, the name beside it and the fixed mark under the name; the amount's
+    // target lies over the quantity, as tall as the line, and never over the name.
+    Layout(contents = listOf(name, quantity, fixedMark, amount), modifier = Modifier.fillMaxWidth()) { (names, quantities, fixedMarks, amounts), constraints ->
+        val gap = if (column.whole > 0) QUANTITY_GAP.roundToPx() else 0
+        val width = constraints.maxWidth
+        val share = maxOf((width * QUANTITY_SHARE).toInt(), column.word)
+        val fitted = minOf(column.whole, share, width)
+        // Short quantities ("2 pc", "1") still leave the amount's target its least width before the names begin:
+        // the column is then as wide as that target, less the gap, the same on every line so the names stay aligned.
+        val quantityWidth = if (column.whole > 0) maxOf(fitted, AMOUNT_TARGET.roundToPx() - gap).coerceAtMost(width) else fitted
+        // The quantity takes the column's whole width and sets itself against its end.
+        val shownQuantity = quantities.firstOrNull()?.measure(Constraints.fixedWidth(quantityWidth.coerceAtLeast(0)))
+        val nameConstraints = Constraints(maxWidth = (width - quantityWidth - gap).coerceAtLeast(0))
+        val shownName = names.first().measure(nameConstraints)
+        val shownFixed = fixedMarks.firstOrNull()?.measure(nameConstraints)
+        val content = maxOf(shownName.height + (shownFixed?.height ?: 0), shownQuantity?.height ?: 0)
+        // A line is its text with a little space above and below it, and never less than the card's target where it
+        // answers a tap: one line of text is the target's height exactly, and each line it wraps onto adds no more than itself.
+        val height = maxOf(content + 2 * padding.roundToPx(), if (tall) CardTarget.roundToPx() else 0)
+        val top = (height - content) / 2
+        // It ends where the name begins at the latest, so a tap on the name always marks the line.
+        val amountWidth = maxOf(quantityWidth + gap / 2, AMOUNT_TARGET.roundToPx()).coerceAtMost(minOf(width, quantityWidth + gap))
+        val shownAmount = amounts.firstOrNull()?.measure(Constraints.fixed(amountWidth, height))
+        layout(width, height) {
+            // Placed in the order they read: the screen reader takes a line's parts in the order they are placed.
+            shownName.place(quantityWidth + gap, top)
+            shownQuantity?.place(0, top)
+            shownFixed?.place(quantityWidth + gap, top + shownName.height)
+            // Last, so that it lies over the line and takes the taps on the amount.
+            shownAmount?.place(0, 0)
         }
     }
 }
@@ -573,17 +608,156 @@ private val ARROW_GAP = 2.dp
 /** The arrow after a rounded quantity: small and secondary on screen, the words [spoken] for the screen reader. */
 @Composable
 private fun RowScope.RoundingArrow(arrow: String, spoken: String, tag: String) {
+    RoundingArrowText(arrow, spoken, tag, Modifier.alignByBaseline().padding(start = ARROW_GAP))
+}
+
+/** A rounded quantity's arrow, small and secondary, read as the words [spoken]. */
+@Composable
+private fun RoundingArrowText(arrow: String, spoken: String, tag: String, modifier: Modifier = Modifier) {
     Text(
         arrow,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.alignByBaseline().padding(start = ARROW_GAP).clearAndSetSemantics {
+        modifier = modifier.clearAndSetSemantics {
             text = AnnotatedString(spoken)
             shownText = arrow
             testTag = tag
         },
     )
 }
+
+/** A line's name, with "to taste" and its note after it ([namedLine]), in the reading face; struck through once [done]. */
+@Composable
+private fun LineName(line: IngredientLine, position: Int, done: Boolean) {
+    val named = line.name ?: stringResource(R.string.card_unnamed_ingredient)
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Text(
+        remember(named, line, muted) { namedLine(AnnotatedString(named), line, muted) },
+        style = MaterialTheme.typography.bodyLarge.done(done),
+        modifier = Modifier.testTag(IngredientTags.name(position)),
+    )
+}
+
+/**
+ * The quantity column of the list on [CardMode.VIEW], as a page of a cookbook sets it: [shown] where any line carries
+ * a quantity; [above] where the column cannot stand beside the names — at large text ([isLargeText]), or where a
+ * quantity with its arrow does not fit [PAGE_COLUMN] on one line — and every quantity of the list then stands above its
+ * name instead, so that none is cut.
+ */
+internal data class PageColumn(val shown: Boolean, val above: Boolean)
+
+@Composable
+private fun pageColumn(lines: List<IngredientLine>): PageColumn {
+    val measurer = rememberTextMeasurer()
+    val quantityStyle = pageQuantityStyle()
+    val arrowStyle = MaterialTheme.typography.labelMedium
+    val density = LocalDensity.current
+    val large = isLargeText()
+    return remember(lines, quantityStyle, arrowStyle, density, large) {
+        fun width(text: String, style: TextStyle) = measurer.measure(text, style, softWrap = false, maxLines = 1).size.width
+        val room = with(density) { PAGE_COLUMN.roundToPx() }
+        val arrowGap = with(density) { PAGE_ARROW_GAP.roundToPx() }
+        // A pixel's slack, as in the cooking column, so rounding never wraps a quantity that fits.
+        val fits = lines.all { line ->
+            val quantity = line.quantity ?: return@all true
+            val arrow = roundingMark(line.rounding)?.takeIf { line.derived }?.let { width(it.first, arrowStyle) + arrowGap } ?: 0
+            arrow + width(quantity, quantityStyle) + 1 <= room
+        }
+        val shown = lines.any { it.quantity != null }
+        PageColumn(shown, above = shown && (large || !fits))
+    }
+}
+
+/**
+ * A quantity on [CardMode.VIEW]: the body line's size in the working face — the theme's label face, Golos Text Medium
+ * with tabular figures — so that amounts read apart from the names in the reading face and their figures line up.
+ */
+@Composable
+internal fun pageQuantityStyle(): TextStyle = MaterialTheme.typography.let {
+    it.bodyLarge.copy(fontFamily = it.labelLarge.fontFamily, fontWeight = it.labelLarge.fontWeight, fontFeatureSettings = it.labelLarge.fontFeatureSettings)
+}
+
+/**
+ * One ingredient on [CardMode.VIEW]: its quantity right-aligned in the list's [PAGE_COLUMN] at the line's start, its
+ * name [QUANTITY_GAP] beside it and the fixed mark under the name; or, where the column stands above the names
+ * ([PageColumn.above]), the quantity on a line of its own over the name, both at the line's start and given the whole
+ * width. The line is its text with [VIEW_LINE_PADDING] above and below. Read as on Cooking: the name, then the quantity.
+ */
+@Composable
+private fun PageLine(line: IngredientLine, position: Int, page: PageColumn, done: Boolean, name: @Composable () -> Unit) {
+    val quantity: @Composable () -> Unit = { line.quantity?.let { PageQuantity(it, line, position, done) } }
+    val fixedMark: @Composable () -> Unit = { if (line.fixed) FixedMark(stringResource(R.string.card_quantity_fixed), done) }
+    Layout(contents = listOf(name, quantity, fixedMark), modifier = Modifier.fillMaxWidth()) { (names, quantities, fixedMarks), constraints ->
+        val width = constraints.maxWidth
+        val padding = VIEW_LINE_PADDING.roundToPx()
+        if (page.above) {
+            val whole = Constraints(maxWidth = width)
+            val shownQuantity = quantities.firstOrNull()?.measure(whole)
+            val shownName = names.first().measure(whole)
+            val shownFixed = fixedMarks.firstOrNull()?.measure(whole)
+            val over = shownQuantity?.height ?: 0
+            val height = over + shownName.height + (shownFixed?.height ?: 0) + 2 * padding
+            layout(width, height) {
+                // Placed in the order they read: the name, then the quantity.
+                shownName.place(0, padding + over)
+                shownQuantity?.place(0, padding)
+                shownFixed?.place(0, padding + over + shownName.height)
+            }
+        } else {
+            val column = if (page.shown) PAGE_COLUMN.roundToPx().coerceAtMost(width) else 0
+            val start = if (page.shown) (column + QUANTITY_GAP.roundToPx()).coerceAtMost(width) else 0
+            val shownQuantity = quantities.firstOrNull()?.measure(Constraints.fixedWidth(column))
+            val nameConstraints = Constraints(maxWidth = width - start)
+            val shownName = names.first().measure(nameConstraints)
+            val shownFixed = fixedMarks.firstOrNull()?.measure(nameConstraints)
+            // The quantity sits on the name's first baseline, as the two read along one line.
+            val nameBaseline = shownName[FirstBaseline]
+            val quantityBaseline = shownQuantity?.get(FirstBaseline) ?: 0
+            val quantityTop = (nameBaseline - quantityBaseline).coerceAtLeast(0)
+            val nameTop = (quantityBaseline - nameBaseline).coerceAtLeast(0)
+            val content = maxOf(nameTop + shownName.height + (shownFixed?.height ?: 0), quantityTop + (shownQuantity?.height ?: 0))
+            layout(width, content + 2 * padding) {
+                shownName.place(start, padding + nameTop)
+                shownQuantity?.place(0, padding + quantityTop)
+                shownFixed?.place(start, padding + nameTop + shownName.height)
+            }
+        }
+    }
+}
+
+/**
+ * A quantity on [CardMode.VIEW] in the [pageQuantityStyle], with the arrow rounding gave it ([roundingMark]) standing
+ * before it in the column, on its baseline, read as its words after the quantity. Given a fixed width — the column —
+ * the two stand against its end; given room, as wide as they are, at the start.
+ */
+@Composable
+private fun PageQuantity(quantity: String, line: IngredientLine, position: Int, done: Boolean) {
+    val mark = roundingMark(line.rounding)?.takeIf { line.derived }
+    val arrow: @Composable () -> Unit = { mark?.let { (shown, spoken) -> RoundingArrowText(shown, stringResource(spoken), IngredientTags.rounding(position)) } }
+    val amount: @Composable () -> Unit = { Text(quantity, style = pageQuantityStyle().done(done)) }
+    Layout(contents = listOf(amount, arrow), modifier = Modifier.testTag(IngredientTags.quantity(position))) { (amounts, arrows), constraints ->
+        val shownArrow = arrows.firstOrNull()?.measure(Constraints())
+        val before = shownArrow?.let { it.width + PAGE_ARROW_GAP.roundToPx() } ?: 0
+        val shownAmount = amounts.single().measure(Constraints(maxWidth = (constraints.maxWidth - before).coerceAtLeast(0)))
+        val content = before + shownAmount.width
+        val width = maxOf(content, constraints.minWidth).coerceAtMost(constraints.maxWidth)
+        val arrowTop = shownArrow?.let { shownAmount[FirstBaseline] - it[FirstBaseline] } ?: 0
+        val top = (-arrowTop).coerceAtLeast(0)
+        val height = maxOf(top + shownAmount.height, top + arrowTop + (shownArrow?.height ?: 0))
+        layout(width, height) {
+            val start = (width - content).coerceAtLeast(0)
+            // Placed in the order they read: the quantity, then the words of its arrow.
+            shownAmount.place(start + before, top)
+            shownArrow?.place(start, top + arrowTop)
+        }
+    }
+}
+
+/** The width of the quantity column on [CardMode.VIEW], the decided design's. */
+internal val PAGE_COLUMN = 82.dp
+
+/** The space between a quantity's arrow and the quantity it stands before on [CardMode.VIEW]. */
+private val PAGE_ARROW_GAP = 3.dp
 
 /** What a fixed line says under its name. */
 @Composable

@@ -63,7 +63,7 @@ import kotlin.time.Duration.Companion.minutes
  * around it, a step as tall as its number and text, the steps [SECTION_GAP] and [VIEW_STEP_SPACING] apart; a done mark is shown (struck)
  * and read as done, but no line or step carries a click action and a tap changes nothing; no amount offers fixing; a
  * timer reads as its name and duration with no Start, and as its remaining time while it runs; group subheadings and
- * notes stand as in cooking. COOKING is today's card: 56 dp lines that a tap marks, the amount's own target, a Start
+ * notes stand as in cooking, the subheadings in small capitals. COOKING is today's card: 56 dp lines that a tap marks, the amount's own target, a Start
  * control on each timer. In English and in Russian.
  */
 @RunWith(AndroidJUnit4::class)
@@ -235,9 +235,10 @@ class CardModeListsTest {
         // A step follows the one before — its text, or its timer — a modest gap below it.
         assertNear("the second step stands under the first's timer", unmerged(ViewTimerTags.line(0)).boundsInRoot.bottom + px(SECTION_GAP + VIEW_STEP_SPACING), node(steps[1]).boundsInRoot.top)
         assertNear("the third step stands under the second", node(steps[1]).boundsInRoot.bottom + px(SECTION_GAP + VIEW_STEP_SPACING), node(steps[2]).boundsInRoot.top)
-        // Groups and notes stand as in cooking.
+        // Groups and notes stand as in cooking; a group's subheading in small capitals, read as written (T-313).
         val group = unmerged(IngredientTags.group(0))
-        assertEquals(words.group, text(group))
+        assertEquals(words.group.uppercase(), text(group))
+        assertEquals(listOf(words.group), group.config.getOrNull(SemanticsProperties.ContentDescription))
         assertTrue("the group's subheading is a heading", group.config.getOrNull(SemanticsProperties.Heading) != null)
         assertEquals("${words.names[0]} — ${words.note}", text(unmerged(IngredientTags.name(0))))
     }
