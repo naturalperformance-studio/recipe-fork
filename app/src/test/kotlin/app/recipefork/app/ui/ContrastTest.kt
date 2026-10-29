@@ -97,6 +97,7 @@ class ContrastTest {
         graphic("the empty cover's picture with a plus", c.onSurfaceVariant, c.surfaceContainerHigh),
         graphic("a photo source sheet's icons — take, choose, record, choose a clip", c.onSurfaceVariant, c.surfaceContainerLow),
         graphic("a photo source sheet's removal's bin", c.error, c.surfaceContainerLow),
+        graphic("the square before an item of equipment on the card's View, filled or empty, and the chevron after its \"Not in your kitchen\", on their tint", c.onSurfaceVariant, c.surfaceContainerLow),
         graphic("the restore question's ways — the icon of \"Add to the book\"", c.onSurface, c.surfaceContainerHigh),
         graphic("the restore question's ways — the icon of \"Replace the book\"", c.error, c.surfaceContainerHigh),
         graphic("a step's sheet — the icons of \"Insert ingredient\", \"Add timer\" and \"Add photo or clip\"", c.primary, c.surfaceContainerLow),

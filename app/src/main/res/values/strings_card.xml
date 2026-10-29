@@ -142,8 +142,10 @@
     <!-- The equipment the recipe needs, above the ingredients; on Cooking it folds as the ingredients do once every item is marked. -->
     <string name="card_equipment">Equipment</string>
     <string name="card_equipment_show_action">Show the equipment</string>
-    <!-- Under an item of equipment the reader's kitchen lacks (My kitchen). -->
+    <!-- Beside an item of equipment the reader's kitchen lacks (My kitchen), its square left empty. -->
     <string name="card_equipment_not_in_kitchen">Not in your kitchen</string>
+    <!-- What the screen reader says of an item on View whose square is filled: the kitchen does not lack it. -->
+    <string name="card_equipment_in_kitchen">In your kitchen</string>
     <!-- What a tap on such an item does, on View: My kitchen opens at it. -->
     <string name="card_equipment_open_kitchen_action">Open My kitchen</string>
     <!-- Under the equipment on View while My kitchen has nothing ticked: the way to set it up. -->

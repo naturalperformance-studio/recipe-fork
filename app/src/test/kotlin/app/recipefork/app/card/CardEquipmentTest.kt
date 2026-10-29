@@ -121,7 +121,9 @@ class CardEquipmentTest {
 
     /** The items read as done, as the card shows them — struck through and muted where read so. */
     private fun doneItems(): List<Int> = pilaf.equipment.indices.filter { index ->
-        val read = node(item(index)).config.getOrNull(SemanticsProperties.StateDescription) in setOf("Done", "Готово")
+        // On View the state may also say that the item is in the kitchen: "In your kitchen, Done".
+        val state = node(item(index)).config.getOrNull(SemanticsProperties.StateDescription).orEmpty().split(", ")
+        val read = state.any { it in setOf("Done", "Готово") }
         val struck = compose.textLayoutsWithin(item(index)).any {
             it.layoutInput.style.textDecoration == TextDecoration.LineThrough && it.layoutInput.style.color == scheme.onSurfaceVariant
         }
@@ -150,8 +152,8 @@ class CardEquipmentTest {
 
     private fun markAllIngredients() = pilaf.ingredients.forEach { tap(CardTags.ingredient(it.position)) }
 
-    // View: the block "Equipment" above the ingredients, its items in order, compact as View's ingredient lines, no tap
-    // on them. The screen is tall, so that every part is measured whole.
+    // View: the block "Equipment" above the ingredients, its items in order, each a row of the page 48 dp tall
+    // (redesign-1 § 4.2), no tap on one the kitchen does not lack. The screen is tall, so that every part is measured whole.
     @Test
     @Config(qualifiers = "w360dp-h2000dp")
     fun viewListsTheEquipmentCompactlyAboveTheIngredients() {
@@ -162,12 +164,11 @@ class CardEquipmentTest {
         assertEquals(listOf("Skimmer"), compose.textsOf(item(1)))
         assertTrue("the equipment stands above the ingredients", node(EquipmentTags.SURFACE).boundsInRoot.bottom <= node(CardTags.INGREDIENTS).boundsInRoot.top)
         assertTrue("the items in their order", node(item(0)).boundsInRoot.bottom <= node(item(1)).boundsInRoot.top + 0.5f)
-        // As compact as an ingredient line of View, and answering no tap.
+        // A row of the page, lower than the card's target, and answering no tap.
         val density = compose.density.density
         val itemHeight = node(item(0)).boundsInRoot.height / density
-        val ingredientHeight = node(CardTags.ingredient(1)).boundsInRoot.height / density
-        assertEquals(ingredientHeight, itemHeight, 1f)
-        assertTrue("$itemHeight dp is compact", itemHeight < CardTarget.value)
+        assertEquals(VIEW_ROW_HEIGHT.value, itemHeight, 1f)
+        assertTrue("$itemHeight dp is lower than a target", itemHeight < CardTarget.value)
         assertNull(node(item(0)).config.getOrNull(SemanticsActions.OnClick))
     }
 

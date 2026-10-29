@@ -1083,12 +1083,12 @@ private fun RecipeContent(
                 }
             }
             // The equipment stands above the serving count and the ingredients, as the editor lists it before them; an
-            // item naming an entry the kitchen lacks says so (free text never does).
+            // item naming an entry the kitchen lacks says so, one naming an entry it has says that (free text neither).
             val equipment = remember(recipe.equipment, equipmentEntries, language, kitchen) {
                 val reading = if (language == InterfaceLanguage.RUSSIAN) RecipeLanguage.RU else RecipeLanguage.EN
                 recipe.equipment.map { item ->
                     val entry = item.dictionaryEntry
-                    ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), entry?.takeIf(kitchen::lacks))
+                    ShownEquipment(EquipmentNames.shown(item, equipmentEntries, reading), entry?.takeIf(kitchen::lacks), had = entry != null && kitchen.has(entry))
                 }
             }
             EquipmentList(equipment, marks, mode, shownAgain.equipment, onOpenKitchen, onSetUpKitchen)

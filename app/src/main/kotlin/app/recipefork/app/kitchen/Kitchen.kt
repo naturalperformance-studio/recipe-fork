@@ -38,6 +38,16 @@ class Kitchen(val held: Set<Long>, dictionary: List<EquipmentEntryEntity>) {
         return if (entry.parentId == null) itemsOf[entry.id].orEmpty().none { it.id in held } else entry.id !in held
     }
 
+    /**
+     * Whether the kitchen is known to have the entry [entryId]: never while it [isEmpty] or for an entry that does not
+     * count (the reader has said nothing of it), and otherwise when it does not [lack][lacks] it.
+     */
+    fun has(entryId: Long): Boolean {
+        if (isEmpty) return false
+        byId[entryId]?.takeIf(::counts) ?: return false
+        return !lacks(entryId)
+    }
+
     companion object {
         /** The group «Расходники» / "Consumables" of the equipment dictionary; its id is permanent. */
         const val CONSUMABLES: Long = 10700L

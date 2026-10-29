@@ -117,6 +117,8 @@
     <string name="card_equipment_show_action">Показать посуду и технику</string>
     <!-- Под предметом, которого нет на кухне читателя («Моя кухня»). -->
     <string name="card_equipment_not_in_kitchen">Нет на кухне</string>
+    <!-- Что экранный диктор говорит о предмете на «Просмотре» с залитым квадратом: на кухне он есть. -->
+    <string name="card_equipment_in_kitchen">Есть на кухне</string>
     <!-- Что делает касание такого предмета на «Просмотре»: открывает «Мою кухню» на нём. -->
     <string name="card_equipment_open_kitchen_action">Открыть «Мою кухню»</string>
     <string name="card_equipment_set_up_kitchen">Настроить «Мою кухню»</string>
