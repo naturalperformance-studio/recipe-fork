@@ -36,6 +36,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.animation.AnimatedVisibility
@@ -144,7 +145,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -1048,17 +1048,22 @@ private fun RecipeContent(
         ) {
             if (viewing) {
                 Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
-                Column(onHeadingPlaced?.let { placed -> Modifier.onGloballyPositioned { placed(it.boundsInRoot()) } } ?: Modifier) {
-                    // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
-                    Text(
-                        recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
-                    )
-                    // Right under the title, as its subtitle, muted: the counts of ingredients and steps and the timers'
-                    // time together, for deciding.
-                    RecipeSummaryLine(remember(recipe, language) { RecipeSummary.of(recipe, language) })
+                val heading: @Composable (onTitleLaidOut: (TextLayoutResult) -> Unit) -> Unit = { onTitleLaidOut ->
+                    Column(onHeadingPlaced?.let { placed -> Modifier.onGloballyPositioned { placed(it.boundsInRoot()) } } ?: Modifier) {
+                        // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
+                        Text(
+                            recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
+                            style = MaterialTheme.typography.headlineSmall,
+                            onTextLayout = onTitleLaidOut,
+                            modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
+                        )
+                        // Right under the title, as its subtitle, muted: the counts of ingredients and steps and the timers'
+                        // time together, for deciding.
+                        RecipeSummaryLine(remember(recipe, language) { RecipeSummary.of(recipe, language) })
+                    }
                 }
+                // A version's provenance stands above its title, its knee running down from the parent to this recipe.
+                recipe.parent?.let { ProvenanceLine(it, recipe.statedParent, recipes, onOpenParent, heading) } ?: heading {}
                 // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
                 recipe.statedAuthor?.let {
                     Text(
@@ -1067,7 +1072,6 @@ private fun RecipeContent(
                         modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
                     )
                 }
-                recipe.parent?.let { Provenance(it, recipe.statedParent, recipes, onOpenParent) }
                 // The author's description stands with the title block it tells about, before the equipment and the
                 // ingredients, the card's gap from either.
                 if (recipe.description.isNotBlank()) {
@@ -1182,63 +1186,10 @@ private fun KeptPlace(recipe: RecipeId, tab: CardMode, scroll: ScrollState, plac
     }
 }
 
-/** What the provenance area knows of the parent: nothing yet, its title, or that the book does not hold it. */
-private sealed interface ParentContent {
-    data object Loading : ParentContent
-    data object Unavailable : ParentContent
-    data class Held(val title: String) : ParentContent
-}
-
 /**
- * The provenance area: the one direct parent, named by its title (FORK-003 (3), FORK-004 (1), FLOW-065). While the
- * book holds the parent, tapping it opens the parent's card; a parent the book does not hold is said to be
- * unavailable and opens nothing. No descendant is ever listed or counted (FORK-004 (3)).
- *
- * A parent the recipe names in text, [stated] — the one a found recipe's file states, or the found recipe a fork was
- * made from — is named by that title, and by that author marked as not verified (FLOW-065 (4, 5)), held or not.
- *
- * The line is drawn in the scheme's tertiary colour, beet in the redesign: provenance is the one thing in the app
- * that colour marks, held or not.
- */
-@Composable
-private fun Provenance(parent: RecipeId, stated: StatedParent?, recipes: RecipeRepository, onOpenParent: (RecipeId) -> Unit) {
-    val content by remember(parent, recipes) {
-        recipes.observe(parent).map { it?.let { held -> ParentContent.Held(held.title) } ?: ParentContent.Unavailable }
-    }.collectAsState(initial = ParentContent.Loading)
-    val resources = LocalResources.current
-    when (val shown = content) {
-        ParentContent.Loading -> Unit
-        ParentContent.Unavailable -> Text(
-            provenanceText(resources, stated, held = null),
-            color = MaterialTheme.colorScheme.tertiary,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.testTag(CardTags.PROVENANCE),
-        )
-        is ParentContent.Held -> Box(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = CardTarget)
-                .clickable(
-                    onClickLabel = stringResource(R.string.card_parent_open_action),
-                    role = Role.Button,
-                    onClick = { onOpenParent(parent) },
-                )
-                .testTag(CardTags.PROVENANCE),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Text(
-                provenanceText(resources, stated, shown.title),
-                color = MaterialTheme.colorScheme.tertiary,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-    }
-}
-
-/**
- * What the provenance area says in [resources]' language: the parent the book holds by its title [held] — or by the
- * [stated] one's, with its author marked as not verified — or, [held] null, that the book does not hold it. The card's
- * line and a printed recipe's (FLOW-075).
+ * What a printed recipe says of its parent in [resources]' language (FLOW-075): the parent the book holds by its title
+ * [held] — or by the [stated] one's, with its author marked as not verified — or, [held] null, that the book does not
+ * hold it. The card says it in its own line ([ProvenanceLine]).
  */
 internal fun provenanceText(resources: Resources, stated: StatedParent?, held: String?): String {
     val untitled = resources.getString(R.string.common_untitled_recipe)

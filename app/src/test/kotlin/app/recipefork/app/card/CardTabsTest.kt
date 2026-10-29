@@ -407,6 +407,9 @@ class CardTabsTest {
         compose.waitUntil(PATIENCE_MS) { exists(TimerTags.barStatus(19)) }
         choose(CardMode.VIEW)
         compose.waitUntil(PATIENCE_MS) { exists(TimerTags.barStatus(19)) }
+        // Fork stands aside while the title stands where it floats (the provenance line above the title, T-311).
+        compose.scrollUntilForkShows()
+        assertTrue(exists(TimerTags.barStatus(19)))
         assertTrue("fork above the bar", bottom(CardTags.FORK) <= top(TimerTags.BAR) + 0.5f)
     }
 

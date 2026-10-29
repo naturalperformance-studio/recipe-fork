@@ -109,8 +109,9 @@ class ForkAFoundRecipeTest {
 
     private fun stored(id: RecipeId) = runBlocking { recipes.get(id) }
 
-    private fun awaitProvenance(text: String) =
-        compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.PROVENANCE) == listOf(text) }
+    /** The provenance line reads [texts]: its words, then the author the file states where the line names one. */
+    private fun awaitProvenance(vararg texts: String) =
+        compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.PROVENANCE) == texts.toList() }
 
     private fun opens(): Boolean =
         AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()) != null
@@ -143,18 +144,22 @@ class ForkAFoundRecipeTest {
         assertTrue(fork.media.isEmpty())
         assertEquals(parent, stored(id))
 
-        // The fork's card names the found recipe and opens it.
+        // The fork's card names the found recipe, without its author, and opens it; the found recipe's own card names
+        // its author (FLOW-065 (3)).
         compose.onNodeWithTag(EditorTags.BACK).performClick()
         compose.awaitCard()
         compose.onNodeWithTag(CardTags.DESCRIPTION).assertDoesNotExist()
-        val named = "Forked from “Bean soup” (author: anna, stated in the file, not verified)"
-        awaitProvenance(named)
+        awaitProvenance("after “Bean soup”")
         assertTrue(opens())
+        compose.onNodeWithTag(ProvenanceTags.AUTHOR, useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag(CardTags.STATED_AUTHOR).assertDoesNotExist()
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.TITLE) == listOf("Bean soup") }
+        assertEquals(listOf("Author: anna (stated in the file, not verified)"), compose.textsOf(CardTags.STATED_AUTHOR))
         assertEquals(id.value, session.viewing.value)
 
-        // The found recipe is removed from the book: the fork names it by its title as unavailable, and opens nothing.
+        // The found recipe is removed from the book: the fork names it by its title as unavailable, with the author the
+        // file states under it, marked as not verified, and opens nothing.
         compose.runOnIdle {
             session.closeCard()
             session.choose(LibraryView.MARKED)
@@ -164,7 +169,7 @@ class ForkAFoundRecipeTest {
         compose.waitUntil(PATIENCE_MS) { stored(id) == null }
         compose.runOnIdle { session.openCard(forkId.value, LibraryView.OWN) }
         compose.awaitCard()
-        awaitProvenance("Forked from “Bean soup” (author: anna, stated in the file, not verified), which is not in this recipe book")
+        awaitProvenance("after “Bean soup”, which is not in this book", "anna · author from the file, not verified")
         assertNull(AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()))
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         compose.waitForIdle()
@@ -180,7 +185,8 @@ class ForkAFoundRecipeTest {
         session.openCard(forkId.value, LibraryView.OWN)
         show()
         compose.awaitCard()
-        awaitProvenance("Forked from “Bean soup”, which is not in this recipe book")
+        awaitProvenance("after “Bean soup”, which is not in this book")
+        compose.onNodeWithTag(ProvenanceTags.AUTHOR, useUnmergedTree = true).assertDoesNotExist()
     }
 
     // FLOW-065 (5): a found recipe's file names a parent the book does not hold — named by the file's title and
@@ -191,7 +197,7 @@ class ForkAFoundRecipeTest {
         session.openCard(id.value, LibraryView.MARKED)
         show()
         compose.awaitCard()
-        awaitProvenance("Forked from “Soup” (author: boris, stated in the file, not verified), which is not in this recipe book")
+        awaitProvenance("after “Soup”, which is not in this book", "boris · author from the file, not verified")
         assertNull(AccessibilityChecks.clickActionLabel(compose.onNodeWithTag(CardTags.PROVENANCE).fetchSemanticsNode()))
     }
 
@@ -204,7 +210,7 @@ class ForkAFoundRecipeTest {
         session.openCard(id.value, LibraryView.MARKED)
         show()
         compose.awaitCard()
-        awaitProvenance("Forked from “My soup” (author: boris, stated in the file, not verified)")
+        awaitProvenance("after “My soup”")
         assertTrue(opens())
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.TITLE) == listOf("My soup, renamed since") }
@@ -218,7 +224,7 @@ class ForkAFoundRecipeTest {
         session.openCard(id.value, LibraryView.MARKED)
         show()
         compose.awaitCard()
-        awaitProvenance("Forked from a recipe that is not in this recipe book")
+        awaitProvenance("after a recipe not in this book")
     }
 
     // L10N-001: the stated parent reads in Russian, held and not held.
@@ -230,11 +236,11 @@ class ForkAFoundRecipeTest {
         session.openCard(id.value, LibraryView.MARKED)
         show()
         compose.awaitCard()
-        awaitProvenance("Основано на рецепте «Soup» (автор: boris, указан в файле, не проверен), которого нет в этой книге рецептов")
+        awaitProvenance("по рецепту «Soup», которого нет в книге", "boris · автор из файла, не проверен")
         compose.runOnIdle { session.openCard(forkId.value, LibraryView.OWN) }
         compose.awaitCard()
-        awaitProvenance("Основано на рецепте «Bean soup» (автор: anna, указан в файле, не проверен)")
+        awaitProvenance("по рецепту «Bean soup»")
         assertTrue(runBlocking { importer.remove(id) })
-        awaitProvenance("Основано на рецепте «Bean soup» (автор: anna, указан в файле, не проверен), которого нет в этой книге рецептов")
+        awaitProvenance("по рецепту «Bean soup», которого нет в книге", "anna · автор из файла, не проверен")
     }
 }
