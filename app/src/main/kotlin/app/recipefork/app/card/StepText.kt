@@ -18,6 +18,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import app.recipefork.app.R
 import app.recipefork.app.dictionary.IngredientEntryEntity
 import app.recipefork.core.recipe.Ingredient
@@ -167,7 +168,8 @@ internal object StepTags {
  * A step's text on the card, each reference read as [references] gives it, followed by the list's arrow where rounding
  * moved it (FLOW-032 (3), SCALE-004). The screen reader reads it as one sentence, an arrow as the words it stands for.
  * A step marked [done] is struck through and muted (FLOW-068). It is set in the [mode]'s style ([stepTextStyle]), or in
- * [style] where one is given — the editor's rows read a step in its body text — and tagged [tag]. Drawn in at most
+ * [style] where one is given; on [CardMode.VIEW], in the mode's style, each reference is set in the working face
+ * ([viewReferenceStyle]) — the editor's rows read a step in its body text — and tagged [tag]. Drawn in at most
  * [maxLines], the last ellipsized where it runs on — a step folded on Cooking shows its first line — though the screen
  * reader reads it whole.
  */
@@ -192,9 +194,11 @@ internal fun StepText(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontSize = MaterialTheme.typography.labelMedium.fontSize,
     )
+    // On View a reference is set in the working face, as the list's quantities are; elsewhere it reads as the text does.
+    val referenceStyle = if (mode == CardMode.VIEW && style == null) viewReferenceStyle() else null
     val shown = buildAnnotatedString {
         runs.forEachIndexed { index, run ->
-            append(run.text)
+            if (referenceStyle != null && run is StepRun.Reference) withStyle(referenceStyle) { append(run.text) } else append(run.text)
             val arrow = marks[index]?.first
             if (arrow != null) withStyle(arrowStyle) { append(ARROW_GAP + arrow) }
         }
@@ -242,16 +246,34 @@ internal fun shownStepText(step: Step, references: CardReferences): String {
 }
 
 /**
- * How a step reads on the card: larger than the ingredient list and than body text anywhere else in the product, so
- * it can be read at arm's length (A11Y-007). On [CardMode.VIEW] the theme's large title style, a size up from body
- * text; on [CardMode.COOKING], read from further away with busy hands, the theme's small headline, a size up again. It
- * follows the font scale like any text (A11Y-004).
+ * How a step reads on the card. On [CardMode.VIEW], a page of a cookbook, the theme's large body style — 16 sp of the
+ * reading face, a line and a half apart — beside its number in the margin; on [CardMode.COOKING], read from further away
+ * with busy hands, the theme's small headline, larger than the ingredient list and than body text anywhere else in the
+ * product (A11Y-007). It follows the font scale like any text (A11Y-004).
  */
 @Composable
 internal fun stepTextStyle(mode: CardMode): TextStyle = when (mode) {
-    CardMode.VIEW -> MaterialTheme.typography.titleLarge
+    CardMode.VIEW -> MaterialTheme.typography.bodyLarge
     CardMode.COOKING -> MaterialTheme.typography.headlineSmall
 }
+
+/**
+ * A reference in a step's text on [CardMode.VIEW]: in the working face of what is counted — the theme's label face,
+ * Medium with tabular figures — at [VIEW_REFERENCE_SIZE], a little under the reading text, so that its height matches.
+ */
+@Composable
+internal fun viewReferenceStyle(): SpanStyle {
+    val label = MaterialTheme.typography.labelLarge
+    return SpanStyle(
+        fontFamily = label.fontFamily,
+        fontWeight = label.fontWeight,
+        fontFeatureSettings = label.fontFeatureSettings,
+        fontSize = VIEW_REFERENCE_SIZE,
+    )
+}
+
+/** The size of a reference in a step's text on [CardMode.VIEW]. */
+internal val VIEW_REFERENCE_SIZE = 14.5.sp
 
 /** A narrow space that never breaks, so the arrow stays on its quantity's line. */
 private const val ARROW_GAP = "\u202F"
