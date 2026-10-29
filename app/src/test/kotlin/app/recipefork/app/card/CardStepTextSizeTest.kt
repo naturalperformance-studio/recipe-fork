@@ -53,10 +53,11 @@ import org.robolectric.annotation.GraphicsMode
 import java.time.Instant
 
 /**
- * A11Y-007, A11Y-004: a step's text on the card is set larger than the ingredient list, the rest of the card and body
- * text anywhere in the product; on a 360 dp-wide phone at font scale 2.0 it still wraps whole, inside the card, and a
- * reference in it keeps its small rounding arrow on screen and its words for the screen reader. On Cooking it is set a
- * size larger again than on View, and still fits whole at twice the font scale on a 320 dp-wide phone.
+ * A11Y-007, A11Y-004: on Cooking a step's text is set larger than the ingredient list, the rest of the card and body
+ * text anywhere in the product; on View it reads as a page of a cookbook, in the theme's large body style (T-314). On a
+ * 360 dp-wide phone at font scale 2.0 it still wraps whole, inside the card, and a reference in it keeps its small
+ * rounding arrow on screen and its words for the screen reader. On Cooking it is set larger than on View, and still
+ * fits whole at twice the font scale on a 320 dp-wide phone.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -132,17 +133,19 @@ class CardStepTextSizeTest {
             .mapNotNull { layoutOf(it)?.layoutInput?.style?.fontSize }
 
     @Test
-    fun aStepReadsLargerThanTheListAndTheRestOfTheCard() {
+    fun onCookingAStepReadsLargerThanTheListAndTheRestOfTheCard() {
         open(scale = 1f)
-        val step = stepLayout().layoutInput.style.fontSize
-        // A size up from the 18 sp it was set at: the theme's title style, not a size of its own.
-        assertEquals(theme!!.titleLarge.fontSize, step)
-        assertTrue("the step is set at $step", step.value > 18f)
+        // The rest of the card as View shows it, where all of it stands.
         val others = mapOf(
             "the ingredient list" to sizesWithin(CardTags.INGREDIENTS),
             "the serving count" to sizesWithin(CardTags.SERVINGS),
             "the description" to sizesWithin(CardTags.DESCRIPTION),
         )
+        compose.chooseCardTab(CardMode.COOKING)
+        val step = stepLayout().layoutInput.style.fontSize
+        // The theme's small headline, not a size of its own.
+        assertEquals(theme!!.headlineSmall.fontSize, step)
+        assertTrue("the step is set at $step", step.value > 18f)
         others.forEach { (part, sizes) ->
             assertTrue("$part shows text", sizes.isNotEmpty())
             sizes.forEach { assertTrue("$part at $it is smaller than the step at $step", it.value < step.value) }
@@ -172,7 +175,7 @@ class CardStepTextSizeTest {
 
         val layout = stepLayout()
         val text = layout.layoutInput.text
-        assertEquals(theme!!.titleLarge.fontSize, layout.layoutInput.style.fontSize)
+        assertEquals(theme!!.bodyLarge.fontSize, layout.layoutInput.style.fontSize)
         assertTrue("it wraps over several lines", layout.lineCount > 1)
         assertFalse("nothing of it is cut off", layout.hasVisualOverflow)
         assertEquals(text.length, layout.getLineEnd(layout.lineCount - 1))
@@ -190,7 +193,7 @@ class CardStepTextSizeTest {
         assertTrue("the rounded reference carries its arrow: ${text.text}", arrow >= 0 && text.text.contains("4\u00A0pc"))
         val span = text.spanStyles.singleOrNull { arrow in it.start until it.end }
         assertNotNull("the arrow is styled apart", span)
-        assertTrue("the arrow is smaller than the step", span!!.item.fontSize.value < theme!!.titleLarge.fontSize.value)
+        assertTrue("the arrow is smaller than the step", span!!.item.fontSize.value < theme!!.bodyLarge.fontSize.value)
         val spoken = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsProperties.Text].joinToString("") { it.text }
         assertTrue("read with its words: $spoken", spoken.contains(context.getString(R.string.card_quantity_rounded_up)))
@@ -203,7 +206,7 @@ class CardStepTextSizeTest {
     fun onCookingAStepReadsLargerThanOnView() {
         open(scale = 1f)
         val view = stepLayout().layoutInput.style.fontSize
-        assertEquals(theme!!.titleLarge.fontSize, view)
+        assertEquals(theme!!.bodyLarge.fontSize, view)
         compose.chooseCardTab(CardMode.COOKING)
         val cooking = stepLayout().layoutInput.style
         assertEquals(theme!!.headlineSmall.fontSize, cooking.fontSize)
