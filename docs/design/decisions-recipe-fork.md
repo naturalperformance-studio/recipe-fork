@@ -336,3 +336,38 @@ line; decision 3 — a third value set (per 100 g) and its spoken phrase; decisi
 - Open: the switch where a label cannot fit whole (320 dp default state, 200 %) — fork to the lead.
   Closed 2026-10-22 (F-2): the label breaks inside the word as Compose does; equal segments and
   the check icon stay; no behaviour change beyond decision 2.
+
+## 2026-10-29 — Equipment rows on the card's View tab, T-317 (decided by the owner via /team-lead (F-1))
+
+Fork: `docs/increments/v0.43.md`, Forks, F-1. There is no proposal file; the options were put to
+the owner directly. The option as put to the owner: «Квадрат только там, где приложение знает
+ответ: заполненный — есть, пустой — «Нет на кухне». Остальные строки показывают одно название с
+отступом под квадрат. Честно, не нужен новый значок.» The owner's answer, verbatim: «Без
+квадрата». Decided design behind the rows: `docs/brand/identity/redesign-1-recipe-fork.html`
+§ 4.2 «Карточка рецепта из файла, тёмная тема».
+
+1. **On View, an equipment item gets a square only where the app knows whether the kitchen has it: filled for what the kitchen has, empty with «Нет на кухне» for what it lacks; an item the app cannot tell about gets no square.**
+   - Unknown items: free-text items, consumables (parchment and the like), and every item while
+     My kitchen has nothing ticked. Such a row shows its name alone; the name keeps the square's
+     indent (14 dp square place + 12 dp gap), so all names in the list start on one line. It
+     carries no kitchen state for the screen reader (neither «Есть на кухне» nor «Нет на кухне»).
+   - Square: 14 dp, corners 2 dp, onSurfaceVariant; filled for an item the kitchen has, a 1.5 dp
+     outline for one it lacks. Decorative: the row's words carry the state. An item the kitchen
+     has is read with the state «Есть на кухне» / "In your kitchen".
+   - A lacking item: «Нет на кухне» / "Not in your kitchen" at the row's end, labelLarge (Golos
+     Medium), onSurfaceVariant; with a chevron when the row opens My kitchen. That row is one
+     button, at least 56 dp tall, action «Открыть «Мою кухню»» / "Open My kitchen". At large text
+     the words go under the name.
+   - Rows that do nothing are at least 48 dp tall. A dotted 1 dp outlineVariant rule runs under
+     every row.
+   - With My kitchen empty, the list keeps the «Настроить «Мою кухню»» / "Set up My kitchen" prompt
+     as built.
+   - Cooking's equipment is unchanged: words in Literata bodyMedium, as before the redesign.
+   *Why:* the owner's choice. The case put to the owner: a square only where the app knows the
+   answer is honest and needs no new icon. As built before this decision, an unknown item got a
+   filled square and was read «Есть на кухне», which is untrue (principle: show only what the app can know).
+   *Rejected:* a neutral third mark drawn by the designer; the build as it was (a filled square
+   and «Есть на кухне» for an unknown item).
+
+**Behaviour changes against the current build (for /team-lead):** an unknown item loses its
+square and its «Есть на кухне» state on View (built in T-317, 10216dc9); nothing else.
