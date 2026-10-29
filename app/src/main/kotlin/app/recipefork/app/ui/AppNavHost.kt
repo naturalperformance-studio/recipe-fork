@@ -156,8 +156,12 @@ fun AppNavHost(
         modifier = modifier,
         enterTransition = { slideInHorizontally(tween(MOTION_MS)) { it } },
         exitTransition = { slideOutHorizontally(tween(MOTION_MS)) { -it / BENEATH_SHIFT } },
-        popEnterTransition = { slideInHorizontally(tween(MOTION_MS)) { -it / BENEATH_SHIFT } },
-        popExitTransition = { slideOutHorizontally(tween(MOTION_MS)) { it } },
+        popEnterTransition = { beneathReturns() },
+        popExitTransition = { aboveLeaves() },
+        // The back gesture moves the same slide as a back tapped, following the finger: the host's own default for a
+        // gesture shrinks the screen above and fades the one beneath in.
+        predictivePopEnterTransition = { beneathReturns() },
+        predictivePopExitTransition = { aboveLeaves() },
     ) {
         composable(Destinations.LIBRARY_ROUTE) {
             LibraryScreen(
@@ -440,6 +444,12 @@ private const val MOTION_MS = 300
 
 /** The destination beneath moves by this fraction of the width while the one above slides over it. */
 private const val BENEATH_SHIFT = 4
+
+/** Back: the destination beneath slides back into place from where it was pushed aside. */
+private fun beneathReturns() = slideInHorizontally(tween(MOTION_MS)) { -it / BENEATH_SHIFT }
+
+/** Back: the destination above slides out to the right. */
+private fun aboveLeaves() = slideOutHorizontally(tween(MOTION_MS)) { it }
 
 /** The theme the reader chose, from the composition root: the one [MainActivity][app.recipefork.app.MainActivity] shows. */
 @Composable
