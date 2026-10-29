@@ -6,8 +6,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
@@ -53,10 +52,10 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -545,7 +544,6 @@ fun CardScreen(
         val barShown = timersBar?.shown?.isNotEmpty() == true
         val density = LocalDensity.current
         val bottom = if (barShown) 0.dp else (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
-        val direction = LocalLayoutDirection.current
         Box(
             Modifier
                 .fillMaxSize()
@@ -554,12 +552,10 @@ fun CardScreen(
                 .onGloballyPositioned { area ->
                     forkFloor = area.boundsInRoot().bottom - with(density) { (padding.calculateBottomPadding() + FAB_SPACING).toPx() }
                 }
-                .padding(
-                    top = padding.calculateTopPadding(),
-                    start = padding.calculateStartPadding(direction),
-                    end = padding.calculateEndPadding(direction),
-                    bottom = if (barShown) maxOf(keyboard, padding.calculateBottomPadding()) else keyboard,
-                )
+                // Under the bar and its tabs as they are measured in this frame: the tabs come with the recipe, and the
+                // recipe stands under them from its first frame, not under the bar alone for one frame and then moved down.
+                .padding(remember(padding) { TopAndSides(padding) })
+                .padding(bottom = if (barShown) maxOf(keyboard, padding.calculateBottomPadding()) else keyboard)
                 .consumeWindowInsets(padding),
         ) {
             when {
@@ -795,6 +791,18 @@ private fun Loading() {
             centred = true,
         )
     }
+}
+
+/**
+ * The top and the sides of the scaffold's [padding], read as the card's content is measured rather than as it is
+ * composed: the scaffold learns the height of the bar and its tabs while it measures them, after the content was composed,
+ * so a padding read in composition stays the bar's alone for the frame in which the tabs come.
+ */
+private class TopAndSides(private val padding: PaddingValues) : PaddingValues {
+    override fun calculateTopPadding(): Dp = padding.calculateTopPadding()
+    override fun calculateBottomPadding(): Dp = 0.dp
+    override fun calculateLeftPadding(layoutDirection: LayoutDirection): Dp = padding.calculateLeftPadding(layoutDirection)
+    override fun calculateRightPadding(layoutDirection: LayoutDirection): Dp = padding.calculateRightPadding(layoutDirection)
 }
 
 /** How long a read may take before the card says it is still reading. */
