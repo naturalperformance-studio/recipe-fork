@@ -35,12 +35,13 @@ import app.recipefork.core.recipe.Step
 
 /**
  * One step on [CardMode.VIEW], as a page of a cookbook sets it: its number large in the [margin], in the reading face,
- * muted ([MarginNumber]); beside it the step's text in body size ([stepTextStyle]), its references in the working face,
- * and the author's note under the text ([StepNote]) — read by the screen reader as one line that says the number once,
- * the note after the text. Under the text, in its column, the step's photograph or clip, named by its number, then its
- * timers as duration labels ([ViewTimer]) side by side, wrapping to the next line where they do not fit. A dotted rule
- * in the theme's outline-variant colour parts it from the next step, none after the [last]; the [first] stands a little
- * further under the section's heading.
+ * muted ([MarginNumber]); beside it the step's text in body size ([stepTextStyle]), its references in the working face —
+ * read by the screen reader as one line that says the number once. Under the text, in its column, the step's photograph
+ * or clip, named by its number, then its timers as duration labels ([ViewTimer]) side by side, wrapping to the next line
+ * where they do not fit; then the reader's [ownNote], pencilled in the margin ([MarginNote]) and read after the labels.
+ * A found recipe's note, its author's, stands as it does on Cooking instead: muted under the text ([StepNote]), read
+ * with the step's line after its text. A dotted rule in the theme's outline-variant colour parts it from the next step,
+ * none after the [last]; the [first] stands a little further under the section's heading.
  *
  * Nothing on it answers a tap but its media's own controls: a mark is shown, read-only — the text struck through and
  * muted when [done] — its state read while the recipe has any mark ([stated]).
@@ -58,6 +59,7 @@ internal fun StepBlock(
     stated: Boolean = false,
     first: Boolean = true,
     last: Boolean = true,
+    ownNote: Boolean = true,
 ) {
     val rule = if (last) Modifier else Modifier.dottedRule()
     Column(
@@ -73,7 +75,7 @@ internal fun StepBlock(
             MarginNumber(number, step.position, margin)
             Column(Modifier.weight(1f)) {
                 StepText(step, references, done = done, mode = CardMode.VIEW)
-                step.note?.let { StepNote(it, step.position, CardMode.VIEW) }
+                if (!ownNote) step.note?.let { StepNote(it, step.position, CardMode.VIEW) }
             }
         }
         val indent = margin + VIEW_MARGIN_GAP
@@ -91,6 +93,7 @@ internal fun StepBlock(
                 step.timers.indices.forEach { index -> ViewTimer(step, index, timers, references::quantity) }
             }
         }
+        if (ownNote) step.note?.let { MarginNote(it, step.position, Modifier.padding(start = indent, top = VIEW_LABEL_GAP)) }
     }
 }
 
@@ -180,7 +183,7 @@ internal val VIEW_FIRST_STEP_ABOVE = 16.dp
 /** The space below a step, above its rule. */
 internal val VIEW_STEP_BELOW = 12.dp
 
-/** The gap above a step's media and its duration labels, and between two lines of labels. */
+/** The gap above a step's media, its duration labels and its margin note, and between two lines of labels. */
 internal val VIEW_LABEL_GAP = 8.dp
 
 /** The gap between two duration labels side by side. */

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuilds the four bundled fonts in app/src/main/res/font/ and their licences in
+# Rebuilds the five bundled fonts in app/src/main/res/font/ and their licences in
 # app/src/main/assets/licenses/ from the official SIL OFL 1.1 sources (the redesign's type roles,
 # docs/brand/identity/port-1-rodoslovnaya.html, «Шрифты и Typography»). The app never downloads a font.
 #
@@ -7,15 +7,17 @@
 #
 # Sources, pinned: google/fonts at commit $GOOGLE_FONTS_COMMIT —
 #   ofl/literata/Literata[opsz,wght].ttf   (variable; upstream googlefonts/literata)
+#   ofl/literata/Literata-Italic[opsz,wght].ttf (variable; the same family's italic)
 #   ofl/golostext/GolosText[wght].ttf      (variable; upstream googlefonts/golos-text)
 #   ofl/literata/OFL.txt, ofl/golostext/OFL.txt
 # Each download is checked against its SHA-256 below, so a moved file fails loudly.
 #
 # Steps: fontTools.varLib.instancer pins each variable font to a static instance (Literata at
-# opsz=18 and wght=400/500, Golos Text at wght=400/500); fontTools.subset then keeps Basic Latin to
-# Latin Extended-B (U+0000–024F), Cyrillic (U+0400–04FF) and the signs recipes and the interface use
-# (general punctuation, fractions, arrows, ≈, −, №, ×, ₽, €), the OpenType layout features (tnum among
-# them), all name records, and no hinting (Android does not run TrueType hinting at phone densities).
+# opsz=18 and wght=400/500, Literata Italic at opsz=18 and wght=400 for margin notes, Golos Text at
+# wght=400/500); fontTools.subset then keeps Basic Latin to Latin Extended-B (U+0000–024F), Cyrillic
+# (U+0400–04FF) and the signs recipes and the interface use (general punctuation, fractions, arrows, ≈,
+# −, №, ×, ₽, €), the OpenType layout features (tnum among them), all name records, and no hinting
+# (Android does not run TrueType hinting at phone densities).
 #
 # Needs curl, sha256sum and fontTools $FONTTOOLS_VERSION: run through uv when it is installed, else
 # the python3 on PATH must import fontTools. Works in a temporary directory outside the repository.
@@ -51,6 +53,7 @@ fetch() { # <path under ofl/> <sha256> <local name>
 }
 
 fetch 'literata/Literata%5Bopsz,wght%5D.ttf' b41138c9373112f32abb589cc22e8674b06ed4048b0c513be922bdd26f274440 literata.ttf
+fetch 'literata/Literata-Italic%5Bopsz,wght%5D.ttf' d483dfaeba9cbf4ce71d32a52ee65df82f7e35b15fff8d1011cdb242d1fcd465 literata-italic.ttf
 fetch 'golostext/GolosText%5Bwght%5D.ttf' 17bb58fb69aec2dfb047a2ebf52534023e9b688c97a6b7ac795b0a72912c2063 golos.ttf
 fetch literata/OFL.txt 8742963604cd89dc81437811a850018fc03b2bfad686d7422c8235967c87614e literata-OFL.txt
 fetch golostext/OFL.txt ff532f9e8789f09a9fdffc3c0954eedfb0a48be77b2e2eb90f5f82e4f347f50c golos-OFL.txt
@@ -67,6 +70,7 @@ build() { # <variable font> <axis=value…> <resource name>
 mkdir -p "$fonts" "$licenses"
 build literata.ttf opsz=18 wght=400 literata_regular
 build literata.ttf opsz=18 wght=500 literata_medium
+build literata-italic.ttf opsz=18 wght=400 literata_italic
 build golos.ttf wght=400 golos_text_regular
 build golos.ttf wght=500 golos_text_medium
 cp "$work/literata-OFL.txt" "$licenses/Literata-OFL.txt"

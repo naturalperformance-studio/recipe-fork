@@ -56,6 +56,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.recipefork.app.R
+import app.recipefork.app.library.HyphenFitText
+import app.recipefork.app.ui.appColors
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.LayoutDirection
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.PhotoImage
 import app.recipefork.app.media.PhotoStore
@@ -120,7 +130,9 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * All of the above is the [CardMode.COOKING] presentation. In [CardMode.VIEW] the steps read as a page of a cookbook
  * ([StepBlock]): each number large in a margin of its own, the text beside it in body size, its references in the
  * working face, each timer a duration label ([ViewTimer]) with nothing that starts it; its done mark is shown but a tap
- * leaves it as it is, and no step is current.
+ * leaves it as it is, and no step is current. There a step's note, when the notes are the reader's [ownNotes] — the
+ * recipe is the book's own, not a found one — is pencilled in the margin after the duration labels ([MarginNote]); a
+ * found recipe's notes, its author's, keep the muted look under the text ([StepNote]), as on Cooking.
  */
 @Composable
 internal fun StepsList(
@@ -134,6 +146,7 @@ internal fun StepsList(
     readerScrolling: () -> Boolean = { false },
     coveredBelow: Dp = 0.dp,
     readerInteractions: InteractionSource? = null,
+    ownNotes: Boolean = true,
 ) {
     // A step that is only a reference reads as one, one that is only its author's note reads as that, and one that is
     // only a photograph or a clip shows it — or says it is unavailable (FLOW-061); one holding nothing that reads or
@@ -242,6 +255,7 @@ internal fun StepsList(
                     stated = marks?.any == true,
                     first = index == 0,
                     last = index == shown.lastIndex,
+                    ownNote = ownNotes,
                 )
                 return@forEachIndexed
             }
@@ -441,12 +455,18 @@ internal object StepRowTags {
     fun number(position: Int) = "card-step-$position-number"
     fun entry(position: Int) = "card-step-$position-entry"
     fun note(position: Int) = "card-step-$position-note"
+
+    /** The reader's margin note of the step at [position] on View, its rule, mark and words ([MarginNote]). */
+    fun margin(position: Int) = "card-step-$position-margin-note"
+
+    /** The pencil mark of that margin note. */
+    fun mark(position: Int) = "card-step-$position-margin-mark"
 }
 
 /**
  * The author's note on a step, under its text: muted, in the theme's on-surface-variant colour — on the current step's
  * container too — and a size of the type scale smaller than the step's text ([stepNoteStyle]). Its own composable, shared
- * by [StepRow] and [StepBlock], so that the note's look is drawn in one place.
+ * by [StepRow] and [StepBlock] — there for a found recipe's notes — so that the note's look is drawn in one place.
  */
 @Composable
 internal fun StepNote(note: String, position: Int, mode: CardMode) {
@@ -467,6 +487,70 @@ internal fun stepNoteStyle(mode: CardMode) = when (mode) {
 
 /** The gap between a step's text and its note. */
 internal val STEP_NOTE_GAP = 4.dp
+
+/**
+ * The reader's own note on a step on [CardMode.VIEW], pencilled in the margin (the redesign's pencil note): in
+ * [marginNoteStyle], the reading face's real italic, after a pencil mark [MARGIN_NOTE_MARK] across, standing level with
+ * its first line, and a dashed rule [MARGIN_NOTE_RULE] wide down its start edge — all in the theme's graphite
+ * ([app.recipefork.app.ui.AppColors.graphite]), which nothing else is drawn in. It wraps between words, and after the
+ * hyphen of a hyphenated word; only a word wider than its room is hyphenated across lines ([HyphenFitText]). The mark
+ * is decorative: the screen reader reads the note's words.
+ */
+@Composable
+internal fun MarginNote(note: String, position: Int, modifier: Modifier = Modifier) {
+    val graphite = MaterialTheme.appColors.graphite
+    val style = marginNoteStyle()
+    // The mark stands level with the note's first line, as the line grows with the font scale.
+    val markTop = with(LocalDensity.current) { ((style.lineHeight.toDp() - MARGIN_NOTE_MARK) / 2).coerceAtLeast(0.dp) }
+    Row(
+        modifier.fillMaxWidth().testTag(StepRowTags.margin(position)).dashedRule(graphite)
+            .padding(start = MARGIN_NOTE_INSET, top = MARGIN_NOTE_PADDING, bottom = MARGIN_NOTE_PADDING),
+        horizontalArrangement = Arrangement.spacedBy(MARGIN_NOTE_MARK_GAP),
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_margin_note),
+            contentDescription = null,
+            tint = graphite,
+            modifier = Modifier.padding(top = markTop).size(MARGIN_NOTE_MARK).testTag(StepRowTags.mark(position)),
+        )
+        HyphenFitText(note, style, Modifier.weight(1f).testTag(StepRowTags.note(position)), color = graphite)
+    }
+}
+
+/** How the reader's margin note reads: the reading face's real italic at 14.5 sp, its line 1.4 times its size. */
+@Composable
+internal fun marginNoteStyle(): TextStyle = MaterialTheme.typography.bodyMedium.copy(
+    fontSize = MARGIN_NOTE_SIZE,
+    lineHeight = MARGIN_NOTE_LINE,
+    fontStyle = FontStyle.Italic,
+)
+
+/** The dashed rule down the start edge of a margin note, in [color]. */
+private fun Modifier.dashedRule(color: Color): Modifier = drawBehind {
+    val width = MARGIN_NOTE_RULE.toPx()
+    val x = if (layoutDirection == LayoutDirection.Rtl) size.width - width / 2f else width / 2f
+    drawLine(
+        color, Offset(x, 0f), Offset(x, size.height), strokeWidth = width,
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(MARGIN_NOTE_DASH.toPx(), MARGIN_NOTE_DASH_GAP.toPx())),
+    )
+}
+
+/** The size of a margin note's words, and their line height. */
+internal val MARGIN_NOTE_SIZE = 14.5.sp
+internal val MARGIN_NOTE_LINE = 20.3.sp
+
+/** The width of the dashed rule down a margin note, and the length of a dash of it and of the gap after it. */
+internal val MARGIN_NOTE_RULE = 1.5.dp
+internal val MARGIN_NOTE_DASH = 4.5.dp
+internal val MARGIN_NOTE_DASH_GAP = 3.dp
+
+/** The size of the pencil mark before a margin note's words, and the gap between them. */
+internal val MARGIN_NOTE_MARK = 16.dp
+internal val MARGIN_NOTE_MARK_GAP = 7.dp
+
+/** How far a margin note's mark stands from its rule, and the room above and below its words, inside the rule. */
+internal val MARGIN_NOTE_INSET = 10.dp
+internal val MARGIN_NOTE_PADDING = 2.dp
 
 /** The space between one step and the next, beyond the section's own. */
 internal val StepSpacing = 16.dp
