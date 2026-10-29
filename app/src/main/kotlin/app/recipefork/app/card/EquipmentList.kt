@@ -30,6 +30,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -41,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.timer.BesideOrUnder
 import app.recipefork.app.ui.Motion
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * The equipment the recipe needs, above its ingredients and on the same tonal surface, under its heading "Equipment",
@@ -167,7 +171,7 @@ private fun EquipmentLine(
 /**
  * One item of equipment on View, as a row of the page (redesign-1 § 4.2): a [KitchenSquare] — filled while the kitchen
  * [has][InKitchen.HAS] the item, empty while it [lacks][InKitchen.LACKS] it, none but its place while the app cannot
- * tell ([InKitchen.UNKNOWN]; the owner, 2026-10-29) — then the name in the reading face, wrapping, never cut, and for a
+ * tell ([InKitchen.UNKNOWN]; the owner, 2026-10-29) — then the name in the reading face, wrapping, never cut, the square level with its first line (F-2), and for a
  * lacking item "Not in your kitchen" at the row's end, beside the name where both fit, else under it. Shape and words,
  * never colour alone: the screen reader reads the line as its name and, for an item the kitchen has, "In your kitchen"
  * as its state; a lacking item's words are read with the line; of an item it cannot tell, nothing of the kitchen. While the recipe has any mark ([stated]) the
@@ -192,7 +196,9 @@ private fun ViewEquipmentLine(
     val marked = if (stated) stringResource(if (done) R.string.card_marked_done else R.string.card_marked_not_done) else null
     val state = listOfNotNull(had, marked).joinToString(STATE_SEPARATOR)
     val opens = onOpenKitchen?.let { Modifier.clickable(onClickLabel = opening, role = Role.Button, onClick = it) } ?: Modifier
-    Row(
+    // The square and the name stand centred in the row together; within them the square stands level with the name's
+    // first line, centred on its height, however many lines the name wraps to (the owner, F-2, 2026-10-29).
+    Box(
         cardPlace(CardPlaces.equipment(index))
             .fillMaxWidth()
             .dottedRule()
@@ -201,20 +207,47 @@ private fun ViewEquipmentLine(
             .heightIn(min = if (onOpenKitchen != null) CardTarget else VIEW_ROW_HEIGHT)
             .padding(vertical = VIEW_LINE_PADDING)
             .testTag(CardTags.equipment(index)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(SQUARE_GAP),
+        contentAlignment = Alignment.CenterStart,
     ) {
-        if (inKitchen == InKitchen.UNKNOWN) {
-            Spacer(Modifier.width(SQUARE_SIZE))
-        } else {
-            KitchenSquare(had = inKitchen == InKitchen.HAS, Modifier.testTag(EquipmentTags.square(index)))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(SQUARE_GAP)) {
+            if (inKitchen == InKitchen.UNKNOWN) {
+                Spacer(Modifier.width(SQUARE_SIZE))
+            } else {
+                KitchenSquare(
+                    had = inKitchen == InKitchen.HAS,
+                    Modifier.alignBy { it.measuredHeight / 2 }.testTag(EquipmentTags.square(index)),
+                )
+            }
+            BesideOrUnder(
+                Modifier.weight(1f).alignBy(FirstLineMiddle),
+                main = { FirstLineMarked(item, MaterialTheme.typography.bodyLarge.done(done)) },
+                trailing = if (lacking) ({ NotInKitchen(index, MaterialTheme.typography.labelLarge, chevron = onOpenKitchen != null) }) else null,
+            )
         }
-        BesideOrUnder(
-            Modifier.weight(1f),
-            main = { Text(item, style = MaterialTheme.typography.bodyLarge.done(done)) },
-            trailing = if (lacking) ({ NotInKitchen(index, MaterialTheme.typography.labelLarge, chevron = onOpenKitchen != null) }) else null,
-        )
     }
+}
+
+/** The middle of a text's first line, from its top: what a row's square stands level with. */
+private val FirstLineMiddle = HorizontalAlignmentLine(::min)
+
+/**
+ * [text] in [style], wrapping, never cut, giving its parents the middle of its first line as [FirstLineMiddle]. The
+ * text's layout is told during its measure, so the line is known by the time the text is placed.
+ */
+@Composable
+private fun FirstLineMarked(text: String, style: TextStyle) {
+    val middle = remember { IntArray(1) }
+    Text(
+        text,
+        style = style,
+        onTextLayout = { laid ->
+            middle[0] = if (laid.lineCount > 0) ((laid.getLineTop(0) + laid.getLineBottom(0)) / 2).roundToInt() else laid.size.height / 2
+        },
+        modifier = Modifier.layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            layout(placeable.width, placeable.height, mapOf(FirstLineMiddle to middle[0])) { placeable.place(0, 0) }
+        },
+    )
 }
 
 /**

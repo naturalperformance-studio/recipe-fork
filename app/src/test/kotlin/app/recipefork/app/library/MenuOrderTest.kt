@@ -67,7 +67,8 @@ import java.time.Instant
  * v0.38, T-269 (scenario 5): every ⋮ of a recipe or of recipes — an entry's, the card's, a collection's — and the book's
  * selection's actions at the bottom (v0.42, T-305), start to end, list their items in one order, an item a place lacks
  * skipped: Add to collection, Add to shopping list, Print, Share as PDF, Export, then what only that place has, then
- * Delete / Remove. The file action is "Export" / «Экспорт» on a recipe and a collection alike.
+ * Delete / Remove. The file action is "Export" / «Экспорт» on a recipe and a collection alike, the card's ⋮ offering it
+ * too, right after Share as PDF (v0.43, T-316).
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -209,11 +210,11 @@ class MenuOrderTest {
         compose.runOnIdle { session.openCard(id, LibraryView.OWN) }
         compose.awaitCard()
         compose.waitForIdle()
-        val card = listOf(CardTags.COLLECTION, CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.DELETE)
+        val card = listOf(CardTags.COLLECTION, CardTags.SHOPPING, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.EXPORT, CardTags.DELETE)
         compose.openTheCardMenu()
         await(CardTags.DELETE)
         assertEquals(card, compose.tagsTopToBottom(card.toSet()))
-        assertEquals(listOf(words.addToCollection, words.addToShopping, words.print, words.sharePdf, words.delete), words(card))
+        assertEquals(listOf(words.addToCollection, words.addToShopping, words.print, words.sharePdf, words.export, words.delete), words(card))
         compose.closeTheCardMenu()
         compose.backThroughTheCard()
         await(LibraryTags.PAGER)

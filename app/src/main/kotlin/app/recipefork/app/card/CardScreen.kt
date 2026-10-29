@@ -97,6 +97,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.rememberUpdatedState
 import app.recipefork.app.kitchen.Kitchen
 import app.recipefork.app.collections.AddToCollectionSheet
+import app.recipefork.app.library.FileProgress
+import app.recipefork.app.library.FileWork
 import app.recipefork.app.library.DELETABLE
 import app.recipefork.app.library.PendingRemoval
 import app.recipefork.app.library.deleteRecipe
@@ -275,7 +277,13 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * opens a sheet of the reader's own collections ([AddToCollectionSheet], v0.36), whose changes apply as they are ticked
  * and which the card's snackbar confirms as it closes ("In 2 collections").
  * After it, Print hands the recipe to the system's print service and Share as PDF opens the share sheet on it as a PDF
- * file, each as View reads it at the count and fixings the card holds at that moment (FLOW-075 (1)).
+ * file, each as View reads it at the count and fixings the card holds at that moment (FLOW-075 (1)). Right after them,
+ * where the card is given [onExport] — wherever the book's entries offer it (FLOW-063) — "Export" writes the recipe's
+ * file and opens the share and save sheet on it, by the book's own path, given the recipe's title; [fileWork], the file
+ * being written meanwhile, shows its progress over the top of the card.
+ *
+ * On View a step's note is pencilled in the margin only while the recipe is the reader's own: a found one — one the
+ * book holds from a file ([RecipeRepository.isMarked]) — has its author's notes, which keep their muted look.
  *
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
@@ -296,6 +304,8 @@ fun CardScreen(
     session: CardSession = remember { TextCardSession.inMemory() },
     onRemoved: (PendingRemoval) -> Unit = PendingRemoval::finish,
     onOpenShopping: () -> Unit = {},
+    onExport: ((title: String) -> Unit)? = null,
+    fileWork: FileWork? = null,
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
     // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
@@ -495,6 +505,7 @@ fun CardScreen(
                     },
                     onAddToCollection = if (collections != null) { { collecting = true } } else null,
                     onPrint = printRecipe,
+                    onExport = if (recipe != null && onExport != null) { { onExport(recipe.title) } } else null,
                     onSourceText = if (recipe?.sourceText != null) { { readingSource = true } } else null,
                 )
                 // The tabs stay under the bar and never scroll with the recipe.
@@ -573,6 +584,8 @@ fun CardScreen(
                             RecipeContent(
                                 recipe, parentShown, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                                 shownAgain, units,
+                                // Only the reader's own notes are pencil: a found recipe's are its author's.
+                                ownNotes = (shown as? CardContent.Shown)?.marked != true,
                                 nutritionShown = nutritionShown,
                                 equipmentEntries = equipmentEntries,
                                 kitchen = kitchen,
@@ -588,7 +601,7 @@ fun CardScreen(
                 }
                 else -> Loading()
             }
-            if (preparing) PrintProgress(Modifier.align(Alignment.TopCenter))
+            if (fileWork != null) FileProgress(fileWork, Modifier.align(Alignment.TopCenter)) else if (preparing) PrintProgress(Modifier.align(Alignment.TopCenter))
         }
     }
     if (collecting && collections != null && recipe != null) {
@@ -931,6 +944,7 @@ private fun TopBar(
     onAddToShopping: () -> Unit,
     onAddToCollection: (() -> Unit)?,
     onPrint: ((PrintWay) -> Unit)?,
+    onExport: (() -> Unit)?,
     onSourceText: (() -> Unit)?,
 ) {
     // The last title shown is kept while it fades out, so that it does not vanish before the fade.
@@ -963,7 +977,7 @@ private fun TopBar(
                         onClick = onEdit,
                     )
                 }
-                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onAddToCollection, onPrint, onSourceText)
+                CardMenu(removal, onRemove, marked, onClearMarks, listed, onAddToShopping, onAddToCollection, onPrint, onExport, onSourceText)
             }
         },
         // On the colour the column holding the bar and the tabs draws: the bar's, turning to its scrolled colour.
@@ -1044,7 +1058,8 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit, modifier: Modifier
 
 /**
  * The recipe as the tab [mode] shows it, scrolled by [scroll]: View the whole of it, Cooking only what cooking needs —
- * the equipment, the serving count, the ingredients and the steps.
+ * the equipment, the serving count, the ingredients and the steps. Its step notes are the reader's own ([ownNotes]),
+ * pencilled in the margin on View, or a found recipe's author's.
  */
 @Composable
 private fun RecipeContent(
@@ -1061,6 +1076,7 @@ private fun RecipeContent(
     places: CardPlaces,
     shownAgain: ShownAgain,
     units: UnitSystem,
+    ownNotes: Boolean,
     nutritionShown: MutableState<NutritionShown?>,
     equipmentEntries: Map<Long, DictionaryEntry>,
     kitchen: Kitchen,
@@ -1193,6 +1209,7 @@ private fun RecipeContent(
                 readerScrolling = { scroll.isScrollInProgress },
                 coveredBelow = bottom,
                 readerInteractions = scroll.interactionSource,
+                ownNotes = ownNotes,
             )
         }
     }
@@ -1469,7 +1486,8 @@ private fun BarAction(@DrawableRes icon: Int, label: String, action: String, tag
  * The card's ⋮, after its other actions, always shown, in the order every ⋮ of a recipe keeps (v0.38, T-269): first
  * "Add to collection" where the card is given the book's collections ([onAddToCollection], v0.36), then the
  * shopping-list action — "Add to shopping list", or "Update in shopping list" while the recipe is [listed] (FLOW-074) —
- * then, once the recipe is read with its scale, Print and Share as PDF ([onPrint], FLOW-075), then "Original text"
+ * then, once the recipe is read with its scale, Print and Share as PDF ([onPrint], FLOW-075), then Export where the
+ * card is given it ([onExport], FLOW-063; decisions 2026-10-15 #7), then "Original text"
  * where the recipe keeps the text it was made from ([onSourceText], v0.39), which opens it in a sheet, then Clear marks while
  * the recipe has done marks (FLOW-068), which takes every mark of the recipe away at once, and the recipe's removal —
  * Delete for an own recipe in a deletable state, Remove for a found one — in the theme's error colour. Each item is the
@@ -1485,6 +1503,7 @@ private fun CardMenu(
     onAddToShopping: () -> Unit,
     onAddToCollection: (() -> Unit)?,
     onPrint: ((PrintWay) -> Unit)?,
+    onExport: (() -> Unit)?,
     onSourceText: (() -> Unit)?,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -1531,6 +1550,16 @@ private fun CardMenu(
                         onPrint(PrintWay.SHARE)
                     },
                     modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.SHARE_PDF),
+                )
+            }
+            if (onExport != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.file_export)) },
+                    onClick = {
+                        expanded = false
+                        onExport()
+                    },
+                    modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.EXPORT),
                 )
             }
             if (onSourceText != null) {
@@ -1661,6 +1690,7 @@ object CardTags {
     const val COLLECTION = "card-collection"
     const val PRINT = "card-print"
     const val SHARE_PDF = "card-share-pdf"
+    const val EXPORT = "card-export"
     const val SOURCE_TEXT = "card-source-text"
     const val PROVENANCE = "card-provenance"
     const val STATED_AUTHOR = "card-stated-author"
