@@ -447,7 +447,7 @@ fun LibraryScreen(
  * known, and that it is under way otherwise. The screen reader names what is under way.
  */
 @Composable
-private fun FileProgress(work: FileWork, modifier: Modifier = Modifier) {
+internal fun FileProgress(work: FileWork, modifier: Modifier = Modifier) {
     val label = stringResource(if (work.kind == FileWork.Kind.IMPORT) R.string.file_importing else R.string.file_exporting)
     val tagged = modifier.fillMaxWidth().semantics { contentDescription = label }.testTag(LibraryTags.FILE_PROGRESS)
     val track = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -1273,7 +1273,7 @@ private const val TAG_SEPARATOR = " · "
  * fails says so.
  */
 @Composable
-private fun rememberExport(recipes: RecipeRepository, session: LibrarySession): (recipeId: String, title: String) -> Unit {
+internal fun rememberExport(recipes: RecipeRepository, session: LibrarySession): (recipeId: String, title: String) -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var exporting by remember { mutableStateOf(false) }

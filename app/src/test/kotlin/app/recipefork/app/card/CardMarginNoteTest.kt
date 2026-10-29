@@ -41,6 +41,7 @@ import app.recipefork.app.book.TestBook
 import app.recipefork.app.data.HeldLastCardTab
 import app.recipefork.app.editor.PATIENCE_MS
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.file.RecipeImport
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.timer.LocalCardTimers
 import app.recipefork.app.timer.TestTimers
@@ -117,10 +118,15 @@ class CardMarginNoteTest {
         timers.close()
     }
 
-    /** The card of a recipe of the book's own, its second step carrying [note], on [mode]. */
-    private fun open(note: String = english, mode: CardMode = CardMode.VIEW, dark: Boolean = false, fontScale: Float = 1f) {
-        val recipe = recipe(note)
-        runBlocking { recipes.save(recipe) }
+    /**
+     * The card of a recipe of the book's own — or, [found], one the book holds from a file — its second step carrying
+     * [note], on [mode].
+     */
+    private fun open(note: String = english, mode: CardMode = CardMode.VIEW, dark: Boolean = false, fontScale: Float = 1f, found: Boolean = false): Recipe {
+        val recipe = recipe(note).let { if (found) it.inState(RecipeImport.FOUND_STATE) else it }
+        runBlocking {
+            if (found) assertTrue(recipes.addFound(recipe, now)) else recipes.save(recipe)
+        }
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(
@@ -138,6 +144,7 @@ class CardMarginNoteTest {
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { exists(StepRowTags.note(1)) }
         scroll(StepRowTags.note(1))
+        return recipe
     }
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
@@ -258,6 +265,30 @@ class CardMarginNoteTest {
         assertFalse("no margin note on Cooking", exists(StepRowTags.margin(1)))
         assertFalse(exists(StepRowTags.mark(1)))
         assertEquals(listOf("2.", simmer, english), compose.textsOf(CardTags.step(1)))
+    }
+
+    // T-316: the card itself tells them apart — a found recipe (RecipeRepository.isMarked: the book holds it from a
+    // file) has its author's notes, which keep the muted look under the text on View, read with the step; no pencil.
+    @Test
+    fun onTheCardAFoundRecipesNoteKeepsItsLookOnView() {
+        val recipe = open(found = true)
+        assertTrue(runBlocking { recipes.isMarked(recipe.id) })
+        val style = layoutOf(StepRowTags.note(1)).layoutInput.style
+        assertEquals(scheme!!.onSurfaceVariant, style.color)
+        assertNotEquals(FontStyle.Italic, style.fontStyle)
+        assertFalse("no pencil for the author's note", exists(StepRowTags.margin(1)))
+        assertFalse(exists(StepRowTags.mark(1)))
+        assertEquals(listOf("2.", simmer, english), compose.textsOf(CardTags.step(1)))
+        assertTrue("under the text, above the labels", bounds(StepRowTags.note(1)).bottom <= bounds(StepBlockTags.labels(1)).top)
+    }
+
+    // The same recipe as the book's own is pencilled on the card: the flag is the book's, not the recipe's content.
+    @Test
+    fun onTheCardTheSameRecipeAsOnesOwnIsPencilled() {
+        val recipe = open()
+        assertFalse(runBlocking { recipes.isMarked(recipe.id) })
+        assertTrue(exists(StepRowTags.margin(1)))
+        assertPencil(Color(0xFF6A5B48))
     }
 
     // A found recipe's notes are its author's: on View they keep the muted look under the text, read with the step.

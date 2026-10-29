@@ -241,6 +241,27 @@ class CardEquipmentRowsTest {
         compose.assertCardTarget(row(1))
     }
 
+    // F-2 (the owner, 2026-10-29): a name wrapping to several lines keeps its square level with its first line, centred
+    // on that line's height, not on the whole block; a one-line row keeps its square in the row's middle.
+    @Test
+    @Config(qualifiers = "en-w320dp-h640dp", fontScale = 2f)
+    fun atTwiceTheFontScaleOn320dpTheSquareStandsLevelWithTheNamesFirstLine() {
+        val items = long + ShownEquipment("Pan", had = true)
+        show(items)
+        long.indices.forEach { index ->
+            val name = compose.textLayoutsWithin(row(index)).first { it.layoutInput.text.text == long[index].text }
+            assertTrue("the name of row $index wraps to several lines", name.lineCount > 2)
+            val top = compose.onNode(hasText(long[index].text) and hasAnyAncestor(hasTestTag(row(index))), useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot.top
+            val firstLine = top + (name.getLineTop(0) + name.getLineBottom(0)) / 2
+            val square = bounds(EquipmentTags.square(index))
+            assertEquals("row $index: the square level with the first line", firstLine, square.center.y, 1f)
+            assertTrue("row $index: not in the block's middle", square.center.y < bounds(row(index)).center.y - name.size.height / 4)
+        }
+        val one = bounds(EquipmentTags.square(2))
+        assertEquals("a one-line row: the square in the row's middle", bounds(row(2)).center.y, one.center.y, 1f)
+    }
+
     // Cooking keeps its own lines: no square, the words under the name, no kitchen state.
     @Test
     fun cookingKeepsItsOwnLines() {
