@@ -43,8 +43,9 @@ import java.time.Instant
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * A step's author's note on the card: under the step's text, before its timers, muted and a size smaller, on View and on
- * Cooking; read by the screen reader after the step's text; and a step holding only a note is still a step.
+ * A step's note on the card: on Cooking under the step's text, before its timers, muted and a size smaller, read by the
+ * screen reader after the step's text; on View, a recipe of the book's own, pencilled in the margin after the step's
+ * timers and read after them (T-315, `CardMarginNoteTest`); and a step holding only a note is still a step.
  */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -106,25 +107,33 @@ class CardStepNoteTest {
 
     private fun exists(tag: String) = compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
-    /** What [mode] shows of the note: under the text, before the first timer, muted and smaller, read after the text. */
+    /**
+     * What [mode] shows of the note: on Cooking under the text, before the first timer, muted, read after the text; on
+     * View after the timer, read on its own after it. Smaller than the step's text on both.
+     */
     private fun assertTheNoteStands(mode: CardMode, timerTag: String) {
         show(mode)
-        // Read by the screen reader as part of the step, after its text.
-        assertEquals(listOf("1.", "Fry the beet.", note), compose.textsOf(CardTags.step(0)))
-        // Under the text, before the timer.
+        val cooking = mode == CardMode.COOKING
+        // On Cooking read by the screen reader as part of the step, after its text; on View after the step's line.
+        assertEquals(listOf("1.", "Fry the beet.") + listOfNotNull(note.takeIf { cooking }), compose.textsOf(CardTags.step(0)))
+        assertEquals(listOf(note), compose.textsOf(StepRowTags.note(0)))
         compose.onNodeWithTag(timerTag).performScrollTo()
         val text = bounds(StepTags.text(0))
         val shown = bounds(StepRowTags.note(0))
         assertTrue("the note at ${shown.top} under the text ending ${text.bottom}", shown.top >= text.bottom)
-        assertTrue("the note ending ${shown.bottom} above the timer at ${bounds(timerTag).top}", shown.bottom <= bounds(timerTag).top)
+        if (cooking) {
+            assertTrue("the note ending ${shown.bottom} above the timer at ${bounds(timerTag).top}", shown.bottom <= bounds(timerTag).top)
+            assertEquals("muted", scheme.onSurfaceVariant, layoutOf(StepRowTags.note(0)).layoutInput.style.color)
+        } else {
+            assertTrue("the note at ${shown.top} under the timer ending ${bounds(timerTag).bottom}", shown.top >= bounds(timerTag).bottom)
+        }
         assertTrue(shown.left >= text.left - 1f)
-        // Muted, and smaller than the step's text.
-        val noteLayout = layoutOf(StepRowTags.note(0))
-        assertEquals(scheme.onSurfaceVariant, noteLayout.layoutInput.style.color)
-        assertTrue(noteLayout.layoutInput.style.fontSize < layoutOf(StepTags.text(0)).layoutInput.style.fontSize)
+        // Smaller than the step's text.
+        assertTrue(layoutOf(StepRowTags.note(0)).layoutInput.style.fontSize < layoutOf(StepTags.text(0)).layoutInput.style.fontSize)
         // A step holding only a note is shown, numbered, and reads as its note; a step with none shows none.
-        assertTrue("Taste as you go." in compose.textsOf(CardTags.step(1)))
         assertEquals("2.", compose.textsOf(CardTags.step(1)).first())
+        if (cooking) assertTrue("Taste as you go." in compose.textsOf(CardTags.step(1)))
+        else assertEquals(listOf("Taste as you go."), compose.textsOf(StepRowTags.note(1)))
         assertEquals(listOf("3.", "Serve."), compose.textsOf(CardTags.step(2)))
         assertTrue(!exists(StepRowTags.note(2)))
     }
@@ -133,7 +142,7 @@ class CardStepNoteTest {
     fun onCookingTheNoteStandsUnderTheTextMutedAndSmaller() = assertTheNoteStands(CardMode.COOKING, TimerTags.start(0))
 
     @Test
-    fun onViewTheNoteStandsUnderTheTextMutedAndSmaller() = assertTheNoteStands(CardMode.VIEW, ViewTimerTags.line(0))
+    fun onViewTheNoteStandsAfterTheTimerSmaller() = assertTheNoteStands(CardMode.VIEW, ViewTimerTags.line(0))
 
     // The note is the author's words, shown as written whatever the interface language.
     @Test

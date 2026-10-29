@@ -195,7 +195,9 @@ class CardStepPageTest {
     fun theNumberIsReadOnce() {
         open()
         assertEquals(listOf("1.", fry.replace("  ", " 40 g ")), compose.textsOf(CardTags.step(0)))
-        assertEquals(listOf("2.", simmer, note), compose.textsOf(CardTags.step(1)))
+        // The reader's note stands after the step's labels, in the margin, and is read there (T-315).
+        assertEquals(listOf("2.", simmer), compose.textsOf(CardTags.step(1)))
+        assertEquals(listOf(note), compose.textsOf(StepRowTags.note(1)))
         assertEquals(listOf("12.", "Stir and taste."), compose.textsOf(CardTags.step(11)))
         // The number in the margin says nothing of its own.
         val number = compose.onNodeWithTag(StepRowTags.number(0), useUnmergedTree = true).fetchSemanticsNode()
@@ -238,12 +240,13 @@ class CardStepPageTest {
         assertEquals("a label's words in the working face", WorkingFamily, words.fontFamily)
         assertEquals("tnum", words.fontFeatureSettings)
         assertEquals(scheme!!.onSurfaceVariant, words.color)
-        // In the text's column, under the text and its note, the two labels on one line.
+        // In the text's column, under the text, the two labels on one line; the reader's note after them (T-315).
         val first = bounds(ViewTimerTags.label(1, 0))
         val second = bounds(ViewTimerTags.label(1, 1))
         val text = bounds(StepTags.text(1))
         assertNear("the first label under the text's start", text.left, first.left)
-        assertTrue("the labels under the note", first.top >= bounds(StepRowTags.note(1)).bottom)
+        assertTrue("the labels under the text", first.top >= text.bottom)
+        assertTrue("the note under the labels", bounds(StepRowTags.margin(1)).top >= maxOf(first.bottom, second.bottom))
         assertNear("the second label on the first's line", first.top, second.top)
         assertNear("the second label 6 dp after the first", first.right + px(VIEW_LABELS_GAP), second.left)
         assertTrue("a label is as wide as its words, both within the column", second.right <= text.right + 0.5f)

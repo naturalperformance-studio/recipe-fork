@@ -15,7 +15,7 @@ import kotlin.math.pow
 /**
  * A11Y-002: the contrast of every pair of the theme's colours the screens draw text, icons and control boundaries in,
  * computed in both schemes AppTheme builds from `app_theme.xml` — the light one and the dark one, each with its colours
- * beyond Material 3's roles (raised paper) — by the formula of WCAG 2.2. A disabled control (drawn at 38 % opacity) is
+ * beyond Material 3's roles (raised paper, graphite) — by the formula of WCAG 2.2. A disabled control (drawn at 38 % opacity) is
  * left out, as WCAG leaves out inactive controls.
  */
 @RunWith(AndroidJUnit4::class)
@@ -29,7 +29,7 @@ class ContrastTest {
     private fun pairs(c: ColorScheme, a: AppColors) = listOf(
         // Text.
         text("body text — titles, ingredient lines, steps, fields' text", c.onSurface, c.surface),
-        text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", a heading's \"Unnamed group\", step notes, a step's author's note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's number in the margin and its duration labels on the card's View (their clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
+        text("muted notes and marks — an entry's sending mark, an ingredient row's free-text mark and its \"New ingredient\", a heading's \"Unnamed group\", step notes, a found recipe's step note on the card, ingredient notes, labels, placeholders, the synonym beside an offered entry, a step's number in the margin and its duration labels on the card's View (their clock and \"Oven · 40 min\"), a step's row in the editor — its number, author's note, timer lines and \"New step\"", c.onSurfaceVariant, c.surface),
         text("text actions — the bar's actions, text buttons, timers' figures, the checklist's label", c.primary, c.surface),
         text("a filled button's label, a step's number in its circle on the card, the book's floating action", c.onPrimary, c.primary),
         text("a problem said under a field — the title's and the description's marks and counters among them — an ingredient row's mark of an amount its field does not hold", c.error, c.surface),
@@ -77,7 +77,7 @@ class ContrastTest {
         text("the card's chosen tab with the recipe scrolled under the bar, on the bar's scrolled colour", c.primary, c.surfaceContainer),
         text("the card's tab not chosen with the recipe scrolled under the bar, on the bar's scrolled colour", c.onSurfaceVariant, c.surfaceContainer),
         text("a view's floating action — its words and icon; the card's current step on Cooking, on its container", c.onPrimaryContainer, c.primaryContainer),
-        text("the arrow after a rounded reference in the card's current step, and the step's author's note, on its container", c.onSurfaceVariant, c.primaryContainer),
+        text("the arrow after a rounded reference in the card's current step, and the step's note, on its container", c.onSurfaceVariant, c.primaryContainer),
         text("My kitchen opened from a recipe — the row of its item, its name and \"Needed for the recipe\", on the primary container", c.onPrimaryContainer, c.primaryContainer),
         text("a book's entry, a row of its contents — its title and state", c.onSurface, c.surface),
         text("a book's entry, a row of its contents — its tags, stated author and sending mark", c.onSurfaceVariant, c.surface),
@@ -152,6 +152,11 @@ class ContrastTest {
         graphic("the card's nutrition — the switch's boundary", c.outline, c.surface),
         text("the nutrition sheet — its title, captions and counted rows", c.onSurface, c.surfaceContainerLow),
         text("the nutrition sheet — the rows not counted and how it is counted", c.onSurfaceVariant, c.surfaceContainerLow),
+        // Graphite: the reader's own margin notes and nothing else (the redesign's pencil, T-315).
+        text("a margin note on the card's View — its words, in pencil", a.graphite, c.surface),
+        graphic("a margin note on the card's View — its pencil mark and its dashed rule", a.graphite, c.surface),
+        text("a margin note on the current step's container — its words, in pencil", a.graphite, c.primaryContainer),
+        graphic("a margin note on the current step's container — its pencil mark and its dashed rule", a.graphite, c.primaryContainer),
         // Beet: the tertiary colour marks provenance and nothing else (the redesign, T-296).
         text("a fork's provenance line on the card — \"Forked from …\"", c.tertiary, c.surface),
         text("a fork's provenance line on the container tint", c.tertiary, c.surfaceContainer),
