@@ -419,7 +419,7 @@ class DeleteRecipeTest {
         compose.waitUntil(PATIENCE_MS) {
             compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().isNotEmpty()
         }
-        assertEquals(listOf("Forked from a recipe that is not in this recipe book"), compose.textsOf(CardTags.PROVENANCE))
+        assertEquals(listOf("after a recipe not in this book"), compose.textsOf(CardTags.PROVENANCE))
         assertEquals(parent.id, stored(fork)?.parent)
         assertNull(stored(parent))
     }

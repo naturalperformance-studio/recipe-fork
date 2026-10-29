@@ -31,6 +31,12 @@
     <string name="card_summary_three">%1$s · %2$s · %3$s</string>
     <string name="card_summary_spoken_two">%1$s, %2$s</string>
     <string name="card_summary_spoken_three">%1$s, %2$s, %3$s</string>
+    <string name="card_provenance">по рецепту «%1$s»</string>
+    <string name="card_provenance_open">по рецепту «%1$s»\u00A0›</string>
+    <string name="card_provenance_unavailable">по рецепту «%1$s», которого нет в книге</string>
+    <string name="card_provenance_unknown">по рецепту, которого нет в книге</string>
+    <string name="card_provenance_author">%1$s · автор из файла, не проверен</string>
+    <string name="card_provenance_author_spoken">%1$s, автор из файла, не проверен</string>
     <string name="card_parent">Основано на рецепте «%1$s»</string>
     <string name="card_parent_open_action">Открыть рецепт, на котором основан этот</string>
     <string name="card_parent_unavailable">Основано на рецепте, которого нет в этой книге рецептов</string>

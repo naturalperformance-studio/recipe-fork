@@ -25,6 +25,7 @@ import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
 import app.recipefork.app.card.CardEnvironment
 import app.recipefork.app.card.CardTags
+import app.recipefork.app.card.scrollUntilForkShows
 import app.recipefork.app.card.forkFromTheCard
 import app.recipefork.app.card.awaitCard
 import app.recipefork.app.card.backThroughTheCard
@@ -163,6 +164,8 @@ class FoundRecipesTest {
         openEntry(id)
         assertEquals("Bean soup", compose.textsOf(CardTags.TITLE).single())
         assertEquals("Author: anna (stated in the file, not verified)", compose.textsOf(CardTags.STATED_AUTHOR).single())
+        // Fork stands aside while the title, under the provenance line, stands where it floats (T-311).
+        compose.scrollUntilForkShows()
         assertTrue(exists(CardTags.FORK))
         assertTrue(!exists(CardTags.EDIT))
         assertEquals("Servings: 2", compose.textsOf(CardTags.SERVINGS).single())
