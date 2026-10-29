@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,13 +25,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 
@@ -86,9 +92,10 @@ internal fun EmptyState(
                 painterResource(picture),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(56.dp).testTag(LibraryTags.emptyPicture(tag)),
+                modifier = Modifier.size(PICTURE_SIDE).testTag(LibraryTags.emptyPicture(tag)),
             )
         },
+        pictureSide = PICTURE_SIDE,
         headlineStyle = MaterialTheme.typography.titleMedium,
         headline = headline,
         sentence = sentence,
@@ -116,6 +123,7 @@ internal fun EmptyState(
 ) {
     EmptyLayout(
         picture = { Engraved(engraving, Modifier.testTag(LibraryTags.emptyPicture(tag))) },
+        pictureSide = engraving.side,
         headlineStyle = MaterialTheme.typography.titleLarge,
         // The design sets the headline 16 dp under the engraving.
         headlineGap = 8.dp,
@@ -128,6 +136,9 @@ internal fun EmptyState(
         centred = centred,
     )
 }
+
+/** The side of an empty state's small picture. */
+private val PICTURE_SIDE = 56.dp
 
 /** The size of each engraving, as the design draws it: the mark at 112 dp, the cart at 96 dp. */
 private val Engraving.side: Dp get() = when (this) {
@@ -159,9 +170,16 @@ private fun Engraved(engraving: Engraving, modifier: Modifier) {
 private fun Layer(@DrawableRes drawable: Int, tint: Color) =
     Icon(painterResource(drawable), contentDescription = null, tint = tint, modifier = Modifier.fillMaxSize())
 
+/**
+ * The layout every empty state shares: the picture, [pictureSide] tall, above the words and the way out. Where the whole
+ * state does not fit the space it is given — at a large font scale on a small phone (v0.42, F-3 option B) — the
+ * picture is left out, and only the picture: the words and the way out stay, and they scroll only if even they do not
+ * fit. The headline is set as a book entry's title is ([HyphenFitText]).
+ */
 @Composable
 private fun EmptyLayout(
     picture: @Composable () -> Unit,
+    pictureSide: Dp,
     headlineStyle: TextStyle,
     headline: String,
     sentence: String?,
@@ -177,20 +195,68 @@ private fun EmptyLayout(
     // above and below, only a narrow one where a large font fills the space.
     val placed = if (centred) modifier.fillMaxSize().imePadding() else modifier.fillMaxWidth()
     val margin = if (centred) 8.dp else 24.dp
-    Column(
-        // At a large font scale the state scrolls rather than clipping its action; the scroll keeps the space's height
-        // as the least the state takes, so that a short one is centred in it.
-        placed.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = margin).testTag(tag),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = if (centred) Arrangement.spacedBy(8.dp, Alignment.CenterVertically) else Arrangement.spacedBy(8.dp),
-    ) {
-        picture()
-        Text(
+    val density = LocalDensity.current
+    BoxWithConstraints(placed) {
+        // The height the state may take without scrolling: its space less its margins; unbounded in a list.
+        val room = if (constraints.hasBoundedHeight) constraints.maxHeight - with(density) { (margin * 2).roundToPx() } else Constraints.Infinity
+        Column(
+            // Should even the words not fit, the state scrolls rather than clipping its action; the scroll keeps the
+            // space's height as the least the state takes, so that a short one is centred in it.
+            Modifier
+                .then(if (centred) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = margin)
+                .testTag(tag),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = if (centred) Arrangement.Center else Arrangement.Top,
+        ) {
+            // The design sets the words 8 dp under the picture, and the headline [headlineGap] further.
+            PictureWhereItFits(room, pictureSide, gap = 8.dp + headlineGap, picture) {
+                EmptyWords(headlineStyle, headline, sentence, action, tag, actionHeight)
+            }
+        }
+    }
+}
+
+/** The slots of [PictureWhereItFits]: the words are measured first, the picture composed only where it fits. */
+private enum class EmptySlot { WORDS, PICTURE }
+
+/**
+ * [words], centred, with [picture] — [pictureSide] tall — [gap] above them, as long as the two fit in [room] pixels;
+ * else the words alone, the picture not composed at all.
+ */
+@Composable
+private fun PictureWhereItFits(room: Int, pictureSide: Dp, gap: Dp, picture: @Composable () -> Unit, words: @Composable () -> Unit) {
+    SubcomposeLayout { constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val laidWords = subcompose(EmptySlot.WORDS, words).map { it.measure(loose) }
+        val wordsHeight = laidWords.sumOf { it.height }
+        val gapPx = gap.roundToPx()
+        val fits = room == Constraints.Infinity || pictureSide.roundToPx() + gapPx + wordsHeight <= room
+        val laidPicture = if (fits) subcompose(EmptySlot.PICTURE, picture).map { it.measure(loose) } else emptyList()
+        val above = if (laidPicture.isEmpty()) 0 else laidPicture.maxOf { it.height } + gapPx
+        val width = constraints.constrainWidth((laidWords + laidPicture).maxOfOrNull { it.width } ?: 0)
+        layout(width, constraints.constrainHeight(above + wordsHeight)) {
+            laidPicture.forEach { it.place((width - it.width) / 2, 0) }
+            var y = above
+            laidWords.forEach {
+                it.place((width - it.width) / 2, y)
+                y += it.height
+            }
+        }
+    }
+}
+
+/** An empty state's words and its way out: the headline, read as a heading; the sentence, if any; the action, if any. */
+@Composable
+private fun EmptyWords(headlineStyle: TextStyle, headline: String, sentence: String?, action: EmptyAction?, tag: String, actionHeight: Dp) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HyphenFitText(
             headline,
-            style = headlineStyle,
+            headlineStyle,
+            Modifier.semantics { heading() }.testTag(LibraryTags.emptyHeadline(tag)),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = headlineGap).semantics { heading() }.testTag(LibraryTags.emptyHeadline(tag)),
         )
         if (sentence != null) {
             Text(
