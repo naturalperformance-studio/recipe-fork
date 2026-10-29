@@ -46,6 +46,7 @@ import app.recipefork.app.editor.SAMPLE_DICTIONARIES
 import app.recipefork.app.editor.TestDevice
 import app.recipefork.app.editor.descriptionOf
 import app.recipefork.app.editor.textsOf
+import app.recipefork.app.library.LibraryTags
 import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.book.FavouriteEntity
 import app.recipefork.app.timer.TimerTags
@@ -375,10 +376,11 @@ class CardTopBarTest {
         }
         compose.awaitCard()
         val layout = layoutOf(CardTags.TITLE)
-        assertEquals(long, layout.layoutInput.text.text)
+        // The drawn title carries an unseen place to break after each inner hyphen (breakAfterHyphens).
+        assertEquals(long, layout.layoutInput.text.text.replace("\u200B", ""))
         assertEquals(Int.MAX_VALUE, layout.layoutInput.maxLines)
         compose.assertWhole(CardTags.TITLE)
-        assertEquals(long.length, layout.getLineEnd(layout.lineCount - 1))
+        assertEquals(layout.layoutInput.text.length, layout.getLineEnd(layout.lineCount - 1))
         (0 until layout.lineCount).forEach { assertFalse("line $it is not ellipsized", layout.isLineEllipsized(it)) }
         assertFalse("no title in the bar while the heading is in view", exists(CardTags.BAR_TITLE))
         repeat(4) { compose.onNodeWithTag(CardTags.CONTENT).performTouchInput { swipeUp() } }
@@ -483,8 +485,8 @@ class CardTopBarTest {
         assertEquals(listOf(0, 0, 0), listOf(backs, forks, edits))
     }
 
-    // Scenario 7: while the recipe is still being read, nothing for a moment, then an indicator rather than a blank
-    // screen; the recipe read, the indicator goes.
+    // Scenario 7: while the recipe is still being read, nothing for a moment, then the card's loading state — the
+    // engraved mark over its words (T-312) — rather than a blank screen; the recipe read, the state goes.
     @Test
     fun whileTheRecipeLoadsAnIndicatorShowsAfterAMoment() = loading("Loading the recipe")
 
@@ -503,7 +505,7 @@ class CardTopBarTest {
         assertTrue(exists(CardTags.BACK))
         compose.mainClock.advanceTimeBy(LOADING_INDICATOR_DELAY_MS)
         assertTrue("the indicator once the read takes a while", exists(CardTags.LOADING))
-        assertEquals(listOf(said), compose.descriptionOf(CardTags.LOADING))
+        assertEquals(listOf(said), compose.textsOf(LibraryTags.emptyHeadline(CardTags.LOADING)))
         assertFalse(exists(CardTags.CONTENT))
         compose.mainClock.autoAdvance = true
         held.complete(Unit)

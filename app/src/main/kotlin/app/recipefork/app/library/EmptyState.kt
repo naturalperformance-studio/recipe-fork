@@ -109,7 +109,8 @@ internal fun EmptyState(
 
 /**
  * An empty section shown with one of the redesign's [Engraving]s: the same layout, words and action as the other
- * empty states, with the engraving above a headline in Literata 22 (titleLarge); [centred] as the other states are.
+ * empty states, with the engraving above a headline in Literata 22 (titleLarge); [centred] and [actionHeight] as the
+ * other states take them.
  */
 @Composable
 internal fun EmptyState(
@@ -120,6 +121,7 @@ internal fun EmptyState(
     tag: String,
     modifier: Modifier = Modifier,
     centred: Boolean = false,
+    actionHeight: Dp = 48.dp,
 ) {
     EmptyLayout(
         picture = { Engraved(engraving, Modifier.testTag(LibraryTags.emptyPicture(tag))) },
@@ -132,7 +134,7 @@ internal fun EmptyState(
         action = action,
         tag = tag,
         modifier = modifier,
-        actionHeight = 48.dp,
+        actionHeight = actionHeight,
         centred = centred,
     )
 }

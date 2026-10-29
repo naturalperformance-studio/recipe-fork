@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -40,6 +41,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.AnnotatedString
@@ -140,8 +142,10 @@ private class WholePlace {
 /**
  * The line's words, and under them the stated author where the book does not hold the parent: a place at least the
  * card's target high — the 48 dp the redesign asks, raised to the card's 56 — that opens the parent while the book
- * holds it. [onFirstLine] learns where the words stand and
- * the middle of their first line within them, in pixels.
+ * holds it. [onFirstLine] learns where the words stand and the middle of their first line within them, in pixels.
+ *
+ * While the book is asked for the parent, the place is kept as high as the words will most likely stand, so that the
+ * title under them does not move as they come ([expected]).
  */
 @Composable
 private fun Words(
@@ -156,25 +160,22 @@ private fun Words(
         .heightIn(min = CardTarget)
         .semantics { traversalIndex = LINE_AFTER }
     if (content == ParentContent.Loading) {
-        // The place the line takes, kept while the book is asked for the parent, so that the title does not move down.
-        Spacer(area)
+        val likely = expected(stated)
+        if (likely == null) {
+            Spacer(area)
+        } else {
+            // The words the line will most likely say, laid out unseen and unread, keep their place.
+            Box(area.alpha(0f).clearAndSetSemantics { testTag = ProvenanceTags.SLOT }, contentAlignment = Alignment.CenterStart) {
+                Laid(likely, stated, beet, onFirstLine = { _, _ -> })
+            }
+        }
         return
     }
-    val held = content as? ParentContent.Held
-    val untitled = stringResource(R.string.common_untitled_recipe)
-    val title = (stated?.title ?: held?.title)?.ifBlank { untitled }
-    val words = when {
-        held != null -> stringResource(R.string.card_provenance, title ?: untitled)
-        title != null -> stringResource(R.string.card_provenance_unavailable, title)
-        else -> stringResource(R.string.card_provenance_unknown)
-    }
-    // Held, a chevron after the last word says the line leads somewhere; it is drawn, not read out.
-    val shown = if (held != null) stringResource(R.string.card_provenance_open, title ?: untitled) else words
-    val author = stated?.nickname?.takeIf { held == null && it.isNotBlank() }
+    val held = content is ParentContent.Held
     Box(
         area
             .then(
-                if (held != null) {
+                if (held) {
                     Modifier.clickable(
                         onClickLabel = stringResource(R.string.card_parent_open_action),
                         role = Role.Button,
@@ -187,34 +188,59 @@ private fun Words(
             .testTag(CardTags.PROVENANCE),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Column(Modifier.padding(start = WORDS_START)) {
-            val laid = remember { LaidWords() }
-            Box(Modifier.semantics { text = AnnotatedString(words) }) {
-                Box(Modifier.clearAndSetSemantics {}) {
-                    Text(
-                        shown,
-                        color = beet,
-                        style = MaterialTheme.typography.titleSmall,
-                        onTextLayout = { laid.result = it },
-                        modifier = Modifier.onGloballyPositioned { coordinates ->
-                            laid.result?.let { onFirstLine(coordinates, (it.getLineTop(0) + it.getLineBottom(0)) / 2) }
-                        },
-                    )
-                }
-            }
-            author?.let {
-                // Read with a comma where it shows a "·".
-                val spoken = stringResource(R.string.card_provenance_author_spoken, it)
+        Laid(content, stated, beet, onFirstLine)
+    }
+}
+
+/**
+ * What the line will most likely say once the book answers, where the version itself tells: a version whose file names
+ * its parent was made elsewhere, and its parent is most often not in this book — the words then known whole, the
+ * author with them. Null where the version tells nothing: its parent most often held, its title not yet known, the
+ * line one line high, within the least place.
+ */
+private fun expected(stated: StatedParent?): ParentContent? = if (stated != null) ParentContent.Unavailable else null
+
+/** The words of the line as [content] makes them, and under them the stated author where the book does not hold the parent. */
+@Composable
+private fun Laid(content: ParentContent, stated: StatedParent?, beet: Color, onFirstLine: (LayoutCoordinates, Float) -> Unit) {
+    val held = content as? ParentContent.Held
+    val untitled = stringResource(R.string.common_untitled_recipe)
+    val title = (stated?.title ?: held?.title)?.ifBlank { untitled }
+    val words = when {
+        held != null -> stringResource(R.string.card_provenance, title ?: untitled)
+        title != null -> stringResource(R.string.card_provenance_unavailable, title)
+        else -> stringResource(R.string.card_provenance_unknown)
+    }
+    // Held, a chevron after the last word says the line leads somewhere; it is drawn, not read out.
+    val shown = if (held != null) stringResource(R.string.card_provenance_open, title ?: untitled) else words
+    val author = stated?.nickname?.takeIf { held == null && it.isNotBlank() }
+    Column(Modifier.padding(start = WORDS_START)) {
+        val laid = remember { LaidWords() }
+        Box(Modifier.semantics { text = AnnotatedString(words) }) {
+            Box(Modifier.clearAndSetSemantics {}) {
                 Text(
-                    stringResource(R.string.card_provenance_author, it),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .padding(top = AUTHOR_GAP)
-                        .semantics { contentDescription = spoken }
-                        .testTag(ProvenanceTags.AUTHOR),
+                    shown,
+                    color = beet,
+                    style = MaterialTheme.typography.titleSmall,
+                    onTextLayout = { laid.result = it },
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        laid.result?.let { onFirstLine(coordinates, (it.getLineTop(0) + it.getLineBottom(0)) / 2) }
+                    },
                 )
             }
+        }
+        author?.let {
+            // Read with a comma where it shows a "·".
+            val spoken = stringResource(R.string.card_provenance_author_spoken, it)
+            Text(
+                stringResource(R.string.card_provenance_author, it),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .padding(top = AUTHOR_GAP)
+                    .semantics { contentDescription = spoken }
+                    .testTag(ProvenanceTags.AUTHOR),
+            )
         }
     }
 }
@@ -283,6 +309,9 @@ private var SemanticsPropertyReceiver.provenanceDrawing by ProvenanceDrawn
 object ProvenanceTags {
     const val COLUMN = "card-provenance-column"
     const val AUTHOR = "card-provenance-author"
+
+    /** The place the line keeps, unseen, while the book is asked for the parent. */
+    const val SLOT = "card-provenance-slot"
 }
 
 /** The column the nodes and the knee are drawn in, and where the words and the title start beside it. */
