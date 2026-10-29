@@ -48,8 +48,9 @@ import org.robolectric.annotation.GraphicsMode
  * T-313, scenario 3 of the recipe card as a cookbook page: on View each amount stands right-aligned in a column of
  * [PAGE_COLUMN] at the line's start, in the working face with tabular figures, its rounding arrow in the column before
  * it and read in words; the name beside it in the reading face, the preparation muted after a dash; a group's
- * subheading in small capitals of the working face, read as written. At large text the column stands above the names
- * and nothing is cut, even at twice the font scale on a 320 dp phone. Cooking keeps its own presentation.
+ * subheading in small capitals of the working face, read as written. At the default font scale the column stays beside
+ * the names, a long amount wrapping in it between words; at large text it stands above the names and nothing is cut,
+ * even at twice the font scale on a 320 dp phone. Cooking keeps its own presentation.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -80,10 +81,10 @@ class PageQuantityColumnTest {
         mode: CardMode = CardMode.VIEW,
         groups: List<IngredientGroup> = emptyList(),
         language: InterfaceLanguage = InterfaceLanguage.ENGLISH,
-    ) {
-        val ordered = lines.indices.map {
+        ordered: List<Ingredient> = lines.indices.map {
             Ingredient(it, null, freeTextName = lines[it].name, unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.ONE)
-        }
+        },
+    ) {
         compose.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
@@ -182,9 +183,17 @@ class PageQuantityColumnTest {
 
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
-    fun onViewAGroupSubheadingStandsInSmallCapitalsOfTheWorkingFaceReadAsWritten() {
-        show(english, groups = listOf(IngredientGroup("For the sauce", 0), IngredientGroup("On top", 3)))
-        listOf("For the sauce", "On top").forEachIndexed { index, name ->
+    fun onViewAGroupSubheadingStandsInSmallCapitalsOfTheWorkingFaceReadAsWritten() =
+        assertSmallCapitals(english, listOf("For the sauce", "On top"), InterfaceLanguage.ENGLISH)
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun onViewAGroupSubheadingStandsInSmallCapitalsInRussian() =
+        assertSmallCapitals(russian, listOf("Соус", "Сверху"), InterfaceLanguage.RUSSIAN)
+
+    private fun assertSmallCapitals(lines: List<IngredientLine>, names: List<String>, language: InterfaceLanguage) {
+        show(lines, groups = listOf(IngredientGroup(names[0], 0), IngredientGroup(names[1], 3)), language = language)
+        names.forEachIndexed { index, name ->
             val heading = unmerged(IngredientTags.group(index))
             assertEquals("set in capitals", name.uppercase(), text(heading))
             assertEquals("read as written", listOf(name), heading.config.getOrNull(SemanticsProperties.ContentDescription))
@@ -225,12 +234,68 @@ class PageQuantityColumnTest {
         assertAbove(english)
     }
 
+    private fun household(position: Int, name: String, unit: QuantityUnit, quantity: Rational) =
+        Ingredient(position, null, freeTextName = name, unitType = unit.type, unit = unit, quantity = quantity)
+
+    /**
+     * A Russian recipe for 7 shown for 10: a pinch, a tablespoon rounded up to «1½ ст. л.» with its arrow, and cups —
+     * amounts wider than [PAGE_COLUMN] on one line in the working face at the default font scale. The pinch line is
+     * given as «1 щепотка» itself, a pinch of one reading as the bare unit on the card.
+     */
+    private val longRussian = listOf(
+        household(0, "Соль", QuantityUnit.PINCH, Rational.ONE),
+        household(1, "Масло оливковое", QuantityUnit.TABLESPOON, Rational.ONE),
+        household(2, "Молоко", QuantityUnit.CUP, Rational.of(21, 20)),
+    )
+
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp")
+    fun atTheDefaultFontScaleALongAmountWrapsInTheColumnBesideItsName() {
+        val scaled = ingredientList(longRussian, emptyMap(), InterfaceLanguage.RUSSIAN, 7, Rational.of(10))
+        // As the card shows it, any no-break space read as a space.
+        assertEquals("1½ ст. л.", scaled.lines[1].quantity?.replace('\u00A0', ' '))
+        assertEquals("the tablespoon is rounded up", Rounding.UP, scaled.lines[1].rounding)
+        assertTrue(scaled.lines[1].derived)
+        assertTrue("${scaled.lines[2].quantity} is in cups", scaled.lines[2].quantity.orEmpty().contains("стакан"))
+        val list = scaled.copy(lines = listOf(scaled.lines[0].copy(quantity = "1 щепотка")) + scaled.lines.drop(1))
+        val ordered = longRussian
+        show(list.lines, language = InterfaceLanguage.RUSSIAN, ordered = ordered)
+        val start = px(16.dp)
+        val columnEnd = start + px(PAGE_COLUMN)
+        list.lines.indices.forEach { position ->
+            val quantity = unmerged(IngredientTags.quantity(position)).boundsInRoot
+            assertEquals("the column of line $position starts the line", start, quantity.left, 0.5f)
+            assertEquals("the column of line $position stays ${PAGE_COLUMN} wide", px(PAGE_COLUMN), quantity.width, 0.5f)
+            assertEquals("the name of line $position stands beside the column", columnEnd + px(12.dp), nameBounds(position).left, 0.5f)
+            assertTrue("the name of line $position is on its amount's first line", nameBounds(position).top < quantityGlyphs(position).bottom)
+            val layout = quantityLayout(position)
+            val box = node(layout.layoutInput.text.text).boundsInRoot
+            (0 until layout.lineCount).forEach { line ->
+                assertEquals("line $line of ${layout.layoutInput.text} ends at the column's edge", columnEnd, box.left + layout.getLineRight(line), 2f)
+            }
+            // Whole: nothing cut, broken only between words.
+            compose.assertWhole(CardTags.ingredient(position))
+        }
+        listOf(0, 1).forEach { assertTrue("${list.lines[it].quantity} wraps in the column", quantityLayout(it).lineCount > 1) }
+        val arrow = arrowBounds(1)
+        assertTrue("the arrow stands in the column: $arrow", arrow.left >= start - 0.5f)
+        assertTrue("the arrow stands before its amount", arrow.right <= quantityGlyphs(1).left + 0.5f)
+        assertEquals("округлено вверх, точное значение меньше", text(unmerged(IngredientTags.rounding(1))))
+    }
+
     @Test
     @Config(qualifiers = "en-w360dp-h640dp")
-    fun anAmountTooLongForTheColumnTakesTheWholeListAboveTheNames() {
-        val lines = english + IngredientLine("Flour", "12 ½ heaped tablespoons")
+    fun aWordTooLongForTheColumnEvenAloneWidensItForEveryLine() {
+        val lines = english + IngredientLine("Flour", "1 heapedtablespoonfuls")
         show(lines)
-        assertAbove(lines)
+        val start = px(16.dp)
+        val widened = unmerged(IngredientTags.quantity(4)).boundsInRoot.width
+        assertTrue("the column is wider than ${PAGE_COLUMN}: $widened px", widened > px(PAGE_COLUMN))
+        lines.indices.forEach { position ->
+            assertEquals("the column of line $position is as wide as on every other", widened, unmerged(IngredientTags.quantity(position)).boundsInRoot.width, 0.5f)
+            assertEquals("the name of line $position stands beside the column", start + widened + px(12.dp), nameBounds(position).left, 0.5f)
+            compose.assertWhole(CardTags.ingredient(position))
+        }
     }
 
     @Test
