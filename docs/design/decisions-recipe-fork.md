@@ -371,3 +371,23 @@ the owner directly. The option as put to the owner: «Квадрат тольк�
 
 **Behaviour changes against the current build (for /team-lead):** an unknown item loses its
 square and its «Есть на кухне» state on View (built in T-317, 10216dc9); nothing else.
+
+## 2026-10-29 — Equipment square when a name wraps, T-317 / T-316 (decided by the owner via /team-lead (F-2))
+
+Fork: `docs/increments/v0.43.md`, Forks, F-2, raised by the designer's QA of T-317. There is no
+proposal file; the options were put to the owner directly. The option as put to the owner:
+«Квадрат стоит на уровне первой строки названия, как маркер списка. Рекомендация дизайнера.
+Правка маленькая, войдёт в T-316.» The owner's answer, verbatim: «По первой строке». This adds to
+the entry above (equipment rows on View); everything there still holds.
+
+1. **On the card's View tab, an equipment row's square stands level with the name's first line — centred on that line's height — not centred on a wrapped block.**
+   - One-line rows look as they do now.
+   - A row with no square (an item the app cannot tell about) keeps its indent as before; nothing
+     else in the row moves.
+   *Why:* the owner's choice; the designer's case: the square marks the item's start, as a list
+   marker does; centred on a block of several lines at large text (320 dp, 200 %) it stood beside
+   a middle line and read as belonging to that line. *Rejected:* «По центру блока» — centred on
+   the whole name block, as built in T-317 and as the mock's CSS (`.eq{align-items:center}`).
+
+**Behaviour changes against the current build (for /team-lead):** none beyond the square's
+vertical place on wrapped equipment rows (to be built in T-316).
