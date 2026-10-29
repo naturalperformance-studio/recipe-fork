@@ -370,19 +370,20 @@ internal fun HyphenFitText(
         val fitted = remember(text, style, width, measurer, density) {
             fitWords(text, style, width, measurer, density, hyphenParts = true)
         }
-        Box(Modifier.clearAndSetSemantics {}) {
-            Text(
-                breakAfterHyphens(text),
-                style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
-                color = color,
-                textAlign = textAlign,
-                softWrap = true,
-                onTextLayout = {
-                    laid.result = it
-                    onTextLayout(it)
-                },
-            )
-        }
+        // The drawn text, with its places to break, carries no semantics of its own — none in either tree — so that
+        // the text is read out once, from the node above.
+        Text(
+            breakAfterHyphens(text),
+            style = if (fitted.overflows) fitted.style.copy(hyphens = Hyphens.Auto) else fitted.style,
+            color = color,
+            textAlign = textAlign,
+            softWrap = true,
+            onTextLayout = {
+                laid.result = it
+                onTextLayout(it)
+            },
+            modifier = Modifier.clearAndSetSemantics {},
+        )
     }
 }
 

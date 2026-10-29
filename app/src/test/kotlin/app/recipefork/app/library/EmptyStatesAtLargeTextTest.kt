@@ -5,7 +5,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
@@ -30,6 +32,7 @@ import app.recipefork.app.recipe.RecipeRepository
 import app.recipefork.app.ui.AppNavHost
 import app.recipefork.app.ui.AppTheme
 import app.recipefork.core.recipe.Recipe
+import app.recipefork.core.recipe.fork
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -108,6 +111,21 @@ class EmptyStatesAtLargeTextTest {
     }
 
     /**
+     * [words] are read out once: exactly one text of the screen reads them, in the merged tree the screen reader is
+     * given and in the unmerged one — the drawn copy of a fitted text, with its places to break, is no second text.
+     */
+    private fun assertReadOnce(words: String) {
+        listOf(false, true).forEach { unmerged ->
+            val count = compose.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = unmerged).fetchSemanticsNodes()
+                .sumOf { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().count { it.text.replace("\u200B", "") == words } }
+            assertEquals("“$words” read out, ${if (unmerged) "unmerged" else "merged"}", 1, count)
+        }
+    }
+
+    /** The headline of the state tagged [state] is read out once. */
+    private fun assertTheHeadlineIsReadOnce(state: String) = assertReadOnce(compose.textsOf(LibraryTags.emptyHeadline(state)).single())
+
+    /**
      * The state tagged [state] keeps its headline, its sentence when [sentence], and its way out tagged [action]; it
      * has nothing to scroll, and its way out stands whole on the screen, unscrolled. Its picture, [side] dp tall and
      * [gap] dp above the headline, is left out only where it would not have fit: the words with the picture above them
@@ -115,6 +133,7 @@ class EmptyStatesAtLargeTextTest {
      */
     private fun assertTheWayOutShowsWithoutScrolling(state: String, action: String, sentence: Boolean, side: Int, gap: Int): Boolean {
         assertTrue("$state keeps its headline", exists(LibraryTags.emptyHeadline(state)))
+        assertTheHeadlineIsReadOnce(state)
         assertEquals("$state keeps its sentence", sentence, exists(LibraryTags.emptySentence(state)))
         val range = compose.onNodeWithTag(state).fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange]
         assertEquals("$state has nothing to scroll", 0f, range.maxValue(), 0.5f)
@@ -137,6 +156,7 @@ class EmptyStatesAtLargeTextTest {
     /** The picture of the state tagged [state] stays, [side] dp square, above the headline. */
     private fun assertThePictureStays(state: String, side: Int) {
         await(LibraryTags.emptyPicture(state))
+        assertTheHeadlineIsReadOnce(state)
         val picture = rect(compose.onNodeWithTag(LibraryTags.emptyPicture(state), useUnmergedTree = true).getBoundsInRoot())
         val headline = rect(compose.onNodeWithTag(LibraryTags.emptyHeadline(state), useUnmergedTree = true).getBoundsInRoot())
         with(compose.density) {
@@ -318,6 +338,23 @@ class EmptyStatesAtLargeTextTest {
         val words = "Своих рецептов пока нет"
         val style = showAlone(words)
         assertTheHeadlineBreaksBetweenWords(ALONE, words, style)
+    }
+
+    // The book rows set their title and their provenance line the same way: each is read out once too.
+    @Test
+    @Config(qualifiers = "ru-w320dp-h711dp", fontScale = 2f)
+    fun aBookRowsTitleAndProvenanceAreReadOnce() {
+        val parent = Recipe.create(Instant.parse("2026-10-10T11:00:00Z"), owner = null).copy(title = "Плов по-фергански")
+        val version = parent.fork(Instant.parse("2026-10-10T12:00:00Z"), owner = null, byAuthor = true).copy(title = "Картофельно-грибная запеканка")
+        runBlocking {
+            recipes.save(parent)
+            recipes.save(version)
+        }
+        show(LibraryView.OWN, Mode.Serverless)
+        await(BookEntryRowTags.provenance(version.id.value))
+        compose.waitForIdle()
+        assertReadOnce("Картофельно-грибная запеканка")
+        assertReadOnce("по рецепту «Плов по-фергански»")
     }
 
     private companion object {
