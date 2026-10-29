@@ -16,6 +16,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -197,6 +198,11 @@ class KitchenFromTheCardTest {
         }
 
         val atOpening = surfaceTop()
+        // The reader has scrolled on into the card, past its title: a place the card keeps (a few pixels from the very
+        // top are not one, CardPlaces.anchorAt). View's rows are 48 dp from T-317, so clearing the fork alone scrolls
+        // too little to tell.
+        compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, SCROLLED_ON_PX) }
+        compose.waitForIdle()
         compose.scrollClearOfFork(line(1))
         val top = surfaceTop()
         assertTrue("the card is scrolled down to its equipment", top < atOpening)
@@ -398,6 +404,9 @@ class KitchenFromTheCardTest {
     }
 
     private companion object {
+        /** How far the reader has scrolled into the card before reaching the lacking line. */
+        const val SCROLLED_ON_PX = 120f
+
         val NOW: Instant = Instant.parse("2026-10-10T12:00:00Z")
         val scheme = lightColorScheme()
 

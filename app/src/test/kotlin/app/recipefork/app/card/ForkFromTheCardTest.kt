@@ -147,7 +147,7 @@ class ForkFromTheCardTest {
         assertEquals(forkId.value, session.viewing.value)
         compose.waitUntil(PATIENCE_MS) { compose.textsOf(CardTags.TITLE) == listOf("Green borscht") }
         compose.waitUntilExactlyOneExists(hasTestTag(CardTags.PROVENANCE), PATIENCE_MS)
-        assertEquals(listOf("Forked from “Borscht”"), compose.textsOf(CardTags.PROVENANCE))
+        assertEquals(listOf("after “Borscht”"), compose.textsOf(CardTags.PROVENANCE))
         assertEquals("Green borscht", stored(forkId)?.title)
         assertEquals(original, stored(original.id))
         // The provenance opens the original's card.

@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,17 +68,22 @@ fun AppTheme(dark: Boolean = false, content: @Composable () -> Unit) {
 data class AppColors(
     /** A sheet lighter than the page in both schemes: the book's collection spines (the redesign's `s0`). */
     val raisedPaper: Color,
+    /** The pencil of the reader's own margin notes on a step, and of nothing else (the redesign's `pencil`, v0.43). */
+    val graphite: Color,
 ) {
     companion object {
         /** Outside [AppTheme] (a bare MaterialTheme in a test): nothing is specified, so nothing is drawn in them. */
-        val Unspecified = AppColors(raisedPaper = Color.Unspecified)
+        val Unspecified = AppColors(raisedPaper = Color.Unspecified, graphite = Color.Unspecified)
     }
 }
 
 /** The colours beyond Material 3's roles `app_theme.xml` gives: its `theme_dark_<name>` ones when [dark], else `theme_light_<name>`. */
 fun appColors(resources: Resources, dark: Boolean): AppColors {
     fun color(light: Int, darkOne: Int) = Color(resources.getColor(if (dark) darkOne else light, null))
-    return AppColors(raisedPaper = color(R.color.theme_light_raisedPaper, R.color.theme_dark_raisedPaper))
+    return AppColors(
+        raisedPaper = color(R.color.theme_light_raisedPaper, R.color.theme_dark_raisedPaper),
+        graphite = color(R.color.theme_light_graphite, R.color.theme_dark_graphite),
+    )
 }
 
 private val LocalAppColors = staticCompositionLocalOf { AppColors.Unspecified }
@@ -174,12 +180,14 @@ fun appShapes(resources: Resources): Shapes {
 }
 
 /**
- * The bundled family of what is read: Literata at its 18 pt optical size, Regular and Medium (`res/font/`, built by
- * `scripts/fonts.sh`). Never a downloadable font: the app makes no request at run time.
+ * The bundled family of what is read: Literata at its 18 pt optical size, Regular and Medium, and its real Italic for
+ * the reader's margin notes (`res/font/`, built by `scripts/fonts.sh`). Never a downloadable font: the app makes no
+ * request at run time.
  */
 val ReadingFamily = FontFamily(
     Font(R.font.literata_regular, FontWeight.Normal),
     Font(R.font.literata_medium, FontWeight.Medium),
+    Font(R.font.literata_italic, FontWeight.Normal, FontStyle.Italic),
 )
 
 /** The bundled family of what is pressed, counted and compared: Golos Text, Regular and Medium. */

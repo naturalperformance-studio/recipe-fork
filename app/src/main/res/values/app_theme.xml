@@ -111,9 +111,11 @@
 
     <!-- Beyond Material 3's roles, light and dark: read through the theme as MaterialTheme.appColors, never in a screen.
          Raised paper: a sheet lighter than the page in both schemes — the book's collection spines (the redesign's
-         s0). -->
+         s0). Graphite: the pencil of one's own margin notes on a step, and nothing else (the redesign's pencil). -->
     <color name="theme_light_raisedPaper">#FFFCF8F0</color>
+    <color name="theme_light_graphite">#FF6A5B48</color>
     <color name="theme_dark_raisedPaper">#FF2A251F</color>
+    <color name="theme_dark_graphite">#FFCDBB9F</color>
 
     <!-- Corners: Material 3's shape scale, from the smallest (chips, menus) to the largest (sheets, dialogs). -->
     <dimen name="theme_shape_extraSmall">4dp</dimen>

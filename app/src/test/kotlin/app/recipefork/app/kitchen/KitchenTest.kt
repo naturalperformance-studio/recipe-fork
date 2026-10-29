@@ -38,6 +38,18 @@ class KitchenTest {
         assertTrue(Kitchen.counts(KITCHEN_DICTIONARY.single { it.id == FRYING_PAN }))
     }
 
+    // T-317: known to have — never while the kitchen is empty, never what does not count; otherwise what it does not lack.
+    @Test
+    fun aKitchenHasOnlyWhatCountsAndIsTicked() {
+        val empty = Kitchen(setOf(PARCHMENT), KITCHEN_DICTIONARY)
+        KITCHEN_DICTIONARY.forEach { assertFalse("${it.labelEn}", empty.has(it.id)) }
+        val kitchen = Kitchen(setOf(FRYING_PAN), KITCHEN_DICTIONARY)
+        assertTrue(kitchen.has(FRYING_PAN))
+        assertTrue("a group is had through any of its items", kitchen.has(STOVETOP))
+        listOf(SAUCEPAN, SCALE, MEASURING).forEach { assertFalse("$it", kitchen.has(it)) }
+        listOf(PARCHMENT, FOIL, Kitchen.CONSUMABLES, REMOVED_POT, 99_999L).forEach { assertFalse("$it", kitchen.has(it)) }
+    }
+
     @Test
     fun aGroupIsHadWhenAnyOfItsItemsIs() {
         val kitchen = Kitchen(setOf(FRYING_PAN), KITCHEN_DICTIONARY)

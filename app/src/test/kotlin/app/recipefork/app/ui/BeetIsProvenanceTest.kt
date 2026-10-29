@@ -26,20 +26,24 @@ class BeetIsProvenanceTest {
                 .filterNot { it.startsWith("*") || it.startsWith("/*") || it.startsWith("//") }
                 .sumOf { line -> aRead.findAll(line).count() }
         }.filterValues { it > 0 }
-        // The provenance line's two forms (a parent the book holds, and one it does not) and the held-fork dialog's glyph;
-        // the engraved mark's bent tine; the book entry's provenance line.
-        assertEquals(mapOf("card/CardScreen.kt" to 3, "library/EmptyState.kt" to 1, "library/BookEntryRow.kt" to 1), reads)
+        // The card's provenance line, held or not, and the held-fork dialog's glyph; the engraved mark's bent tine; the
+        // book entry's provenance line.
+        assertEquals(
+            mapOf("card/ProvenanceLine.kt" to 1, "card/CardScreen.kt" to 1, "library/EmptyState.kt" to 1, "library/BookEntryRow.kt" to 1),
+            reads,
+        )
     }
 
-    // Both of the card's reads stand in its provenance area, and are its tertiary itself.
+    // The provenance line's one read is its beet, which colours the words and draws the nodes and the knee, held or not.
     @Test
-    fun theCardsTwoReadsAreTheProvenanceLine() {
-        val card = File(sources, "card/CardScreen.kt").readText()
-        val provenance = card.substringAfter("private fun Provenance(").substringBefore("\n}\n")
-        assertEquals(listOf("tertiary", "tertiary"), aRead.findAll(provenance).map { it.groupValues[1] }.toList())
+    fun theProvenanceLinesReadIsItsBeet() {
+        val line = File(sources, "card/ProvenanceLine.kt").readText().substringAfter("internal fun ProvenanceLine(").substringBefore("\n}\n")
+        assertEquals(listOf("tertiary"), aRead.findAll(line).map { it.groupValues[1] }.toList())
+        assertTrue(Regex("""val beet = MaterialTheme\.colorScheme\.tertiary""").containsMatchIn(line))
+        assertTrue(Regex("""draw\(it, beet\)""").containsMatchIn(line))
     }
 
-    // The third read is the held-fork dialog's icon colour, that is its provenance glyph.
+    // The card screen's read is the held-fork dialog's icon colour, that is its provenance glyph.
     @Test
     fun theHeldForkDialogsGlyphIsBeet() {
         val card = File(sources, "card/CardScreen.kt").readText()

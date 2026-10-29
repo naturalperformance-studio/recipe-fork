@@ -57,6 +57,7 @@ import app.recipefork.app.library.LibraryScreen
 import app.recipefork.app.library.LibrarySession
 import app.recipefork.app.library.rememberBookCollections
 import app.recipefork.app.library.rememberCoverThumbnails
+import app.recipefork.app.library.rememberExport
 import app.recipefork.app.library.rememberRecipeImport
 import app.recipefork.app.paste.PasteReading
 import app.recipefork.app.paste.PasteScreen
@@ -155,8 +156,12 @@ fun AppNavHost(
         modifier = modifier,
         enterTransition = { slideInHorizontally(tween(MOTION_MS)) { it } },
         exitTransition = { slideOutHorizontally(tween(MOTION_MS)) { -it / BENEATH_SHIFT } },
-        popEnterTransition = { slideInHorizontally(tween(MOTION_MS)) { -it / BENEATH_SHIFT } },
-        popExitTransition = { slideOutHorizontally(tween(MOTION_MS)) { it } },
+        popEnterTransition = { beneathReturns() },
+        popExitTransition = { aboveLeaves() },
+        // The back gesture moves the same slide as a back tapped, following the finger: the host's own default for a
+        // gesture shrinks the screen above and fades the one beneath in.
+        predictivePopEnterTransition = { beneathReturns() },
+        predictivePopExitTransition = { aboveLeaves() },
     ) {
         composable(Destinations.LIBRARY_ROUTE) {
             LibraryScreen(
@@ -221,7 +226,7 @@ fun AppNavHost(
             )
         }
         composable(Destinations.CARD_ROUTE, arguments = recipeArgument) { entry ->
-            RecipeCard(RecipeId(entry.recipeId()), session, recipes, editor, card)
+            RecipeCard(RecipeId(entry.recipeId()), session, recipes, editor, card, mode)
         }
         composable(Destinations.EDITOR_ROUTE, arguments = recipeArgument) { entry ->
             EditorScreen(RecipeId(entry.recipeId()), recipes, editor, session.viewModelScope, onClose = session::closeEditor)
@@ -245,8 +250,10 @@ fun AppNavHost(
  * A recipe's card: its edit action opens the editor on it; its fork action writes a fork and opens the editor on it,
  * so that leaving the editor shows the fork's card (FLOW-029 (1)), or first offers an unchanged fork the book holds
  * already (FLOW-015); a fork's provenance opens its parent's card in place of the fork's; the Open of its notice that a
- * recipe was put on the shopping list opens the list in place of the card, above the book. The screen stays on while
- * the card is shown, and is left to the device once it is not (FLOW-014).
+ * recipe was put on the shopping list opens the list in place of the card, above the book. In [Mode.Serverless] its ⋮
+ * exports the recipe to a file as the book's entries do (FLOW-063), by the same path, its progress shown over the card
+ * and its failure said in the dialog over whatever is shown. The screen stays on while the card is shown, and is left to
+ * the device once it is not (FLOW-014).
  */
 @Composable
 private fun RecipeCard(
@@ -255,7 +262,10 @@ private fun RecipeCard(
     recipes: RecipeRepository,
     editor: EditorEnvironment,
     card: CardEnvironment,
+    mode: Mode,
 ) {
+    val export = rememberExport(recipes, session)
+    val fileWork by session.work.collectAsState()
     // One fork per tap: a second tap while the first is being written adds none.
     var forking by remember(id) { mutableStateOf(false) }
     // An unchanged fork the book already holds, offered in place of a new one (FLOW-015).
@@ -301,6 +311,8 @@ private fun RecipeCard(
             session.closeCard()
             session.openShopping()
         },
+        onExport = if (mode == Mode.Serverless) { title -> export(id.value, title) } else null,
+        fileWork = fileWork,
     )
 }
 
@@ -432,6 +444,12 @@ private const val MOTION_MS = 300
 
 /** The destination beneath moves by this fraction of the width while the one above slides over it. */
 private const val BENEATH_SHIFT = 4
+
+/** Back: the destination beneath slides back into place from where it was pushed aside. */
+private fun beneathReturns() = slideInHorizontally(tween(MOTION_MS)) { -it / BENEATH_SHIFT }
+
+/** Back: the destination above slides out to the right. */
+private fun aboveLeaves() = slideOutHorizontally(tween(MOTION_MS)) { it }
 
 /** The theme the reader chose, from the composition root: the one [MainActivity][app.recipefork.app.MainActivity] shows. */
 @Composable

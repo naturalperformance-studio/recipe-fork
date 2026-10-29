@@ -9,12 +9,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.nio.ByteBuffer
 
 /**
  * T-297: the four fonts the type roles use ship in `res/font/` as static instances (Literata and Golos Text, Regular
  * and Medium) that draw Russian and English and the signs recipes use, and the SIL OFL 1.1 text of each family ships in
- * `assets/licenses/`.
+ * `assets/licenses/`. T-315: so does Literata's real Italic, Regular, for the reader's margin notes — built and subset by
+ * `scripts/fonts.sh` as the others are.
  */
 @RunWith(AndroidJUnit4::class)
 class BundledFontsTest {
@@ -28,6 +30,10 @@ class BundledFontsTest {
         }
 
         val weight: Int get() = data.getShort(tables.getValue("OS/2") + 4).toInt()
+
+        /** Whether the font is an italic face: bit 0 of its OS/2 fsSelection and bit 1 of its head macStyle both say so. */
+        val italic: Boolean get() = (data.getShort(tables.getValue("OS/2") + 62).toInt() and 1) != 0 &&
+            (data.getShort(tables.getValue("head") + 44).toInt() and 2) != 0
 
         /** Every code point the font's Unicode character map (format 4 or 12) maps to a glyph other than .notdef. */
         val codePoints: Set<Int> by lazy {
@@ -75,6 +81,7 @@ class BundledFontsTest {
     private val fonts = mapOf(
         "literata_regular" to (R.font.literata_regular to 400),
         "literata_medium" to (R.font.literata_medium to 500),
+        "literata_italic" to (R.font.literata_italic to 400),
         "golos_text_regular" to (R.font.golos_text_regular to 400),
         "golos_text_medium" to (R.font.golos_text_medium to 500),
     )
@@ -86,7 +93,16 @@ class BundledFontsTest {
             val font = font(id)
             assertFalse("$name is static, not a variable font", "fvar" in font.tables)
             assertEquals("$name's weight", weight, font.weight)
+            assertEquals("$name is italic, or upright", name.endsWith("italic"), font.italic)
         }
+    }
+
+    // The italic is built and subset by the script from the family's own italic source, as the others are.
+    @Test
+    fun theItalicIsBuiltByTheFontsScript() {
+        val script = File("../scripts/fonts.sh").readText()
+        assertTrue(Regex("""fetch 'literata/Literata-Italic%5Bopsz,wght%5D\.ttf' [0-9a-f]{64} literata-italic\.ttf""").containsMatchIn(script))
+        assertTrue(Regex("""(?m)^build literata-italic\.ttf opsz=18 wght=400 literata_italic$""").containsMatchIn(script))
     }
 
     @Test

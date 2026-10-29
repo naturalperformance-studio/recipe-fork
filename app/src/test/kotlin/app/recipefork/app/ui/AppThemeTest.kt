@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontListFontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.ResourceFont
 import androidx.core.view.WindowCompat
@@ -118,8 +119,8 @@ class AppThemeTest {
     // in both schemes, and AppTheme gives the one of the scheme on the screen as it changes.
     @Test
     fun theRaisedPaperIsTheFilesLighterThanThePageAndGivenWithTheScheme() {
-        assertEquals(AppColors(raisedPaper = Color(BEYOND_LIGHT.getValue("raisedPaper"))), appColors(resources, dark = false))
-        assertEquals(AppColors(raisedPaper = Color(BEYOND_DARK.getValue("raisedPaper"))), appColors(resources, dark = true))
+        assertEquals(Color(BEYOND_LIGHT.getValue("raisedPaper")), appColors(resources, dark = false).raisedPaper)
+        assertEquals(Color(BEYOND_DARK.getValue("raisedPaper")), appColors(resources, dark = true).raisedPaper)
         for (dark in listOf(false, true)) {
             val scheme = appColorScheme(resources, dark)
             val paper = appColors(resources, dark).raisedPaper.luminance()
@@ -134,6 +135,24 @@ class AppThemeTest {
         dark.value = true
         compose.waitForIdle()
         assertEquals(appColors(resources, dark = true), shown)
+    }
+
+    // T-315: graphite, the redesign's pencil, is a named colour of the file beside raised paper — #6A5B48 in light,
+    // #CDBB9F in dark — and AppTheme gives the one of the scheme on the screen as it changes.
+    @Test
+    fun theGraphiteIsTheFilesPencilAndGivenWithTheScheme() {
+        assertEquals(Color(0xFF6A5B48), appColors(resources, dark = false).graphite)
+        assertEquals(Color(0xFFCDBB9F), appColors(resources, dark = true).graphite)
+        assertEquals(0xFF6A5B48.toInt(), resources.getColor(R.color.theme_light_graphite, null))
+        assertEquals(0xFFCDBB9F.toInt(), resources.getColor(R.color.theme_dark_graphite, null))
+        val dark = mutableStateOf(false)
+        var shown: Color? = null
+        compose.setContent { AppTheme(dark = dark.value) { shown = MaterialTheme.appColors.graphite } }
+        compose.waitForIdle()
+        assertEquals(Color(0xFF6A5B48), shown)
+        dark.value = true
+        compose.waitForIdle()
+        assertEquals(Color(0xFFCDBB9F), shown)
     }
 
     @Test
@@ -209,7 +228,14 @@ class AppThemeTest {
         }
         // The families are the bundled files, Regular and Medium each: never a downloadable font.
         fun files(family: FontFamily) = (family as FontListFontFamily).fonts.map { (it as ResourceFont).resId to it.weight }
-        assertEquals(listOf(R.font.literata_regular to FontWeight.Normal, R.font.literata_medium to FontWeight.Medium), files(ReadingFamily))
+        assertEquals(
+            listOf(R.font.literata_regular to FontWeight.Normal, R.font.literata_medium to FontWeight.Medium, R.font.literata_italic to FontWeight.Normal),
+            files(ReadingFamily),
+        )
+        // The reading family's italic is a file of its own, a real italic face, not a slanted Regular (T-315).
+        val styles = (ReadingFamily as FontListFontFamily).fonts.associate { (it as ResourceFont).resId to it.style }
+        assertEquals(FontStyle.Italic, styles[R.font.literata_italic])
+        assertEquals(FontStyle.Normal, styles[R.font.literata_regular])
         assertEquals(listOf(R.font.golos_text_regular to FontWeight.Normal, R.font.golos_text_medium to FontWeight.Medium), files(WorkingFamily))
     }
 
@@ -300,8 +326,8 @@ class AppThemeTest {
         const val BUTTON = "button"
 
         /** The colours beyond Material 3's roles, light and dark, in the file's order (T-308). */
-        val BEYOND_LIGHT = mapOf("raisedPaper" to 0xFFFCF8F0)
-        val BEYOND_DARK = mapOf("raisedPaper" to 0xFF2A251F)
+        val BEYOND_LIGHT = mapOf("raisedPaper" to 0xFFFCF8F0, "graphite" to 0xFF6A5B48)
+        val BEYOND_DARK = mapOf("raisedPaper" to 0xFF2A251F, "graphite" to 0xFFCDBB9F)
 
         /** The design source's colour roles, light and dark, in the file's order. */
         val LIGHT = mapOf(

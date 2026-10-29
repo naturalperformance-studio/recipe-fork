@@ -196,17 +196,18 @@ class CardSummaryTest {
         compose.onNodeWithTag(CardTags.SUMMARY).assertDoesNotExist()
     }
 
-    // For a fork, where it came from stands under the summary — the card's one provenance, in beet — and opens the parent.
+    // For a fork, where it came from stands above the title — the card's one provenance, in beet — and opens the parent;
+    // the summary stays right under the title.
     @Test
-    fun aForksProvenanceStandsUnderTheSummaryAndOpensTheParent() {
+    fun aForksProvenanceStandsAboveTheTitleAndOpensTheParent() {
         val parent = recipe("Borscht", ingredients = 3, steps = 2)
         runBlocking { recipes.save(parent) }
         show(parent.fork(now, owner = null).copy(title = "Green borscht"))
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
         assertEquals("3 ingredients · 2 steps", summary())
-        assertEquals(listOf("Forked from “Borscht”"), compose.textsOf(CardTags.PROVENANCE))
+        assertEquals(listOf("after “Borscht”"), compose.textsOf(CardTags.PROVENANCE))
+        assertTrue(top(CardTags.PROVENANCE) < top(CardTags.TITLE))
         assertTrue(top(CardTags.TITLE) < top(CardTags.SUMMARY))
-        assertTrue(top(CardTags.SUMMARY) < top(CardTags.PROVENANCE))
         assertEquals(listOf(beet), compose.textLayoutsWithin(CardTags.PROVENANCE).map { it.layoutInput.style.color })
         compose.onNodeWithTag(CardTags.PROVENANCE).performClick()
         assertEquals(listOf(parent.id), opened)
@@ -218,7 +219,7 @@ class CardSummaryTest {
         val parent = recipe("Borscht", ingredients = 3, steps = 2)
         show(parent.fork(now, owner = null).copy(title = "Green borscht"))
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().size == 1 }
-        assertEquals(listOf("Forked from a recipe that is not in this recipe book"), compose.textsOf(CardTags.PROVENANCE))
+        assertEquals(listOf("after a recipe not in this book"), compose.textsOf(CardTags.PROVENANCE))
         assertEquals(listOf(beet), compose.textLayoutsWithin(CardTags.PROVENANCE).map { it.layoutInput.style.color })
     }
 }

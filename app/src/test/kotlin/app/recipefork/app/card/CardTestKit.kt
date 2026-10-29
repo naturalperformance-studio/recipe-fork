@@ -34,7 +34,7 @@ fun ComposeTestRule.backThroughTheCard() {
 }
 
 /** The card's ⋮ items, each that the menu may hold. */
-private val CARD_MENU_ITEMS = setOf(CardTags.SHOPPING, CardTags.COLLECTION, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.SOURCE_TEXT, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
+private val CARD_MENU_ITEMS = setOf(CardTags.SHOPPING, CardTags.COLLECTION, CardTags.PRINT, CardTags.SHARE_PDF, CardTags.EXPORT, CardTags.SOURCE_TEXT, CardTags.CLEAR_MARKS, CardTags.DELETE, CardTags.REMOVE)
 
 /** Whether the card's ⋮ is open: one of its items is shown. */
 private fun ComposeTestRule.cardMenuOpen() = CARD_MENU_ITEMS.any { onAllNodes(hasTestTag(it)).fetchSemanticsNodes().isNotEmpty() }
@@ -146,10 +146,13 @@ fun SemanticsNodeInteractionsProvider.assertWhole(tag: String) {
         (0 until layout.lineCount - 1).forEach { line ->
             val end = layout.getLineEnd(line)
             assertTrue("\"$text\" in $tag breaks only between words, not after \"${text.substring(layout.getLineStart(line), end)}\"",
-                text[end - 1].isWhitespace() || text.getOrNull(end)?.isWhitespace() == true)
+                text[end - 1].isWhitespace() || text[end - 1] == BREAK_AFTER_HYPHEN || text.getOrNull(end)?.isWhitespace() == true)
         }
     }
 }
+
+/** The unseen place to break after an inner hyphen that a title set as a book row's carries (breakAfterHyphens). */
+private const val BREAK_AFTER_HYPHEN = '\u200B'
 
 /** Waits until the card is open and shows its content or one of its messages. */
 fun ComposeTestRule.awaitCard() = waitUntil(PATIENCE_MS) {

@@ -35,7 +35,16 @@
     <string name="card_summary_three">%1$s · %2$s · %3$s</string>
     <string name="card_summary_spoken_two">%1$s, %2$s</string>
     <string name="card_summary_spoken_three">%1$s, %2$s, %3$s</string>
-    <!-- A fork's provenance area (FORK-003, FORK-004): its one direct parent. -->
+    <!-- A version's provenance line above its title (FORK-010, FLOW-065): its one direct parent, by title, and whether
+         the book holds it — read as card_provenance, shown as card_provenance_open with a chevron while it opens the
+         parent; the author a file states, marked as not verified, only where the book does not hold the parent. -->
+    <string name="card_provenance">after “%1$s”</string>
+    <string name="card_provenance_open">after “%1$s”\u00A0›</string>
+    <string name="card_provenance_unavailable">after “%1$s”, which is not in this book</string>
+    <string name="card_provenance_unknown">after a recipe not in this book</string>
+    <string name="card_provenance_author">%1$s · author from the file, not verified</string>
+    <string name="card_provenance_author_spoken">%1$s, author from the file, not verified</string>
+    <!-- A printed fork's parent (FLOW-075), and the action of the card's provenance line. -->
     <string name="card_parent">Forked from “%1$s”</string>
     <string name="card_parent_open_action">Open the recipe this one was forked from</string>
     <string name="card_parent_unavailable">Forked from a recipe that is not in this recipe book</string>
@@ -133,8 +142,10 @@
     <!-- The equipment the recipe needs, above the ingredients; on Cooking it folds as the ingredients do once every item is marked. -->
     <string name="card_equipment">Equipment</string>
     <string name="card_equipment_show_action">Show the equipment</string>
-    <!-- Under an item of equipment the reader's kitchen lacks (My kitchen). -->
+    <!-- Beside an item of equipment the reader's kitchen lacks (My kitchen), its square left empty. -->
     <string name="card_equipment_not_in_kitchen">Not in your kitchen</string>
+    <!-- What the screen reader says of an item on View whose square is filled: the kitchen does not lack it. -->
+    <string name="card_equipment_in_kitchen">In your kitchen</string>
     <!-- What a tap on such an item does, on View: My kitchen opens at it. -->
     <string name="card_equipment_open_kitchen_action">Open My kitchen</string>
     <!-- Under the equipment on View while My kitchen has nothing ticked: the way to set it up. -->

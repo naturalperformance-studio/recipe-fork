@@ -205,7 +205,8 @@ class CardIngredientSpacingTest {
     }
 
     // The tighter top keeps the card's parts apart, 8 dp from each other: the description among them, right under the
-    // title block — title, summary, stated author, provenance — and before the equipment and the ingredients (T-208).
+    // title block — the provenance above the title, then title, stated author, summary — and before the equipment and
+    // the ingredients (T-208, T-311, T-312).
     @Test
     fun theDescriptionStandsUnderTheTitleBlockBeforeTheEquipment() {
         tab.keep(CardMode.VIEW)
@@ -224,14 +225,15 @@ class CardIngredientSpacingTest {
         )
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.PROVENANCE)).fetchSemanticsNodes().isNotEmpty() }
         val order = listOf(
-            CardTags.TITLE, CardTags.SUMMARY, CardTags.STATED_AUTHOR, CardTags.PROVENANCE, CardTags.DESCRIPTION,
+            CardTags.PROVENANCE, CardTags.TITLE, CardTags.STATED_AUTHOR, CardTags.SUMMARY, CardTags.DESCRIPTION,
             EquipmentTags.SURFACE, CardTags.SERVINGS_FEWER, IngredientTags.SURFACE, CardTags.STEPS,
         )
         order.zipWithNext().forEach { (above, below) ->
             assertTrue("$above above $below", bounds(above).bottom <= bounds(below).top + 0.5f)
         }
-        assertEquals("the summary right under the title", 0f, dp(bounds(CardTags.SUMMARY).top - bounds(CardTags.TITLE).bottom), 0.5f)
-        assertEquals("the description 8 dp under the provenance", 8f, dp(bounds(CardTags.DESCRIPTION).top - bounds(CardTags.PROVENANCE).bottom), 0.5f)
+        assertEquals("the stated author 6 dp under the title", 6f, dp(bounds(CardTags.STATED_AUTHOR).top - bounds(CardTags.TITLE).bottom), 0.5f)
+        assertEquals("the summary right under the stated author", 0f, dp(bounds(CardTags.SUMMARY).top - bounds(CardTags.STATED_AUTHOR).bottom), 0.5f)
+        assertEquals("the description 8 dp under the summary", 8f, dp(bounds(CardTags.DESCRIPTION).top - bounds(CardTags.SUMMARY).bottom), 0.5f)
         assertEquals("the equipment 8 dp under the description", 8f, dp(bounds(EquipmentTags.SURFACE).top - bounds(CardTags.DESCRIPTION).bottom), 0.5f)
         assertEquals("the steps 8 dp under the ingredients", 8f, dp(bounds(CardTags.STEPS).top - bounds(IngredientTags.SURFACE).bottom), 0.5f)
     }

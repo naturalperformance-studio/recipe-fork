@@ -224,7 +224,8 @@ class CardStepClipBoxTest {
         // The box fills the step's media width: from under the step's text to the card's edge, as a photograph's.
         val step = bounds(CardTags.step(1))
         assertEquals(step.right, clip.media.right, 1f)
-        assertEquals(step.left + with(compose.density) { StepIndent.toPx() }, clip.media.left, 1f)
+        val text = compose.onNodeWithTag(StepTags.text(1), useUnmergedTree = true).fetchSemanticsNode().positionInRoot.x
+        assertEquals(text, clip.media.left, 1f)
     }
 
     private fun controlName() = compose.onNodeWithTag(CardTags.stepVideoControl(1)).fetchSemanticsNode()
