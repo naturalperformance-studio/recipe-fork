@@ -6,15 +6,13 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ripple
@@ -54,10 +52,10 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -113,7 +111,6 @@ import app.recipefork.app.print.rememberPrintOut
 import app.recipefork.app.shopping.ListedRecipe
 import app.recipefork.app.shopping.rememberAddToShopping
 import app.recipefork.app.timer.rememberCardTimers
-import androidx.compose.material3.Button
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -128,6 +125,11 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import app.recipefork.app.library.EmptyAction
 import app.recipefork.app.library.EmptyState
+import app.recipefork.app.library.HyphenFitText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.TextStyle
+import app.recipefork.app.library.Engraving
 import app.recipefork.app.ui.SnackbarAction
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
@@ -177,7 +179,11 @@ import app.recipefork.core.recipe.StatedParent
 import app.recipefork.core.recipe.UnitSystem
 import app.recipefork.core.scaling.InterfaceLanguage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
@@ -189,8 +195,11 @@ private sealed interface CardContent {
     data object Loading : CardContent
     data object Missing : CardContent
     data object Unreadable : CardContent
-    /** The recipe, and whether the book holds it as a found one ([RecipeRepository.isMarked]). */
-    data class Shown(val recipe: Recipe, val marked: Boolean) : CardContent
+    /**
+     * The recipe, whether the book holds it as a found one ([RecipeRepository.isMarked]), and what the book says of its
+     * parent — null for a recipe with none.
+     */
+    data class Shown(val recipe: Recipe, val marked: Boolean, val parent: ParentContent?) : CardContent
 }
 
 /** How the card's ⋮ takes a recipe out of the book: an own recipe is deleted, a found one removed. */
@@ -201,6 +210,17 @@ private fun removalOf(recipe: Recipe, marked: Boolean): Removal? = when {
     marked -> Removal.REMOVE
     recipe.state in DELETABLE -> Removal.DELETE
     else -> null
+}
+
+/**
+ * What the book says of the parent of [recipe], as it changes: held with its title, or not held; null, at once, for a
+ * recipe with no parent. A parent that cannot be read is taken as not held: the card never fails for its parent.
+ */
+private fun parentOf(recipes: RecipeRepository, recipe: Recipe): Flow<ParentContent?> {
+    val parent = recipe.parent ?: return flowOf(null)
+    return recipes.observe(parent)
+        .map<Recipe?, ParentContent?> { held -> held?.let { ParentContent.Held(it.title) } ?: ParentContent.Unavailable }
+        .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(ParentContent.Unavailable) else throw failure }
 }
 
 /** Whether the book holds [id] as a found recipe; a book that cannot say is taken to hold it as its own. */
@@ -260,7 +280,7 @@ private suspend fun markedIn(recipes: RecipeRepository, id: RecipeId): Boolean =
  * [onBack] is the bar's back action; the system's back, and its predictive gesture, are the navigation host's, which
  * leaves the card for the destination beneath it.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalCoroutinesApi::class)
 @Composable
 fun CardScreen(
     recipeId: RecipeId,
@@ -279,11 +299,19 @@ fun CardScreen(
 ) {
     // Each attempt reads the recipe afresh; a read that fails — a row that does not read back, the storage refusing —
     // is said to be a failure, not an absence, and "Try again" makes the next attempt (FLOW-020 (3)), shown loading
-    // until it is read.
+    // until it is read. A version is shown once its parent is read as well, so that its provenance line and its title
+    // come together and nothing under them moves as the line comes (T-312).
     var attempt by remember(recipeId, recipes) { mutableIntStateOf(0) }
     val content by remember(recipeId, recipes, attempt) {
         recipes.observe(recipeId)
-            .map<Recipe?, CardContent> { recipe -> recipe?.let { CardContent.Shown(it, markedIn(recipes, recipeId)) } ?: CardContent.Missing }
+            .flatMapLatest<Recipe?, CardContent> { recipe ->
+                if (recipe == null) {
+                    flowOf(CardContent.Missing)
+                } else {
+                    val marked = markedIn(recipes, recipeId)
+                    parentOf(recipes, recipe).map { parent -> CardContent.Shown(recipe, marked, parent) }
+                }
+            }
             .onStart { emit(CardContent.Loading) }
             .catch { failure -> if (failure is Exception && failure !is CancellationException) emit(CardContent.Unreadable) else throw failure }
     }.collectAsState(initial = CardContent.Loading)
@@ -323,6 +351,7 @@ fun CardScreen(
     val barStates = TABS.map { rememberTopAppBarState() }
     val shown = content
     val recipe = (shown as? CardContent.Shown)?.recipe
+    val parentShown = (shown as? CardContent.Shown)?.parent
     val removal = (shown as? CardContent.Shown)?.let { removalOf(it.recipe, it.marked) }
     // The recipe leaves the book at once, asking nothing, and the card closes to the book, which says so with Undo.
     val remove = rememberRemoval(recipes, environment.marks, onRemoved)
@@ -515,7 +544,6 @@ fun CardScreen(
         val barShown = timersBar?.shown?.isNotEmpty() == true
         val density = LocalDensity.current
         val bottom = if (barShown) 0.dp else (padding.calculateBottomPadding() - keyboard).coerceAtLeast(0.dp)
-        val direction = LocalLayoutDirection.current
         Box(
             Modifier
                 .fillMaxSize()
@@ -524,12 +552,10 @@ fun CardScreen(
                 .onGloballyPositioned { area ->
                     forkFloor = area.boundsInRoot().bottom - with(density) { (padding.calculateBottomPadding() + FAB_SPACING).toPx() }
                 }
-                .padding(
-                    top = padding.calculateTopPadding(),
-                    start = padding.calculateStartPadding(direction),
-                    end = padding.calculateEndPadding(direction),
-                    bottom = if (barShown) maxOf(keyboard, padding.calculateBottomPadding()) else keyboard,
-                )
+                // Under the bar and its tabs as they are measured in this frame: the tabs come with the recipe, and the
+                // recipe stands under them from its first frame, not under the bar alone for one frame and then moved down.
+                .padding(remember(padding) { TopAndSides(padding) })
+                .padding(bottom = if (barShown) maxOf(keyboard, padding.calculateBottomPadding()) else keyboard)
                 .consumeWindowInsets(padding),
         ) {
             when {
@@ -545,7 +571,7 @@ fun CardScreen(
                         // A timer cancelled on a step is said in the card's notice, with Undo.
                         CompositionLocalProvider(LocalTimerCancelled provides timerCancelled) {
                             RecipeContent(
-                                recipe, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
+                                recipe, parentShown, loaded, recipes, held, mode, session, marks, onOpenParent, scrolls[page], placesOf[page],
                                 shownAgain, units,
                                 nutritionShown = nutritionShown,
                                 equipmentEntries = equipmentEntries,
@@ -744,8 +770,9 @@ private fun runningOutOfSight(recipe: Recipe, scroll: ScrollState, places: CardP
 }
 
 /**
- * Said while the recipe is still being read: nothing for a moment, so that a quick read does not flash, then an
- * indicator in place of the blank.
+ * Said while the recipe is still being read: nothing for a moment, so that a quick read does not flash, then the
+ * card's state in place of the blank — the engraved mark over the words that the recipe is loading, as the book's
+ * states stand (redesign-1 § 4.2, the card's states kept with the mark in place of an icon).
  */
 @Composable
 private fun Loading() {
@@ -755,41 +782,63 @@ private fun Loading() {
         showing = true
     }
     if (showing) {
-        val said = stringResource(R.string.card_loading)
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(Modifier.semantics { contentDescription = said }.testTag(CardTags.LOADING))
-        }
+        EmptyState(
+            engraving = Engraving.MARK,
+            headline = stringResource(R.string.card_loading),
+            sentence = null,
+            action = null,
+            tag = CardTags.LOADING,
+            centred = true,
+        )
     }
+}
+
+/**
+ * The top and the sides of the scaffold's [padding], read as the card's content is measured rather than as it is
+ * composed: the scaffold learns the height of the bar and its tabs while it measures them, after the content was composed,
+ * so a padding read in composition stays the bar's alone for the frame in which the tabs come.
+ */
+private class TopAndSides(private val padding: PaddingValues) : PaddingValues {
+    override fun calculateTopPadding(): Dp = padding.calculateTopPadding()
+    override fun calculateBottomPadding(): Dp = 0.dp
+    override fun calculateLeftPadding(layoutDirection: LayoutDirection): Dp = padding.calculateLeftPadding(layoutDirection)
+    override fun calculateRightPadding(layoutDirection: LayoutDirection): Dp = padding.calculateRightPadding(layoutDirection)
 }
 
 /** How long a read may take before the card says it is still reading. */
 internal const val LOADING_INDICATOR_DELAY_MS = 300L
 
-/** The word that the recipe could not be read from the device, and the offer to read it again (FLOW-020 (3)). */
+/**
+ * The word that the recipe could not be read from the device, and the offer to read it again (FLOW-020 (3)): the
+ * engraved mark over the words, and the way out at the card's target height.
+ */
 @Composable
 private fun Unreadable(onRetry: () -> Unit) {
-    Column(Modifier.padding(16.dp).testTag(CardTags.UNREADABLE)) {
-        Text(stringResource(R.string.card_unreadable), style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = onRetry,
-            modifier = Modifier.heightIn(min = CardTarget).testTag(CardTags.RETRY),
-        ) { Text(stringResource(R.string.card_retry)) }
-    }
+    EmptyState(
+        engraving = Engraving.MARK,
+        headline = stringResource(R.string.card_unreadable),
+        sentence = null,
+        action = EmptyAction(stringResource(R.string.card_retry), null, CardTags.RETRY, onRetry),
+        tag = CardTags.UNREADABLE,
+        centred = true,
+        actionHeight = CardTarget,
+    )
 }
 
 /**
- * Said when the book no longer holds the recipe: the app's empty state — a picture, that the recipe is not found, that
- * it is no longer in this recipe book — with one way out, back to the book ([onBack]).
+ * Said when the book no longer holds the recipe: the engraved mark, that the recipe is not found, that it is no longer
+ * in this recipe book — with one way out, back to the book ([onBack]), outlined as the redesign draws the way out of a
+ * state in which nothing was found.
  */
 @Composable
 private fun Missing(onBack: () -> Unit) {
     EmptyState(
-        picture = R.drawable.ic_search_off,
+        engraving = Engraving.MARK,
         headline = stringResource(R.string.card_missing_headline),
         sentence = stringResource(R.string.card_missing),
-        action = EmptyAction(stringResource(R.string.card_missing_back), R.drawable.ic_arrow_back, CardTags.MISSING_BACK, onBack),
+        action = EmptyAction(stringResource(R.string.card_missing_back), null, CardTags.MISSING_BACK, outlined = true, onClick = onBack),
         tag = CardTags.MISSING,
+        centred = true,
         actionHeight = CardTarget,
     )
 }
@@ -1000,6 +1049,7 @@ private fun ForkAction(expanded: Boolean, onFork: () -> Unit, modifier: Modifier
 @Composable
 private fun RecipeContent(
     recipe: Recipe,
+    parent: ParentContent?,
     entries: Map<Long, IngredientEntryEntity>,
     recipes: RecipeRepository,
     held: ScaleInForce,
@@ -1050,27 +1100,28 @@ private fun RecipeContent(
                 Cover(recipe, recipes.bookName(), cardPlace(CardPlaces.COVER_KEY))
                 val heading: @Composable (onTitleLaidOut: (TextLayoutResult) -> Unit) -> Unit = { onTitleLaidOut ->
                     Column(onHeadingPlaced?.let { placed -> Modifier.onGloballyPositioned { placed(it.boundsInRoot()) } } ?: Modifier) {
-                        // The title whole, on as many lines as it takes (A11Y-004); the bar repeats it once it scrolls away.
-                        Text(
+                        // The title whole, on as many lines as it takes (A11Y-004), its words kept whole as a book row's
+                        // title keeps them; the bar repeats it once it scrolls away.
+                        HyphenFitText(
                             recipe.title.ifBlank { stringResource(R.string.common_untitled_recipe) },
-                            style = MaterialTheme.typography.headlineSmall,
+                            cardTitleStyle(),
+                            cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
                             onTextLayout = onTitleLaidOut,
-                            modifier = cardPlace(CardPlaces.TITLE_KEY).semantics { heading() }.testTag(CardTags.TITLE),
                         )
-                        // Right under the title, as its subtitle, muted: the counts of ingredients and steps and the timers'
+                        // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)):
+                        // under the title, as a byline in a book, read after the title.
+                        recipe.statedAuthor?.let { StatedAuthor(it) }
+                        // Under them, as the title's subtitle, muted: the counts of ingredients and steps and the timers'
                         // time together, for deciding.
                         RecipeSummaryLine(remember(recipe, language) { RecipeSummary.of(recipe, language) })
                     }
                 }
                 // A version's provenance stands above its title, its knee running down from the parent to this recipe.
-                recipe.parent?.let { ProvenanceLine(it, recipe.statedParent, recipes, onOpenParent, heading) } ?: heading {}
-                // A found recipe's author as its file states it, marked every time it is shown (FLOW-064 (3)).
-                recipe.statedAuthor?.let {
-                    Text(
-                        stringResource(R.string.file_stated_author, it),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.testTag(CardTags.STATED_AUTHOR),
-                    )
+                val parentId = recipe.parent
+                if (parentId != null && parent != null) {
+                    ProvenanceLine(parentId, parent, recipe.statedParent, onOpenParent, heading)
+                } else {
+                    heading {}
                 }
                 // The author's description stands with the title block it tells about, before the equipment and the
                 // ingredients, the card's gap from either.
@@ -1204,6 +1255,35 @@ internal fun provenanceText(resources: Resources, stated: StatedParent?, held: S
     val title = (stated?.title ?: held).ifBlank { untitled }
     return if (author == null) resources.getString(R.string.card_parent, title) else resources.getString(R.string.card_parent_stated, title, author)
 }
+
+/**
+ * The card's title as the redesign sets it (`.ctitle`): the reading face, Medium, at [TITLE_SIZE] on [TITLE_LINE] —
+ * larger than the theme's small headline, which the steps on Cooking keep.
+ */
+@Composable
+internal fun cardTitleStyle(): TextStyle =
+    MaterialTheme.typography.headlineSmall.copy(fontSize = TITLE_SIZE, lineHeight = TITLE_LINE, fontWeight = FontWeight.Medium)
+
+/** The title's size and line height: Literata 28 on 1.12 of it, rounded up to 32. */
+private val TITLE_SIZE = 28.sp
+private val TITLE_LINE = 32.sp
+
+/**
+ * The author a found recipe's file states, under its title: in Literata italics and muted, as a byline in a book and
+ * as the book's rows show it, marked as stated and not verified.
+ */
+@Composable
+private fun StatedAuthor(author: String) {
+    Text(
+        stringResource(R.string.file_stated_author, author),
+        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = AUTHOR_GAP).testTag(CardTags.STATED_AUTHOR),
+    )
+}
+
+/** The stated author's distance under the title, as the redesign sets it (`.cauth`). */
+private val AUTHOR_GAP = 6.dp
 
 /** The space between a section's heading and its parts. */
 internal val SECTION_GAP = 8.dp
