@@ -140,7 +140,7 @@ class CardMarksUndoTest {
         awaitStatement("Marks cleared", "Undo")
         compose.waitForIdle()
         parts.forEach {
-            val said = if (it == CardTags.step(0)) "Current step" else "Not done"
+            val said = if (it == CardTags.step(0)) "Current step, 1 of 3" else "Not done"
             assertEquals("$it after clearing", said, node(it).config.getOrNull(SemanticsProperties.StateDescription))
         }
 
@@ -150,7 +150,7 @@ class CardMarksUndoTest {
         assertEquals(
             mapOf(
                 CardTags.equipment(0) to "Done", CardTags.ingredient(0) to "Not done", CardTags.ingredient(1) to "Done",
-                CardTags.step(0) to "Done", CardTags.step(1) to "Current step", CardTags.step(2) to "Not done",
+                CardTags.step(0) to "Done", CardTags.step(1) to "Current step, 2 of 3", CardTags.step(2) to "Not done",
             ),
             read,
         )
@@ -219,7 +219,7 @@ class CardMarksUndoTest {
             assertEquals("$tag's state", if (on) ToggleableState.On else ToggleableState.Off, config.getOrNull(SemanticsProperties.ToggleableState))
             val said = when {
                 on -> "Done"
-                tag == CardTags.step(0) -> "Current step"
+                tag == CardTags.step(0) -> "Current step, 1 of 3"
                 else -> "Not done"
             }
             assertEquals("$tag is read", said, config.getOrNull(SemanticsProperties.StateDescription))

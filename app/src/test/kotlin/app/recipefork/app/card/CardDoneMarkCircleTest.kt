@@ -184,7 +184,7 @@ class CardDoneMarkCircleTest {
     @Test
     fun theCurrentStepsEmptyCircleIsInItsContainersInk() {
         val current = Part(CardTags.step(0), StepRowTags.number(0))
-        assertEquals("Current step", state(current))
+        assertEquals("Current step, 1 of 3", state(current))
         assertFalse(showsCheck(current))
         assertTrue("the ring on the current step", same(scheme.onPrimaryContainer, ring(current)))
     }
@@ -219,7 +219,8 @@ class CardDoneMarkCircleTest {
         val first = Part(CardTags.step(0), StepRowTags.number(0))
         val whole = stepLayout(0)
         assertTrue("the step runs over several lines", whole.lineCount > 1)
-        assertTrue("its number starts its text", whole.layoutInput.text.text.startsWith("1. Brown the chicken"))
+        // The current step: its caption numbers it, its text does not (T-324).
+        assertTrue("its text starts with its words", whole.layoutInput.text.text.startsWith("Brown the chicken"))
 
         tap(first.row)
         val folded = stepLayout(0)

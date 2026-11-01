@@ -54,6 +54,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.semantics.getTextLayoutResult
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.LayoutDirection
 import app.recipefork.app.book.BookName
 import app.recipefork.app.media.PhotoImage
@@ -109,8 +115,9 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * On Cooking the steps read as a stepper, each done mark joined to the next by a line, and a step marked done folds to
  * one struck line with its mark ticked ([StepRow]); a tap on it unmarks it and it unfolds.
  *
- * On Cooking the first step not marked done is the current one: drawn, with its timers, on the theme's primary
- * container and read as the current step. A step marked done brings the next one not marked after it into view, wholly
+ * On Cooking the first step not marked done is the current one: drawn, with its timers and its note, on the theme's
+ * primary container — the olive plate — under the caption "Current step · N of M" ([StepRow]); with every step marked
+ * done none is. A step marked done brings the next one not marked after it into view, wholly
  * above the [coveredBelow] the navigation bar covers at the bottom of the viewport, scrolling smoothly — unless the
  * reader is scrolling themselves ([readerScrolling]), or until they take hold of the card's scroll ([readerInteractions]);
  * a step unmarked, or a step marked with none unmarked after it,
@@ -263,6 +270,7 @@ internal fun StepsList(
                 },
                 mode = mode,
                 current = step.position == current,
+                count = shown.size,
                 stated = marks?.any == true,
                 last = index == shown.lastIndex,
                 animate = settled,
@@ -306,9 +314,13 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
  * the card has read the recipe's timers ([animate]); before, a step stands as they make it at once. The screen reader
  * still reads a folded step's text whole; its note folds away with the rest.
  *
- * The [current] step — its number and text, its media and its timers — stands on the theme's primary container, which
- * reaches a little beyond it into the gutter and the space between steps, so that nothing moves as the current step
- * changes; its text is in the container's own colour, and the screen reader reads it as the current step.
+ * The [current] step — its text, its note, its media and its timers — stands on the theme's primary container, the
+ * olive plate, which reaches a little beyond it into the gutter and the space between steps. Its done mark stands level
+ * with a caption above its text, "Current step · 3 of 4" — its [number] among the [count] steps — in capitals of the
+ * working face ([currentCaptionStyle]); its text, which the caption numbers in place of "3. ", is set as every step's
+ * on Cooking, in the theme's small headline — the plate, the caption and the colour set it apart, not its size; both
+ * in the container's own colour. The screen reader reads the caption
+ * once, as the step's state, in place of "Not done" — the current step is never done — and not its drawn copy.
  *
  * This is the [CardMode.COOKING] step; [CardMode.VIEW] shows a [StepBlock].
  */
@@ -324,6 +336,7 @@ private fun StepRow(
     onToggle: (() -> Unit)? = null,
     mode: CardMode = CardMode.COOKING,
     current: Boolean = false,
+    count: Int = number,
     stated: Boolean = false,
     last: Boolean = true,
     animate: Boolean = true,
@@ -345,15 +358,18 @@ private fun StepRow(
         modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp).then(highlight).then(line)
             .testTag(StepRowTags.entry(step.position)),
     ) {
-        // The current step is read as such; it is never done, so its state says that it is current.
-        val currentState = stringResource(R.string.card_current_step).takeIf { current }
+        // The current step is read as such, with its place among the steps; it is never done, so its state says that it
+        // is current. The caption drawn above its text says the same and is not read again.
+        val currentState = stringResource(R.string.card_current_step, number, count).takeIf { current }
+        val caption = stringResource(R.string.card_current_step_caption, number, count).takeIf { current }
         val marking = when {
             onToggle != null && cooking -> Modifier.heightIn(min = CardTarget).markedDone(done, onToggle, state = currentState)
             currentState != null -> Modifier.semantics { stateDescription = currentState }
             else -> Modifier.shownDone(done, stated)
         }
         Row(
-            Modifier.fillMaxWidth().then(marking).semantics(mergeDescendants = true) { text = AnnotatedString("$number.") }
+            // The step's number is read from its line; the current step's is read in its state instead.
+            Modifier.fillMaxWidth().then(marking).semantics(mergeDescendants = true) { if (!current) text = AnnotatedString("$number.") }
                 .testTag(CardTags.step(step.position)),
             horizontalArrangement = Arrangement.spacedBy(StepGap),
         ) {
@@ -362,7 +378,13 @@ private fun StepRow(
                 val ring = if (current) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 DoneCircle(cooking && done, StepRowTags.number(step.position), Modifier.padding(top = markTop), ring = ring)
                 Column(Modifier.weight(1f).then(if (cooking && animate) Modifier.animateContentSize(Motion.appearing()) else Modifier)) {
-                    StepText(step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE, number = number)
+                    // The caption's line is as tall as the mark and its space above and below, so that the mark stands
+                    // where it does on every step, level with the caption's middle.
+                    caption?.let { CurrentStepCaption(it, markTop * 2 + DONE_MARK_SIZE, step.position) }
+                    StepText(
+                        step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE,
+                        number = number.takeIf { !current },
+                    )
                     if (!folded) step.note?.let { StepNote(it, step.position, mode) }
                 }
             }
@@ -445,9 +467,52 @@ internal val CURRENT_OUTSET_SIDE = 8.dp
 /** How far the current step's container reaches above and below the step, into the space between steps. */
 internal val CURRENT_OUTSET_END = 4.dp
 
+/**
+ * The caption above the current step's text on Cooking, [caption] drawn in capitals ([currentCaptionStyle]), standing
+ * in the middle of a line at least [height] tall, [CURRENT_CAPTION_GAP] above the text. The screen reader does not read
+ * it — the step's state says it — but its [ShownText] is what is drawn.
+ */
+@Composable
+private fun CurrentStepCaption(caption: String, height: Dp, position: Int) {
+    val drawn = caption.uppercase()
+    // The caption as laid out stays reachable — by a test for its look — though it says nothing.
+    val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
+    Box(Modifier.fillMaxWidth().padding(bottom = CURRENT_CAPTION_GAP).heightIn(min = height), contentAlignment = Alignment.CenterStart) {
+        Text(
+            drawn,
+            style = currentCaptionStyle(),
+            onTextLayout = { laidOut[0] = it },
+            modifier = Modifier.clearAndSetSemantics {
+                shownText = drawn
+                testTag = StepRowTags.caption(position)
+                getTextLayoutResult { results -> laidOut[0]?.let { results += it } != null }
+            },
+        )
+    }
+}
+
+/** How the current step's caption reads: the theme's large label — the working face — at 13 sp, its letters spaced. */
+@Composable
+internal fun currentCaptionStyle(): TextStyle = MaterialTheme.typography.labelLarge.copy(
+    fontSize = CURRENT_CAPTION_SIZE,
+    lineHeight = CURRENT_CAPTION_LINE,
+    letterSpacing = CURRENT_CAPTION_TRACKING,
+)
+
+/** The size of the current step's caption, its line height and the space between its letters. */
+internal val CURRENT_CAPTION_SIZE = 13.sp
+internal val CURRENT_CAPTION_LINE = 18.sp
+internal val CURRENT_CAPTION_TRACKING = 0.04.em
+
+/** The gap between the current step's caption line and its text. */
+internal val CURRENT_CAPTION_GAP = 8.dp
+
 /** Test tags of a step's parts on the card. */
 internal object StepRowTags {
     fun number(position: Int) = "card-step-$position-number"
+
+    /** The caption above the current step's text on Cooking ([CurrentStepCaption]). */
+    fun caption(position: Int) = "card-step-$position-caption"
     fun entry(position: Int) = "card-step-$position-entry"
     fun note(position: Int) = "card-step-$position-note"
 

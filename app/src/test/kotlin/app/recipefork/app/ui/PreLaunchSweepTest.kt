@@ -485,7 +485,7 @@ class PreLaunchSweepTest {
         awaitLacking(listOf(2))
         compose.onNodeWithTag(CardTags.SCREEN).assertExists()
         assertTrue("the second step is the current one", compose.onNodeWithTag(CardTags.step(1)).fetchSemanticsNode()
-            .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step))
+            .config.getOrNull(SemanticsProperties.StateDescription) == context.getString(R.string.card_current_step, 2, cake.steps.size))
         assertOnlyThePagerScrollsSideways("Cooking")
         checkScreen("the card, Cooking", target = CardTarget)
         compose.onNodeWithTag(CardTags.MENU).performClick()

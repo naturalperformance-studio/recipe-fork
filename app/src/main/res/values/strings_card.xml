@@ -131,8 +131,11 @@
     <string name="card_tab_cooking">Cooking</string>
     <string name="card_tab_view_action">Show the recipe for reading</string>
     <string name="card_tab_cooking_action">Show the recipe for cooking</string>
-    <!-- On the Cooking tab the first step not marked done is the current one: the screen reader reads it so. -->
-    <string name="card_current_step">Current step</string>
+    <!-- On the Cooking tab the first step not marked done is the current one. Above its text the caption says so with
+         its number among the steps and their count ("Current step · 3 of 4"), drawn in capitals; the screen reader
+         reads the step's state in the second form, with a comma for the dot. -->
+    <string name="card_current_step_caption">Current step · %1$d of %2$d</string>
+    <string name="card_current_step">Current step, %1$d of %2$d</string>
     <!-- On the Cooking tab, once every ingredient is marked done, the list folds into one line; a tap shows it again.
          The line reads "All gathered · show", "show" in the accent colour. -->
     <string name="card_ingredients_gathered">All gathered</string>

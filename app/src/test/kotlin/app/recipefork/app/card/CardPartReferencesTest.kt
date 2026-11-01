@@ -130,7 +130,8 @@ class CardPartReferencesTest {
         assertEquals("3 pc", listQuantity())
         assertEquals("Всего: 3\u00A0pc", shown(2))
         assertEquals("В маринад: 2\u00A0pc\u202F↑", shown(0))
-        assertEquals(listOf("1.", "В маринад: 2\u00A0pc (rounded up, exact value was lower)"), spoken(0))
+        // The first step, the current one, says its number in its state, not its line (T-324).
+        assertEquals(listOf("В маринад: 2\u00A0pc (rounded up, exact value was lower)"), spoken(0))
     }
 
     // The references read as a timer names them: the part's text and rounding, and the whole's beside it.
