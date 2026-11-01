@@ -20,7 +20,7 @@ identifiers did not change on the split and never will.
 
 | Part | What is in it | Requirements |
 |---|---|---|
-| [10-offline-and-sync.md](10-offline-and-sync.md) | The device first: writing with no account and no connection, sending a recipe to the server by the owner's act — including the pool recipe that created an account, an unanswered sending, and a recipe the server no longer holds — and what is refused | FLOW-001–FLOW-007, FLOW-059 |
+| [10-offline-and-sync.md](10-offline-and-sync.md) | The device holds everything: the dictionaries, and writing with no account and no connection | FLOW-001, FLOW-002 |
 | [20-device-storage.md](20-device-storage.md) | The recipe book and what the device keeps, with and without an account; clearing media the device can fetch again | FLOW-009–FLOW-012, FLOW-058, FLOW-051, FLOW-052, FLOW-060 |
 | [30-cooking.md](30-cooking.md) | Cooking from a recipe: timers heard with the application closed and named by their step, the screen kept awake, the usual serving count, forking twice, a flagged recipe's statement | FLOW-013–FLOW-018, FLOW-020 |
 | [35-cooking-with-busy-hands.md](35-cooking-with-busy-hands.md) | The card's two tabs, View and Cooking; marking ingredients, equipment and steps done; and the vibration that answers a touch while cooking | FLOW-068–FLOW-070 |
