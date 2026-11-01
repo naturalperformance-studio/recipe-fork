@@ -1194,6 +1194,7 @@ private fun RecipeContent(
                     groups = recipe.ingredientGroups,
                     mode = mode,
                     shownAgain = shownAgain.ingredients,
+                    coveredBelow = bottom,
                 )
             }
             // On View, roughly what the dish holds, at the scale in force; nothing where no row can be counted.

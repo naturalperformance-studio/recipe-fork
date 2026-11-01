@@ -11,6 +11,8 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.ComposeTimeoutException
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.runtime.CompositionLocalProvider
@@ -451,6 +453,50 @@ class CardTopBarTest {
         val root = bounds(CardTags.SCREEN)
         compose.waitUntil(PATIENCE_MS) { bounds(CardTags.FIX_FIELD).bottom <= root.bottom - KEYBOARD }
         assertTrue("the content ends at the keyboard", bounds(CardTags.CONTENT).bottom <= root.bottom - KEYBOARD + 0.5f)
+    }
+
+    // T-326: one tap on the amount of a line low on the card, and nothing else: the fixing control opens under it in
+    // sight, and stays in sight above the keyboard that comes up for it — its field and Recalculate both — without the
+    // reader scrolling to find it.
+    @Test
+    fun anAmountTappedLowOnTheCardOpensItsControlInSightAboveTheKeyboard() {
+        val recipe = Recipe.create(now, null).copy(
+            title = "Stew",
+            servings = 4,
+            ingredients = (0 until 20).map {
+                Ingredient(it, null, freeTextName = "Thing ${it + 1}", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(100))
+            },
+        ).also { runBlocking { recipes.save(it) } }
+        compose.runOnUiThread { WindowCompat.setDecorFitsSystemWindows(compose.activity.window, false) }
+        show(recipe.id)
+        compose.chooseCardTab(CardMode.COOKING)
+        insets(navigation = NAVIGATION)
+        val root = bounds(CardTags.SCREEN)
+        // The line at the foot of the screen, as the reader comes to it scrolling down the list.
+        val amount = compose.onNodeWithTag(CardTags.fixAmount(8), useUnmergedTree = true).performScrollTo()
+        val line = amount.fetchSemanticsNode().boundsInRoot
+        assertTrue("the line ($line) stands low on the screen ($root)", line.bottom > root.bottom - NAVIGATION - KEYBOARD)
+        amount.performClick()
+        compose.waitUntil(PATIENCE_MS) { exists(CardTags.FIX_FIELD) }
+        compose.onNodeWithTag(CardTags.FIX_FIELD).assertIsFocused()
+        // Where each part lies whole, scrolled out of sight or not.
+        fun whole(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+        fun inSight(above: Float) =
+            listOf(CardTags.FIX_FIELD, CardTags.FIX_CONFIRM).map(::whole).all { it.top >= bounds(CardTags.PAGER).top && it.bottom <= above + 0.5f }
+        fun said(above: Float) =
+            "the field (${whole(CardTags.FIX_FIELD)}) and Recalculate (${whole(CardTags.FIX_CONFIRM)}) are not in sight between " +
+                "${bounds(CardTags.PAGER).top} and $above"
+        try {
+            compose.waitUntil(PATIENCE_MS) { inSight(above = root.bottom - NAVIGATION) }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError(said(root.bottom - NAVIGATION), e)
+        }
+        insets(navigation = NAVIGATION, keyboard = KEYBOARD)
+        try {
+            compose.waitUntil(PATIENCE_MS) { inSight(above = root.bottom - KEYBOARD) }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError(said(root.bottom - KEYBOARD), e)
+        }
     }
 
     private fun insets(status: Int = 0, navigation: Int = 0, keyboard: Int = 0) {

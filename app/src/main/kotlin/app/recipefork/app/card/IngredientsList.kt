@@ -122,6 +122,7 @@ internal fun IngredientsList(
     groups: List<IngredientGroup> = emptyList(),
     mode: CardMode = CardMode.COOKING,
     shownAgain: MutableState<Boolean> = remember { mutableStateOf(false) },
+    coveredBelow: Dp = 0.dp,
 ) {
     if (ordered.isEmpty()) return
     var open by remember(ordered, mode) { mutableStateOf<Int?>(null) }
@@ -131,7 +132,7 @@ internal fun IngredientsList(
     val folded = foldedOnCooking(gathered, shownAgain, mode)
     LaunchedEffect(folded) { if (folded) open = null }
     GatheringSurface(IngredientTags.SURFACE) {
-        Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded) { shownAgain.value = true }
+        Lines(ordered, list, fixings, language, open, { open = it }, onFix, onRelease, marks, groups, mode, folded, coveredBelow) { shownAgain.value = true }
     }
 }
 
@@ -180,6 +181,7 @@ private fun Lines(
     groups: List<IngredientGroup>,
     mode: CardMode,
     folded: Boolean,
+    coveredBelow: Dp,
     onShow: () -> Unit,
 ) {
     // A small gap under the heading; the status line, the warning and the lines then stand one against the next, so that
@@ -190,11 +192,14 @@ private fun Lines(
         AnimatedVisibility(folded, enter = Motion.open, exit = Motion.close) {
             GatheredLine(R.string.card_ingredients_show_action, IngredientTags.GATHERED, onShow)
         }
-        AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) { AllLines(ordered, list, fixings, language, open, onOpen, onFix, onRelease, marks, groups, mode) }
+        AnimatedVisibility(!folded, enter = Motion.open, exit = Motion.close) { AllLines(ordered, list, fixings, language, open, onOpen, onFix, onRelease, marks, groups, mode, coveredBelow) }
     }
 }
 
-/** The list's status, warning and lines, with the fixing control [open] under its line. */
+/**
+ * The list's status, warning and lines, with the fixing control [open] under its line, brought into sight clear of the
+ * [coveredBelow] the card's content runs under.
+ */
 @Composable
 private fun AllLines(
     ordered: List<Ingredient>,
@@ -208,6 +213,7 @@ private fun AllLines(
     marks: CardMarks?,
     groups: List<IngredientGroup>,
     mode: CardMode,
+    coveredBelow: Dp,
 ) {
     val cooking = mode == CardMode.COOKING
     val column = quantityColumn(list.lines)
@@ -251,6 +257,7 @@ private fun AllLines(
                             onFix = { amount, unit -> onFix(offer.fixing(position, amount, unit)); onOpen(null) },
                             onRelease = { onRelease(position); onOpen(null) },
                             onClose = { onOpen(null) },
+                            coveredBelow = coveredBelow,
                         )
                     }
                 }
