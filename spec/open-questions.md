@@ -2,11 +2,7 @@
 slug: OQ
 status: open
 updated: 2026-10-15
-ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011,
-  OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020,
-  OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030,
-  OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038, OQ-039, OQ-040,
-  OQ-041, OQ-042, OQ-043]
+ids: [OQ-001, OQ-002, OQ-003, OQ-004, OQ-005, OQ-006, OQ-007, OQ-008, OQ-009, OQ-010, OQ-011, OQ-012, OQ-013, OQ-014, OQ-015, OQ-016, OQ-017, OQ-018, OQ-019, OQ-020, OQ-021, OQ-022, OQ-023, OQ-024, OQ-025, OQ-026, OQ-027, OQ-028, OQ-029, OQ-030, OQ-031, OQ-032, OQ-033, OQ-034, OQ-035, OQ-036, OQ-037, OQ-038, OQ-039, OQ-040, OQ-041, OQ-042, OQ-043, OQ-044]
 open_before_mvp: [OQ-016, OQ-029, OQ-030]
 ---
 
@@ -578,3 +574,10 @@ fluid ounces (DOM-016), which round on the grids of DOM-017 and are stored as
 written; a metric reader sees them converted exactly (L10N-008); a shopping list
 merges them with an entry's metric lines (FLOW-074). Imperial units other than the
 US ones are not offered.
+
+### OQ-044 — Is there a server again (later)
+Unresolved: the product ships serverless; whether it ever publishes, holds
+accounts or keeps a public catalogue again.
+Proposal: not before a reason the device alone cannot serve — a person asking to
+share recipes beyond files. Planning starts from `35-server-later.md`.
+Touches: 35-server-later.

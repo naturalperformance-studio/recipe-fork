@@ -1,20 +1,17 @@
 # Recipe Fork — specification index
 
-> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 0 next, 40 later.
-> Synced through: v0.38. Last updated 2026-10-15.
+> **Vision** — 22 sections closed · 0 open · 0 n/a. Open questions: 0 next, 16 later.
+> Synced through: v0.38. Last updated 2026-11-01.
 > Since 2026-10-02 this specification is the product vision, not a contract: the product is built in
 > increments planned by `/team-lead` (`docs/increments/`), and releases are whatever increments have
 > shipped. MVP-001 is superseded (see `220-mvp-boundary.md`). The history of the earlier gate process
 > is in `docs/archive/process-v1/`.
 
-The product is a recipe platform built on a fork model: any accessible recipe
-can be forked into an independent recipe that names its direct parent. A recipe
-is a structured, recalculable object, not prose. Reading, cooking, writing and
-forking need no account and no server at all: a recipe lives on the device first
-and reaches the server only when its owner sends it. An account is what an author
-sends and publishes with; it carries no personal data, and it is held by a key its
-holder keeps. The product keeps working when its server is switched off for good
-(serverless mode).
+The product is a recipe book built on a fork model: any recipe a person holds can
+be forked into an independent recipe that names its direct parent. A recipe is a
+structured, recalculable object, not prose. Everything runs on the device — no
+account, no server; a recipe passes from one person to another as a file. A server
+is later and not decided (`35-server-later.md`).
 
 Source draft: `/home/personal/Projects/drafts/recipe-app-requirements.md`
 (read 2026-09-20; the draft is input, not a spec, and is not maintained here).
@@ -43,28 +40,23 @@ removes them when a shipped increment does.
 | [20-goals.md](20-goals.md) | GOAL | closed | What the product is for, what it refuses to be, and the rule that settles scope disputes. |
 | [25-market-context.md](25-market-context.md) | MKT | closed | The market the product launches into, as established by the product owner: what exists, what is hygiene rather than differentiation, and what was not checked; and, looked up on 2026-09-27, the applications that import recipes from social networks — all of which keep what they import private. Holds no requirements. |
 | [30-constraints.md](30-constraints.md) | CON | closed | Hard constraints the product owner accepts as non-negotiable: no personal data, minimal infrastructure cost, immutability, visible automation. |
-| [40-actors.md](40-actors.md) | ACT | closed | Who acts on the system and what each one may do, including whoever is not signed in; what the moderator role reaches on its holder's own work — their own actions and nothing else, so a moderator still keeps their drafts and still rates nobody's recipe of their own; what a publishing ban stops, which is every route into the catalogue and not only the queue; and the one thing no screen anywhere offers — granting the moderator role, which happens in the store; and the two moments a recipe made with no account gets its owner — the pool moved, or its own sending creating the account. |
-| [45-auth/](45-auth/00-index.md) | AUTH | closed | Who needs an account at all and when one appears, the three device slots and the six months that free one, the nickname and its reroll, the muted account created when a device cannot be attested, which sends nothing to the server, several accounts on one device and the pool made with none, and the account's three keys — the account key that signs in, the deletion key that destroys it from outside, and the recovery key issued apart and shown once, the only thing that can retire a stolen account key; the sign-in secret a device presents instead of its key, which is not a device identifier and lapses after six months unused; and creation as three steps — nickname and terms, the two keys, the recovery key. What the server accepts as proof is a set of properties; the cryptography is left to engineering. |
+| [40-actors.md](40-actors.md) | ACT | closed | One actor, the person holding the device; nothing needs an account (ACT-001). Roles and bans are later. |
+| [35-server-later.md](35-server-later.md) | SERVER | closed | The product ships serverless. Whether it gets a server again is not decided (OQ-044); this page is what a server would add, the owner's decisions that hold if it comes back, and where the earlier server specification lives in git. |
 | [50-domain-model/](50-domain-model/00-index.md) | DOM | closed | Entities, their fields and invariants: recipe, ingredient, ingredient dictionary entry, unit type, step, media, account, moderation record; the values an ingredient's quantity may hold and how a typed number is read, with a comma or a point; and that the dictionaries everything here leans on — ingredients, tags and equipment — are maintained outside the application, by hand; an entry's synonyms, ingredient groups, an ingredient's note, up to five timers on a step, the equipment a recipe needs, the author's note on a step, and collections; the fifteen units and the unit system each belongs to; and the comparison factor, which orders and since 2026-10-15 also converts, always marked "≈". |
 | [60-entity-states/](60-entity-states/00-index.md) | ST | closed | State machines with transition tables and, for each state, the transitions that must not happen; the state `local` of a recipe never sent, the recipes an owner may destroy outright and those they may not; the server orders every transition, refuses one whose guard has stopped holding, and tells the actor the state the recipe is actually in. |
 | [65-forking.md](65-forking.md) | FORK | closed | What a fork inherits — equipment included — what it never inherits — media, the description and the author's step notes when the fork is someone else's — how provenance is shown — one line, the Origin, naming the parent by title, its author on its own card — and how an author replaces a published recipe without withdrawing it. |
-| [68-import/](68-import/00-index.md) | IMPORT | closed | **Not in the first release.** A post on Instagram, TikTok or Pinterest shared to the application is read by a language model and published as the source's recipe: no author, no media, a mark naming the platform and the model version and leading to the post, and a mark on every descendant that its original was imported. One source becomes one recipe; the next person to share it is led to the existing one. TikTok text comes from its official endpoint and publishes at once; Instagram and Pinterest text is pasted and goes through the queue. The model has its own USD 50 a month. |
 | [70-flows/](70-flows/00-index.md) | FLOW | closed | User flows and screens, each with its empty, loading, error and offline behaviour: the device first and sending to the server, including a sending the server already holds, which changes nothing unless it already made a fork, an unanswered sending, which keeps its mark, and a recipe the server no longer holds, which is sent as new, an edit sent after an unanswered sending, which is made from what that sending stored, the recipe book and the device, serverless mode and recipe files — opened from other applications too — and saving the whole book, the card's two tabs, View for reading and forking and Cooking for busy hands, where the reader marks what is done, the first unmarked step is the current one and the controls answer with a vibration, My kitchen and what a recipe lacks, the shopping list — merged across units, with lines of the reader's own — printing and PDF of one recipe, several or a collection, collections and their files, choosing several recipes to act on at once, the editor, the catalogue and the favourites section including where a draft is deleted — from its entry or its card, undone while its notice shows — the private link, the author's screen a nickname leads to — where an author is reported, blocked and banned — and the moderator's queue. |
 | [75-author-guidance.md](75-author-guidance.md) | GUIDE | closed | What the editor tells its author before they can find out the hard way: the statement before an irreversible submission, the checklist of good practice, and the hints that fire on the author's own action. The product teaches here because it inspects nowhere. |
 | [80-scaling-rules/](80-scaling-rules/00-index.md) | SCALE | closed | Recalculation and rounding: by servings, from a fixed ingredient, how the two combine and what releasing a fixing restores; the exact values every unit type may display — kilograms to the gram, mixed numbers above one — the nearest-value rule with ties going up, a derived marker on every quantity at any scale but the authored one; and what a reader may fix, in which unit. |
 | [90-media.md](90-media.md) | MEDIA | closed | What a recipe may carry, the 4:3 frame every photo is cropped to by its author, how a step's clip plays, what the device does to a file before it leaves — re-encoding, stripping every metadata field but orientation, silencing and shortening a video — what the author is told about it, the 150 MB an account may hold sent and unpublished, and when a stored file is finally deleted. |
-| [100-moderation.md](100-moderation.md) | MOD | closed | What triggers moderation, what is checked automatically and what by a human, what a rejection produces, and what a moderator is told when the submission they just decided had already been withdrawn or its owner had deleted their account; and that the role is not suspended by ownership — a moderator decides their own submission and acts on their own published recipe, because otherwise two states have no exit at a launch with one person in the role. |
 | [110-catalogue.md](110-catalogue.md) | CAT | closed | Public catalogue, search, filters, favourites and the search inside favourites; what a catalogue entry shows, including the fork marker and fork count; what `newest` orders by — the moment the catalogue got the recipe — and the one chain that makes all four orderings total, so that endless scrolling neither repeats a recipe nor skips one. |
-| [120-ratings.md](120-ratings.md) | RATE | closed | The binary like and dislike over its life: who may give one and on what, the two counts a reader sees, what `highest rated` and `most rated` compute, and why favouriting is not approval. |
-| [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The closed list of what the product depends on — a device attestation service, object storage, the distribution channel and an outbound alerting channel — what each does when it is absent; the one observer that calls the product and is never called by it, and the silent endpoint it calls; and the two artefacts that cross the boundary in the user's own hands: the account key and a private link. Also the surfaces outside the application: the account deletion page, and the claims address, which the product neither reads nor writes to. |
+| [130-external-interfaces.md](130-external-interfaces.md) | EXT | closed | The one external dependency — the distribution channel — and what never leaves the device: no messages to it, no content or identifiers from it. |
 | [140-quality/](140-quality/00-index.md) | QUAL | closed | Quality attributes, each with a metric, a measurement method and a threshold: the two reference devices and networks every timing is taken on, the response times that bind on each, the lowest Android version and the narrowest window, 320 dp, 95 per cent of the month available, one hour as the most work a catastrophe may cost, ten tries a day at a deletion key, the week in which 95 per cent of submissions are decided — and a table saying where every other ISO 25010 characteristic lives or why nothing is promised of it. |
-| [150-retention.md](150-retention.md) | RET | closed | What deleting an account destroys and what survives it, what a deleted author's recipes say instead of a nickname, why nothing is ever deleted for being old, how long server logs live, and what the product deliberately never records about a reader. |
+| [150-retention.md](150-retention.md) | RET | closed | The person deletes by their own act; time deletes nothing; no history of what a person read or cooked is kept. |
 | [160-localization.md](160-localization.md) | L10N | closed | Two languages from the first release and what follows: where the interface language comes from and how it is changed, why both dictionaries must carry both labels, the language a recipe declares about itself and never has checked, a catalogue that lists every language until a reader narrows it, the two fields a text query looks at, matching on the normalised word rather than the letters, and the units: one setting, metric or US, deciding what the editor offers and what every quantity is shown in, converted exactly or, through the dictionary, as "≈", with the household units read as written in both. |
-| [170-abuse.md](170-abuse.md) | ABUSE | closed | Flooding, mass publication, and what a single moderator can absorb; reports about an author collapse onto one queue entry with a count, because the product holds nothing that would tell two anonymous reporters apart; and the one address by which somebody who is not a user of this product claims rights over what is in it. |
 | [180-analytics.md](180-analytics.md) | ANL | closed | What can be known about the product without tracking anyone: the figures countable from stored state, reach taken from the distribution channel, an anonymous count of starts, and the three numbers a published recipe keeps for its own author — openings, additions to favourites and forks made by others, the last also totalled for the product owner — labelled with what they actually count and where they undercount. |
-| [190-legal.md](190-legal.md) | LEG | closed | What publishing grants and what it does not: an irrevocable licence to the product, because permanence cannot rest on a permission that can be withdrawn; a licence to every user over the steps alone, so forking rests on a grant and not only on what copyright excludes; media and description that stay the author's. Terms accepted at account creation and again when they change, where refusing costs authorship and never costs reading. Sixteen years declared and nothing verified. The name is OQ-016 and the law the first release answers to is OQ-029; both are release prerequisites in MVP-003 and neither changes a sentence here. Distribution is limited to a country list the Russian Federation is not on, while access is limited to nobody. |
+| [190-legal.md](190-legal.md) | LEG | closed | Not directed to children, the privacy statement, the published name to clear, where the product is distributed and that access is never restricted by location. |
 | [200-accessibility.md](200-accessibility.md) | A11Y | closed | A fixed list of commitments with thresholds instead of a conformance claim: contrast, 48 dp targets and 56 on the cooking card, the device font scale to 200 per cent, the screen reader working on every screen including the editor so that authorship is not closed to anyone, an alternative to every drag and a drag handle on either side, the cooking card built for busy hands, motion that can be paused, a light and a dark theme, and nothing carried by colour alone. |
-| [210-observability.md](210-observability.md) | OBS | closed | The fourteen signals the product watches, each naming the decision that asked for it, the thresholds at which one becomes a decision, the moderator's screen they live on, and the one outbound channel that carries an alert — numbers only, one way. |
 | [220-mvp-boundary.md](220-mvp-boundary.md) | MVP | closed | The boundary, taking no decision of its own: the first release is every closed section less the sixteen things decided against, the nine prerequisites that produce a record rather than a requirement, and what the launch actually looks like — an empty catalogue, one author, and that same person holding the moderator role, with the four requirements that shape changes the reading of. |
 | — | MIG | n/a | Migration: the product launches from scratch — no existing data, users or predecessor system to migrate from. Moving a user between devices by its key is an authentication requirement, not a migration. |
 
@@ -179,42 +171,13 @@ removes them when a shipped increment does.
 | [20261015-the-origin-is-one-line.md](decisions/20261015-the-origin-is-one-line.md) | accepted, adds FORK-010, changes FLOW-065, refines the display of 20260928-serverless-mode-and-recipe-files | A fork's card names its parent in one line by title, the Origin; the parent's author is on the parent's own card, and on the fork's only while, in serverless mode, the parent is not in the book. |
 | [20261015-one-unit-system-converted-on-display.md](decisions/20261015-one-unit-system-converted-on-display.md) | accepted, supersedes 20261011-us-units-on-display-imperial-writing-later; rewrites L10N-008, DOM-011; changes DOM-016, DOM-017, SCALE-018; answers OQ-042, OQ-043 | One setting, metric or US; the editor offers the chosen system; quantities are shown converted, exactly or through the dictionary as "≈"; the household units belong to both systems; nothing stored is rewritten. |
 
-## C4 context
+## Context
 
-Actors are settled in [`actors`](40-actors.md), the external systems in
-[`external-interfaces`](130-external-interfaces.md). Nothing else crosses the
-boundary: no advertising network, no identity provider, no analytics service and
-no message delivery service reaching a user's device (EXT-009, EXT-010). The
-alerting channel reaches the product's operator and carries numbers only
-(OBS-004). One thing on the diagram is not a dependency: the availability probe
-calls the product and the product never calls it (EXT-012).
-
-```mermaid
-flowchart TB
-    holder["Person using the product<br/>with an account key, or without one"]
-    moderator["Moderator<br/>the product owner"]
-    system["Recipe Fork<br/>Android application and its server"]
-    deletion["Account deletion page<br/>the only surface outside the application"]
-    attest["Device attestation service<br/>three bits of state per device"]
-    storage["Object storage<br/>media, no charge for reads"]
-    channel["Distribution channel<br/>the store the application ships through"]
-    alerts["Alerting channel<br/>one way, numbers only"]
-    probe["Availability probe<br/>outside; calls in, is never called"]
-
-    holder -->|"cooks, writes, forks and reports with no account; sends and rates with one"| system
-    moderator -->|"approves, rejects, removes, bans"| system
-    holder -->|"pastes a deletion key (EXT-006)"| deletion
-    deletion -->|"deletes the account at once"| system
-    system -->|"asks for a verdict, occupies a slot (AUTH-001)"| attest
-    system -->|"stores, serves and deletes objects (EXT-003)"| storage
-    system -->|"is distributed by and obliged by (CON-006, EXT-005)"| channel
-    system -->|"sends a crossed threshold (OBS-004)"| alerts
-    alerts -->|"read by the moderator; nothing comes back (OBS-005)"| moderator
-    probe -->|"asks the silent endpoint whether it answers (EXT-011)"| system
-    probe -->|"reports the product down when nothing else can (EXT-012)"| moderator
-    holder -.->|"keeps the account key wherever they choose (EXT-008)"| holder
-    holder -.->|"in serverless mode, passes recipe files by hand (FLOW-063)"| holder
-```
+The product is an Android application and nothing else runs: no server, no
+advertising network, no identity provider, no analytics service, nothing that
+reaches a user's device (EXT-009, EXT-010). It is distributed through the store
+(CON-006), and a recipe leaves the device only as a file the person hands on
+themselves (FLOW-063). A server is later and not decided (`35-server-later.md`).
 
 ## Retired IDs
 
@@ -224,3 +187,19 @@ and is never reused.
 | ID | Retired | Reason |
 |---|---|---|
 | DOM-013 | 2026-10-04 | A step carries at most one timer — replaced by DOM-024 (up to five), user decision at the planning of v0.24. |
+| FLOW-019 | 2026-11-01 | Pruned as detail: what the card shows when a recipe has no media, description or parent is the team's (empty states). |
+| FLOW-021 | 2026-11-01 | Pruned as detail: restarting a running timer asks first — a dialog's behaviour, the team's. |
+| AUTH-001…AUTH-027 | 2026-11-01 | Server only; folded into `35-server-later.md` with the account section (`45-auth/`), by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| MOD-001…MOD-015 | 2026-11-01 | Server only; folded into `35-server-later.md` with `moderation`, by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| RATE-001…RATE-016 | 2026-11-01 | Server only; folded into `35-server-later.md` with `ratings`, by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| ABUSE-001…ABUSE-007 | 2026-11-01 | Server only; folded into `35-server-later.md` with `abuse`, by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| OBS-001…OBS-007 | 2026-11-01 | Server only; folded into `35-server-later.md` with `observability`, by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| IMPORT-001…IMPORT-024 | 2026-11-01 | Server only; folded into `35-server-later.md` with `import` (`68-import/`), by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| FLOW-008, FLOW-066, FLOW-067 | 2026-11-01 | Server only; folded into `35-server-later.md` with divergence between devices (`70-flows/15-divergence.md`), by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| FLOW-044…FLOW-050, FLOW-056 | 2026-11-01 | Server only; folded into `35-server-later.md` with the moderator's queue (`70-flows/60-moderator-queue.md`), by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| QUAL-006…QUAL-010 | 2026-11-01 | Server only; folded into `35-server-later.md` with availability, the hourly copy, key-trying rates, moderation time (`140-quality/30`–`50`), by the owner's decision that a server is later and not decided. The text is in git at `aff65dcc`. |
+| ACT-002…ACT-008 | 2026-11-01 | Server only; folded into `35-server-later.md` (ownership through accounts, the moderator role and publishing bans). The text is in git at `aff65dcc`. |
+| FLOW-059, FLOW-003…FLOW-007 | 2026-11-01 | Server only; folded into `35-server-later.md` (sending a recipe to the server and what waits on its answer). The text is in git at `aff65dcc`. |
+| EXT-002…EXT-004, EXT-006…EXT-008, EXT-011, EXT-012 | 2026-11-01 | Server only; folded into `35-server-later.md` (attestation, object storage, the deletion page, the account key, the health endpoint and the probe). The text is in git at `aff65dcc`. |
+| RET-001…RET-005, RET-007…RET-009 | 2026-11-01 | Server only; folded into `35-server-later.md` (deleting an account, watched storage, server logs, a removed recipe kept for its author). The text is in git at `aff65dcc`. |
+| LEG-001…LEG-006 | 2026-11-01 | Server only; folded into `35-server-later.md` (what publishing grants, accepting the terms, the declared age). The text is in git at `aff65dcc`. |

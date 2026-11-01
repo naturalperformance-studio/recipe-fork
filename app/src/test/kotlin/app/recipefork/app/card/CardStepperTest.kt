@@ -22,6 +22,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -53,8 +54,8 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Scenario 3 of v0.31: on Cooking the steps are a stepper — each numbered circle joined to the next by a vertical line —
- * and a step marked done shows a check in its circle, is struck through and folds to its first line, ellipsized; a tap
+ * Scenario 3 of v0.31: on Cooking the steps are a stepper — each step's done mark joined to the next by a vertical line —
+ * and a step marked done shows a check in its circle (T-323: an empty circle until then), is struck through and folds to its first line, ellipsized; a tap
  * on it unmarks it and it unfolds, the current step staying in view. View is as it was.
  */
 @RunWith(AndroidJUnit4::class)
@@ -165,11 +166,12 @@ class CardStepperTest {
         tap(1)
         assertEquals(listOf(false, true, false), (0..2).map(::showsCheck))
         assertEquals("Done", stateOf(1))
-        // The check is drawn in the circle's own colour for its number, on its primary fill.
+        // The check is drawn in onPrimary on the circle's primary fill, at its corner (9.5, 17 of 24, 18 dp in the middle).
         val circle = compose.onNodeWithTag(StepRowTags.number(1), useUnmergedTree = true).captureToImage().toPixelMap()
-        val tick = circle[(circle.width * 0.36f).toInt(), (circle.height * 0.595f).toInt()]
+        val corner = with(compose.density) { (5.dp + 18.dp * (9.5f / 24)).toPx() } to with(compose.density) { (5.dp + 18.dp * (17f / 24)).toPx() }
+        val tick = circle[corner.first.toInt(), corner.second.toInt()]
         assertTrue("the check is drawn: $tick", same(scheme.onPrimary, tick))
-        // Unmarked, the number is back.
+        // Unmarked, the circle is empty again.
         tap(1)
         assertEquals(listOf(false, false, false), (0..2).map(::showsCheck))
         assertEquals("Not done", stateOf(1))
@@ -198,7 +200,7 @@ class CardStepperTest {
 
         // A tap on the folded step unmarks it, and it unfolds.
         tap(0)
-        assertEquals("Current step", stateOf(0))
+        assertEquals("Current step, 1 of 3", stateOf(0))
         assertEquals(whole.lineCount, layout(0).lineCount)
         assertTrue("no longer struck through", layout(0).layoutInput.style.textDecoration != TextDecoration.LineThrough)
         assertTrue(shown(StepRowTags.note(0)) && shown(TimerTags.start(0)))
@@ -245,7 +247,7 @@ class CardStepperTest {
         (0..2).forEach { tap(it) }
         compose.onNodeWithTag(CardTags.step(3)).performScrollTo()
         compose.waitForIdle()
-        assertEquals("Current step", stateOf(3))
+        assertEquals("Current step, 4 of 8", stateOf(3))
         compose.mainClock.autoAdvance = false
         compose.onNodeWithTag(CardTags.step(3)).performClick()
         repeat(FRAMES) {
@@ -255,7 +257,7 @@ class CardStepperTest {
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()
         assertEquals(1, layout(3).lineCount)
-        assertEquals("Current step", stateOf(4))
+        assertEquals("Current step, 5 of 8", stateOf(4))
         assertTrue("the next step is brought into view", inView(4))
     }
 
@@ -271,7 +273,7 @@ class CardStepperTest {
         assertEquals("the card does not scroll", before, scrolled(), 0.5f)
         assertEquals("the step unfolds where it is", top, compose.onNodeWithTag(CardTags.step(2)).fetchSemanticsNode().positionInRoot.y, 0.5f)
         assertTrue(layout(2).lineCount > 1)
-        assertEquals("unmarked, the first not done is the current one", "Current step", stateOf(2))
+        assertEquals("unmarked, the first not done is the current one", "Current step, 3 of 8", stateOf(2))
         assertTrue(inView(2))
     }
 
@@ -301,12 +303,12 @@ class CardStepperTest {
         compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, top - visibleTop() + SCROLLED_OFF) }
         compose.waitForIdle()
         assertTrue("the step's top is scrolled off", compose.onNodeWithTag(StepRowTags.entry(2), useUnmergedTree = true).fetchSemanticsNode().positionInRoot.y < visibleTop())
-        assertEquals("Current step", stateOf(2))
+        assertEquals("Current step, 3 of 8", stateOf(2))
 
         compose.onNodeWithTag(CardTags.step(2)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(1, layout(2).lineCount)
-        assertEquals("Current step", stateOf(3))
+        assertEquals("Current step, 4 of 8", stateOf(3))
         val pager = compose.onNodeWithTag(CardTags.PAGER).fetchSemanticsNode().boundsInRoot
         val next = compose.onNodeWithTag(CardTags.step(3)).fetchSemanticsNode()
         val nextTop = next.positionInRoot.y

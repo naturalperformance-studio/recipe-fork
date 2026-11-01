@@ -1,6 +1,20 @@
 package app.recipefork.app.card
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +55,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
@@ -57,7 +73,8 @@ import app.recipefork.core.scaling.UnitLabels
 
 /**
  * The fixing control of one ingredient while it is [open] under its line: it unfolds as it opens and folds away as it
- * closes, the lines below moving with it.
+ * closes, the lines below moving with it. Once unfolded it is brought into sight, above the keyboard and above the
+ * [coveredBelow] the card's content runs under ([FixAmount]).
  */
 @Composable
 internal fun FixAmountUnder(
@@ -68,9 +85,16 @@ internal fun FixAmountUnder(
     onFix: (Rational, QuantityUnit) -> Unit,
     onRelease: () -> Unit,
     onClose: () -> Unit,
+    coveredBelow: Dp = 0.dp,
 ) {
     AnimatedVisibility(open, enter = Motion.open, exit = Motion.close) {
-        Box(Modifier.padding(top = SECTION_GAP)) { FixAmount(offer, current, language, onFix, onRelease, onClose) }
+        val unfolding = transition
+        Box(Modifier.padding(top = SECTION_GAP)) {
+            FixAmount(
+                offer, current, language, onFix, onRelease, onClose, coveredBelow,
+                unfolded = { unfolding.currentState == EnterExitState.Visible && unfolding.targetState == EnterExitState.Visible },
+            )
+        }
     }
 }
 
@@ -80,8 +104,12 @@ internal fun FixAmountUnder(
  * control does not hold is answered with what it holds, and fixes nothing; nothing typed changes nothing either —
  * clearing the control is not a release (SCALE-018 (8)). A fixed row offers its release here (SCALE-017).
  *
- * The control opens with its amount field focused and the keyboard up; what the field does not hold is said under
- * it, and the keyboard's Done applies as Recalculate does.
+ * The control opens with its amount field focused and the keyboard up, an amount fixed before selected whole in it, so
+ * that what is typed replaces it; what the field does not hold is said under it, and the keyboard's Done applies as
+ * Recalculate does. Once [unfolded], it is brought into sight in the scrolling card it stands in, clear of the keyboard
+ * and of the [coveredBelow] the card runs under ([inSight]), and again each time the keyboard changes the room the card
+ * has: opened under a line low on the card, it would otherwise stand below the screen, and the reader would see the
+ * keyboard come up and nothing else.
  */
 @Composable
 internal fun FixAmount(
@@ -91,10 +119,16 @@ internal fun FixAmount(
     onFix: (Rational, QuantityUnit) -> Unit,
     onRelease: () -> Unit,
     onClose: () -> Unit,
+    coveredBelow: Dp = 0.dp,
+    unfolded: () -> Boolean = { true },
 ) {
     var unit by remember { mutableStateOf(current?.unit?.takeIf { it in offer.units } ?: offer.authoredUnit) }
-    var text by remember { mutableStateOf(current?.let { QuantityInput.write(it.amount, it.unit, language) }.orEmpty()) }
-    val reading = FixedAmount.read(text, unit, offer.divisible)
+    // An amount fixed before stands in the field selected whole, so that what the reader types takes its place.
+    var field by remember {
+        val written = current?.let { QuantityInput.write(it.amount, it.unit, language) }.orEmpty()
+        mutableStateOf(TextFieldValue(written, TextRange(0, written.length)))
+    }
+    val reading = FixedAmount.read(field.text, unit, offer.divisible)
     val fix = { (reading as? FixedAmountReading.Accepted)?.let { onFix(it.amount, unit) } }
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -103,14 +137,29 @@ internal fun FixAmount(
         focus.requestFocus()
         keyboard?.show()
     }
+    val whole = remember { SightOf() }
+    val amount = remember { SightOf() }
+    val keys = WindowInsets.ime
+    val density = LocalDensity.current
+    val covered by rememberUpdatedState(with(density) { coveredBelow.toPx() })
+    val isUnfolded by rememberUpdatedState(unfolded)
+    // Not while it unfolds: brought into sight then, it is taken as it stands in the fold, already in sight.
+    LaunchedEffect(whole, amount, keys, density) {
+        snapshotFlow { isUnfolded() to keys.getBottom(density) }.collectLatest { (shown, _) ->
+            if (shown) {
+                withFrameNanos {}
+                inSight(whole, amount, covered)
+            }
+        }
+    }
     Column(
-        Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag(CardTags.FIX),
+        Modifier.fillMaxWidth().then(whole.modifier).padding(vertical = 4.dp).testTag(CardTags.FIX),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(amount.modifier, verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
+                value = field,
+                onValueChange = { field = it },
                 label = { Text(stringResource(R.string.card_fix_amount)) },
                 isError = reading is FixedAmountReading.Refused,
                 supportingText = (reading as? FixedAmountReading.Refused)?.let { refused ->
@@ -160,6 +209,26 @@ internal fun FixAmount(
             )
         }
     }
+}
+
+/** A part of the control that can be brought into sight, as large as it was last laid out. */
+private class SightOf {
+    val requester = BringIntoViewRequester()
+    var size = IntSize.Zero
+    val modifier: Modifier = Modifier.bringIntoViewRequester(requester).onSizeChanged { size = it }
+
+    /** Brings the part into sight with [below] pixels more under it, which the card's content runs under. */
+    suspend fun bring(below: Float) = requester.bringIntoView(Rect(0f, 0f, size.width.toFloat(), size.height + below))
+}
+
+/**
+ * Brings the control into sight with [below] pixels clear under it: the [whole] of it where it fits, and in any case its
+ * [amount], so that in a short room — a large font with the keyboard up — the field stands in sight, the actions under it
+ * a scroll away.
+ */
+private suspend fun inSight(whole: SightOf, amount: SightOf, below: Float) {
+    whole.bring(below)
+    amount.bring(below)
 }
 
 /**

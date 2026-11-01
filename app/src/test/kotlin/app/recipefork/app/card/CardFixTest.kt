@@ -29,6 +29,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.R
@@ -302,6 +303,21 @@ class CardFixTest {
         compose.waitUntil(PATIENCE_MS) { !controlShown() }
         assertEquals("Servings: 6", servings())
         assertEquals(listOf("Chicken", "750 g"), line(0))
+    }
+
+    // T-326: a fixed line opened again offers its amount to be typed over: what the cook types takes its place, rather than
+    // going in before it ("400" over "300" read as 400300 g).
+    @Test
+    fun anAmountFixedBeforeIsTypedOver() {
+        open()
+        fix(0, "300")
+        tap(0)
+        compose.onNodeWithTag(CardTags.FIX_FIELD).performTextInput("400")
+        compose.waitForIdle()
+        assertEquals("400", compose.onNodeWithTag(CardTags.FIX_FIELD).fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
+        confirm()
+        assertEquals("Servings: ≈3", servings())
+        assertEquals(listOf("Chicken", "400 g", "fixed"), line(0))
     }
 
     // A11Y-003, A11Y-005, L10N: the control's actions are large enough, say what they do, and read in Russian.

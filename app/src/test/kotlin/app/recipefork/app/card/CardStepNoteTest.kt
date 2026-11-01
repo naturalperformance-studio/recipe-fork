@@ -114,8 +114,9 @@ class CardStepNoteTest {
     private fun assertTheNoteStands(mode: CardMode, timerTag: String) {
         show(mode)
         val cooking = mode == CardMode.COOKING
-        // On Cooking read by the screen reader as part of the step, after its text; on View after the step's line.
-        assertEquals(listOf("1.", "Fry the beet.") + listOfNotNull(note.takeIf { cooking }), compose.textsOf(CardTags.step(0)))
+        // On Cooking read by the screen reader as part of the step, after its text; on View after the step's line. On
+        // Cooking the first step is the current one, which says its number in its state, not its line (T-324).
+        assertEquals(listOfNotNull("1.".takeIf { !cooking }, "Fry the beet.", note.takeIf { cooking }), compose.textsOf(CardTags.step(0)))
         assertEquals(listOf(note), compose.textsOf(StepRowTags.note(0)))
         compose.onNodeWithTag(timerTag).performScrollTo()
         val text = bounds(StepTags.text(0))
@@ -149,7 +150,8 @@ class CardStepNoteTest {
     @Config(qualifiers = "ru")
     fun inRussianTheNoteReadsAsWritten() {
         show(CardMode.COOKING)
-        assertEquals(listOf("1.", "Fry the beet.", note), compose.textsOf(CardTags.step(0)))
+        // The current step says its number in its state, not its line (T-324).
+        assertEquals(listOf("Fry the beet.", note), compose.textsOf(CardTags.step(0)))
     }
 
     // A step with neither text nor note nor media is still left out.

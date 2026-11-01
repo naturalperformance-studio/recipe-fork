@@ -43,8 +43,8 @@ import java.time.Instant
 import kotlin.math.abs
 
 /**
- * Scenario 5 of cooking with busy hands: each step on the card starts with its number in a filled circle — decorative
- * to the screen reader, which reads the step's number once — its text is set in the theme's small headline style on
+ * Scenario 5 of cooking with busy hands: each step on the card starts with its done mark, an empty circle until marked
+ * (T-323), then its number — the circle decorative to the screen reader, which reads the step's number once — its text is set in the theme's small headline style on
  * Cooking, two sizes up from the body text it was, and the steps stand clearly apart from one another.
  */
 @RunWith(AndroidJUnit4::class)
@@ -97,13 +97,14 @@ class CardStepLayoutTest {
     private fun bounds(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
 
     @Test
-    fun eachStepStartsWithItsNumberInAFilledCircleTheScreenReaderReadsOnce() {
+    fun eachStepStartsWithItsDoneMarkThenItsNumberTheScreenReaderReadsOnce() {
         open()
         (0..2).forEach { position ->
             val number = "${position + 1}"
-            // Read as one line, the number said once: the step's own words follow it.
+            // Read as one line, the number said once: the step's own words follow it. The current step, the first,
+            // says its number in its state instead (T-324).
             val spoken = compose.textsOf(CardTags.step(position))
-            assertEquals(listOf("$number.", recipe.steps[position].text), spoken)
+            assertEquals(listOfNotNull("$number.".takeIf { position > 0 }, recipe.steps[position].text), spoken)
             // The circle itself is decorative: it carries nothing for the screen reader.
             val circle = compose.onNodeWithTag(StepRowTags.number(position), useUnmergedTree = true).fetchSemanticsNode()
             assertTrue(circle.config.getOrNull(SemanticsProperties.Text).isNullOrEmpty())
@@ -111,16 +112,23 @@ class CardStepLayoutTest {
             // A circle, at the line's start, before the text.
             val box = circle.boundsInRoot
             assertEquals("the circle is round: $box", box.width, box.height, 1f)
-            assertTrue(box.width >= with(compose.density) { StepNumberSize.toPx() } - 0.5f)
+            assertEquals(with(compose.density) { DONE_MARK_SIZE.toPx() }, box.width, 0.5f)
             assertEquals(bounds(CardTags.step(position)).left, box.left, 0.5f)
             assertTrue("the text follows the circle", bounds(StepTags.text(position)).left >= box.right)
+            // The text draws the number before the step's words (T-323): the circle no longer carries it. The current
+            // step's caption numbers it instead (T-324).
+            val drawn = compose.onNodeWithTag(StepTags.text(position), useUnmergedTree = true).fetchSemanticsNode()
+                .config[SemanticsActions.GetTextLayoutResult].action!!.let { action ->
+                    mutableListOf<TextLayoutResult>().also { action(it) }.single()
+                }.layoutInput.text.text
+            assertEquals(if (position == 0) recipe.steps[0].text else "$number.\u00A0${recipe.steps[position].text}", drawn)
         }
-        // Filled in the theme's primary colour: inside the circle, above its number.
-        val image = compose.onNodeWithTag(StepRowTags.number(0), useUnmergedTree = true).captureToImage().toPixelMap()
-        val inside = image[image.width / 2, image.height / 8]
+        // Not marked, the circle is empty: inside it, the page shows through, not the primary fill.
+        val image = compose.onNodeWithTag(StepRowTags.number(1), useUnmergedTree = true).captureToImage().toPixelMap()
+        val inside = image[image.width / 2, image.height / 5]
         val primary = colors!!.primary
-        assertTrue("the circle is filled with the primary colour: $inside",
-            abs(inside.red - primary.red) < 0.02f && abs(inside.green - primary.green) < 0.02f && abs(inside.blue - primary.blue) < 0.02f)
+        assertTrue("the circle is not filled: $inside",
+            abs(inside.red - primary.red) > 0.05f || abs(inside.green - primary.green) > 0.05f || abs(inside.blue - primary.blue) > 0.05f)
     }
 
     @Test
@@ -143,7 +151,7 @@ class CardStepLayoutTest {
     }
 
     @Test
-    fun atTwiceTheFontScaleTheNumberStaysInItsCircle() {
+    fun atTwiceTheFontScaleTheCircleStaysRound() {
         open(fontScale = 2f)
         val circle = bounds(StepRowTags.number(0))
         assertEquals("the circle stays round: $circle", circle.width, circle.height, 1f)

@@ -107,7 +107,8 @@
     <string name="card_tab_cooking">Готовка</string>
     <string name="card_tab_view_action">Показать рецепт для чтения</string>
     <string name="card_tab_cooking_action">Показать рецепт для готовки</string>
-    <string name="card_current_step">Текущий шаг</string>
+    <string name="card_current_step_caption">Текущий шаг · %1$d из %2$d</string>
+    <string name="card_current_step">Текущий шаг, %1$d из %2$d</string>
     <string name="card_ingredients_gathered">Всё собрано</string>
     <string name="card_ingredients_show">показать</string>
     <string name="card_ingredients_folded">%1$s · %2$s</string>

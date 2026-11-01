@@ -171,7 +171,8 @@ class CardStepReferencesTest {
         assertEquals("Порций: 8", servings())
         assertEquals("Всыпьте 400\u00A0г муки", shown(0))
         assertEquals("400 г", listQuantity(0))
-        assertEquals(listOf("1.", "Всыпьте 400\u00A0г муки"), spoken(0))
+        // The first step, the current one, says its number in its state, not its line (T-324).
+        assertEquals(listOf("Всыпьте 400\u00A0г муки"), spoken(0))
         // A "to taste" reference reads as the list writes it, unmarked.
         assertEquals("Take по\u00A0вкусу.", shown(4))
     }
@@ -274,7 +275,8 @@ class CardStepReferencesTest {
             ),
         )
         assertEquals("Stir well", shown(0))
-        assertEquals(listOf("1.", "Stir well"), spoken(0))
+        // The first step, the current one, says its number in its state, not its line (T-324).
+        assertEquals(listOf("Stir well"), spoken(0))
         assertEquals("200\u00A0g", shown(1))
         assertEquals(listOf("2.", "200\u00A0g"), spoken(1))
         more(4)
