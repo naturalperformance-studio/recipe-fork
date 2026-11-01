@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -14,10 +15,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -58,14 +63,13 @@ internal fun RecipeTimers.inBar(onScreen: (stepPosition: Int) -> Boolean): List<
 
 /**
  * The bar pinned at the bottom of the card while timers of its recipe run out of sight (FLOW-016): the ringing ones
- * first, then the running ones. A group of one shows its timer on its own line, each timer of a step on its own
- * (DOM-024) — its name, or its step's [number] where it has none, followed, for an unnamed timer of a step with several,
- * by the number it started with, as on the card and its notification; the time it has left or that it rings, and the
- * control that cancels it or stops its ringing — beside the name where the name keeps room for its words, under it
- * otherwise ([BesideOrUnder]). Tapping a line brings the card to its step ([onShow]). A group of two or more gathers
- * into one line ([MergedLine]) that opens into its timers' lines and closes again. Never taller than a third of the
- * screen; more lines scroll within it. It rises from the bottom edge as its first line comes and sinks below it, still
- * showing its last lines, as the last goes; between, it grows and shrinks with its lines.
+ * first, then the running ones. A group of one shows its timer on its own, as a pill ([BarLine]), each timer of a step
+ * on its own (DOM-024) — its name, or its step's [number] where it has none, followed, for an unnamed timer of a step with
+ * several, by the number it started with, as on the card and its notification. Tapping a timer brings the card to its
+ * step ([onShow]). A group of two or more gathers into one line ([MergedLine]) that opens into its timers' pills and
+ * closes again. Never taller than a third of the screen; more lines scroll within it. It rises from the bottom edge as
+ * its first line comes and sinks below it, still showing its last lines, as the last goes; between, it grows and shrinks
+ * with its lines.
  */
 @Composable
 internal fun RunningTimersBar(
@@ -185,6 +189,7 @@ private fun MergedLine(
                         action = stringResource(R.string.timer_bar_stop_all_action),
                         tag = TimerTags.BAR_STOP_ALL,
                         onClick = { group.forEach { timers.stopRinging(it.key) } },
+                        look = TimerLook.FILLED,
                     ) { Text(stringResource(R.string.timer_stop)) }
                 } else if (!open) {
                     Text(
@@ -219,57 +224,100 @@ private fun barName(timer: RunningTimer, number: Int): String {
     return timer.number?.let { stringResource(R.string.timer_numbered, name, it) } ?: name
 }
 
+/**
+ * One timer of the bar as a pill a row's width, inset from the bar's edges, at least the card's [CardTarget] tall;
+ * tapping the pill brings the card to its step ([onShow]). Running, the pill is filled in the primary colour and reads as
+ * the timer on its step does — the time it has left over its name and that it runs ([RunningFace]) — with a quiet
+ * «Cancel timer» under it at its end. Ringing, the pill is on the primary container: its name over its step and the
+ * word that it rings, and beside them, where the name keeps room for its words, otherwise under them ([BesideOrUnder]),
+ * a filled Stop.
+ */
 @Composable
 private fun BarLine(timer: RunningTimer, ringing: Boolean, timers: RecipeTimers, number: Int, onShow: () -> Unit) {
     val key = timer.key
     val position = key.stepPosition
     val index = key.index
     val cancelled = LocalTimerCancelled.current
-    // The name first, its time and its control beside it at the end where the name keeps room for its longest word;
-    // otherwise the name has the line's whole width and the time and the control stand under it, at the end, so that
-    // a name at a large font scale on a narrow phone is never squeezed into breaking inside a word (A11Y-004).
-    BesideOrUnder(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = CardTarget)
-            .clickable(
-                onClickLabel = stringResource(R.string.timer_bar_show_action),
-                role = Role.Button,
-                onClick = onShow,
-            )
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .testTag(TimerTags.barTimer(position, index)),
-        gap = 12.dp,
-        main = {
-            Text(
-                barName(timer, number),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.testTag(TimerTags.barName(position, index)),
-            )
-        },
-        trailing = {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (ringing) stringResource(R.string.timer_bar_ringing) else remainingText(timer.remaining(timers.now)),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.testTag(TimerTags.barStatus(position, index)),
+    val name = barName(timer, number)
+    val colours = MaterialTheme.colorScheme
+    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), horizontalAlignment = Alignment.End) {
+        Surface(
+            Modifier.fillMaxWidth(),
+            // Half the least height: a pill at that height, its ends still clear of what it holds when it grows taller.
+            shape = RoundedCornerShape(CardTarget / 2),
+            color = if (ringing) colours.primaryContainer else colours.primary,
+            contentColor = if (ringing) colours.onPrimaryContainer else colours.onPrimary,
+        ) {
+            val line = Modifier
+                .fillMaxWidth()
+                .heightIn(min = CardTarget)
+                .clickable(
+                    onClickLabel = stringResource(R.string.timer_bar_show_action),
+                    role = Role.Button,
+                    onClick = onShow,
                 )
-                if (ringing) {
-                    TimerButton(
-                        icon = R.drawable.ic_timer_stop,
-                        action = stringResource(R.string.timer_stop_action),
-                        tag = TimerTags.barStop(position, index),
-                        onClick = { timers.stopRinging(key) },
-                    ) { Text(stringResource(R.string.timer_stop)) }
-                } else {
-                    TimerButton(
-                        icon = R.drawable.ic_remove_timer,
-                        action = stringResource(R.string.timer_cancel_action),
-                        tag = TimerTags.barCancel(position, index),
-                        onClick = { timers.cancel(key, cancelled) },
-                    ) { Text(stringResource(R.string.timer_cancel)) }
+                .testTag(TimerTags.barTimer(position, index))
+            if (ringing) {
+                BesideOrUnder(
+                    line.padding(start = 20.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                    gap = 12.dp,
+                    main = {
+                        Column {
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.testTag(TimerTags.barName(position, index)),
+                            )
+                            Text(
+                                // Its step, unless its name is already its step's.
+                                if (timer.name.isBlank()) {
+                                    stringResource(R.string.timer_bar_ringing)
+                                } else {
+                                    stringResource(R.string.timer_bar_ringing_step, number)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.testTag(TimerTags.barStatus(position, index)),
+                            )
+                        }
+                    },
+                    trailing = {
+                        TimerButton(
+                            icon = R.drawable.ic_timer_stop,
+                            action = stringResource(R.string.timer_stop_action),
+                            tag = TimerTags.barStop(position, index),
+                            onClick = { timers.stopRinging(key) },
+                            look = TimerLook.FILLED,
+                        ) { Text(stringResource(R.string.timer_stop)) }
+                    },
+                )
+            } else {
+                Row(
+                    line.padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_step_timer),
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                    )
+                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                    RunningFace(
+                        remainingText(timer.remaining(timers.now)),
+                        name,
+                        TimerTags.barStatus(position, index),
+                        nameTag = TimerTags.barName(position, index),
+                    )
                 }
             }
-        },
-    )
+        }
+        if (!ringing) {
+            TimerButton(
+                icon = R.drawable.ic_close,
+                action = stringResource(R.string.timer_cancel_action),
+                tag = TimerTags.barCancel(position, index),
+                onClick = { timers.cancel(key, cancelled) },
+                look = TimerLook.QUIET,
+            ) { Text(stringResource(R.string.timer_cancel_timer)) }
+        }
+    }
 }

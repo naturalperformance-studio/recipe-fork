@@ -185,9 +185,9 @@ class CardStepTimersTest : CardTimersKit() {
             shown(TimerTags.barTimer(1, 0)) && shown(TimerTags.barTimer(1, 1)) && shown(TimerTags.barTimer(2, 0))
         }
         // As the card and the notification read them: the name, then the number that tells it apart.
-        assertTrue(texts(TimerTags.barTimer(1, 0)).contains("Boil the pasta · timer 1"))
-        assertTrue(texts(TimerTags.barTimer(1, 1)).contains("Boil the pasta · timer 2"))
-        assertTrue(texts(TimerTags.barTimer(2, 0)).contains("Sauce"))
+        assertTrue(texts(TimerTags.barTimer(1, 0)).contains(runningName("Boil the pasta · timer 1")))
+        assertTrue(texts(TimerTags.barTimer(1, 1)).contains(runningName("Boil the pasta · timer 2")))
+        assertTrue(texts(TimerTags.barTimer(2, 0)).contains(runningName("Sauce")))
 
         // One ends and rings: its line offers Stop, which stops it alone.
         pass(3.minutes)
@@ -218,13 +218,13 @@ class CardStepTimersTest : CardTimersKit() {
         assertNull(heldOf(3, 0)!!.number)
         saveStep(3, listOf(Timer(2.minutes), Timer(4.minutes)))
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.start(3, 1)) }
-        assertTrue(texts(TimerTags.start(3, 0)).contains("Rest the pasta"))
+        assertTrue(texts(TimerTags.start(3, 0)).contains(runningName("Rest the pasta")))
         assertTrue(texts(TimerTags.start(3, 1)).contains("Rest the pasta · timer 2"))
         assertEquals(listOf(pastaKey(3, 0)), held().map { it.key })
 
         compose.onNodeWithTag(CardTags.step(last)).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.barTimer(3, 0)) }
-        assertTrue(texts(TimerTags.barTimer(3, 0)).contains("Rest the pasta"))
+        assertTrue(texts(TimerTags.barTimer(3, 0)).contains(runningName("Rest the pasta")))
     }
 
     // A running timer is the step's timer at its index: an earlier timer removed, the one that slides into its place

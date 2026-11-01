@@ -92,7 +92,7 @@ class CardTimerShortNameTest : CardTimersKit() {
         assertEquals(TimerName.derived(words.step), held().single().name)
         assertTrue(held().single().name.length > words.short.length)
         awaitStatus(0, "40:00")
-        assertEquals(words.short, mergedTexts(TimerTags.start(0)).first())
+        assertEquals(listOf("40:00", runningName(words.short)), mergedTexts(TimerTags.start(0)))
     }
 
     @Test
@@ -125,7 +125,7 @@ class CardTimerShortNameTest : CardTimersKit() {
         awaitHeld { it.size == 1 }
         compose.onNodeWithTag(CardTags.step(25)).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { there(TimerTags.barName(0)) }
-        assertEquals(listOf(words.short), texts(TimerTags.barName(0)))
+        assertEquals(listOf(runningName(words.short)), texts(TimerTags.barName(0)))
 
         // Two running gather into one line, led by the soonest: the step's first of two, by its number.
         start(2, 0)
@@ -135,8 +135,8 @@ class CardTimerShortNameTest : CardTimersKit() {
         assertEquals(listOf(words.numbered.format(words.short, 1)), texts(TimerTags.BAR_RUNNING_NAME))
         compose.onNodeWithTag(TimerTags.BAR_RUNNING).performClick()
         compose.waitUntil(PATIENCE_MS) { there(TimerTags.barName(0)) && there(TimerTags.barName(2, 0)) }
-        assertEquals(listOf(words.short), texts(TimerTags.barName(0)))
-        assertEquals(listOf(words.numbered.format(words.short, 1)), texts(TimerTags.barName(2, 0)))
+        assertEquals(listOf(runningName(words.short)), texts(TimerTags.barName(0)))
+        assertEquals(listOf(runningName(words.numbered.format(words.short, 1))), texts(TimerTags.barName(2, 0)))
     }
 
     @Test
@@ -159,6 +159,6 @@ class CardTimerShortNameTest : CardTimersKit() {
         awaitHeld { it.size == 1 }
         compose.onNodeWithTag(CardTags.step(25)).performScrollTo()
         compose.waitUntil(PATIENCE_MS) { there(TimerTags.barName(0)) }
-        assertEquals(listOf(named), texts(TimerTags.barName(0)))
+        assertEquals(listOf(runningName(named)), texts(TimerTags.barName(0)))
     }
 }

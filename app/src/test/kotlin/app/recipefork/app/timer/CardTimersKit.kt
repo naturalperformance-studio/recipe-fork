@@ -23,6 +23,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
+import app.recipefork.app.R
 import app.recipefork.app.book.ActiveBook
 import app.recipefork.app.book.BookName
 import app.recipefork.app.book.TestBook
@@ -166,6 +167,9 @@ abstract class CardTimersKit {
             Thread.sleep(10)
         }
     }
+
+    /** [name] as a running timer reads it under its countdown, on its step and in the bar: «<name> · running». */
+    protected fun runningName(name: String): String = context.getString(R.string.timer_running_name, name)
 
     protected fun key(position: Int) = TimerKey(BookName.Pool, soup.id, position)
 

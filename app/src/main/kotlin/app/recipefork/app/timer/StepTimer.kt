@@ -2,7 +2,9 @@ package app.recipefork.app.timer
 
 import android.content.res.Resources
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
@@ -30,6 +32,9 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import app.recipefork.app.R
 import app.recipefork.app.RecipeForkApplication
 import app.recipefork.app.book.BookName
@@ -294,15 +299,17 @@ internal fun shownName(
 val LocalTimerCancelled = staticCompositionLocalOf<(undo: () -> Unit) -> Unit> { {} }
 
 /**
- * The timer at [index] of [step] on the card (FLOW-016), apart from the step's other timers (DOM-024): a [TimerButton]
- * named by the timer's name — each reference in a derived one read as [quantity] gives it, as the step reads now
- * (FLOW-016 (8)), or, while it is held, the name it was started under; an unnamed one of a step with several told
- * apart by its number — that starts it, with its duration beside it; once started, the time remaining instead,
- * counting down by the clock, then that it has finished. A running timer's control is filled in the theme's primary
- * colour, one at rest tonal ([TimerButton]) — or, [onHighlight], on the current step's primary container, outlined on
- * the surface, so that it stands off the container. A started timer has an action beside it, where it fits, that
- * cancels it, or clears it once finished; while a finished one rings, another beside it stops the ringing
- * ([BesideOrUnder]).
+ * The timer at [index] of [step] on the card (FLOW-016), apart from the step's other timers (DOM-024), named by the
+ * timer's name — each reference in a derived one read as [quantity] gives it, as the step reads now (FLOW-016 (8)), or,
+ * while it is held, the name it was started under; an unnamed one of a step with several told apart by its number.
+ *
+ * At rest it is a pill ([TimerButton]) that starts it, its name and its duration side by side: tonal, or, [onHighlight],
+ * on the current step's primary container, outlined on the surface, so that it stands off the container. Running, it is
+ * one pill the whole width, filled in the theme's primary colour, its time counting down by the clock over its name and
+ * that it runs ([RunningFace]); pressed again it asks whether to restart (FLOW-021). Under it, at its end and on a line
+ * of its own, a quiet text button cancels it, so that a wet hand reaching for the timer does not cancel it by a slip.
+ * Finished, it says so, with the action that clears it beside it where it fits and, while it rings, another that stops
+ * the ringing ([BesideOrUnder]).
  */
 @Composable
 fun StepTimer(
@@ -320,27 +327,47 @@ fun StepTimer(
     val name = shownName(step, index, held, current)
     val now = timers.now
     val finished = held != null && held.hasEnded(now)
-    val status = when {
-        held == null -> durationText(timer.duration)
-        finished -> stringResource(R.string.timer_finished)
-        else -> remainingText(held.remaining(now))
-    }
-    val running = held != null && !finished
     val cancelled = LocalTimerCancelled.current
+    val start = { timers.start(step, index, current) }
+    if (held != null && !finished) {
+        // The timer the whole width; its cancel under it, at its end (a tooltip's anchor takes no alignment of its own).
+        Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
+            TimerButton(
+                icon = R.drawable.ic_step_timer,
+                action = stringResource(R.string.timer_start_action),
+                tag = TimerTags.start(step.position, index),
+                onClick = start,
+                modifier = Modifier.fillMaxWidth(),
+                // A press on a running timer only asks whether to restart it: the answer confirms, the question does not.
+                confirms = false,
+                look = TimerLook.FILLED,
+                onHighlight = onHighlight,
+                wide = true,
+            ) {
+                RunningFace(remainingText(held.remaining(now)), name, TimerTags.status(step.position, index))
+            }
+            TimerButton(
+                icon = R.drawable.ic_close,
+                action = stringResource(R.string.timer_cancel_action),
+                tag = TimerTags.cancel(step.position, index),
+                onClick = { timers.cancel(key, cancelled) },
+                look = TimerLook.QUIET,
+                onHighlight = onHighlight,
+            ) { Text(stringResource(R.string.timer_cancel_timer)) }
+        }
+        return
+    }
+    val status = if (finished) stringResource(R.string.timer_finished) else durationText(timer.duration)
     // The control first, then its actions beside it where they fit; where they do not — a long name, a large font, a
     // narrow screen — the actions go under it at its end, and the status under the name, each whole (A11Y-004).
     BesideOrUnder(
         modifier.fillMaxWidth(),
         main = {
             TimerButton(
-                icon = if (running) R.drawable.ic_step_timer else R.drawable.ic_video_play,
+                icon = R.drawable.ic_video_play,
                 action = stringResource(R.string.timer_start_action),
                 tag = TimerTags.start(step.position, index),
-                onClick = { timers.start(step, index, current) },
-                // A press on a running timer only asks whether to restart it: the answer confirms, the question does not.
-                confirms = !running,
-                // A running timer is filled in the theme's primary colour, told at a glance from one at rest.
-                running = running,
+                onClick = start,
                 onHighlight = onHighlight,
             ) {
                 FlowRow(
@@ -362,14 +389,14 @@ fun StepTimer(
                 }
             }
         },
-        trailing = if (held == null) null else {
+        trailing = if (!finished) null else {
             {
                 // Stop and Clear side by side where they fit, Clear under Stop where they do not, each whole.
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (finished && timers.rings(key)) {
+                    if (timers.rings(key)) {
                         TimerButton(
                             icon = R.drawable.ic_timer_stop,
                             action = stringResource(R.string.timer_stop_action),
@@ -380,17 +407,42 @@ fun StepTimer(
                     }
                     TimerButton(
                         icon = R.drawable.ic_remove_timer,
-                        action = stringResource(if (finished) R.string.timer_clear_action else R.string.timer_cancel_action),
+                        action = stringResource(R.string.timer_clear_action),
                         tag = TimerTags.cancel(step.position, index),
                         onClick = { timers.cancel(key, cancelled) },
                         onHighlight = onHighlight,
-                    ) { Text(stringResource(if (finished) R.string.timer_clear else R.string.timer_cancel)) }
+                    ) { Text(stringResource(R.string.timer_clear)) }
                 }
             }
         },
         mainShare = 0.5f,
     )
 }
+
+/**
+ * A running timer's face, on its filled control: the time it has [left], large, tagged [statusTag], over its [name] and
+ * that it runs — «Яйца · идёт», tagged [nameTag] where one is given. Each line wraps rather than clips.
+ */
+@Composable
+internal fun RowScope.RunningFace(left: String, name: String, statusTag: String, nameTag: String? = null) {
+    Column(Modifier.weight(1f)) {
+        Text(left, style = countdownStyle(), modifier = Modifier.testTag(statusTag))
+        Text(
+            stringResource(R.string.timer_running_name, name),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = nameTag?.let { Modifier.testTag(it) } ?: Modifier,
+        )
+    }
+}
+
+/** The countdown of a running timer: the working face, with tabular figures, larger than a label and heavier. */
+@Composable
+internal fun countdownStyle(): TextStyle =
+    MaterialTheme.typography.labelLarge.copy(fontSize = COUNTDOWN_SIZE, lineHeight = COUNTDOWN_LINE, fontWeight = FontWeight.SemiBold)
+
+/** The countdown's size and line on a running timer's pill, as the redesign draws it (§ 4.4, 20 px). */
+internal val COUNTDOWN_SIZE = 20.sp
+private val COUNTDOWN_LINE = 24.sp
 
 /**
  * [main] with [trailing] beside it at its end where they fit — [main] keeping room for its longest word and at least

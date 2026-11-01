@@ -3,7 +3,8 @@
     <!-- A step's timer on the card (FLOW-016): named by its step unless the author named it. -->
     <string name="timer_start_action">Start this timer</string>
     <string name="timer_finished">Finished</string>
-    <string name="timer_cancel">Cancel</string>
+    <string name="timer_cancel_timer">Cancel timer</string>
+    <string name="timer_running_name">%1$s · running</string>
     <string name="timer_cancel_action">Cancel this timer</string>
     <string name="timer_clear">Clear</string>
     <string name="timer_clear_action">Clear this finished timer</string>
@@ -31,6 +32,7 @@
     <!-- The bar of the recipe's timers running out of sight. -->
     <string name="timer_bar_show_action">Show its step</string>
     <string name="timer_bar_ringing">Ringing</string>
+    <string name="timer_bar_ringing_step">Step %1$d · Ringing</string>
     <string name="timer_bar_step">Step %1$d</string>
     <string name="timer_numbered">%1$s · timer %2$d</string>
     <!-- Two or more timers of the bar in one line, which opens into each timer's line. -->

@@ -32,8 +32,8 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * v0.30, T-220 — a step's timer on Cooking, at a glance: a running timer's control is filled in the theme's primary
- * colour, one at rest tonal; its Cancel stands beside it where they fit; and the current step's container takes in its
- * timers, so that they read as the step's own.
+ * colour, one at rest tonal; its Cancel stands under it, a quiet text button (v0.45, T-325); and the current step's
+ * container takes in its timers, so that they read as the step's own.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -69,9 +69,9 @@ class CardTimerAtAGlanceTest : CardTimersKit() {
         assertFalse(same(scheme.primary, fillOf(TimerTags.start(2))))
     }
 
-    // v0.30, T-221: on the current step's primary container a control at rest — the timer not started, and Cancel beside
-    // a running one — is outlined on the surface, standing off the container rather than tonal on it; the running
-    // timer stays filled in the primary colour.
+    // v0.30, T-221: on the current step's primary container the timer at rest is outlined on the surface, standing off
+    // the container rather than tonal on it; the running timer stays filled in the primary colour, and its Cancel under
+    // it is quiet — neither filled nor edged, drawn on the container itself (v0.45, T-325).
     @Test
     fun onTheCurrentStepAControlAtRestStandsOffTheContainer() {
         show(soup)
@@ -84,7 +84,9 @@ class CardTimerAtAGlanceTest : CardTimersKit() {
         compose.onNodeWithTag(TimerTags.cancel(0)).performScrollTo()
         compose.waitForIdle()
         assertTrue("the running timer stays filled in the primary colour", same(scheme.primary, fillOf(TimerTags.start(0))))
-        assertStandsOff(TimerTags.cancel(0))
+        assertTrue("its cancel is quiet, on the container", same(scheme.primaryContainer, fillOf(TimerTags.cancel(0))))
+        val cancel = bounds(TimerTags.cancel(0))
+        assertTrue(same(scheme.primaryContainer, colourAt(cancel.left + 0.5f, cancel.top + cancel.height / 2)))
     }
 
     /** The control tagged [tag] is filled with the surface, not tonal, and its edge drawn apart from the container. */
@@ -97,15 +99,16 @@ class CardTimerAtAGlanceTest : CardTimersKit() {
         assertFalse("$tag's edge ($edge) is drawn, not the container", same(scheme.primaryContainer, edge) || same(scheme.surface, edge))
     }
 
-    // Where they fit, Cancel stands beside the running timer's control, at its end; each a card target.
+    // Cancel stands under the running timer's control, at its end, not beside it — however much room there is; each
+    // a card target, whole (fixes § 4).
     @Test
-    fun cancelStandsBesideStartWhereItFits() = cancelBesideStart()
+    fun cancelStandsUnderTheRunningTimer() = cancelUnderStart()
 
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp")
-    fun inRussianCancelStandsBesideStartWhereItFits() = cancelBesideStart()
+    fun inRussianCancelStandsUnderTheRunningTimer() = cancelUnderStart()
 
-    private fun cancelBesideStart() {
+    private fun cancelUnderStart() {
         show(soup)
         start(0)
         awaitHeld { it.size == 1 }
@@ -114,7 +117,8 @@ class CardTimerAtAGlanceTest : CardTimersKit() {
         compose.waitForIdle()
         val start = bounds(TimerTags.start(0))
         val cancel = bounds(TimerTags.cancel(0))
-        assertTrue("Cancel ($cancel) stands beside Start ($start)", cancel.left >= start.right && cancel.top < start.bottom && cancel.bottom > start.top)
+        assertTrue("Cancel ($cancel) stands under Start ($start)", cancel.top >= start.bottom - 0.5f)
+        assertEquals("at its end", start.right, cancel.right, 0.5f)
         listOf(TimerTags.start(0), TimerTags.cancel(0)).forEach {
             compose.assertCardTarget(it)
             compose.assertWhole(it)

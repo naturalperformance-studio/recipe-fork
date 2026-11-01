@@ -302,7 +302,11 @@ class CardIngredientSpacingTest {
     }
 
     private companion object {
-        /** The whole lines a 360 × 640 dp card shows under its header as it opens, with the servings and the bar up. */
-        const val LINES_IN_SIGHT = 6
+        /**
+         * The whole lines a 360 × 640 dp card shows under its header as it opens, with the servings and the bar up: six
+         * without the bar; with it, five, since a running timer in the bar stands as a 56 dp pill with its quiet 56 dp
+         * "Cancel timer" on a line of its own under it (v0.45, T-325, redesign fixes § 4).
+         */
+        const val LINES_IN_SIGHT = 5
     }
 }
