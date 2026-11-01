@@ -2,7 +2,8 @@
 <resources>
     <string name="timer_start_action">Запустить этот таймер</string>
     <string name="timer_finished">Готово</string>
-    <string name="timer_cancel">Отменить</string>
+    <string name="timer_cancel_timer">Отменить таймер</string>
+    <string name="timer_running_name">%1$s · идёт</string>
     <string name="timer_cancel_action">Отменить этот таймер</string>
     <string name="timer_clear">Убрать</string>
     <string name="timer_clear_action">Убрать этот законченный таймер</string>
@@ -26,6 +27,7 @@
     <string name="timer_unheard_dismiss">Понятно</string>
     <string name="timer_bar_show_action">Показать его шаг</string>
     <string name="timer_bar_ringing">Звенит</string>
+    <string name="timer_bar_ringing_step">Шаг %1$d · Звенит</string>
     <string name="timer_bar_step">Шаг %1$d</string>
     <string name="timer_numbered">%1$s · таймер %2$d</string>
     <string name="timer_bar_more">ещё %1$d</string>

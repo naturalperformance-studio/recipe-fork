@@ -55,7 +55,12 @@ class CardTimerReferencesTest : CardTimersKit() {
     }
 
     /** The name the timer's control reads by. */
-    private fun controlName(): String = compose.textsOf(TimerTags.start(0)).first()
+    /** The name on the timer's control: its first text at rest; under its countdown, «<name> · running», while it runs. */
+    private fun controlName(): String {
+        val texts = compose.textsOf(TimerTags.start(0))
+        val running = runningName("")
+        return texts.firstOrNull { it.endsWith(running) }?.removeSuffix(running) ?: texts.first()
+    }
 
     private fun open() {
         runBlocking { recipes.save(bread) }

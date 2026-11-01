@@ -77,7 +77,7 @@ class RunningTimersBarTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { barShown() }
         compose.waitUntil(PATIENCE_MS) { text(TimerTags.barStatus(1)) == "10:00" }
         val line = compose.onNodeWithTag(TimerTags.barTimer(1)).fetchSemanticsNode()
-        assertTrue(line.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().any { it.text == "Rice" })
+        assertTrue(line.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().any { it.text == runningName("Rice") })
         assertEquals(context.getString(R.string.timer_bar_show_action), AccessibilityChecks.clickActionLabel(line))
         compose.assertCardTarget(TimerTags.barCancel(1))
 
@@ -191,7 +191,7 @@ class RunningTimersBarTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.barStop(1)) }
         // One finished names itself, as before.
         assertTrue(!shown(TimerTags.BAR_FINISHED))
-        assertEquals("Ringing", text(TimerTags.barStatus(1)))
+        assertEquals("Step 2 · Ringing", text(TimerTags.barStatus(1)))
 
         ring(2)
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.BAR_FINISHED) }
@@ -235,7 +235,7 @@ class RunningTimersBarTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { !shown(TimerTags.BAR_FINISHED) }
         assertEquals(setOf(held().single { it.key.stepPosition == 1 }.key), timers.ringing.ringing.value)
         // The one left names itself, still ringing.
-        assertEquals("Ringing", text(TimerTags.barStatus(1)))
+        assertEquals("Step 2 · Ringing", text(TimerTags.barStatus(1)))
         compose.onNodeWithTag(TimerTags.barTimer(1)).performClick()
         compose.waitUntil(PATIENCE_MS) { !barShown() }
         assertTrue(top(CardTags.step(1)) >= top(CardTags.SCREEN))
@@ -288,7 +288,7 @@ class RunningTimersBarTest : CardTimersKit() {
         compose.waitUntil(PATIENCE_MS) { !barShown() }
         compose.runOnIdle { timers.ringing.ring(held().single()) }
         compose.waitUntil(PATIENCE_MS) { shown(TimerTags.barStop(2)) }
-        assertEquals("Ringing", text(TimerTags.barStatus(2)))
+        assertEquals("Step 3 · Ringing", text(TimerTags.barStatus(2)))
         assertTrue(!shown(TimerTags.barCancel(2)))
         compose.assertCardTarget(TimerTags.barStop(2))
 
