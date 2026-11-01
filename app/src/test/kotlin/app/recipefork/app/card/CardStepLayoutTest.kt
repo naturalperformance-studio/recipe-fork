@@ -134,8 +134,7 @@ class CardStepLayoutTest {
     @Test
     fun aStepIsSetInTheThemesHeadlineStyleOnCookingAndStandsApartFromTheNext() {
         open()
-        // A step other than the current one, which has a size of its own (T-324).
-        val layout = compose.onNodeWithTag(StepTags.text(1), useUnmergedTree = true).fetchSemanticsNode()
+        val layout = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsActions.GetTextLayoutResult].action!!.let { action ->
                 mutableListOf<TextLayoutResult>().also { action(it) }.single()
             }

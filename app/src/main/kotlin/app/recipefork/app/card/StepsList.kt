@@ -317,8 +317,9 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
  * The [current] step — its text, its note, its media and its timers — stands on the theme's primary container, the
  * olive plate, which reaches a little beyond it into the gutter and the space between steps. Its done mark stands level
  * with a caption above its text, "Current step · 3 of 4" — its [number] among the [count] steps — in capitals of the
- * working face ([currentCaptionStyle]); its text, which the caption numbers in place of "3. ", is in the reading face at
- * [CURRENT_STEP_SIZE] ([currentStepStyle]); both in the container's own colour. The screen reader reads the caption
+ * working face ([currentCaptionStyle]); its text, which the caption numbers in place of "3. ", is set as every step's
+ * on Cooking, in the theme's small headline — the plate, the caption and the colour set it apart, not its size; both
+ * in the container's own colour. The screen reader reads the caption
  * once, as the step's state, in place of "Not done" — the current step is never done — and not its drawn copy.
  *
  * This is the [CardMode.COOKING] step; [CardMode.VIEW] shows a [StepBlock].
@@ -382,7 +383,6 @@ private fun StepRow(
                     caption?.let { CurrentStepCaption(it, markTop * 2 + DONE_MARK_SIZE, step.position) }
                     StepText(
                         step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE,
-                        style = if (current) currentStepStyle() else null,
                         number = number.takeIf { !current },
                     )
                     if (!folded) step.note?.let { StepNote(it, step.position, mode) }
@@ -498,17 +498,6 @@ internal fun currentCaptionStyle(): TextStyle = MaterialTheme.typography.labelLa
     lineHeight = CURRENT_CAPTION_LINE,
     letterSpacing = CURRENT_CAPTION_TRACKING,
 )
-
-/** How the current step's text reads on Cooking: the theme's small headline — the reading face — at 23 sp. */
-@Composable
-internal fun currentStepStyle(): TextStyle = MaterialTheme.typography.headlineSmall.copy(
-    fontSize = CURRENT_STEP_SIZE,
-    lineHeight = CURRENT_STEP_LINE,
-)
-
-/** The size of the current step's text on Cooking, and its line height, 1.38 times it. */
-internal val CURRENT_STEP_SIZE = 23.sp
-internal val CURRENT_STEP_LINE = 31.7.sp
 
 /** The size of the current step's caption, its line height and the space between its letters. */
 internal val CURRENT_CAPTION_SIZE = 13.sp

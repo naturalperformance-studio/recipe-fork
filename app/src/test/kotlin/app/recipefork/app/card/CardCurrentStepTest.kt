@@ -63,7 +63,8 @@ import kotlin.math.abs
  * view, smoothly, unless the reader is scrolling themselves. View shows no current step.
  *
  * v0.45, T-324: the current step stands on the olive plate with the caption "Current step · N of M" above its text,
- * visible and read once, its text in Literata at 23 sp; its note and its timer stand on the plate too.
+ * visible and read once, its text in the theme's small headline as every Cooking step's; its note and its timer stand
+ * on the plate too.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -187,9 +188,9 @@ class CardCurrentStepTest {
         assertEquals(listOf(null, "ТЕКУЩИЙ ШАГ · 2 ИЗ 3", null), captions())
     }
 
-    // The caption stands above the step's text, inside the plate; the text is Literata at 23 sp in the plate's ink.
+    // The caption stands above the step's text, inside the plate; the text is in the theme's small headline, in the plate's ink.
     @Test
-    fun theCurrentStepIsCaptionedAboveItsTextInLargeLiterata() {
+    fun theCurrentStepIsCaptionedAboveItsTextInTheThemesHeadline() {
         open(pilaf, CardMode.COOKING, appType = true)
         assertEquals(listOf("CURRENT STEP · 1 OF 3", null, null), captions())
         val caption = compose.onNodeWithTag(StepRowTags.caption(0), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
@@ -199,18 +200,21 @@ class CardCurrentStepTest {
         assertTrue("the caption is on the plate", plate.contains(caption.topLeft) && plate.contains(caption.bottomRight - Offset(1f, 1f)))
         assertTrue("the caption has room", caption.height > 0f && caption.width > 0f)
 
+        // Set as every step on Cooking, in the theme's small headline: the plate, not its size, sets it apart.
+        val headline = appTypography(context.resources).headlineSmall
         val layout = compose.textLayoutsWithin(StepTags.text(0)).single()
-        assertEquals(23f, layout.layoutInput.style.fontSize.value, 0.01f)
+        assertEquals(headline.fontSize, layout.layoutInput.style.fontSize)
+        assertEquals(headline.lineHeight, layout.layoutInput.style.lineHeight)
         assertEquals(ReadingFamily, layout.layoutInput.style.fontFamily)
         assertEquals(scheme.onPrimaryContainer, layout.layoutInput.style.color)
         assertEquals("the caption numbers the step; its text does not", "Fry the chicken.", layout.layoutInput.text.text)
         val captionLayout = compose.textLayoutsWithin(StepRowTags.caption(0)).single()
         assertEquals(scheme.onPrimaryContainer, captionLayout.layoutInput.style.color)
 
-        // Another step reads as before: its number in its text, at the Cooking size.
+        // Another step reads as before, its number in its text, at the same size as the current one.
         val next = compose.textLayoutsWithin(StepTags.text(1)).single()
         assertEquals("2.\u00A0Add the rice.", next.layoutInput.text.text)
-        assertEquals(24f, next.layoutInput.style.fontSize.value, 0.01f)
+        assertEquals(layout.layoutInput.style.fontSize, next.layoutInput.style.fontSize)
     }
 
     // Within the target sizes — 150 % on a 360 dp phone — the caption and the step's text read whole, in Russian, the
