@@ -170,8 +170,9 @@ class NaturalLinesTest {
         assertEquals(w.lines[2][1], compose.textLayoutsWithin(IngredientTags.quantity(2)).single().layoutInput.text.text)
         // The salt, marked done, is struck through, its "to taste" with it.
         assertEquals(TextDecoration.LineThrough, compose.textLayoutsWithin(IngredientTags.name(1)).single().layoutInput.style.textDecoration)
-        // A step's references read as before: the scaled amount, "to taste", the editor's placeholder and unit.
-        assertEquals(w.stepRead, compose.textLayoutsWithin(StepTags.text(0)).single().layoutInput.text.text)
+        // A step's references read as before: the scaled amount, "to taste", the editor's placeholder and unit — its
+        // words as drawn, after the number Cooking draws before them.
+        assertEquals(w.stepRead, compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode().config[ShownText])
     }
 
     @Test

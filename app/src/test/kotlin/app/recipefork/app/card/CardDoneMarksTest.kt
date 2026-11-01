@@ -178,7 +178,7 @@ class CardDoneMarksTest {
         tap(step(0))
         assertEquals(listOf(ingredient(1), step(0)), doneParts())
         assertEquals(listOf("Rice", "350 g"), struck(ingredient(1)))
-        assertEquals(listOf("Fry the chicken."), struck(step(0)))
+        assertEquals(listOf("1.\u00A0Fry the chicken."), struck(step(0)))
         assertEquals("Mark as not done", clickLabel(ingredient(1)))
         assertEquals("Mark as not done", clickLabel(step(0)))
         // What a line says is unchanged: the mark is its state, not its words.

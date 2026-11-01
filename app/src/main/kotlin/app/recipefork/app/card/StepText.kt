@@ -171,7 +171,9 @@ internal object StepTags {
  * [style] where one is given; on [CardMode.VIEW], in the mode's style, each reference is set in the working face
  * ([viewReferenceStyle]) — the editor's rows read a step in its body text — and tagged [tag]. Drawn in at most
  * [maxLines], the last ellipsized where it runs on — a step folded on Cooking shows its first line — though the screen
- * reader reads it whole.
+ * reader reads it whole. With a [number] the text is drawn after it ("2. Add the rice."), as on Cooking, where no
+ * circle carries it; the number is drawn only — the step's line says it to the screen reader — and its [ShownText]
+ * is the step's text after it.
  */
 @Composable
 internal fun StepText(
@@ -183,6 +185,7 @@ internal fun StepText(
     style: TextStyle? = null,
     tag: String = StepTags.text(step.position),
     maxLines: Int = Int.MAX_VALUE,
+    number: Int? = null,
 ) {
     val runs = StepText.runs(step, references::quantity)
     // Each rounded reference, by its run: its arrow, and how the screen reader reads the reference with it.
@@ -196,13 +199,15 @@ internal fun StepText(
     )
     // On View a reference is set in the working face, as the list's quantities are; elsewhere it reads as the text does.
     val referenceStyle = if (mode == CardMode.VIEW && style == null) viewReferenceStyle() else null
-    val shown = buildAnnotatedString {
+    val written = buildAnnotatedString {
         runs.forEachIndexed { index, run ->
             if (referenceStyle != null && run is StepRun.Reference) withStyle(referenceStyle) { append(run.text) } else append(run.text)
             val arrow = marks[index]?.first
             if (arrow != null) withStyle(arrowStyle) { append(ARROW_GAP + arrow) }
         }
     }
+    // The number stays with the first word: a no-break space after its point.
+    val shown = if (number == null) written else AnnotatedString("$number.$NUMBER_SPACE") + written
     val spoken = runs.withIndex().joinToString("") { (index, run) -> marks[index]?.second ?: run.text }
     // The text as laid out stays reachable — by the screen reader for its bounds, by a test for its size — though the
     // node's own text is replaced by what is spoken.
@@ -217,7 +222,7 @@ internal fun StepText(
             onTextLayout = { laidOut[0] = it },
             modifier = modifier.clearAndSetSemantics {
                 text = AnnotatedString(spoken)
-                shownText = shown.text
+                shownText = written.text
                 testTag = tag
                 getTextLayoutResult { results -> laidOut[0]?.let { results += it } != null }
             },
@@ -277,3 +282,6 @@ internal val VIEW_REFERENCE_SIZE = 14.5.sp
 
 /** A narrow space that never breaks, so the arrow stays on its quantity's line. */
 private const val ARROW_GAP = "\u202F"
+
+/** The space after a step's number before its text: one that never breaks, so the number stays with the first word. */
+private const val NUMBER_SPACE = " "

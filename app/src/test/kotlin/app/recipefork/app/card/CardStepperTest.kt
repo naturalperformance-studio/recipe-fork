@@ -22,6 +22,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.recipefork.app.book.ActiveBook
@@ -53,8 +54,8 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Scenario 3 of v0.31: on Cooking the steps are a stepper — each numbered circle joined to the next by a vertical line —
- * and a step marked done shows a check in its circle, is struck through and folds to its first line, ellipsized; a tap
+ * Scenario 3 of v0.31: on Cooking the steps are a stepper — each step's done mark joined to the next by a vertical line —
+ * and a step marked done shows a check in its circle (T-323: an empty circle until then), is struck through and folds to its first line, ellipsized; a tap
  * on it unmarks it and it unfolds, the current step staying in view. View is as it was.
  */
 @RunWith(AndroidJUnit4::class)
@@ -165,11 +166,12 @@ class CardStepperTest {
         tap(1)
         assertEquals(listOf(false, true, false), (0..2).map(::showsCheck))
         assertEquals("Done", stateOf(1))
-        // The check is drawn in the circle's own colour for its number, on its primary fill.
+        // The check is drawn in onPrimary on the circle's primary fill, at its corner (9.5, 17 of 24, 18 dp in the middle).
         val circle = compose.onNodeWithTag(StepRowTags.number(1), useUnmergedTree = true).captureToImage().toPixelMap()
-        val tick = circle[(circle.width * 0.36f).toInt(), (circle.height * 0.595f).toInt()]
+        val corner = with(compose.density) { (5.dp + 18.dp * (9.5f / 24)).toPx() } to with(compose.density) { (5.dp + 18.dp * (17f / 24)).toPx() }
+        val tick = circle[corner.first.toInt(), corner.second.toInt()]
         assertTrue("the check is drawn: $tick", same(scheme.onPrimary, tick))
-        // Unmarked, the number is back.
+        // Unmarked, the circle is empty again.
         tap(1)
         assertEquals(listOf(false, false, false), (0..2).map(::showsCheck))
         assertEquals("Not done", stateOf(1))
