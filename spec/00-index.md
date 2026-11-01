@@ -1,7 +1,7 @@
 # Recipe Fork — specification index
 
-> **Vision** — 27 sections closed · 0 open · 1 n/a. Open questions: 0 next, 40 later.
-> Synced through: v0.38. Last updated 2026-10-15.
+> **Vision** — 27 sections closed · 0 open · 0 n/a. Open questions: 0 next, 15 later.
+> Synced through: v0.38. Last updated 2026-11-01.
 > Since 2026-10-02 this specification is the product vision, not a contract: the product is built in
 > increments planned by `/team-lead` (`docs/increments/`), and releases are whatever increments have
 > shipped. MVP-001 is superseded (see `220-mvp-boundary.md`). The history of the earlier gate process
