@@ -34,6 +34,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -349,6 +350,8 @@ internal object IngredientTags {
     fun name(position: Int) = "card-ingredient-$position-name"
     /** The quantity of the line at [position], with its arrow where it carries one. */
     fun quantity(position: Int) = "card-ingredient-$position-quantity"
+    /** The done mark at the start of the line at [position] on Cooking. */
+    fun mark(position: Int) = "card-ingredient-$position-mark"
     /** The subheading of the group at [index] of the recipe's headings. */
     fun group(index: Int) = "card-ingredient-group-$index"
 }
@@ -440,8 +443,9 @@ private fun quantityColumn(lines: List<IngredientLine>): QuantityColumn {
  * more than its share of a narrow line or large text, it narrows and the quantity wraps in it; the name wraps, never
  * cut. Read by the screen reader as one line — the name, then the quantity — the arrow as the words it stands for.
  *
- * A tap on the line marks it [done] or unmarks it ([onToggle], FLOW-068); a line marked done is struck through and
- * muted, and read as done. A line that offers fixing opens its control from its amount — a target of its own, at
+ * A tap on the line marks it [done] or unmarks it ([onToggle], FLOW-068); such a line starts with its done mark
+ * ([DoneCircle]) — an empty circle, ticked once done — and a line marked done is struck through and muted, and read as
+ * done: three signs, never colour alone. A line that offers fixing opens its control from its amount — a target of its own, at
  * least [AMOUNT_TARGET] wide and the line's height, named for what it does — and offers the same to the screen reader
  * as the line's second action, beside the marking ([onOpen]). A line that answers a tap is the card's [CardTarget] tall.
  *
@@ -476,7 +480,19 @@ private fun IngredientRow(
     val padding = if (cooking) LINE_PADDING else VIEW_LINE_PADDING
     Column(place.fillMaxWidth().then(marking).then(fixing).semantics(mergeDescendants = true) {}.testTag(CardTags.ingredient(position))) {
         val name: @Composable () -> Unit = { LineName(line, position, done) }
-        if (page != null) PageLine(line, position, page, done, name) else CookingLine(line, position, column, done, tall, padding, fixable, fixLabel, name) { opening() }
+        when {
+            page != null -> PageLine(line, position, page, done, name)
+            // A line the reader can mark starts with its done mark, the rest of the line beside it.
+            onToggle != null && cooking -> Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(DONE_MARK_GAP),
+            ) {
+                DoneCircle(done, IngredientTags.mark(position))
+                Box(Modifier.weight(1f)) { CookingLine(line, position, column, done, tall, padding, fixable, fixLabel, name) { opening() } }
+            }
+            else -> CookingLine(line, position, column, done, tall, padding, fixable, fixLabel, name) { opening() }
+        }
     }
 }
 

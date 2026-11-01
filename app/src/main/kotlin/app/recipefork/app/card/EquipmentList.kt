@@ -137,9 +137,10 @@ internal enum class InKitchen { HAS, LACKS, UNKNOWN }
 /**
  * One item of equipment on Cooking: its name, wrapping, never cut, and — when the kitchen is [lacking] it — "Not in
  * your kitchen" under it, muted, part of the line the screen reader reads. With [onToggle] a tap marks it [done] or
- * unmarks it — a check box to the screen reader — and the line is the card's [CardTarget] tall; without (no marks to
- * keep), its mark is only shown, read-only, its state read while the recipe has any mark ([stated]). A line marked
- * done is struck through and muted, and read as done; the kitchen's mark stays as it is.
+ * unmarks it — a check box to the screen reader — the line is the card's [CardTarget] tall, and it starts with its done
+ * mark ([DoneCircle]), an empty circle ticked once done; without (no marks to keep), its mark is only shown, read-only,
+ * its state read while the recipe has any mark ([stated]). A line marked done is struck through and muted, and read as
+ * done — three signs with its mark, never colour alone; the kitchen's mark stays as it is.
  */
 @Composable
 private fun EquipmentLine(
@@ -161,9 +162,16 @@ private fun EquipmentLine(
             .testTag(CardTags.equipment(index)),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Column {
-            Text(item, style = MaterialTheme.typography.bodyLarge.done(done))
-            if (lacking) NotInKitchen(index, MaterialTheme.typography.bodyMedium, chevron = false)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DONE_MARK_GAP),
+        ) {
+            if (onToggle != null) DoneCircle(done, EquipmentTags.mark(index))
+            Column(Modifier.weight(1f)) {
+                Text(item, style = MaterialTheme.typography.bodyLarge.done(done))
+                if (lacking) NotInKitchen(index, MaterialTheme.typography.bodyMedium, chevron = false)
+            }
         }
     }
 }
@@ -340,6 +348,9 @@ internal object EquipmentTags {
 
     /** The "Not in your kitchen" of the item at [index]. */
     fun lacking(index: Int) = "card-equipment-lacking-$index"
+
+    /** The done mark before the item at [index] on Cooking. */
+    fun mark(index: Int) = "card-equipment-mark-$index"
 
     /** The square before the item at [index] on View; none while the app cannot tell whether the kitchen has it. */
     fun square(index: Int) = "card-equipment-square-$index"

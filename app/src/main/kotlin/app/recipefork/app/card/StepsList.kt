@@ -4,13 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.SemanticsPropertyKey
-import androidx.compose.ui.semantics.SemanticsPropertyReceiver
-import androidx.compose.ui.text.TextLayoutResult
 import app.recipefork.app.ui.Motion
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,12 +33,8 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
@@ -117,8 +106,8 @@ val LocalStepToShow = staticCompositionLocalOf<StepToShow?> { null }
  * A tap on a step's line — its number and text — marks it done, and a tap again unmarks it ([marks], FLOW-068); its
  * media and its timer keep their own taps. Without [marks] a step is not marked.
  *
- * On Cooking the steps read as a stepper, each circle joined to the next by a line, and a step marked done folds to its
- * first line with a check in its circle ([StepRow]); a tap on it unmarks it and it unfolds.
+ * On Cooking the steps read as a stepper, each done mark joined to the next by a line, and a step marked done folds to
+ * one struck line with its mark ticked ([StepRow]); a tap on it unmarks it and it unfolds.
  *
  * On Cooking the first step not marked done is the current one: drawn, with its timers, on the theme's primary
  * container and read as the current step. A step marked done brings the next one not marked after it into view, wholly
@@ -299,8 +288,8 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
     StepText.render(step, quantity).isNotBlank() || step.note != null || hasMedia
 
 /**
- * One step: its number in a filled circle and its text beside it, with the author's note under the text, muted and
- * smaller ([StepNote]), read by the screen reader as one line that says the number once — the circle itself is
+ * One step: its done mark and its numbered text beside it, with the author's note under the text, muted and
+ * smaller ([StepNote]), read by the screen reader as one line that says the number once — the mark itself is
  * decorative — and the note after the text; then its photograph or its clip, named by the step's number, and its
  * timer, if it carries them, set under the text, the timer a clear gap below the rest. Steps after the first stand apart from the one before. An item whose
  * file the device does not hold, or cannot show, says so in its place (FLOW-061).
@@ -309,9 +298,10 @@ internal fun isListed(step: Step, quantity: ReferenceQuantity, hasMedia: Boolean
  * ([onToggle]) — a check box to the screen reader; a step marked done has its text struck through and muted, and is
  * read as done.
  *
- * On Cooking the steps read as a stepper: each circle is joined to the next one's by a vertical line ([stepLine]),
- * none after the [last]; a step marked done shows a check in its circle in place of its number and folds to its first
- * line, ellipsized — its note, media and timers folded away — unless one of its timers is running or ringing, which
+ * On Cooking the steps read as a stepper: each step's done mark ([DoneCircle]) — an empty circle, level with the text's
+ * first line — is joined to the next one's by a vertical line ([stepLine]), none after the [last], and the step's text
+ * starts with its number ("2. "); a step marked done shows the mark ticked and folds to its first line, struck through
+ * and ellipsized — its note, media and timers folded away — unless one of its timers is running or ringing, which
  * holds it open until that timer is cancelled or its ringing stopped. Folding and unfolding animate ([Motion]) — once
  * the card has read the recipe's timers ([animate]); before, a step stands as they make it at once. The screen reader
  * still reads a folded step's text whole; its note folds away with the rest.
@@ -343,11 +333,14 @@ private fun StepRow(
     // Read from the timers as they tick, but changing only as a timer of the step starts, ends, rings or goes.
     val timing by remember(step, timers) { derivedStateOf { timers.holdOpen(step) } }
     val folded = cooking && done && !timing
-    val circle = rememberStepCircle(number)
+    // The mark stands level with the middle of the text's first line, as the line grows with the font scale.
+    val lineHeight = stepTextStyle(mode).lineHeight
+    val textLine = if (lineHeight.isSp) with(LocalDensity.current) { lineHeight.toDp() } else DONE_MARK_SIZE
+    val markTop = ((textLine - DONE_MARK_SIZE) / 2).coerceAtLeast(0.dp)
     // The current step's container takes in the whole step — its number and text, its media and its timers — so that
     // its timers read as its own.
     val highlight = if (current) Modifier.currentStep() else Modifier
-    val line = if (cooking && !last) Modifier.stepLine(circle.side, below = spacing) else Modifier
+    val line = if (cooking && !last) Modifier.stepLine(markTop + DONE_MARK_SIZE, below = spacing) else Modifier
     Column(
         modifier.fillMaxWidth().padding(top = if (number > 1) spacing else 0.dp).then(highlight).then(line)
             .testTag(StepRowTags.entry(step.position)),
@@ -366,9 +359,10 @@ private fun StepRow(
         ) {
             val color = if (current) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current
             CompositionLocalProvider(LocalContentColor provides color) {
-                StepNumber(circle, step.position, checked = cooking && done)
+                val ring = if (current) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                DoneCircle(cooking && done, StepRowTags.number(step.position), Modifier.padding(top = markTop), ring = ring)
                 Column(Modifier.weight(1f).then(if (cooking && animate) Modifier.animateContentSize(Motion.appearing()) else Modifier)) {
-                    StepText(step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE)
+                    StepText(step, references, done = done, mode = mode, maxLines = if (folded) 1 else Int.MAX_VALUE, number = number)
                     if (!folded) step.note?.let { StepNote(it, step.position, mode) }
                 }
             }
@@ -406,18 +400,19 @@ private fun RecipeTimers.holdOpen(step: Step): Boolean = step.timers.indices.any
 }
 
 /**
- * The stepper's line from a step's circle, [side] across, down to the next step's, which stands [below] it: in the
- * theme's on-surface-variant colour, a small gap clear of each circle, drawn over the current step's container too
- * (ContrastTest).
+ * The stepper's line from a step's mark, whose bottom is [markBottom] below the step's top, down to the next step's
+ * mark, which stands [below] it: centred under the mark, in the theme's on-surface-variant colour, a small gap clear of
+ * each mark, drawn over the current step's container too (ContrastTest).
  */
 @Composable
-private fun Modifier.stepLine(side: Dp, below: Dp): Modifier {
+private fun Modifier.stepLine(markBottom: Dp, below: Dp): Modifier {
     val color = MaterialTheme.colorScheme.onSurfaceVariant
     return drawBehind {
-        val x = side.toPx() / 2f
+        val x = DONE_MARK_SIZE.toPx() / 2f
         val gap = STEP_LINE_GAP.toPx()
-        val top = side.toPx() + gap
-        val bottom = size.height + below.toPx() - gap
+        val top = markBottom.toPx() + gap
+        // The next step's mark stands as far below its top as this one below this step's.
+        val bottom = size.height + below.toPx() + (markBottom - DONE_MARK_SIZE).toPx() - gap
         if (bottom > top) drawLine(color, Offset(x, top), Offset(x, bottom), strokeWidth = STEP_LINE_WIDTH.toPx())
     }
 }
@@ -555,11 +550,8 @@ internal val MARGIN_NOTE_PADDING = 2.dp
 /** The space between one step and the next, beyond the section's own. */
 internal val StepSpacing = 16.dp
 
-/** The gap between a step's number and its text. */
+/** The gap between a step's done mark and its text. */
 private val StepGap = 12.dp
-
-/** The least size of a step's circle; it grows with the font scale and stays a circle. */
-internal val StepNumberSize = 32.dp
 
 /** The gap above a step's timer, setting it clearly apart from the step's text and its media. */
 internal val TimerGap = 12.dp
@@ -568,57 +560,7 @@ internal val TimerGap = 12.dp
 internal val TimersGap = 8.dp
 
 /** Where a step's photograph, clip and timer start: under its text. */
-internal val StepIndent = StepNumberSize + StepGap
-
-/** A step's number as its circle draws it, and the circle's side. */
-private class StepCircle(val number: TextLayoutResult, val side: Dp)
-
-/** The circle of step [number]: as large as the number needs and never less than [StepNumberSize]. */
-@Composable
-private fun rememberStepCircle(number: Int): StepCircle {
-    val measurer = rememberTextMeasurer()
-    val style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onPrimary)
-    val density = LocalDensity.current
-    return remember(number, style, density) {
-        val shown = measurer.measure("$number", style, softWrap = false, maxLines = 1)
-        StepCircle(shown, with(density) { maxOf(StepNumberSize, (maxOf(shown.size.width, shown.size.height)).toDp() + 8.dp) })
-    }
-}
-
-/** Whether a step's circle shows a check in place of its number: what a test reads of a circle that says nothing. */
-internal val ShowsCheck = SemanticsPropertyKey<Boolean>(SHOWS_CHECK_KEY)
-private const val SHOWS_CHECK_KEY = "card.shows-check"
-internal var SemanticsPropertyReceiver.showsCheck by ShowsCheck
-
-/**
- * A step's number in a filled [circle] in the theme's primary colour — or, [checked], a check in its place, as a step
- * marked done shows on Cooking. Drawn, not set as text: it is decorative, the step's line says the number and its state.
- */
-@Composable
-private fun StepNumber(circle: StepCircle, position: Int, checked: Boolean) {
-    val fill = MaterialTheme.colorScheme.primary
-    val mark = MaterialTheme.colorScheme.onPrimary
-    val shown = circle.number
-    Box(
-        Modifier
-            .size(circle.side)
-            .clearAndSetSemantics { testTag = StepRowTags.number(position); showsCheck = checked }
-            .drawBehind {
-                drawCircle(fill)
-                if (checked) {
-                    val s = size.minDimension
-                    val tick = Path().apply {
-                        moveTo(s * 0.28f, s * 0.52f)
-                        lineTo(s * 0.44f, s * 0.67f)
-                        lineTo(s * 0.73f, s * 0.36f)
-                    }
-                    drawPath(tick, mark, style = Stroke(width = s * 0.09f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-                } else {
-                    drawText(shown, topLeft = Offset((size.width - shown.size.width) / 2f, (size.height - shown.size.height) / 2f))
-                }
-            },
-    )
-}
+internal val StepIndent = DONE_MARK_SIZE + StepGap
 
 @Composable
 internal fun StepMedia(item: StepMediaItem, number: Int, position: Int) {

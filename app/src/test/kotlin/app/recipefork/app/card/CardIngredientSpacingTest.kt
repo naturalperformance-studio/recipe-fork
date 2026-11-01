@@ -125,7 +125,8 @@ class CardIngredientSpacingTest {
 
     @Test
     fun linesAre56dpWithNoGapAndSubheadingsHaveAModestGapAbove() {
-        val long = "Coarsely ground black pepper from the mill, fresh"
+        // Two lines beside its done mark and quantity at 360 dp.
+        val long = "Ground black pepper from the mill"
         show(
             Recipe.create(now, null).copy(
                 title = "Buns",

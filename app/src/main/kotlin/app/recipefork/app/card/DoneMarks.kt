@@ -1,7 +1,13 @@
 package app.recipefork.app.card
 
 import android.content.Context
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,15 +16,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import app.recipefork.app.R
 import app.recipefork.app.book.BookName
 import app.recipefork.core.recipe.Ingredient
@@ -256,3 +273,54 @@ internal val doneColor: Color
 @Composable
 internal fun TextStyle.done(done: Boolean): TextStyle =
     if (done) copy(color = doneColor, textDecoration = TextDecoration.LineThrough) else this
+
+/**
+ * The done mark before a line, an item or a step on Cooking (decisions 2026-10-15, item 9; redesign-1 § 4.4, `.mk`): a
+ * disc in the primary colour with the redesign's check in `onPrimary` when [done]; an empty circle outlined in [ring]
+ * when not — the theme's muted ink on the page, the container's own ink on the current step. One of three signs, with
+ * the text struck through and muted ([done]): never colour alone. Drawn, not read: the line it stands on already says
+ * its state in words ([markedDone]), so it says nothing; a test reads it by [tag] and [ShowsCheck].
+ */
+@Composable
+internal fun DoneCircle(done: Boolean, tag: String, modifier: Modifier = Modifier, ring: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+    val colours = MaterialTheme.colorScheme
+    val drawn = if (done) Modifier.background(colours.primary, CircleShape) else Modifier.border(DONE_MARK_RING, ring, CircleShape)
+    Box(
+        modifier
+            .size(DONE_MARK_SIZE)
+            .then(drawn)
+            .clearAndSetSemantics { testTag = tag; showsCheck = done },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (done) {
+            val check = colours.onPrimary
+            Canvas(Modifier.size(DONE_MARK_CHECK)) {
+                // The redesign's check, drawn on a 24-unit square: M5 12.5 l4.5 4.5 L19 7.5, stroke 2.6, round.
+                val unit = size.width / 24f
+                val path = Path().apply {
+                    moveTo(5f * unit, 12.5f * unit)
+                    lineTo(9.5f * unit, 17f * unit)
+                    lineTo(19f * unit, 7.5f * unit)
+                }
+                drawPath(path, check, style = Stroke(width = 2.6f * unit, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            }
+        }
+    }
+}
+
+/** The side of a done mark's circle. */
+internal val DONE_MARK_SIZE: Dp = 28.dp
+
+/** The width of the ring of a done mark not yet ticked. */
+internal val DONE_MARK_RING: Dp = 2.dp
+
+/** The size of the check drawn in a ticked done mark. */
+private val DONE_MARK_CHECK: Dp = 18.dp
+
+/** The space between a done mark and what follows it on its line. */
+internal val DONE_MARK_GAP: Dp = 12.dp
+
+/** Whether a done mark shows its check: what a test reads of a mark that says nothing. */
+internal val ShowsCheck = SemanticsPropertyKey<Boolean>(SHOWS_CHECK_KEY)
+private const val SHOWS_CHECK_KEY = "card.shows-check"
+internal var SemanticsPropertyReceiver.showsCheck by ShowsCheck
