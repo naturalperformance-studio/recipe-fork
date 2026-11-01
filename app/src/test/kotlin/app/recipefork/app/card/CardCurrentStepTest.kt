@@ -10,6 +10,14 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.geometry.Offset
+import app.recipefork.app.editor.textsOf
+import app.recipefork.app.timer.TimerTags
+import app.recipefork.app.ui.ReadingFamily
+import app.recipefork.app.ui.appTypography
+import app.recipefork.core.recipe.Timer
+import kotlin.time.Duration.Companion.minutes
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -53,6 +61,9 @@ import kotlin.math.abs
  * Scenario 3 of v0.27: on Cooking the first step not marked done is the current one — drawn on the theme's primary
  * container and read by the screen reader as the current step — and marking a step brings the next one not marked into
  * view, smoothly, unless the reader is scrolling themselves. View shows no current step.
+ *
+ * v0.45, T-324: the current step stands on the olive plate with the caption "Current step · N of M" above its text,
+ * visible and read once, its text in Literata at 23 sp; its note and its timer stand on the plate too.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -100,11 +111,13 @@ class CardCurrentStepTest {
         book.close()
     }
 
-    private fun open(recipe: Recipe, tab: CardMode) {
+    /** Opens [recipe] on [tab]; in the app's own type — its faces and sizes — where [appType]. */
+    private fun open(recipe: Recipe, tab: CardMode, appType: Boolean = false) {
         runBlocking { recipes.save(recipe) }
         val environment = CardEnvironment(marks = marks, lastTab = HeldLastCardTab(tab), ingredients = IngredientEntries { emptyList() })
         compose.setContent {
-            MaterialTheme(colorScheme = scheme) { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
+            val typography = if (appType) appTypography(context.resources) else MaterialTheme.typography
+            MaterialTheme(colorScheme = scheme, typography = typography) { CardScreen(recipe.id, recipes, environment, onBack = {}, onEdit = {}) }
         }
         compose.awaitCard()
         compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(CardTags.step(0))).fetchSemanticsNodes().size == 1 }
@@ -113,9 +126,18 @@ class CardCurrentStepTest {
 
     private fun step(position: Int) = CardTags.step(position)
 
-    /** Whether the step at [position] is read as the current one. */
-    private fun readAsCurrent(position: Int): Boolean =
-        compose.onNodeWithTag(step(position)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription) == "Current step"
+    /** The state the step at [position] is read with. */
+    private fun stateOf(position: Int): String? =
+        compose.onNodeWithTag(step(position)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
+
+    /** Whether the step at [position] is read as the current one, of the three. */
+    private fun readAsCurrent(position: Int): Boolean = stateOf(position) == "Current step, ${position + 1} of 3"
+
+    /** The caption drawn above each step's text, by position: null where there is none. */
+    private fun captions(count: Int = 3): List<String?> = (0 until count).map { position ->
+        compose.onAllNodes(hasTestTag(StepRowTags.caption(position)), useUnmergedTree = true).fetchSemanticsNodes()
+            .singleOrNull()?.config?.get(ShownText)
+    }
 
     /** The colour drawn in the step at [position], right of its line of text and below it. */
     private fun backgroundOf(position: Int): Color {
@@ -158,9 +180,111 @@ class CardCurrentStepTest {
 
     @Test
     @Config(qualifiers = "ru-w360dp-h640dp")
-    fun theCurrentStepIsReadInRussian() {
+    fun theCurrentStepIsCaptionedAndReadInRussian() {
+        marks.hold(BookName.Pool, pilaf.id, setOf(DoneMark.of(pilaf.steps[0])))
         open(pilaf, CardMode.COOKING)
-        assertEquals("Текущий шаг", compose.onNodeWithTag(step(0)).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription))
+        assertEquals("Текущий шаг, 2 из 3", stateOf(1))
+        assertEquals(listOf(null, "ТЕКУЩИЙ ШАГ · 2 ИЗ 3", null), captions())
+    }
+
+    // The caption stands above the step's text, inside the plate; the text is Literata at 23 sp in the plate's ink.
+    @Test
+    fun theCurrentStepIsCaptionedAboveItsTextInLargeLiterata() {
+        open(pilaf, CardMode.COOKING, appType = true)
+        assertEquals(listOf("CURRENT STEP · 1 OF 3", null, null), captions())
+        val caption = compose.onNodeWithTag(StepRowTags.caption(0), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val text = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val plate = compose.onNodeWithTag(StepRowTags.entry(0)).fetchSemanticsNode().boundsInRoot
+        assertTrue("the caption ($caption) stands above the text ($text)", caption.bottom <= text.top + 0.5f)
+        assertTrue("the caption is on the plate", plate.contains(caption.topLeft) && plate.contains(caption.bottomRight - Offset(1f, 1f)))
+        assertTrue("the caption has room", caption.height > 0f && caption.width > 0f)
+
+        val layout = compose.textLayoutsWithin(StepTags.text(0)).single()
+        assertEquals(23f, layout.layoutInput.style.fontSize.value, 0.01f)
+        assertEquals(ReadingFamily, layout.layoutInput.style.fontFamily)
+        assertEquals(scheme.onPrimaryContainer, layout.layoutInput.style.color)
+        assertEquals("the caption numbers the step; its text does not", "Fry the chicken.", layout.layoutInput.text.text)
+        val captionLayout = compose.textLayoutsWithin(StepRowTags.caption(0)).single()
+        assertEquals(scheme.onPrimaryContainer, captionLayout.layoutInput.style.color)
+
+        // Another step reads as before: its number in its text, at the Cooking size.
+        val next = compose.textLayoutsWithin(StepTags.text(1)).single()
+        assertEquals("2.\u00A0Add the rice.", next.layoutInput.text.text)
+        assertEquals(24f, next.layoutInput.style.fontSize.value, 0.01f)
+    }
+
+    // Within the target sizes — 150 % on a 360 dp phone — the caption and the step's text read whole, in Russian, the
+    // longer of the two.
+    @Test
+    @Config(qualifiers = "ru-w360dp-h640dp", fontScale = 1.5f)
+    fun atOneAndAHalfTimesTheFontScaleTheCaptionAndTextReadWhole() {
+        marks.hold(BookName.Pool, stew.id, (0..6).map { DoneMark.of(stew.steps[it]) }.toSet())
+        open(stew, CardMode.COOKING, appType = true)
+        compose.onNodeWithTag(step(7)).performScrollTo()
+        compose.waitForIdle()
+        assertEquals(listOf("ТЕКУЩИЙ ШАГ · 8 ИЗ 8"), (0..7).mapNotNull { captions(8)[it] })
+        compose.assertWhole(StepRowTags.caption(7))
+        compose.assertWhole(StepTags.text(7))
+        compose.assertCardTarget(step(7))
+    }
+
+    // Read once: as the step's state, with its place among the steps; neither the drawn caption nor a number is read
+    // besides.
+    @Test
+    fun theCaptionIsReadOnceAsTheStepsState() {
+        open(pilaf, CardMode.COOKING)
+        assertEquals("Current step, 1 of 3", stateOf(0))
+        assertEquals(listOf("Fry the chicken."), compose.textsOf(step(0)))
+        val drawn = compose.onNodeWithTag(StepRowTags.caption(0), useUnmergedTree = true).fetchSemanticsNode().config
+        assertTrue("the drawn caption has no words of its own", drawn.getOrNull(SemanticsProperties.Text).isNullOrEmpty())
+        assertTrue("nor a description", drawn.getOrNull(SemanticsProperties.ContentDescription).isNullOrEmpty())
+        // Another step keeps its number and its state in words.
+        assertEquals(listOf("2.", "Add the rice."), compose.textsOf(step(1)))
+        assertEquals("Not done", stateOf(1))
+    }
+
+    @Test
+    fun thePlateMovesWithTheMarksAndGoesWithTheLast() {
+        open(pilaf, CardMode.COOKING)
+        compose.onNodeWithTag(step(0)).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(listOf(null, "CURRENT STEP · 2 OF 3", null), captions())
+        compose.onNodeWithTag(step(1)).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(listOf(null, null, "CURRENT STEP · 3 OF 3"), captions())
+        // An earlier step unmarked takes the plate back.
+        compose.onNodeWithTag(step(0)).performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(listOf("CURRENT STEP · 1 OF 3", null, null), captions())
+        // Every step marked: no plate anywhere.
+        (0..2).forEach { if (stateOf(it) != "Done") compose.onNodeWithTag(step(it)).performScrollTo().performClick() }
+        compose.waitForIdle()
+        assertEquals(listOf<String?>(null, null, null), captions())
+        (0..2).forEach { assertFalse("step $it, every step done", same(scheme.primaryContainer, backgroundOf(it))) }
+    }
+
+    // The step's note and its timer stand on the plate: within its bounds, drawn on its colour.
+    @Test
+    fun theCurrentStepsNoteAndTimerStandOnThePlate() {
+        val noted = pilaf.copy(
+            steps = listOf(
+                Step(0, "Fry the chicken.", timers = listOf(Timer(8.minutes, "Chicken")), note = "Skin side down first."),
+                Step(1, "Add the rice."),
+            ),
+        )
+        open(noted, CardMode.COOKING)
+        compose.waitUntil(PATIENCE_MS) { compose.onAllNodes(hasTestTag(TimerTags.start(0))).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(TimerTags.start(0)).performScrollTo()
+        compose.waitForIdle()
+        val plate = compose.onNodeWithTag(StepRowTags.entry(0)).fetchSemanticsNode().boundsInRoot
+        listOf(StepRowTags.note(0), TimerTags.start(0)).forEach { tag ->
+            val part = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+            assertTrue("$tag ($part) within the plate ($plate)", part.left >= plate.left && part.top >= plate.top && part.right <= plate.right + 0.5f && part.bottom <= plate.bottom + 0.5f)
+        }
+        // Right of the note's words and below them, the plate's colour.
+        val note = compose.onNodeWithTag(StepRowTags.note(0), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val pixels = compose.onRoot().captureToImage().toPixelMap()
+        assertTrue("under the note, the plate", same(scheme.primaryContainer, pixels[(note.right - 4f).toInt(), (note.bottom + 2f).toInt()]))
     }
 
     @Test
@@ -168,6 +292,7 @@ class CardCurrentStepTest {
         marks.hold(BookName.Pool, pilaf.id, setOf(DoneMark.of(pilaf.steps[0])))
         open(pilaf, CardMode.VIEW)
         assertEquals(listOf(false, false, false), (0..2).map(::readAsCurrent))
+        assertEquals("no caption on View", listOf<String?>(null, null, null), captions())
         (0..2).forEach { assertFalse("step $it on View", same(scheme.primaryContainer, backgroundOf(it))) }
         assertTrue(same(scheme.surface, backgroundOf(1)))
     }

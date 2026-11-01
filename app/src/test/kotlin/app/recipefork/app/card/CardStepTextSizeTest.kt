@@ -143,8 +143,9 @@ class CardStepTextSizeTest {
         )
         compose.chooseCardTab(CardMode.COOKING)
         val step = stepLayout().layoutInput.style.fontSize
-        // The theme's small headline, not a size of its own.
-        assertEquals(theme!!.headlineSmall.fontSize, step)
+        // The recipe's one step is the current one, on its plate at 23 sp (T-324); another step on Cooking is set in the
+        // theme's small headline (CardStepLayoutTest).
+        assertEquals(CURRENT_STEP_SIZE, step)
         assertTrue("the step is set at $step", step.value > 18f)
         others.forEach { (part, sizes) ->
             assertTrue("$part shows text", sizes.isNotEmpty())
@@ -209,8 +210,9 @@ class CardStepTextSizeTest {
         assertEquals(theme!!.bodyLarge.fontSize, view)
         compose.chooseCardTab(CardMode.COOKING)
         val cooking = stepLayout().layoutInput.style
-        assertEquals(theme!!.headlineSmall.fontSize, cooking.fontSize)
-        assertEquals(theme!!.headlineSmall.lineHeight, cooking.lineHeight)
+        // The current step, on its plate (T-324).
+        assertEquals(CURRENT_STEP_SIZE, cooking.fontSize)
+        assertEquals(CURRENT_STEP_LINE, cooking.lineHeight)
         assertTrue("on Cooking at ${cooking.fontSize}, on View at $view", cooking.fontSize.value > view.value)
     }
 
@@ -222,7 +224,7 @@ class CardStepTextSizeTest {
         compose.onNodeWithTag(CardTags.step(0)).performScrollTo()
         compose.waitForIdle()
         val layout = stepLayout()
-        assertEquals(theme!!.headlineSmall.fontSize, layout.layoutInput.style.fontSize)
+        assertEquals("the current step, on its plate (T-324)", CURRENT_STEP_SIZE, layout.layoutInput.style.fontSize)
         assertTrue("it wraps over several lines", layout.lineCount > 1)
         assertFalse("nothing of it is cut off", layout.hasVisualOverflow)
         compose.assertWhole(StepTags.text(0))

@@ -200,7 +200,7 @@ class CardStepperTest {
 
         // A tap on the folded step unmarks it, and it unfolds.
         tap(0)
-        assertEquals("Current step", stateOf(0))
+        assertEquals("Current step, 1 of 3", stateOf(0))
         assertEquals(whole.lineCount, layout(0).lineCount)
         assertTrue("no longer struck through", layout(0).layoutInput.style.textDecoration != TextDecoration.LineThrough)
         assertTrue(shown(StepRowTags.note(0)) && shown(TimerTags.start(0)))
@@ -247,7 +247,7 @@ class CardStepperTest {
         (0..2).forEach { tap(it) }
         compose.onNodeWithTag(CardTags.step(3)).performScrollTo()
         compose.waitForIdle()
-        assertEquals("Current step", stateOf(3))
+        assertEquals("Current step, 4 of 8", stateOf(3))
         compose.mainClock.autoAdvance = false
         compose.onNodeWithTag(CardTags.step(3)).performClick()
         repeat(FRAMES) {
@@ -257,7 +257,7 @@ class CardStepperTest {
         compose.mainClock.autoAdvance = true
         compose.waitForIdle()
         assertEquals(1, layout(3).lineCount)
-        assertEquals("Current step", stateOf(4))
+        assertEquals("Current step, 5 of 8", stateOf(4))
         assertTrue("the next step is brought into view", inView(4))
     }
 
@@ -273,7 +273,7 @@ class CardStepperTest {
         assertEquals("the card does not scroll", before, scrolled(), 0.5f)
         assertEquals("the step unfolds where it is", top, compose.onNodeWithTag(CardTags.step(2)).fetchSemanticsNode().positionInRoot.y, 0.5f)
         assertTrue(layout(2).lineCount > 1)
-        assertEquals("unmarked, the first not done is the current one", "Current step", stateOf(2))
+        assertEquals("unmarked, the first not done is the current one", "Current step, 3 of 8", stateOf(2))
         assertTrue(inView(2))
     }
 
@@ -303,12 +303,12 @@ class CardStepperTest {
         compose.onNodeWithTag(CardTags.CONTENT).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, top - visibleTop() + SCROLLED_OFF) }
         compose.waitForIdle()
         assertTrue("the step's top is scrolled off", compose.onNodeWithTag(StepRowTags.entry(2), useUnmergedTree = true).fetchSemanticsNode().positionInRoot.y < visibleTop())
-        assertEquals("Current step", stateOf(2))
+        assertEquals("Current step, 3 of 8", stateOf(2))
 
         compose.onNodeWithTag(CardTags.step(2)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(1, layout(2).lineCount)
-        assertEquals("Current step", stateOf(3))
+        assertEquals("Current step, 4 of 8", stateOf(3))
         val pager = compose.onNodeWithTag(CardTags.PAGER).fetchSemanticsNode().boundsInRoot
         val next = compose.onNodeWithTag(CardTags.step(3)).fetchSemanticsNode()
         val nextTop = next.positionInRoot.y

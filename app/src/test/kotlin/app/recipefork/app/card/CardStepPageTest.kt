@@ -289,8 +289,9 @@ class CardStepPageTest {
     @Test
     fun cookingKeepsItsLook() {
         open(mode = CardMode.COOKING)
+        // A step other than the current one, which has a size of its own (T-324).
+        assertEquals(theme!!.headlineSmall.fontSize, layoutOf(StepTags.text(1)).layoutInput.style.fontSize)
         val text = layoutOf(StepTags.text(0)).layoutInput
-        assertEquals(theme!!.headlineSmall.fontSize, text.style.fontSize)
         assertTrue("no reference styled apart on Cooking: ${text.text.spanStyles}", text.text.spanStyles.isEmpty())
         // The number in its circle, drawn, the text after the circle's gap.
         assertFalse("the circle carries no text layout", compose.onNodeWithTag(StepRowTags.number(0), useUnmergedTree = true).fetchSemanticsNode()

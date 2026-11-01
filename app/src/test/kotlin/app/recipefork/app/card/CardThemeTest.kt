@@ -79,7 +79,8 @@ class CardThemeTest {
         ingredients = listOf(
             Ingredient(0, null, freeTextName = "Flour", unitType = UnitType.EXACT, unit = QuantityUnit.GRAM, quantity = Rational.of(200)),
         ),
-        steps = listOf(Step(0, "Whisk the flour with the milk")),
+        // The second step is not the current one, which has a size of its own (T-324).
+        steps = listOf(Step(0, "Whisk the flour with the milk"), Step(1, "Fry the pancakes")),
     )
 
     /** The theme file as an owner might edit it: other tones, another error colour, a larger title size. */
@@ -135,7 +136,7 @@ class CardThemeTest {
 
     @Test
     fun aHeadlineSizeChangedInTheThemeFileShowsOnTheCookingStepsWhichStayLargerThanBodyText() {
-        val step = layoutOf(hasTestTag(StepTags.text(0))).layoutInput.style.fontSize
+        val step = layoutOf(hasTestTag(StepTags.text(1))).layoutInput.style.fontSize
         assertEquals(EDITED_HEADLINE_SP.sp, step)
         val body = appTypography(resources)
         listOf(body.bodyLarge, body.bodyMedium, body.bodySmall).forEach {

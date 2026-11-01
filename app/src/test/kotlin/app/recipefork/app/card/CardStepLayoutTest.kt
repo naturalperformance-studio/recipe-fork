@@ -101,9 +101,10 @@ class CardStepLayoutTest {
         open()
         (0..2).forEach { position ->
             val number = "${position + 1}"
-            // Read as one line, the number said once: the step's own words follow it.
+            // Read as one line, the number said once: the step's own words follow it. The current step, the first,
+            // says its number in its state instead (T-324).
             val spoken = compose.textsOf(CardTags.step(position))
-            assertEquals(listOf("$number.", recipe.steps[position].text), spoken)
+            assertEquals(listOfNotNull("$number.".takeIf { position > 0 }, recipe.steps[position].text), spoken)
             // The circle itself is decorative: it carries nothing for the screen reader.
             val circle = compose.onNodeWithTag(StepRowTags.number(position), useUnmergedTree = true).fetchSemanticsNode()
             assertTrue(circle.config.getOrNull(SemanticsProperties.Text).isNullOrEmpty())
@@ -114,12 +115,13 @@ class CardStepLayoutTest {
             assertEquals(with(compose.density) { DONE_MARK_SIZE.toPx() }, box.width, 0.5f)
             assertEquals(bounds(CardTags.step(position)).left, box.left, 0.5f)
             assertTrue("the text follows the circle", bounds(StepTags.text(position)).left >= box.right)
-            // The text draws the number before the step's words (T-323): the circle no longer carries it.
+            // The text draws the number before the step's words (T-323): the circle no longer carries it. The current
+            // step's caption numbers it instead (T-324).
             val drawn = compose.onNodeWithTag(StepTags.text(position), useUnmergedTree = true).fetchSemanticsNode()
                 .config[SemanticsActions.GetTextLayoutResult].action!!.let { action ->
                     mutableListOf<TextLayoutResult>().also { action(it) }.single()
                 }.layoutInput.text.text
-            assertEquals("$number.\u00A0${recipe.steps[position].text}", drawn)
+            assertEquals(if (position == 0) recipe.steps[0].text else "$number.\u00A0${recipe.steps[position].text}", drawn)
         }
         // Not marked, the circle is empty: inside it, the page shows through, not the primary fill.
         val image = compose.onNodeWithTag(StepRowTags.number(1), useUnmergedTree = true).captureToImage().toPixelMap()
@@ -132,7 +134,8 @@ class CardStepLayoutTest {
     @Test
     fun aStepIsSetInTheThemesHeadlineStyleOnCookingAndStandsApartFromTheNext() {
         open()
-        val layout = compose.onNodeWithTag(StepTags.text(0), useUnmergedTree = true).fetchSemanticsNode()
+        // A step other than the current one, which has a size of its own (T-324).
+        val layout = compose.onNodeWithTag(StepTags.text(1), useUnmergedTree = true).fetchSemanticsNode()
             .config[SemanticsActions.GetTextLayoutResult].action!!.let { action ->
                 mutableListOf<TextLayoutResult>().also { action(it) }.single()
             }
