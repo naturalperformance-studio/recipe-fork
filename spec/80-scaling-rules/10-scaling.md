@@ -3,7 +3,6 @@ slug: SCALE
 status: closed
 updated: 2026-10-15
 ids: [SCALE-001, SCALE-002, SCALE-003, SCALE-006, SCALE-008, SCALE-010, SCALE-011, SCALE-016, SCALE-017, SCALE-018]
-  SCALE-018]
 ---
 
 # Scaling

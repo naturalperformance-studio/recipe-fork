@@ -3,7 +3,6 @@ slug: CAT
 status: closed
 updated: 2026-10-15
 ids: [CAT-001, CAT-002, CAT-003, CAT-004, CAT-005, CAT-006, CAT-007, CAT-008, CAT-009, CAT-010]
-  CAT-010]
 ---
 
 # Catalogue and search

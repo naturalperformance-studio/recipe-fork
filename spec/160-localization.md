@@ -3,7 +3,6 @@ slug: L10N
 status: closed
 updated: 2026-10-15
 ids: [L10N-001, L10N-002, L10N-003, L10N-004, L10N-005, L10N-006, L10N-007, L10N-008, L10N-009]
-  L10N-008, L10N-009]
 ---
 
 # Localization

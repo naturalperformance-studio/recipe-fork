@@ -3,7 +3,6 @@ slug: RET
 status: closed
 updated: 2026-10-11
 ids: [RET-001, RET-002, RET-003, RET-004, RET-005, RET-006, RET-007, RET-008, RET-009, RET-010]
-  RET-009, RET-010]
 ---
 
 # What is kept and what is deleted

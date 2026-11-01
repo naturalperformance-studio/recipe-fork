@@ -3,7 +3,6 @@ slug: DOM
 status: closed
 updated: 2026-10-15
 ids: [DOM-009, DOM-010, DOM-011, DOM-012, DOM-014, DOM-016, DOM-017, DOM-019, DOM-018, DOM-020]
-  DOM-019, DOM-018, DOM-020]
 ---
 
 # Invariants over ingredients, the dictionaries, units and limits

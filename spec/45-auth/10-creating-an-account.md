@@ -3,7 +3,6 @@ slug: AUTH
 status: closed
 updated: 2026-10-01
 ids: [AUTH-001, AUTH-018, AUTH-002, AUTH-003, AUTH-004, AUTH-005, AUTH-006, AUTH-022, AUTH-023]
-  AUTH-022, AUTH-023]
 ---
 
 # Creating an account
