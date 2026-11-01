@@ -224,3 +224,5 @@ and is never reused.
 | ID | Retired | Reason |
 |---|---|---|
 | DOM-013 | 2026-10-04 | A step carries at most one timer — replaced by DOM-024 (up to five), user decision at the planning of v0.24. |
+| FLOW-019 | 2026-11-01 | Pruned as detail: what the card shows when a recipe has no media, description or parent is the team's (empty states). |
+| FLOW-021 | 2026-11-01 | Pruned as detail: restarting a running timer asks first — a dialog's behaviour, the team's. |
